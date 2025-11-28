@@ -28,3 +28,8 @@ dist-ssr
 .env.local
 .env.production
 
+# Firebase service account keys (NEVER commit these!)
+**/serviceAccountKey.json
+**/*-firebase-adminsdk-*.json
+serviceAccountKey.json
+

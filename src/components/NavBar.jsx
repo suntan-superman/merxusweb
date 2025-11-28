@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
 
-const NavBar = ({ user }) => {
+const NavBar = () => {
+  const { user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -34,7 +36,7 @@ const NavBar = ({ user }) => {
             </Link>
             {user ? (
               <>
-                <Link to="/dashboard" className="text-gray-700 hover:text-primary-600 transition-colors">
+                <Link to="/restaurant" className="text-gray-700 hover:text-primary-600 transition-colors">
                   Dashboard
                 </Link>
                 <button
@@ -45,9 +47,14 @@ const NavBar = ({ user }) => {
                 </button>
               </>
             ) : (
-              <Link to="/onboarding" className="btn-primary">
-                Get Started
-              </Link>
+              <>
+                <Link to="/login" className="text-gray-700 hover:text-primary-600 transition-colors">
+                  Login
+                </Link>
+                <Link to="/onboarding" className="btn-primary">
+                  Get Started
+                </Link>
+              </>
             )}
           </div>
 
@@ -86,7 +93,7 @@ const NavBar = ({ user }) => {
             {user ? (
               <>
                 <Link
-                  to="/dashboard"
+                  to="/restaurant"
                   className="block text-gray-700 hover:text-primary-600 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -103,13 +110,22 @@ const NavBar = ({ user }) => {
                 </button>
               </>
             ) : (
-              <Link
-                to="/onboarding"
-                className="btn-primary block text-center"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Get Started
-              </Link>
+              <>
+                <Link
+                  to="/login"
+                  className="block text-gray-700 hover:text-primary-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/onboarding"
+                  className="btn-primary block text-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Get Started
+                </Link>
+              </>
             )}
           </div>
         )}

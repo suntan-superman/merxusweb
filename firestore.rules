@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user belongs to restaurant
+    function belongsToRestaurant(restaurantId) {
+      return isAuthenticated() && 
+             request.auth.token.restaurantId == restaurantId;
+    }
+    
+    // Helper function to check if user is owner
+    function isOwner(restaurantId) {
+      return belongsToRestaurant(restaurantId) && 
+             request.auth.token.role == 'owner';
+    }
+    
+    // Helper function to check if user is owner or manager
+    function isOwnerOrManager(restaurantId) {
+      return belongsToRestaurant(restaurantId) && 
+             (request.auth.token.role == 'owner' || 
+              request.auth.token.role == 'manager');
+    }
+    
+    // Helper function to check if user is Merxus admin
+    function isMerxusAdmin() {
+      return isAuthenticated() && 
+             (request.auth.token.role == 'merxus_admin' || 
+              request.auth.token.role == 'merxus_support');
+    }
+    
+    // Restaurant data - users must have matching restaurantId
+    match /restaurants/{restaurantId}/{collection}/{docId} {
+      // Orders, calls, customers, menuItems - all restaurant users can read/write
+      allow read, write: if belongsToRestaurant(restaurantId);
+    }
+    
+    // Restaurant settings
+    match /restaurants/{restaurantId}/meta/settings {
+      allow read: if belongsToRestaurant(restaurantId);
+      allow write: if isOwnerOrManager(restaurantId);
+    }
+    
+    // User management - only owners can write, owners/managers can read
+    match /restaurants/{restaurantId}/users/{userId} {
+      allow read: if isOwnerOrManager(restaurantId);
+      allow write: if isOwner(restaurantId);
+    }
+    
+    // Merxus admin access to all restaurant data
+    match /restaurants/{restaurantId}/{document=**} {
+      allow read, write: if isMerxusAdmin();
+    }
+    
+    // Merxus admin collections
+    match /merxus/{document=**} {
+      allow read, write: if isMerxusAdmin();
+    }
+  }
+}
+
