@@ -45,10 +45,13 @@ apiClient.interceptors.request.use(
     const user = auth.currentUser;
     if (user) {
       try {
-        const token = await getIdToken(user, true);
+        // Don't force refresh on every request - only refresh if token is about to expire
+        // This prevents excessive token refreshes that might cause auth state issues
+        const token = await getIdToken(user, false); // false = don't force refresh
         config.headers.Authorization = `Bearer ${token}`;
       } catch (error) {
         console.error('Error getting token:', error);
+        // If getting token fails, don't break the request - let the backend handle it
       }
     }
     return config;

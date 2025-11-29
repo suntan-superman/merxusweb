@@ -106,19 +106,23 @@ export async function createRestaurant(req: AuthenticatedRequest, res: Response)
       handleCodeInApp: false,
     });
 
-    // TODO: Replace with Firebase Auth email sending (see user's other app implementation)
-    // For now, using SendGrid for custom HTML emails
-    // Send invitation email
-    const { sendRestaurantInvitation } = await import('../utils/email');
-    const emailSent = await sendRestaurantInvitation(
-      manager.email,
-      manager.displayName,
-      restaurant.name,
-      passwordResetLink
-    );
+    // Send invitation email (non-blocking - don't fail restaurant creation if email fails)
+    try {
+      const { sendRestaurantInvitation } = await import('../utils/email');
+      const emailSent = await sendRestaurantInvitation(
+        manager.email,
+        manager.displayName,
+        restaurant.name,
+        passwordResetLink
+      );
 
-    if (!emailSent) {
-      console.warn('Email invitation not sent. Invitation link:', passwordResetLink);
+      if (!emailSent) {
+        console.warn('Email invitation not sent. Invitation link:', passwordResetLink);
+      }
+    } catch (emailError: any) {
+      // Log but don't fail - restaurant is already created
+      console.error('Error sending invitation email (non-fatal):', emailError);
+      console.warn('Restaurant created successfully, but email not sent. Invitation link:', passwordResetLink);
     }
 
     res.status(201).json({

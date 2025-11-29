@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { deleteRestaurant, fetchRestaurantMenu, createRestaurantMenuItem, updateRestaurantMenuItem, deleteRestaurantMenuItem, toggleRestaurantMenuItemAvailability } from '../../api/merxus';
 import MenuTable from '../menu/MenuTable';
 import MenuItemForm from '../menu/MenuItemForm';
+import MenuImport from '../menu/MenuImport';
 
 const DAYS = [
   { key: 'monday', label: 'Monday' },
@@ -229,6 +230,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
   const [menuLoading, setMenuLoading] = useState(false);
   const [menuError, setMenuError] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
   return (
@@ -606,13 +608,22 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                   <p className="text-sm text-gray-600">
                     Manage menu items for {restaurant.name || 'this restaurant'}
                   </p>
-                  <button
-                    type="button"
-                    onClick={handleAddMenuItem}
-                    className="btn-primary text-sm"
-                  >
-                    + Add Item
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setImportOpen(true)}
+                      className="btn-secondary text-sm"
+                    >
+                      📥 Import CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddMenuItem}
+                      className="btn-primary text-sm"
+                    >
+                      + Add Item
+                    </button>
+                  </div>
                 </div>
 
                 {menuError && (
@@ -679,6 +690,15 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
             onSave={handleSaveMenuItem}
             editing={editingItem}
           />
+
+          {/* Menu Import Modal */}
+          {importOpen && (
+            <MenuImport
+              onImportComplete={loadMenu}
+              onClose={() => setImportOpen(false)}
+              createItemFn={(item) => createRestaurantMenuItem(restaurant.id || restaurant.restaurantId, item)}
+            />
+          )}
         </>
       )}
     </div>

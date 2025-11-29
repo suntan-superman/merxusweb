@@ -4,10 +4,13 @@ import { onAuthStateChanged, getIdToken, signOut } from 'firebase/auth';
 
 const AuthContext = createContext(null);
 
-// Inactivity timeout: 30 minutes (in milliseconds)
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+// Inactivity timeout: 1 hour (in milliseconds) - DISABLED FOR TESTING
+const INACTIVITY_TIMEOUT = 60 * 60 * 1000;
 // Token refresh interval: 50 minutes (tokens expire after 1 hour)
 const TOKEN_REFRESH_INTERVAL = 50 * 60 * 1000;
+// Auth loading safety timeout: DISABLED FOR TESTING (was 30 seconds)
+const AUTH_LOADING_TIMEOUT = null; // Disabled
+const ENABLE_INACTIVITY_TIMEOUT = false; // Set to true to re-enable
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -18,6 +21,7 @@ export function AuthProvider({ children }) {
   const tokenRefreshTimerRef = useRef(null);
   const lastActivityRef = useRef(Date.now());
   const activityListenersRef = useRef([]);
+  const userRef = useRef(null);
 
   // Helper to decode JWT token
   const decodeToken = (idToken) => {
@@ -77,24 +81,58 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error('Error refreshing token:', error);
-      // Token expired or invalid - log out
-      if (error.code === 'auth/id-token-expired' || error.code === 'auth/id-token-revoked' || error.code === 'auth/user-disabled') {
-        console.log('Token expired, revoked, or user disabled. Logging out...');
+      // Only log out on critical auth errors, not network/timeout errors
+      if (error.code === 'auth/id-token-expired' || 
+          error.code === 'auth/id-token-revoked' || 
+          error.code === 'auth/user-disabled' ||
+          error.code === 'auth/user-not-found' ||
+          error.code === 'auth/invalid-credential') {
+        console.log('Critical auth error. Logging out...', error.code);
         await signOut(auth);
+        setToken(null);
+        setUserClaims(null);
+        return false;
       } else {
-        // Other error - still log out to be safe
-        console.log('Unexpected token error. Logging out for security...');
-        await signOut(auth);
+        // Network errors, timeouts, etc. - don't log out, just log the error
+        console.warn('Non-critical token refresh error (network/timeout). Keeping user logged in:', error.code || error.message);
+        // Try to get existing token from current user
+        try {
+          const existingToken = await getIdToken(currentUser, false); // Don't force refresh
+          if (existingToken) {
+            console.log('Using existing token despite refresh error');
+            setToken(existingToken);
+            // Try to decode existing token for claims
+            const existingClaims = decodeToken(existingToken);
+            if (existingClaims && (existingClaims.role || existingClaims.type)) {
+              setUserClaims({
+                role: existingClaims.role,
+                restaurantId: existingClaims.restaurantId,
+                type: existingClaims.type,
+              });
+            }
+            return true;
+          }
+        } catch (tokenError) {
+          console.warn('Could not get existing token:', tokenError);
+        }
+        // If we can't get a token at all, still don't log out - let the user try to continue
+        console.warn('No token available, but keeping user logged in to allow retry');
+        return false; // Return false but don't log out
       }
-      setToken(null);
-      setUserClaims(null);
-      return false;
     }
   };
 
-  // Handle user activity
+  // Handle user activity - reset inactivity timer
   const handleActivity = () => {
     lastActivityRef.current = Date.now();
+    // Reset the inactivity timer on any activity (if timer exists, user is logged in)
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = setTimeout(async () => {
+        console.log('Inactivity timeout reached. Logging out...');
+        await signOut(auth);
+      }, INACTIVITY_TIMEOUT);
+    }
   };
 
   // Set up inactivity monitoring
@@ -141,11 +179,22 @@ export function AuthProvider({ children }) {
       clearInterval(tokenRefreshTimerRef.current);
     }
 
-    // Refresh token periodically
+    // Refresh token periodically (only if user still exists)
     tokenRefreshTimerRef.current = setInterval(async () => {
-      if (currentUser) {
-        console.log('Refreshing token...');
-        await refreshTokenAndClaims(currentUser);
+      if (currentUser && auth.currentUser) {
+        console.log('Periodic token refresh triggered...');
+        try {
+          const success = await refreshTokenAndClaims(currentUser);
+          if (!success) {
+            console.warn('Periodic token refresh failed, but keeping user logged in');
+          }
+        } catch (error) {
+          console.error('Error in periodic token refresh:', error);
+          // Don't log out on periodic refresh errors - just log them
+        }
+      } else {
+        console.log('No user for periodic refresh, clearing interval');
+        clearTokenRefresh();
       }
     }, TOKEN_REFRESH_INTERVAL);
   };
@@ -160,9 +209,20 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let loadingTimeout = null;
+    let isUnmounting = false;
     
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log('onAuthStateChanged fired:', currentUser ? 'user exists' : 'no user');
+      console.log('onAuthStateChanged fired:', currentUser ? 'user exists' : 'no user', {
+        previousUser: user?.uid,
+        currentUser: currentUser?.uid,
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Prevent processing if component is unmounting
+      if (isUnmounting) {
+        console.log('Component unmounting, ignoring auth state change');
+        return;
+      }
       
       // Clear any existing timeout
       if (loadingTimeout) {
@@ -172,17 +232,28 @@ export function AuthProvider({ children }) {
       
       setLoading(true); // Start loading
       
-      // Safety timeout: if loading takes more than 10 seconds, force logout
-      loadingTimeout = setTimeout(async () => {
-        console.warn('Auth loading timeout - forcing logout');
-        if (currentUser) {
-          await signOut(auth);
-        }
-        setLoading(false);
-      }, 10000);
+      // Safety timeout: DISABLED FOR TESTING
+      // Only set timeout if enabled and timeout value is provided
+      if (AUTH_LOADING_TIMEOUT) {
+        loadingTimeout = setTimeout(async () => {
+          console.warn('Auth loading timeout - forcing logout');
+          if (currentUser) {
+            await signOut(auth);
+          }
+          setLoading(false);
+        }, AUTH_LOADING_TIMEOUT);
+      }
       
       if (currentUser) {
+        // If we already have this user, don't re-process (prevents duplicate processing)
+        if (user && user.uid === currentUser.uid && userClaims) {
+          console.log('User already authenticated, skipping re-initialization');
+          setLoading(false);
+          return;
+        }
+        
         setUser(currentUser);
+        userRef.current = currentUser;
         console.log('Setting user, refreshing token...');
         
         try {
@@ -199,20 +270,31 @@ export function AuthProvider({ children }) {
             // Wait a bit more to ensure all components have re-rendered with new claims
             await new Promise(resolve => setTimeout(resolve, 50));
             
-            // Set up inactivity timer
-            setupInactivityTimer();
+            // Set up inactivity timer (only if enabled)
+            if (ENABLE_INACTIVITY_TIMEOUT) {
+              setupInactivityTimer();
+            }
             
             // Set up periodic token refresh
             setupTokenRefresh(currentUser);
             setLoading(false); // Only set loading to false after claims are loaded
             console.log('Auth setup complete, loading set to false, userClaims should be available');
           } else {
-            // Token refresh failed - user will be logged out
-            // signOut will trigger onAuthStateChanged again with null
-            clearInactivityTimer();
-            clearTokenRefresh();
-            // Don't set loading to false here - let the logout flow handle it
-            console.log('Token refresh failed, waiting for logout...');
+            // Token refresh failed but might be non-critical (network issue, etc.)
+            // Check if we have existing claims - if so, keep user logged in
+            if (userClaims) {
+              console.warn('Token refresh failed but user has existing claims. Keeping logged in.');
+              setLoading(false);
+              // Still set up token refresh to retry later
+              setupTokenRefresh(currentUser);
+            } else {
+              // No existing claims - this is a problem, but don't force logout immediately
+              // Let the user stay logged in and try again on next interaction
+              console.warn('Token refresh failed and no existing claims. User may experience issues but staying logged in.');
+              setLoading(false);
+              // Set up token refresh to retry
+              setupTokenRefresh(currentUser);
+            }
           }
         } catch (error) {
           console.error('Unexpected error in auth flow:', error);
@@ -220,13 +302,50 @@ export function AuthProvider({ children }) {
             clearTimeout(loadingTimeout);
             loadingTimeout = null;
           }
-          // Force logout on unexpected error
-          await signOut(auth);
+          // Only force logout on truly critical errors
+          if (error.code === 'auth/user-disabled' || error.code === 'auth/user-not-found') {
+            console.error('Critical auth error, logging out:', error.code);
+            await signOut(auth);
+          } else {
+            // Non-critical error - keep user logged in if they have existing claims
+            console.warn('Non-critical auth error, keeping user logged in:', error.code || error.message);
+            if (userClaims) {
+              setLoading(false);
+              setupTokenRefresh(currentUser);
+            } else {
+              // No claims, but don't force logout - let them try to use the app
+              setLoading(false);
+            }
+          }
         }
       } else {
+        // User logged out - but check if this is a false negative
+        // Sometimes Firebase fires this during initialization
+        if (user && userClaims && Date.now() - (lastActivityRef.current || 0) < 5000) {
+          console.warn('Auth state changed to no user, but we had a valid session recently. This might be a false negative. Waiting...');
+          // Don't clear state immediately - wait a moment to see if it recovers
+          setTimeout(() => {
+            if (!auth.currentUser && user) {
+              console.log('User still not found after wait, clearing state...');
+              setUser(null);
+              userRef.current = null;
+              setToken(null);
+              setUserClaims(null);
+              clearInactivityTimer();
+              clearTokenRefresh();
+              setLoading(false);
+            } else if (auth.currentUser) {
+              console.log('User recovered, ignoring false logout');
+              setLoading(false);
+            }
+          }, 1000);
+          return;
+        }
+        
         // User logged out
         console.log('No user, clearing state...');
         setUser(null);
+        userRef.current = null;
         setToken(null);
         setUserClaims(null);
         
@@ -239,6 +358,7 @@ export function AuthProvider({ children }) {
     });
 
     return () => {
+      isUnmounting = true;
       if (loadingTimeout) {
         clearTimeout(loadingTimeout);
       }

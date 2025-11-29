@@ -8,12 +8,14 @@ import {
 } from '../../api/menu';
 import MenuTable from '../../components/menu/MenuTable';
 import MenuItemForm from '../../components/menu/MenuItemForm';
+import MenuImport from '../../components/menu/MenuImport';
 
 export default function MenuPage() {
   const [menu, setMenu] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
   async function loadMenu() {
@@ -92,9 +94,17 @@ export default function MenuPage() {
             Manage your menu items, prices, and availability
           </p>
         </div>
-        <button onClick={handleAddNew} className="btn-primary">
-          + Add Item
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setImportOpen(true)}
+            className="btn-secondary"
+          >
+            📥 Import CSV
+          </button>
+          <button onClick={handleAddNew} className="btn-primary">
+            + Add Item
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -120,6 +130,13 @@ export default function MenuPage() {
         onSave={handleSave}
         editing={editingItem}
       />
+
+      {importOpen && (
+        <MenuImport
+          onImportComplete={loadMenu}
+          onClose={() => setImportOpen(false)}
+        />
+      )}
     </div>
   );
 }
