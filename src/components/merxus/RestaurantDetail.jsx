@@ -3,6 +3,8 @@ import { deleteRestaurant, resendInvitation, fetchRestaurantMenu, createRestaura
 import MenuTable from '../menu/MenuTable';
 import MenuItemForm from '../menu/MenuItemForm';
 import MenuImport from '../menu/MenuImport';
+import ConfirmationModal from '../common/ConfirmationModal';
+import PromptDropdown from '../settings/PromptDropdown';
 
 const DAYS = [
   { key: 'monday', label: 'Monday' },
@@ -22,6 +24,9 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
   const [deleteError, setDeleteError] = useState(null);
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteMenuItemModal, setShowDeleteMenuItemModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [form, setForm] = useState({
     // Basic info
     name: restaurant?.name || '',
@@ -103,16 +108,23 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
     }
   }
 
-  async function handleDeleteMenuItem(item) {
-    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
-      return;
-    }
+  function handleDeleteMenuItem(item) {
+    setItemToDelete(item);
+    setShowDeleteMenuItemModal(true);
+  }
+
+  async function confirmDeleteMenuItem() {
+    if (!itemToDelete) return;
     try {
-      await deleteRestaurantMenuItem(restaurant.id || restaurant.restaurantId, item.id);
-      setMenu((prev) => prev.filter((m) => m.id !== item.id));
+      await deleteRestaurantMenuItem(restaurant.id || restaurant.restaurantId, itemToDelete.id);
+      setMenu((prev) => prev.filter((m) => m.id !== itemToDelete.id));
+      setShowDeleteMenuItemModal(false);
+      setItemToDelete(null);
     } catch (err) {
       console.error('Error deleting menu item:', err);
       setMenuError('Failed to delete menu item.');
+      setShowDeleteMenuItemModal(false);
+      setItemToDelete(null);
     }
   }
 
@@ -187,6 +199,16 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
     }));
   }
 
+  function handlePromptChange(newPrompt) {
+    setForm((prev) => ({
+      ...prev,
+      aiConfig: {
+        ...prev.aiConfig,
+        systemPrompt: newPrompt,
+      },
+    }));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
@@ -200,13 +222,14 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
     }
   }
 
-  async function handleDelete() {
-    if (!confirm(`Are you sure you want to delete "${restaurant.name || restaurant.restaurantId}"? This action cannot be undone.`)) {
-      return;
-    }
+  function handleDelete() {
+    setShowDeleteModal(true);
+  }
 
+  async function confirmDelete() {
     setDeleting(true);
     setDeleteError(null);
+    setShowDeleteModal(false);
     try {
       await deleteRestaurant(restaurant.id || restaurant.restaurantId);
       onClose();
@@ -610,20 +633,11 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Custom System Prompt / Instructions
-                  </label>
-                  <textarea
-                    name="systemPrompt"
+                  <PromptDropdown
                     value={form.aiConfig.systemPrompt || ''}
-                    onChange={handleAIConfigChange}
-                    className="input-field"
-                    rows={6}
-                    placeholder="Enter custom instructions for the AI assistant..."
+                    onChange={handlePromptChange}
+                    voiceName={form.aiConfig.voiceName || 'alloy'}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Custom instructions that will be added to the AI prompt
-                  </p>
                 </div>
               </div>
             )}
@@ -763,6 +777,34 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
               createItemFn={(item) => createRestaurantMenuItem(restaurant.id || restaurant.restaurantId, item)}
             />
           )}
+
+          {/* Delete Restaurant Confirmation Modal */}
+          <ConfirmationModal
+            isOpen={showDeleteModal}
+            onClose={() => setShowDeleteModal(false)}
+            onConfirm={confirmDelete}
+            title="Delete Restaurant"
+            message={`Are you sure you want to delete "${restaurant.name || restaurant.restaurantId}"? This action cannot be undone.`}
+            confirmText="Delete"
+            cancelText="Cancel"
+            variant="danger"
+            isLoading={deleting}
+          />
+
+          {/* Delete Menu Item Confirmation Modal */}
+          <ConfirmationModal
+            isOpen={showDeleteMenuItemModal}
+            onClose={() => {
+              setShowDeleteMenuItemModal(false);
+              setItemToDelete(null);
+            }}
+            onConfirm={confirmDeleteMenuItem}
+            title="Delete Menu Item"
+            message={itemToDelete ? `Are you sure you want to delete "${itemToDelete.name}"?` : ''}
+            confirmText="Delete"
+            cancelText="Cancel"
+            variant="danger"
+          />
         </>
       )}
     </div>

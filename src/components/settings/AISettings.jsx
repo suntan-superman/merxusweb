@@ -1,15 +1,21 @@
 import { useState } from 'react';
+import PromptDropdown from './PromptDropdown';
 
 export default function AISettings({ settings, onSave, saving }) {
   const [form, setForm] = useState({
     model: settings.aiConfig?.model || 'gpt-4o-mini',
     voiceName: settings.aiConfig?.voiceName || 'alloy',
     language: settings.aiConfig?.language || 'en-US',
+    systemPrompt: settings.aiConfig?.systemPrompt || '',
   });
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handlePromptChange(newPrompt) {
+    setForm((prev) => ({ ...prev, systemPrompt: newPrompt }));
   }
 
   function handleSubmit(e) {
@@ -78,6 +84,14 @@ export default function AISettings({ settings, onSave, saving }) {
           <p className="text-xs text-gray-500 mt-1">
             Language code (e.g., en-US, es-ES, fr-FR)
           </p>
+        </div>
+
+        <div>
+          <PromptDropdown
+            value={form.systemPrompt}
+            onChange={handlePromptChange}
+            voiceName={form.voiceName}
+          />
         </div>
 
         <button type="submit" className="btn-primary" disabled={saving}>

@@ -9,6 +9,7 @@ import {
 import MenuTable from '../../components/menu/MenuTable';
 import MenuItemForm from '../../components/menu/MenuItemForm';
 import MenuImport from '../../components/menu/MenuImport';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 export default function MenuPage() {
   const [menu, setMenu] = useState([]);
@@ -17,6 +18,8 @@ export default function MenuPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   async function loadMenu() {
     try {
@@ -62,16 +65,23 @@ export default function MenuPage() {
     }
   }
 
-  async function handleDelete(item) {
-    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
-      return;
-    }
+  function handleDelete(item) {
+    setItemToDelete(item);
+    setShowDeleteModal(true);
+  }
+
+  async function confirmDelete() {
+    if (!itemToDelete) return;
     try {
-      await deleteMenuItem(item.id);
-      setMenu((prev) => prev.filter((m) => m.id !== item.id));
+      await deleteMenuItem(itemToDelete.id);
+      setMenu((prev) => prev.filter((m) => m.id !== itemToDelete.id));
+      setShowDeleteModal(false);
+      setItemToDelete(null);
     } catch (err) {
       console.error(err);
       setError('Failed to delete menu item.');
+      setShowDeleteModal(false);
+      setItemToDelete(null);
     }
   }
 
@@ -137,6 +147,20 @@ export default function MenuPage() {
           onClose={() => setImportOpen(false)}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Delete Menu Item"
+        message={itemToDelete ? `Are you sure you want to delete "${itemToDelete.name}"?` : ''}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 }

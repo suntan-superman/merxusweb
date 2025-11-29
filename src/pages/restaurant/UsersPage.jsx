@@ -4,12 +4,15 @@ import UsersTable from '../../components/admin/UsersTable';
 import InviteUserForm from '../../components/admin/InviteUserForm';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 function UsersPageContent() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [inviting, setInviting] = useState(false);
+  const [showDisableModal, setShowDisableModal] = useState(false);
+  const [userToDisable, setUserToDisable] = useState(null);
 
   async function load() {
     try {
@@ -53,16 +56,24 @@ function UsersPageContent() {
     }
   }
 
-  async function handleDisable(uid) {
-    if (!confirm('Are you sure you want to disable this user?')) {
-      return;
-    }
+  function handleDisable(uid) {
+    const user = users.find(u => u.uid === uid);
+    setUserToDisable({ uid, name: user?.displayName || user?.email || 'this user' });
+    setShowDisableModal(true);
+  }
+
+  async function confirmDisable() {
+    if (!userToDisable) return;
     try {
-      await disableUser(uid);
+      await disableUser(userToDisable.uid);
       await load();
+      setShowDisableModal(false);
+      setUserToDisable(null);
     } catch (err) {
       console.error(err);
       setError('Failed to disable user.');
+      setShowDisableModal(false);
+      setUserToDisable(null);
     }
   }
 
@@ -94,6 +105,20 @@ function UsersPageContent() {
           onDisable={handleDisable}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showDisableModal}
+        onClose={() => {
+          setShowDisableModal(false);
+          setUserToDisable(null);
+        }}
+        onConfirm={confirmDisable}
+        title="Disable User"
+        message={userToDisable ? `Are you sure you want to disable ${userToDisable.name}? They will no longer be able to access the system.` : ''}
+        confirmText="Disable"
+        cancelText="Cancel"
+        variant="warning"
+      />
     </div>
   );
 }
