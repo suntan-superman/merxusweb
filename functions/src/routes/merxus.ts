@@ -136,6 +136,74 @@ export async function createRestaurant(req: AuthenticatedRequest, res: Response)
   }
 }
 
+// Resend invitation email to restaurant owner/manager
+export async function resendInvitation(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { restaurantId } = req.params;
+    if (!restaurantId) {
+      res.status(400).json({ error: 'Restaurant ID required' });
+      return;
+    }
+
+    // Get restaurant settings to get the name
+    const restaurantRef = db.collection('restaurants').doc(restaurantId);
+    const settingsDoc = await restaurantRef.collection('meta').doc('settings').get();
+    if (!settingsDoc.exists) {
+      res.status(404).json({ error: 'Restaurant not found' });
+      return;
+    }
+    const settings = settingsDoc.data();
+    const restaurantName = settings?.name || 'the restaurant';
+
+    // Find owner/manager in users subcollection
+    const usersSnapshot = await restaurantRef.collection('users').where('role', 'in', ['owner', 'manager']).limit(1).get();
+    
+    if (usersSnapshot.empty) {
+      res.status(404).json({ error: 'No owner or manager found for this restaurant' });
+      return;
+    }
+
+    const userDoc = usersSnapshot.docs[0];
+    const userData = userDoc.data();
+    const userEmail = userData.email;
+    const displayName = userData.displayName || userEmail.split('@')[0];
+
+    // Generate password reset link
+    const passwordResetLink = await admin.auth().generatePasswordResetLink(userEmail, {
+      url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?fromInvite=true&restaurantId=${restaurantId}`,
+      handleCodeInApp: false,
+    });
+
+    // Send invitation email (non-blocking)
+    let emailSent = false;
+    try {
+      const { sendRestaurantInvitation } = await import('../utils/email');
+      emailSent = await sendRestaurantInvitation(
+        userEmail,
+        displayName,
+        restaurantName,
+        passwordResetLink
+      );
+    } catch (emailError: any) {
+      console.error('Error sending invitation email:', emailError);
+    }
+
+    res.json({
+      success: true,
+      message: emailSent 
+        ? 'Invitation email sent successfully' 
+        : 'Invitation link generated (email may not have been sent)',
+      invitationLink: passwordResetLink, // Include for manual sending if needed
+      email: userEmail,
+    });
+  } catch (err: any) {
+    console.error('Error resending invitation:', err);
+    res.status(500).json({ error: err.message || 'Failed to resend invitation' });
+  }
+}
+
 // Restaurants
 export async function getAllRestaurants(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { deleteRestaurant, fetchRestaurantMenu, createRestaurantMenuItem, updateRestaurantMenuItem, deleteRestaurantMenuItem, toggleRestaurantMenuItemAvailability } from '../../api/merxus';
+import { deleteRestaurant, resendInvitation, fetchRestaurantMenu, createRestaurantMenuItem, updateRestaurantMenuItem, deleteRestaurantMenuItem, toggleRestaurantMenuItemAvailability } from '../../api/merxus';
 import MenuTable from '../menu/MenuTable';
 import MenuItemForm from '../menu/MenuItemForm';
 import MenuImport from '../menu/MenuImport';
@@ -20,6 +20,8 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState(null);
   const [form, setForm] = useState({
     // Basic info
     name: restaurant?.name || '',
@@ -218,6 +220,28 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
     }
   }
 
+  async function handleResendInvitation() {
+    setResending(true);
+    setResendMessage(null);
+    try {
+      const result = await resendInvitation(restaurant.id || restaurant.restaurantId);
+      setResendMessage({
+        type: 'success',
+        text: result.message || 'Invitation email sent successfully',
+        link: result.invitationLink,
+        email: result.email,
+      });
+    } catch (err) {
+      console.error('Error resending invitation:', err);
+      setResendMessage({
+        type: 'error',
+        text: err.response?.data?.error || err.message || 'Failed to resend invitation',
+      });
+    } finally {
+      setResending(false);
+    }
+  }
+
   const tabs = [
     { id: 'basic', label: 'Basic Info' },
     { id: 'hours', label: 'Business Hours' },
@@ -300,23 +324,60 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
             </div>
           </div>
 
-          <div className="mt-6 flex space-x-2">
-            <button onClick={() => setEditing(true)} className="btn-primary flex-1">
-              Edit
-            </button>
+          <div className="mt-6 space-y-3">
+            <div className="flex space-x-2">
+              <button onClick={() => setEditing(true)} className="btn-primary flex-1">
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting || restaurant.totalOrders > 0}
+                className="btn-secondary flex-1 text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={restaurant.totalOrders > 0 ? 'Cannot delete restaurant with orders' : ''}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+            
             <button
-              onClick={handleDelete}
-              disabled={deleting || restaurant.totalOrders > 0}
-              className="btn-secondary flex-1 text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={restaurant.totalOrders > 0 ? 'Cannot delete restaurant with orders' : ''}
+              onClick={handleResendInvitation}
+              disabled={resending}
+              className="btn-secondary w-full text-primary-600 hover:text-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Resend invitation email to restaurant owner/manager"
             >
-              {deleting ? 'Deleting...' : 'Delete'}
+              {resending ? 'Sending...' : '📧 Resend Invitation Email'}
             </button>
           </div>
 
           {deleteError && (
             <div className="mt-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
               {deleteError}
+            </div>
+          )}
+
+          {resendMessage && (
+            <div className={`mt-4 rounded-md border px-4 py-3 text-sm ${
+              resendMessage.type === 'success' 
+                ? 'bg-green-50 border-green-200 text-green-700' 
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}>
+              <p>{resendMessage.text}</p>
+              {resendMessage.link && (
+                <div className="mt-2">
+                  <p className="text-xs font-medium">Invitation Link:</p>
+                  <a 
+                    href={resendMessage.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs break-all text-primary-600 hover:underline"
+                  >
+                    {resendMessage.link}
+                  </a>
+                  {resendMessage.email && (
+                    <p className="text-xs mt-1">Sent to: {resendMessage.email}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </>
@@ -374,7 +435,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
+                    Twilio Phone Number *
                   </label>
                   <input
                     name="phoneNumber"
@@ -385,6 +446,26 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     placeholder="+15551234567"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    The Twilio phone number assigned to this restaurant for AI call routing.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Twilio Number SID (Optional)
+                  </label>
+                  <input
+                    name="twilioNumberSid"
+                    value={form.twilioNumberSid}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="PNxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Twilio's unique identifier for the phone number (starts with "PN"). 
+                    Found in your Twilio Console under Phone Numbers → Manage → Active Numbers.
+                  </p>
                 </div>
 
                 <div>
@@ -419,23 +500,6 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     <option value="America/Anchorage">Alaska Time (AKT)</option>
                     <option value="Pacific/Honolulu">Hawaii Time (HST)</option>
                   </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Twilio Number SID (Optional)
-                  </label>
-                  <input
-                    name="twilioNumberSid"
-                    value={form.twilioNumberSid}
-                    onChange={handleChange}
-                    className="input-field"
-                    placeholder="PNxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Twilio's unique identifier for the phone number (starts with "PN"). 
-                    Used for advanced routing. The phone number above is used for lookup.
-                  </p>
                 </div>
 
                 <div>

@@ -14,6 +14,7 @@ export default function CreateRestaurantPage() {
     name: '',
     email: '',
     phoneNumber: '',
+    twilioNumberSid: '',
     address: '',
     timezone: 'America/Los_Angeles',
   });
@@ -138,7 +139,7 @@ export default function CreateRestaurantPage() {
 
             <div>
               <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number *
+                Twilio Phone Number *
               </label>
               <input
                 id="phoneNumber"
@@ -150,6 +151,29 @@ export default function CreateRestaurantPage() {
                 className="input-field"
                 placeholder="+15551234567"
               />
+              <p className="mt-1 text-xs text-gray-500">
+                The Twilio phone number assigned to this restaurant for AI call routing. 
+                Must match the phone number configured in your Twilio account.
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="twilioNumberSid" className="block text-sm font-medium text-gray-700 mb-2">
+                Twilio Number SID (Optional)
+              </label>
+              <input
+                id="twilioNumberSid"
+                name="twilioNumberSid"
+                type="text"
+                value={restaurantData.twilioNumberSid}
+                onChange={handleRestaurantChange}
+                className="input-field"
+                placeholder="PNxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Twilio's unique identifier for the phone number (starts with "PN"). 
+                Found in your Twilio Console under Phone Numbers → Manage → Active Numbers.
+              </p>
             </div>
 
             <div>

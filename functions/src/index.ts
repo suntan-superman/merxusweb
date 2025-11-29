@@ -74,6 +74,7 @@ app.get('/merxus/restaurants', merxusRoutes.getAllRestaurants);
 app.get('/merxus/restaurants/:restaurantId', merxusRoutes.getRestaurant);
 app.patch('/merxus/restaurants/:restaurantId', merxusRoutes.updateRestaurant);
 app.delete('/merxus/restaurants/:restaurantId', merxusRoutes.deleteRestaurant);
+app.post('/merxus/restaurants/:restaurantId/resend-invitation', merxusRoutes.resendInvitation);
 app.get('/merxus/restaurants/:restaurantId/menu', merxusRoutes.getRestaurantMenu);
 app.post('/merxus/restaurants/:restaurantId/menu', merxusRoutes.createRestaurantMenuItem);
 app.put('/merxus/restaurants/:restaurantId/menu/:itemId', merxusRoutes.updateRestaurantMenuItem);

@@ -26,6 +26,11 @@ export async function deleteRestaurant(restaurantId) {
   return res.data;
 }
 
+export async function resendInvitation(restaurantId) {
+  const res = await apiClient.post(`/merxus/restaurants/${restaurantId}/resend-invitation`);
+  return res.data;
+}
+
 // Menu management for Merxus admins
 export async function fetchRestaurantMenu(restaurantId) {
   const res = await apiClient.get(`/merxus/restaurants/${restaurantId}/menu`);
