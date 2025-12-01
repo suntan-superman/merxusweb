@@ -1,7 +1,171 @@
+import { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
+import LoadingSpinner from '../../components/LoadingSpinner';
+
+const RESERVATIONS_VIEW_KEY = 'merxus_dashboard_reservations_view';
 
 export default function DashboardPage() {
-  const { user, userClaims } = useAuth();
+  const { user, userClaims, restaurantId } = useAuth();
+  
+  // Load saved reservations view preference (today/week)
+  const [reservationsView, setReservationsView] = useState(() => {
+    try {
+      const saved = localStorage.getItem(RESERVATIONS_VIEW_KEY);
+      return saved === 'week' ? 'week' : 'today';
+    } catch {
+      return 'today';
+    }
+  });
+  
+  // Save preference when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(RESERVATIONS_VIEW_KEY, reservationsView);
+    } catch (err) {
+      console.error('Failed to save reservations view preference:', err);
+    }
+  }, [reservationsView]);
+
+  // Calculate current year and month for comparison
+  const currentYearMonth = useMemo(() => {
+    const now = new Date();
+    return {
+      year: now.getFullYear(),
+      month: now.getMonth(),
+    };
+  }, []);
+
+  // Calculate start of today for call filtering
+  const startOfToday = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }, []);
+
+  // Calculate start of this week (Sunday)
+  const startOfWeek = useMemo(() => {
+    const now = new Date();
+    const day = now.getDay();
+    const diff = now.getDate() - day; // Get Sunday of this week
+    return new Date(now.getFullYear(), now.getMonth(), diff);
+  }, []);
+
+  // Fetch orders
+  const ordersCollectionPath = restaurantId ? `restaurants/${restaurantId}/orders` : null;
+  const { data: orders = [], loading: ordersLoading } = useFirestoreCollection(
+    ordersCollectionPath,
+    {
+      orderBy: [{ field: 'createdAt', direction: 'desc' }],
+      limit: 500, // Get enough to calculate stats
+    }
+  );
+
+  // Fetch reservations
+  const reservationsCollectionPath = restaurantId ? `restaurants/${restaurantId}/reservations` : null;
+  const { data: reservations = [], loading: reservationsLoading } = useFirestoreCollection(
+    reservationsCollectionPath,
+    {
+      orderBy: [{ field: 'createdAt', direction: 'desc' }],
+      limit: 500,
+    }
+  );
+
+  // Fetch calls from callSessions collection (root level) filtered by restaurantId
+  const { data: calls = [], loading: callsLoading } = useFirestoreCollection(
+    restaurantId ? 'callSessions' : null,
+    restaurantId
+      ? {
+          where: [{ field: 'restaurantId', operator: '==', value: restaurantId }],
+          orderBy: [{ field: 'createdAt', direction: 'desc' }],
+          limit: 500,
+        }
+      : {}
+  );
+
+  // Calculate stats
+  const stats = useMemo(() => {
+    // Orders this month - handle Firestore Timestamp and regular dates
+    const ordersThisMonth = orders.filter((order) => {
+      if (!order.createdAt) return false;
+      
+      // Handle Firestore Timestamp - try multiple formats
+      let orderDate;
+      try {
+        if (typeof order.createdAt.toDate === 'function') {
+          orderDate = order.createdAt.toDate();
+        } else if (order.createdAt.seconds) {
+          orderDate = new Date(order.createdAt.seconds * 1000);
+        } else if (order.createdAt._seconds) {
+          orderDate = new Date(order.createdAt._seconds * 1000);
+        } else {
+          orderDate = new Date(order.createdAt);
+        }
+        
+        // Check if date is valid
+        if (isNaN(orderDate.getTime())) {
+          return false;
+        }
+        
+        // Compare year and month directly (avoids timezone issues)
+        const orderYear = orderDate.getFullYear();
+        const orderMonth = orderDate.getMonth();
+        return orderYear === currentYearMonth.year && orderMonth === currentYearMonth.month;
+      } catch (err) {
+        console.error('Error parsing order date:', err, order);
+        return false;
+      }
+    });
+
+    // Calls today - check both startedAt and createdAt fields
+    const callsToday = calls.filter((call) => {
+      const dateField = call.startedAt || call.createdAt;
+      if (!dateField) return false;
+      const callDate = dateField.toDate ? dateField.toDate() : new Date(dateField);
+      return callDate >= startOfToday;
+    });
+
+    // Reservations - filter by today or this week based on toggle
+    const reservationsCount = reservations.filter((reservation) => {
+      if (!reservation.createdAt) return false;
+      
+      // Handle Firestore Timestamp
+      let reservationDate;
+      try {
+        if (typeof reservation.createdAt.toDate === 'function') {
+          reservationDate = reservation.createdAt.toDate();
+        } else if (reservation.createdAt.seconds) {
+          reservationDate = new Date(reservation.createdAt.seconds * 1000);
+        } else if (reservation.createdAt._seconds) {
+          reservationDate = new Date(reservation.createdAt._seconds * 1000);
+        } else {
+          reservationDate = new Date(reservation.createdAt);
+        }
+        
+        if (isNaN(reservationDate.getTime())) {
+          return false;
+        }
+        
+        // Filter based on view preference
+        if (reservationsView === 'today') {
+          return reservationDate >= startOfToday;
+        } else {
+          // Week view
+          return reservationDate >= startOfWeek;
+        }
+      } catch (err) {
+        console.error('Error parsing reservation date:', err, reservation);
+        return false;
+      }
+    }).length;
+
+    return {
+      ordersThisMonth: ordersThisMonth.length,
+      callsToday: callsToday.length,
+      reservationsCount,
+    };
+  }, [orders, calls, reservations, currentYearMonth, startOfToday, startOfWeek, reservationsView]);
+
+  const isLoading = ordersLoading || callsLoading || reservationsLoading;
 
   return (
     <div className="p-6">
@@ -15,20 +179,64 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Orders</h3>
-          <p className="text-3xl font-bold text-primary-600">0</p>
-          <p className="text-sm text-gray-600 mt-2">This month</p>
+          {isLoading ? (
+            <LoadingSpinner text="" />
+          ) : (
+            <>
+              <p className="text-3xl font-bold text-primary-600">{stats.ordersThisMonth}</p>
+              <p className="text-sm text-gray-600 mt-2">This month</p>
+            </>
+          )}
         </div>
 
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Active Calls</h3>
-          <p className="text-3xl font-bold text-primary-600">0</p>
-          <p className="text-sm text-gray-600 mt-2">Today</p>
+          {isLoading ? (
+            <LoadingSpinner text="" />
+          ) : (
+            <>
+              <p className="text-3xl font-bold text-primary-600">{stats.callsToday}</p>
+              <p className="text-sm text-gray-600 mt-2">Today</p>
+            </>
+          )}
         </div>
 
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Revenue</h3>
-          <p className="text-3xl font-bold text-primary-600">$0.00</p>
-          <p className="text-sm text-gray-600 mt-2">This month</p>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold text-gray-900">Total Reservations</h3>
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setReservationsView('today')}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  reservationsView === 'today'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setReservationsView('week')}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  reservationsView === 'week'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Week
+              </button>
+            </div>
+          </div>
+          {isLoading ? (
+            <LoadingSpinner text="" />
+          ) : (
+            <>
+              <p className="text-3xl font-bold text-primary-600">{stats.reservationsCount}</p>
+              <p className="text-sm text-gray-600 mt-2">
+                {reservationsView === 'today' ? 'Today' : 'This week'}
+              </p>
+            </>
+          )}
         </div>
       </div>
 
