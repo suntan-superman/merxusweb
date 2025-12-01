@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { registerLicense } from '@syncfusion/ej2-base';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -24,6 +25,22 @@ import RestaurantsPage from './pages/merxus/RestaurantsPage';
 import CreateRestaurantPage from './pages/merxus/CreateRestaurantPage';
 import AnalyticsPage from './pages/merxus/AnalyticsPage';
 import SystemSettingsPage from './pages/merxus/SystemSettingsPage';
+
+// Register Syncfusion license from environment variable
+const syncfusionKey = import.meta.env.VITE_SYNCFUSION_KEY;
+if (syncfusionKey) {
+  registerLicense(syncfusionKey);
+}
+else {
+  console.error('Syncfusion license key is not set');
+  console.error('Please set the VITE_SYNCFUSION_KEY environment variable');
+  console.error('You can get a free trial license from https://www.syncfusion.com/account/manage-subscriptions');
+  console.error('Once you have a license, set the VITE_SYNCFUSION_KEY environment variable in your .env file');
+  console.error('For example: VITE_SYNCFUSION_KEY=YOUR_LICENSE_KEY');
+  console.error('You can also get a free trial license from https://www.syncfusion.com/account/manage-subscriptions');
+  console.error('Once you have a license, set the VITE_SYNCFUSION_KEY environment variable in your .env file');
+  console.error('For example: VITE_SYNCFUSION_KEY=YOUR_LICENSE_KEY');
+}
 
 function App() {
   return (
@@ -85,31 +102,31 @@ function App() {
                   {/* Redirect authenticated users */}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-                <footer className="bg-gray-900 text-white mt-20">
-                  <div className="container mx-auto px-4 py-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <footer className="mt-20 text-white bg-gray-900">
+                  <div className="container px-4 py-8 mx-auto">
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                       <div>
-                        <h3 className="text-xl font-bold mb-4 text-primary-400">Merxus</h3>
+                        <h3 className="mb-4 text-xl font-bold text-primary-400">Merxus</h3>
                         <p className="text-gray-400">
                           24/7 AI Virtual Host for Restaurants
                         </p>
                       </div>
                       <div>
-                        <h4 className="font-semibold mb-4">Quick Links</h4>
+                        <h4 className="mb-4 font-semibold">Quick Links</h4>
                         <ul className="space-y-2 text-gray-400">
-                          <li><a href="/features" className="hover:text-primary-400 transition-colors">Features</a></li>
-                          <li><a href="/pricing" className="hover:text-primary-400 transition-colors">Pricing</a></li>
-                          <li><a href="/onboarding" className="hover:text-primary-400 transition-colors">Get Started</a></li>
+                          <li><a href="/features" className="transition-colors hover:text-primary-400">Features</a></li>
+                          <li><a href="/pricing" className="transition-colors hover:text-primary-400">Pricing</a></li>
+                          <li><a href="/onboarding" className="transition-colors hover:text-primary-400">Get Started</a></li>
                         </ul>
                       </div>
                       <div>
-                        <h4 className="font-semibold mb-4">Contact</h4>
+                        <h4 className="mb-4 font-semibold">Contact</h4>
                         <p className="text-gray-400">
                           Schedule a 15-minute demo to get started.
                         </p>
                       </div>
                     </div>
-                    <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                    <div className="pt-8 mt-8 text-center text-gray-400 border-t border-gray-800">
                       <p>&copy; 2024 Merxus. All rights reserved.</p>
                     </div>
                   </div>

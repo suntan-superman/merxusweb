@@ -11,10 +11,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@syncfusion/ej2-base": "^31.2.2",
+    "@syncfusion/ej2-buttons": "^31.2.3",
+    "@syncfusion/ej2-calendars": "^31.2.3",
+    "@syncfusion/ej2-data": "^31.2.3",
+    "@syncfusion/ej2-dropdowns": "^31.2.3",
+    "@syncfusion/ej2-grids": "^31.2.3",
+    "@syncfusion/ej2-inputs": "^31.2.3",
+    "@syncfusion/ej2-navigations": "^31.2.3",
+    "@syncfusion/ej2-popups": "^31.2.3",
+    "@syncfusion/ej2-react-grids": "^31.2.3",
+    "@syncfusion/ej2-splitbuttons": "^31.2.3",
     "axios": "^1.6.2",
     "firebase": "^10.7.1",
+    "framer-motion": "^10.18.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.5.2",
     "react-router-dom": "^6.20.1"
   },
   "devDependencies": {

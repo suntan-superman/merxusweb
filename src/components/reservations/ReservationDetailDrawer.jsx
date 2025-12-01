@@ -132,7 +132,7 @@ export default function ReservationDetailDrawer({
                 <button
                   onClick={() => onStatusChange(reservation, 'completed')}
                   disabled={isUpdating}
-                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
                 >
                   {isUpdating ? 'Updating…' : 'Mark as Seated'}
                 </button>

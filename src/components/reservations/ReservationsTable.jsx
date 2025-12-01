@@ -1,4 +1,21 @@
+import { useMemo, useRef } from 'react';
+import {
+  GridComponent,
+  ColumnsDirective,
+  ColumnDirective,
+  Page,
+  Sort,
+  Filter,
+  Toolbar,
+  ExcelExport,
+  PdfExport,
+  Inject,
+  Search,
+  Resize,
+} from '@syncfusion/ej2-react-grids';
 import ReservationStatusBadge from './ReservationStatusBadge';
+
+const GRID_STORAGE_KEY = 'merxus_reservations_grid_columns';
 
 export default function ReservationsTable({
   reservations,
@@ -6,6 +23,19 @@ export default function ReservationsTable({
   onStatusChange,
   updatingId,
 }) {
+  // Transform reservations data for the grid
+  const gridData = useMemo(() => {
+    if (!reservations) return [];
+    return reservations.map((reservation) => ({
+      ...reservation,
+      formattedPhone: formatPhone(reservation.customerPhone),
+      dateTime: `${reservation.date || 'Date TBD'} at ${reservation.time || 'Time TBD'}`,
+      partySizeDisplay: reservation.partySize || '–',
+      sourceLabel: getSourceLabel(reservation.source),
+      createdAtFormatted: formatCreatedAt(reservation.createdAt),
+    }));
+  }, [reservations]);
+
   if (!reservations || reservations.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
@@ -14,103 +44,210 @@ export default function ReservationsTable({
     );
   }
 
+  const gridRef = useRef(null);
+
+  // Load saved column widths from localStorage
+  const savedColumns = useMemo(() => {
+    try {
+      const saved = localStorage.getItem(GRID_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Save column widths when they change
+  const handleResizeStop = (args) => {
+    if (gridRef.current) {
+      const columns = gridRef.current.columns;
+      const widths = {};
+      columns.forEach((col) => {
+        if (col.field) {
+          widths[col.field] = col.width;
+        }
+      });
+      localStorage.setItem(GRID_STORAGE_KEY, JSON.stringify(widths));
+    }
+  };
+
+  // Get column width from saved or default
+  const getColumnWidth = (field, defaultWidth) => {
+    return savedColumns?.[field] || defaultWidth;
+  };
+
+  // Grid toolbar items
+  const toolbarOptions = ['Search', 'ExcelExport', 'PdfExport'];
+
+  // Filter settings for Excel-like filtering
+  const filterSettings = {
+    type: 'Excel',
+  };
+
+  // Page settings
+  const pageSettings = {
+    pageSize: 25,
+    pageSizes: [10, 25, 50, 100],
+  };
+
+  // Handle row click
+  const handleRowSelected = (args) => {
+    if (args.data && onReservationClick) {
+      const originalReservation = reservations.find((r) => r.id === args.data.id);
+      if (originalReservation) {
+        onReservationClick(originalReservation);
+      }
+    }
+  };
+
+  // Handle toolbar click for export
+  const handleToolbarClick = (args) => {
+    if (args.item.id?.includes('excelexport')) {
+      gridRef.current?.excelExport({
+        fileName: `reservations-${new Date().toISOString().split('T')[0]}.xlsx`,
+      });
+    } else if (args.item.id?.includes('pdfexport')) {
+      gridRef.current?.pdfExport({
+        fileName: `reservations-${new Date().toISOString().split('T')[0]}.pdf`,
+      });
+    }
+  };
+
+  // Custom cell templates
+  const guestTemplate = (props) => (
+    <div className="leading-tight py-1">
+      <div className="font-medium text-gray-900 text-sm truncate">
+        {props.customerName || 'Unknown Guest'}
+      </div>
+      <div className="text-[11px] text-gray-400 mt-1">{props.formattedPhone}</div>
+    </div>
+  );
+
+  const dateTimeTemplate = (props) => (
+    <div className="leading-tight py-1">
+      <div className="text-sm font-medium text-gray-900">
+        📅 {props.date || 'Date TBD'}
+      </div>
+      <div className="text-[11px] text-gray-400 mt-1">
+        🕐 {props.time || 'Time TBD'}
+      </div>
+    </div>
+  );
+
+  const partySizeTemplate = (props) => (
+    <div className="flex items-center gap-1.5 py-1">
+      <span className="text-base">👥</span>
+      <span className="text-sm font-medium text-gray-900">
+        {props.partySize || '–'}
+      </span>
+    </div>
+  );
+
+  const sourceTemplate = (props) => (
+    <div className="leading-tight py-1">
+      <div className="text-xs text-gray-700">{props.sourceLabel}</div>
+      <div className="text-[10px] text-gray-400 mt-1">
+        {props.createdAtFormatted}
+      </div>
+    </div>
+  );
+
+  const statusTemplate = (props) => (
+    <ReservationStatusBadge status={props.status} />
+  );
+
+  const actionsTemplate = (props) => (
+    <div onClick={(e) => e.stopPropagation()}>
+      <StatusButtonGroup
+        reservation={props}
+        isUpdating={updatingId === props.id}
+        onStatusChange={onStatusChange}
+        reservations={reservations}
+      />
+    </div>
+  );
+
   return (
-    <div className="overflow-x-auto rounded-lg border bg-white">
-      <table className="min-w-full text-left text-sm">
-        <thead className="border-b bg-gray-50 text-xs uppercase text-gray-500">
-          <tr>
-            <th className="px-4 py-3">Guest</th>
-            <th className="px-4 py-3">Date & Time</th>
-            <th className="px-4 py-3">Party Size</th>
-            <th className="px-4 py-3">Source</th>
-            <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {reservations.map((reservation) => {
-            const isUpdating = updatingId === reservation.id;
-            return (
-              <tr
-                key={reservation.id}
-                className="border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
-                onClick={() => onReservationClick?.(reservation)}
-              >
-                <td className="px-4 py-3 align-top">
-                  <div className="font-medium text-gray-900">
-                    {reservation.customerName || 'Unknown Guest'}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {formatPhone(reservation.customerPhone)}
-                  </div>
-                </td>
-                <td className="px-4 py-3 align-top">
-                  <div className="text-sm text-gray-900 font-medium">
-                    {reservation.date || 'Date TBD'}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {reservation.time || 'Time TBD'}
-                  </div>
-                </td>
-                <td className="px-4 py-3 align-top">
-                  <div className="flex items-center gap-1">
-                    <span className="text-lg">👥</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {reservation.partySize || '–'}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 align-top text-xs text-gray-700">
-                  <div className="flex items-center gap-1">
-                    {reservation.source === 'phone_ai' && (
-                      <>
-                        <span>🤖</span>
-                        <span>AI Phone</span>
-                      </>
-                    )}
-                    {reservation.source === 'online' && (
-                      <>
-                        <span>🌐</span>
-                        <span>Online</span>
-                      </>
-                    )}
-                    {reservation.source === 'walk_in' && (
-                      <>
-                        <span>🚶</span>
-                        <span>Walk-in</span>
-                      </>
-                    )}
-                    {!reservation.source && <span className="text-gray-400">Unknown</span>}
-                  </div>
-                  <div className="text-[11px] text-gray-400 mt-0.5">
-                    {formatCreatedAt(reservation.createdAt)}
-                  </div>
-                </td>
-                <td className="px-4 py-3 align-top">
-                  <ReservationStatusBadge status={reservation.status} />
-                </td>
-                <td
-                  className="px-4 py-3 align-top text-right"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <StatusButtonGroup
-                    reservation={reservation}
-                    isUpdating={isUpdating}
-                    onStatusChange={onStatusChange}
-                  />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <GridComponent
+        ref={gridRef}
+        dataSource={gridData}
+        allowPaging={true}
+        allowSorting={true}
+        allowFiltering={true}
+        allowResizing={true}
+        allowExcelExport={true}
+        allowPdfExport={true}
+        filterSettings={filterSettings}
+        pageSettings={pageSettings}
+        toolbar={toolbarOptions}
+        toolbarClick={handleToolbarClick}
+        rowSelected={handleRowSelected}
+        resizeStop={handleResizeStop}
+        enableHover={true}
+        height="auto"
+        rowHeight={65}
+      >
+        <ColumnsDirective>
+          <ColumnDirective
+            field="customerName"
+            headerText="Guest"
+            width={getColumnWidth('customerName', 180)}
+            minWidth={140}
+            template={guestTemplate}
+            allowFiltering={true}
+          />
+          <ColumnDirective
+            field="date"
+            headerText="Date & Time"
+            width={getColumnWidth('date', 160)}
+            minWidth={130}
+            template={dateTimeTemplate}
+            allowFiltering={true}
+            allowSorting={true}
+          />
+          <ColumnDirective
+            field="partySize"
+            headerText="Party Size"
+            width={getColumnWidth('partySize', 110)}
+            minWidth={90}
+            template={partySizeTemplate}
+            allowFiltering={true}
+            textAlign="Center"
+          />
+          <ColumnDirective
+            field="source"
+            headerText="Source"
+            width={getColumnWidth('source', 130)}
+            minWidth={100}
+            template={sourceTemplate}
+            allowFiltering={true}
+          />
+          <ColumnDirective
+            field="status"
+            headerText="Status"
+            width={getColumnWidth('status', 120)}
+            minWidth={100}
+            template={statusTemplate}
+            allowFiltering={true}
+          />
+          <ColumnDirective
+            headerText="Actions"
+            width={getColumnWidth('actions', 170)}
+            minWidth={140}
+            template={actionsTemplate}
+            allowFiltering={false}
+            allowSorting={false}
+            textAlign="Right"
+          />
+        </ColumnsDirective>
+        <Inject services={[Page, Sort, Filter, Toolbar, ExcelExport, PdfExport, Search, Resize]} />
+      </GridComponent>
     </div>
   );
 }
 
 function formatPhone(phone) {
   if (!phone) return '';
-  // Format as (XXX) XXX-XXXX
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 10) {
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
@@ -132,11 +269,27 @@ function formatCreatedAt(timestamp) {
   });
 }
 
-function StatusButtonGroup({ reservation, isUpdating, onStatusChange }) {
+function getSourceLabel(source) {
+  switch (source) {
+    case 'phone_ai':
+      return '🤖 AI Phone';
+    case 'online':
+      return '🌐 Online';
+    case 'walk_in':
+      return '🚶 Walk-in';
+    default:
+      return source || 'Unknown';
+  }
+}
+
+function StatusButtonGroup({ reservation, isUpdating, onStatusChange, reservations }) {
   const actions = getAvailableActions(reservation.status);
   if (actions.length === 0) {
     return null;
   }
+
+  // Find original reservation for status change
+  const originalReservation = reservations?.find((r) => r.id === reservation.id) || reservation;
 
   return (
     <div className="flex gap-1 justify-end">
@@ -145,7 +298,7 @@ function StatusButtonGroup({ reservation, isUpdating, onStatusChange }) {
           key={action.status}
           type="button"
           disabled={isUpdating}
-          onClick={() => onStatusChange?.(reservation, action.status)}
+          onClick={() => onStatusChange?.(originalReservation, action.status)}
           className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
             isUpdating
               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
@@ -177,4 +330,3 @@ function getAvailableActions(status) {
       return [];
   }
 }
-
