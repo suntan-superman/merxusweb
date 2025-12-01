@@ -94,10 +94,24 @@ export default function OrdersTable({
   );
 }
 
-function formatTime(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleTimeString([], {
+function formatTime(timestamp) {
+  if (!timestamp) return '';
+  // Handle Firestore Timestamp objects
+  const d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  
+  if (isToday) {
+    return d.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+  
+  // Show date and time for older orders
+  return d.toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
   });

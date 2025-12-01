@@ -33,32 +33,25 @@ service cloud.firestore {
               request.auth.token.role == 'merxus_support');
     }
     
-    // Restaurant data - users must have matching restaurantId
-    match /restaurants/{restaurantId}/{collection}/{docId} {
-      // Orders, calls, customers, menuItems - all restaurant users can read/write
-      allow read, write: if belongsToRestaurant(restaurantId);
-    }
-    
-    // Restaurant settings
-    match /restaurants/{restaurantId}/meta/settings {
-      allow read: if belongsToRestaurant(restaurantId);
-      allow write: if isOwnerOrManager(restaurantId);
-    }
-    
-    // User management - only owners can write, owners/managers can read
-    match /restaurants/{restaurantId}/users/{userId} {
-      allow read: if isOwnerOrManager(restaurantId);
-      allow write: if isOwner(restaurantId);
-    }
-    
-    // Merxus admin access to all restaurant data
+    // Restaurant data - ALL subcollections under a restaurant
+    // Uses recursive wildcard to match any depth
     match /restaurants/{restaurantId}/{document=**} {
+      // Restaurant users can read/write their own data
+      allow read, write: if belongsToRestaurant(restaurantId);
+      // Merxus admins can read/write all restaurant data
       allow read, write: if isMerxusAdmin();
     }
     
     // Merxus admin collections
     match /merxus/{document=**} {
       allow read, write: if isMerxusAdmin();
+    }
+    
+    // Call sessions - backend writes, restaurant users can read their calls
+    match /callSessions/{callId} {
+      allow read: if isAuthenticated() && 
+                    resource.data.restaurantId == request.auth.token.restaurantId;
+      allow write: if false; // Only backend can write
     }
   }
 }

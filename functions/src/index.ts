@@ -30,6 +30,7 @@ app.use((req, res, next) => {
 
 // Import routes
 import * as ordersRoutes from './routes/orders';
+import * as reservationsRoutes from './routes/reservations';
 import * as callsRoutes from './routes/calls';
 import * as customersRoutes from './routes/customers';
 import * as menuRoutes from './routes/menu';
@@ -41,6 +42,13 @@ import * as adminRoutes from './routes/admin';
 // Orders routes
 app.get('/orders', ordersRoutes.getOrders);
 app.patch('/orders/:id', ordersRoutes.updateOrder);
+
+// Reservations routes
+app.get('/reservations', reservationsRoutes.getReservations);
+app.get('/reservations/:id', reservationsRoutes.getReservation);
+app.post('/reservations', reservationsRoutes.createReservation);
+app.patch('/reservations/:id', reservationsRoutes.updateReservation);
+app.delete('/reservations/:id', reservationsRoutes.deleteReservation);
 
 // Calls routes
 app.get('/calls', callsRoutes.getCalls);

@@ -1,11 +1,35 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase/config';
 import { useAuth } from '../../context/AuthContext';
+import { fetchSettings } from '../../api/settings';
 
 export default function Sidebar() {
   const { user, userClaims } = useAuth();
   const navigate = useNavigate();
+  const [restaurantName, setRestaurantName] = useState(null);
+
+  const restaurantId = userClaims?.restaurantId;
+
+  // Fetch restaurant name when restaurantId is available
+  useEffect(() => {
+    async function fetchRestaurantName() {
+      if (!restaurantId) {
+        return;
+      }
+      
+      try {
+        // Use the API to fetch settings (goes through authenticated backend)
+        const settings = await fetchSettings();
+        setRestaurantName(settings?.name || null);
+      } catch (error) {
+        console.error('[Sidebar] Error fetching restaurant name:', error);
+      }
+    }
+
+    fetchRestaurantName();
+  }, [restaurantId]);
 
   const handleSignOut = async () => {
     try {
@@ -21,10 +45,16 @@ export default function Sidebar() {
 
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
-      {/* Logo */}
-      <div className="px-6 py-4 border-b border-gray-200">
-        <NavLink to="/restaurant" className="flex items-center space-x-2">
-          <span className="text-2xl font-bold text-primary-600">Merxus</span>
+      {/* Restaurant Name */}
+      <div className="px-5 py-5 border-b border-gray-200">
+        <NavLink to="/restaurant" className="block">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🍽️</span>
+            <h1 className="text-xl font-bold text-gray-900 truncate">
+              {restaurantName || 'Restaurant'}
+            </h1>
+          </div>
+          <p className="text-xs text-gray-500 mt-1 ml-9">Powered by Merxus</p>
         </NavLink>
       </div>
 
@@ -32,6 +62,7 @@ export default function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1">
         <NavItem to="/restaurant" label="Dashboard" icon="📊" />
         <NavItem to="/restaurant/orders" label="Orders" icon="📦" />
+        <NavItem to="/restaurant/reservations" label="Reservations" icon="📅" />
         <NavItem to="/restaurant/calls" label="Calls & Messages" icon="📞" />
         <NavItem to="/restaurant/customers" label="Customers" icon="👥" />
         <NavItem to="/restaurant/menu" label="Menu" icon="🍽️" />

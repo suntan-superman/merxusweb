@@ -393,6 +393,7 @@ export function AuthProvider({ children }) {
     token,
     loading,
     userClaims,
+    restaurantId: userClaims?.restaurantId,  // Expose restaurantId directly for convenience
     refreshToken,
     signOut: handleSignOut,
     isRestaurantUser: userClaims?.type === 'restaurant',

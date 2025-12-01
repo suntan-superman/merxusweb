@@ -12,6 +12,7 @@ import Onboarding from './pages/Onboarding';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/restaurant/DashboardPage';
 import OrdersPage from './pages/restaurant/OrdersPage';
+import ReservationsPage from './pages/restaurant/ReservationsPage';
 import CallsPage from './pages/restaurant/CallsPage';
 import CustomersPage from './pages/restaurant/CustomersPage';
 import MenuPage from './pages/restaurant/MenuPage';
@@ -55,6 +56,7 @@ function App() {
                   >
                     <Route index element={<DashboardPage />} />
                     <Route path="orders" element={<OrdersPage />} />
+                    <Route path="reservations" element={<ReservationsPage />} />
                     <Route path="calls" element={<CallsPage />} />
                     <Route path="customers" element={<CustomersPage />} />
                     <Route path="menu" element={<MenuPage />} />
