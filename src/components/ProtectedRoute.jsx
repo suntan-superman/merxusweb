@@ -6,12 +6,14 @@ export default function ProtectedRoute({
   children, 
   requireAuth = true,
   requireRestaurant = false,
+  requireVoice = false,  // Require voice tenant
+  requireRealEstate = false,  // NEW: Require real estate tenant
   requireMerxus = false,
   requireOwner = false,
   requireManager = false,
   requireAdmin = false,
 }) {
-  const { user, loading, userClaims, isRestaurantUser, isMerxusAdmin, isOwner, isManager, isMerxusAdminRole } = useAuth();
+  const { user, loading, userClaims, isRestaurantUser, isVoiceUser, isRealEstateUser, isMerxusAdmin, isOwner, isManager, isMerxusAdminRole } = useAuth();
   const location = useLocation();
 
   // Debug logging - use useEffect to avoid logging on every render
@@ -24,8 +26,12 @@ export default function ProtectedRoute({
         userClaims: userClaims ? JSON.parse(JSON.stringify(userClaims)) : null,
         requireAuth,
         requireRestaurant,
+        requireVoice,
+        requireRealEstate,  // NEW
         requireMerxus,
         isRestaurantUser,
+        isVoiceUser,
+        isRealEstateUser,  // NEW
         isMerxusAdmin,
         path: location.pathname,
         // Detailed checks
@@ -35,6 +41,8 @@ export default function ProtectedRoute({
         roleCheck: userClaims?.role === 'merxus_admin',
         willBlockMerxus: requireMerxus && user && (!userClaims || !isMerxusAdmin),
         willBlockRestaurant: requireRestaurant && user && (!userClaims || !isRestaurantUser),
+        willBlockVoice: requireVoice && user && (!userClaims || !isVoiceUser),
+        willBlockRealEstate: requireRealEstate && user && (!userClaims || !isRealEstateUser),  // NEW
       };
       console.log('ProtectedRoute state:', state);
       
@@ -57,8 +65,26 @@ export default function ProtectedRoute({
           isRestaurantUser,
         });
       }
+      if (requireVoice && user && (!userClaims || !isVoiceUser)) {
+        console.warn('⚠️ Will block Voice route:', {
+          requireVoice,
+          hasUser: !!user,
+          hasClaims: !!userClaims,
+          userClaimsType: userClaims?.type,
+          isVoiceUser,
+        });
+      }
+      if (requireRealEstate && user && (!userClaims || !isRealEstateUser)) {
+        console.warn('⚠️ Will block Real Estate route:', {
+          requireRealEstate,
+          hasUser: !!user,
+          hasClaims: !!userClaims,
+          userClaimsType: userClaims?.type,
+          isRealEstateUser,
+        });
+      }
     }
-  }, [loading, user, userClaims, requireAuth, requireRestaurant, requireMerxus, isRestaurantUser, isMerxusAdmin, location.pathname]);
+  }, [loading, user, userClaims, requireAuth, requireRestaurant, requireVoice, requireRealEstate, requireMerxus, isRestaurantUser, isVoiceUser, isRealEstateUser, isMerxusAdmin, location.pathname]);
 
   // Always wait for loading to complete
   if (loading) {
@@ -89,6 +115,18 @@ export default function ProtectedRoute({
   if (requireRestaurant && user && (!userClaims || !isRestaurantUser)) {
     // User is logged in but not a restaurant user
     console.warn('User logged in but not a restaurant user. Redirecting to home.');
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireVoice && user && (!userClaims || !isVoiceUser)) {
+    // User is logged in but not a voice user
+    console.warn('User logged in but not a voice user. Redirecting to home.');
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireRealEstate && user && (!userClaims || !isRealEstateUser)) {
+    // User is logged in but not a real estate user
+    console.warn('User logged in but not a real estate user. Redirecting to home.');
     return <Navigate to="/" replace />;
   }
 

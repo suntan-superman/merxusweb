@@ -42,7 +42,7 @@ export default function CallDetailDrawer({ open, onClose, call }) {
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Call Details</h2>
             <p className="text-xs text-gray-500">
-              {call.customerName || 'Unknown'} • {call.customerPhone || 'No number'}
+              {getCustomerName(call) || 'Unknown'} • {getCustomerPhone(call) || 'No number'}
             </p>
           </div>
 
@@ -117,9 +117,47 @@ export default function CallDetailDrawer({ open, onClose, call }) {
   );
 }
 
-function formatDate(iso) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleString([], {
+function getCustomerName(call) {
+  if (!call) return null;
+  return call.customerName || 
+         call.parsedMessage?.name || 
+         call.parsedOrder?.name || 
+         call.parsedReservation?.name || 
+         null;
+}
+
+function getCustomerPhone(call) {
+  if (!call) return null;
+  return call.customerPhone || 
+         call.parsedMessage?.phone || 
+         call.parsedOrder?.phone || 
+         call.parsedReservation?.phone || 
+         call.from || 
+         null;
+}
+
+function formatDate(date) {
+  if (!date) return '';
+  
+  // Handle Firestore Timestamp objects
+  let dateObj;
+  if (date.toDate) {
+    dateObj = date.toDate();
+  } else if (date.seconds) {
+    dateObj = new Date(date.seconds * 1000);
+  } else if (date instanceof Date) {
+    dateObj = date;
+  } else if (typeof date === 'string' || typeof date === 'number') {
+    dateObj = new Date(date);
+  } else {
+    return '';
+  }
+  
+  if (isNaN(dateObj.getTime())) {
+    return '';
+  }
+  
+  return dateObj.toLocaleString([], {
     dateStyle: 'short',
     timeStyle: 'short',
   });

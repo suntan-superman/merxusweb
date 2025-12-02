@@ -1,0 +1,395 @@
+{
+    "Professional Services": {
+        "Law Office": [
+            "Consultation",
+            "Contract Drafting",
+            "Estate Planning",
+            "Litigation Support",
+            "Business Formation"
+        ],
+        "Accounting & Tax Services": [
+            "Bookkeeping",
+            "Payroll Services",
+            "Tax Preparation",
+            "Financial Audits",
+            "Business Consulting"
+        ],
+        "Insurance Agency": [
+            "Auto Insurance Quotes",
+            "Home Insurance Policies",
+            "Business Liability Packages",
+            "Claims Assistance",
+            "Life Insurance Plans"
+        ],
+        "Real Estate Brokerage": [
+            "Property Listings",
+            "Buyer Representation",
+            "Seller Representation",
+            "Home Valuations",
+            "Rental Management"
+        ],
+        "Consulting Firm": [
+            "Business Strategy",
+            "Process Optimization",
+            "Market Research",
+            "Product Development Consulting"
+        ],
+        "Marketing Agency": [
+            "Social Media Management",
+            "Brand Development",
+            "Digital Advertising",
+            "SEO Optimization",
+            "Content Creation"
+        ],
+        "Financial Advisor": [
+            "Retirement Planning",
+            "Investment Strategy",
+            "Wealth Management",
+            "Risk Assessment"
+        ],
+        "Architectural Firm": [
+            "Residential Design",
+            "Commercial Design",
+            "Blueprint Drafting",
+            "Site Planning",
+            "3D Modeling"
+        ],
+        "Engineering Firm": [
+            "Structural Engineering",
+            "Mechanical Engineering",
+            "Civil Project Planning",
+            "Safety Assessments"
+        ],
+        "Notary Services": [
+            "Document Notarization",
+            "Mobile Notary",
+            "Loan Signing",
+            "Verification Services"
+        ],
+        "Software Development Company": [
+            "Mobile App Development",
+            "Web App Development",
+            "Backend API Development",
+            "Systems Integration",
+            "Cloud Architecture",
+            "AI Implementation",
+            "Technical Support",
+            "UI/UX Design",
+            "DevOps Services"
+        ]
+    },
+    "Home & Repair Services": {
+        "HVAC Services": [
+            "AC Repair",
+            "Heater Repair",
+            "System Installation",
+            "Seasonal Tune-Up",
+            "Thermostat Installation"
+        ],
+        "Plumbing Services": [
+            "Leak Repair",
+            "Drain Clearing",
+            "Water Heater Installation",
+            "Fixture Replacement",
+            "Emergency Pipe Repair"
+        ],
+        "Electrical Services": [
+            "Outlet Installation",
+            "Lighting Installation",
+            "Panel Upgrades",
+            "Wiring Repair",
+            "Safety Inspection"
+        ],
+        "Landscaping & Lawn Care": [
+            "Weekly Lawn Service",
+            "Tree Trimming",
+            "Irrigation Repair",
+            "Landscape Design"
+        ],
+        "Pest Control": [
+            "Insect Treatment",
+            "Rodent Control",
+            "Termite Inspection",
+            "Preventative Treatments"
+        ],
+        "Roofing Services": [
+            "Roof Repair",
+            "Roof Replacement",
+            "Leak Detection",
+            "Gutter Cleaning"
+        ],
+        "Garage Door Repair": [
+            "Spring Replacement",
+            "Door Motor Repair",
+            "Track Alignment"
+        ],
+        "Window Cleaning": [
+            "Interior Window Cleaning",
+            "Exterior Window Cleaning",
+            "Hard Water Removal"
+        ],
+        "Handyman Services": [
+            "General Repairs",
+            "Furniture Assembly",
+            "Minor Plumbing",
+            "Minor Electrical Work"
+        ],
+        "Solar Installation": [
+            "Solar System Design",
+            "Panel Installation",
+            "Battery Storage Setup",
+            "System Monitoring"
+        ]
+    },
+    "Health & Wellness": {
+        "Dental Office": [
+            "Teeth Cleaning",
+            "X-Rays",
+            "Cavity Filling",
+            "Root Canals",
+            "Teeth Whitening"
+        ],
+        "Chiropractor": [
+            "Spinal Adjustment",
+            "Posture Correction",
+            "Back Pain Treatment"
+        ],
+        "Optometry / Eye Care": [
+            "Eye Exams",
+            "Prescription Glasses",
+            "Contact Lens Fittings"
+        ],
+        "Primary Care Clinic": [
+            "Physical Exams",
+            "Vaccinations",
+            "Chronic Care Management"
+        ],
+        "Physical Therapy": [
+            "Injury Rehab",
+            "Strength Training",
+            "Mobility Therapy"
+        ],
+        "Massage Therapy": [
+            "Deep Tissue Massage",
+            "Swedish Massage",
+            "Sports Massage"
+        ],
+        "Nutritionist": [
+            "Meal Planning",
+            "Diet Assessments",
+            "Weight Management Programs"
+        ],
+        "Holistic Wellness Center": [
+            "Acupuncture",
+            "Herbal Treatments",
+            "Meditation Coaching"
+        ],
+        "Urgent Care": [
+            "Walk-in Diagnosis",
+            "Rapid Testing",
+            "Minor Injury Treatment"
+        ],
+        "Podiatry Clinic": [
+            "Foot Pain Treatment",
+            "Orthotics",
+            "Nail Procedures"
+        ]
+    },
+    "Beauty & Personal Care": {
+        "Hair Salon": [
+            "Haircut",
+            "Hair Coloring",
+            "Extensions",
+            "Perms",
+            "Blowouts"
+        ],
+        "Barbershop": [
+            "Men’s Haircut",
+            "Beard Trim",
+            "Shave Services"
+        ],
+        "Nail Salon": [
+            "Manicure",
+            "Pedicure",
+            "Gel Nails"
+        ],
+        "Spa / Day Spa": [
+            "Facials",
+            "Massages",
+            "Body Wraps"
+        ],
+        "Laser Hair Removal": [
+            "Laser Sessions",
+            "Skin Prep Consultation"
+        ],
+        "Tattoo Studio": [
+            "Custom Designs",
+            "Touch-ups",
+            "Piercings"
+        ],
+        "Cosmetic Clinic": [
+            "Botox",
+            "Fillers",
+            "Skin Rejuvenation"
+        ],
+        "Skincare Clinic": [
+            "Chemical Peels",
+            "Acne Treatments",
+            "Dermaplaning"
+        ],
+        "Beauty Supply Store": [
+            "Hair Products",
+            "Cosmetics",
+            "Skin Care Items"
+        ],
+        "Personal Stylist": [
+            "Wardrobe Consulting",
+            "Event Styling"
+        ]
+    },
+    "Retail & Consumer Services": {
+        "Retail Store / Boutique": [
+            "Clothing",
+            "Accessories",
+            "Seasonal Products"
+        ],
+        "Auto Sales": [
+            "New Car Sales",
+            "Used Car Sales",
+            "Financing Assistance"
+        ],
+        "Auto Detailing": [
+            "Interior Detail",
+            "Exterior Detail",
+            "Ceramic Coating"
+        ],
+        "Jewelry Store": [
+            "Rings",
+            "Necklaces",
+            "Watch Repair"
+        ],
+        "Furniture Store": [
+            "Living Room Furniture",
+            "Bedroom Sets",
+            "Mattresses"
+        ],
+        "Pet Store": [
+            "Pet Food",
+            "Pet Toys",
+            "Aquarium Supplies"
+        ],
+        "Clothing Store": [
+            "Men’s Clothing",
+            "Women’s Clothing",
+            "Children’s Clothing"
+        ],
+        "Electronics Shop": [
+            "Phones",
+            "Laptops",
+            "Home Audio"
+        ],
+        "Thrift Store": [
+            "Used Clothing",
+            "Furniture",
+            "Collectibles"
+        ],
+        "Office Supply Store": [
+            "Printers",
+            "Office Furniture",
+            "Ink & Toner"
+        ]
+    },
+    "Food & Hospitality (Non-Restaurant)": {
+        "Coffee Shop": [
+            "Espresso Drinks",
+            "Cold Brew",
+            "Pastries"
+        ],
+        "Bakery": [
+            "Bread",
+            "Cakes",
+            "Custom Orders"
+        ],
+        "Catering Service": [
+            "Event Catering",
+            "Corporate Meals",
+            "Wedding Packages"
+        ],
+        "Food Truck": [
+            "Daily Specials",
+            "Event Booking"
+        ],
+        "Snack Shop": [
+            "Chips",
+            "Candy",
+            "Drinks"
+        ],
+        "Ice Cream Parlor": [
+            "Scoops",
+            "Milkshakes",
+            "Ice Cream Cakes"
+        ],
+        "Event Venue": [
+            "Wedding Hosting",
+            "Corporate Events",
+            "Banquet Setup"
+        ],
+        "Bed & Breakfast": [
+            "Nightly Stay",
+            "Breakfast Service",
+            "Tour Packages"
+        ],
+        "Hotel Front Desk": [
+            "Room Reservations",
+            "Concierge Services"
+        ],
+        "Banquet Hall": [
+            "Full Event Service",
+            "Table & Chair Rental"
+        ]
+    },
+    "Transportation & Logistics": {
+        "Moving Company": [
+            "Residential Moves",
+            "Commercial Moves",
+            "Packing Services"
+        ],
+        "Courier / Delivery Service": [
+            "Same-Day Delivery",
+            "Scheduled Pickups"
+        ],
+        "Trucking Company": [
+            "Freight Transport",
+            "Logistics Planning"
+        ],
+        "Taxi / Ride Service": [
+            "Local Rides",
+            "Airport Transport"
+        ],
+        "Towing Service": [
+            "Flatbed Towing",
+            "Jumpstarts",
+            "Tire Changes"
+        ],
+        "Auto Rental": [
+            "Daily Rentals",
+            "Long-Term Rentals"
+        ],
+        "Logistics Management": [
+            "Warehouse Planning",
+            "Supply Chain Oversight"
+        ],
+        "Freight Broker": [
+            "Load Matching",
+            "Carrier Scheduling"
+        ],
+        "Airport Shuttle": [
+            "Scheduled Shuttle",
+            "Private Shuttle"
+        ],
+        "Boat Rental": [
+            "Hourly Boat Rental",
+            "Fishing Trips"
+        ]
+    }
+}

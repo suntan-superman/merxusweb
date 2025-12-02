@@ -80,8 +80,12 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401) {
       // Token expired or invalid - redirect to login
+      // BUT: Don't redirect for public onboarding routes
       const currentPath = window.location.pathname;
-      if (!currentPath.includes('/login')) {
+      const isPublicRoute = error.config?.url?.includes('/onboarding/') || 
+                           error.config?.url?.includes('/health');
+      
+      if (!currentPath.includes('/login') && !isPublicRoute) {
         window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
       }
     } else if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {

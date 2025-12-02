@@ -6,6 +6,7 @@
 export const SENDGRID_TEMPLATES = {
   // Invitation templates
   RESTAURANT_INVITATION: 'd-5527db39a81a434fb306d0effa87557e',
+  OFFICE_INVITATION: 'd-5527db39a81a434fb306d0effa87557e', // TODO: Create separate template for office invitations
   TEAM_INVITATION: 'd-e4858834722741e790aba9e32f9ba634',
   
   // Order templates
@@ -33,7 +34,9 @@ export function getTemplateId(
   try {
     // Try to import firebase-functions (only works in Cloud Functions environment)
     const functions = require('firebase-functions');
-    return functions.config().sendgrid?.[configKey] || defaultId;
+    // Handle both v1 and v2 syntax
+    const config = functions.default?.config?.() || functions.config?.();
+    return config?.sendgrid?.[configKey] || process.env[`SENDGRID_TEMPLATE_${configKey.toUpperCase()}`] || defaultId;
   } catch {
     // Fallback to environment variable or default
     return process.env[`SENDGRID_TEMPLATE_${configKey.toUpperCase()}`] || defaultId;

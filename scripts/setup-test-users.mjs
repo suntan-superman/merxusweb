@@ -97,6 +97,29 @@ async function getRestaurants() {
   }
 }
 
+async function getOffices() {
+  try {
+    const offices = [];
+    const snapshot = await admin.firestore().collection('offices').get();
+    
+    for (const doc of snapshot.docs) {
+      const settingsDoc = await doc.ref.collection('meta').doc('settings').get();
+      const settings = settingsDoc.data() || {};
+      offices.push({
+        id: doc.id,
+        name: settings.name || 'Unnamed Office',
+        email: settings.email || '',
+        phoneNumber: settings.phoneNumber || '',
+      });
+    }
+    
+    return offices.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (error) {
+    console.error('Error fetching offices:', error.message);
+    return [];
+  }
+}
+
 async function setupRestaurantUser() {
   console.log('\n=== Setting up Restaurant User ===');
   
@@ -250,6 +273,60 @@ async function createUserWithRestaurant(email, password, role, restaurantId, dis
   }
 }
 
+async function setupSuperAdmin() {
+  console.log('\n=== Setting up Super Admin ===');
+  
+  const email = await question('Email: ');
+  if (!email || !email.includes('@')) {
+    console.error('❌ Invalid email address');
+    return;
+  }
+
+  const password = await question('Password: ');
+  if (!password || password.length < 6) {
+    console.error('❌ Password must be at least 6 characters');
+    return;
+  }
+
+  const displayName = await question('Display Name (optional, press Enter to skip): ');
+
+  try {
+    let userRecord;
+    try {
+      userRecord = await admin.auth().getUserByEmail(email);
+      console.log('ℹ️  User already exists, updating claims...');
+    } catch {
+      userRecord = await admin.auth().createUser({
+        email,
+        password,
+        displayName: displayName || email.split('@')[0],
+        emailVerified: false,
+      });
+      console.log('✅ User created in Firebase Auth.');
+    }
+
+    await admin.auth().setCustomUserClaims(userRecord.uid, {
+      role: 'super_admin',
+      type: 'merxus',
+    });
+    console.log('✅ Custom claims set.');
+
+    console.log('\n═══════════════════════════════════════════════════════════');
+    console.log('✅ SUCCESS! Super Admin setup complete');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log(`Email: ${email}`);
+    console.log(`Role: super_admin`);
+    console.log(`Type: merxus`);
+    console.log(`UID: ${userRecord.uid}`);
+    console.log('═══════════════════════════════════════════════════════════\n');
+  } catch (error) {
+    console.error('\n❌ Error:', error.message);
+    if (error.code) {
+      console.error(`   Error code: ${error.code}`);
+    }
+  }
+}
+
 async function setupMerxusAdmin() {
   console.log('\n=== Setting up Merxus Admin ===');
   
@@ -320,6 +397,158 @@ async function setupMerxusAdmin() {
   }
 }
 
+async function setupVoiceUser() {
+  console.log('\n=== Setting up Voice Portal Company Admin ===');
+  
+  // Get email
+  const email = await question('Email: ');
+  if (!email || !email.includes('@')) {
+    console.error('❌ Invalid email address');
+    return;
+  }
+
+  // Get password
+  const password = await question('Password: ');
+  if (!password || password.length < 6) {
+    console.error('❌ Password must be at least 6 characters');
+    return;
+  }
+
+  // Get display name
+  const displayName = await question('Display Name (optional, press Enter to skip): ');
+
+  // Get role with numbered selection
+  console.log('\nSelect Role:');
+  console.log('1. Owner (Company Admin - full access)');
+  console.log('2. Manager');
+  console.log('3. Staff');
+  const roleChoice = await question('Choice (1-3): ');
+  
+  const roleMap = {
+    '1': 'owner',
+    '2': 'manager',
+    '3': 'staff',
+  };
+  
+  const role = roleMap[roleChoice];
+  if (!role) {
+    console.error('❌ Invalid role choice. Must be 1, 2, or 3.');
+    return;
+  }
+
+  // Get office with numbered selection
+  console.log('\nFetching offices...');
+  const offices = await getOffices();
+  
+  if (offices.length === 0) {
+    console.error('❌ No offices found in database.');
+    console.log('   You can still enter an office ID manually if needed.');
+    const officeId = await question('Office ID (or press Enter to cancel): ');
+    if (!officeId) {
+      console.log('Cancelled.');
+      return;
+    }
+    await createUserWithOffice(email, password, role, officeId, displayName);
+    return;
+  }
+
+  console.log('\nAvailable Offices:');
+  offices.forEach((o, index) => {
+    console.log(`${index + 1}. ${o.name} (ID: ${o.id})`);
+    if (o.phoneNumber) {
+      console.log(`   Phone: ${o.phoneNumber}`);
+    }
+  });
+  console.log(`${offices.length + 1}. Enter Office ID manually`);
+  
+  const officeChoice = await question(`\nSelect Office (1-${offices.length + 1}): `);
+  const choiceNum = parseInt(officeChoice, 10);
+  
+  let officeId;
+  if (choiceNum >= 1 && choiceNum <= offices.length) {
+    officeId = offices[choiceNum - 1].id;
+    console.log(`✅ Selected: ${offices[choiceNum - 1].name}`);
+  } else if (choiceNum === offices.length + 1) {
+    officeId = await question('Enter Office ID: ');
+    if (!officeId) {
+      console.log('Cancelled.');
+      return;
+    }
+  } else {
+    console.error('❌ Invalid selection.');
+    return;
+  }
+
+  await createUserWithOffice(email, password, role, officeId, displayName);
+}
+
+async function createUserWithOffice(email, password, role, officeId, displayName) {
+  try {
+    // Verify office exists
+    const officeDoc = await admin.firestore().collection('offices').doc(officeId).get();
+    if (!officeDoc.exists) {
+      console.error(`❌ Office with ID "${officeId}" not found.`);
+      return;
+    }
+
+    let userRecord;
+    try {
+      userRecord = await admin.auth().getUserByEmail(email);
+      console.log('ℹ️  User already exists, updating claims and Firestore document...');
+    } catch {
+      userRecord = await admin.auth().createUser({
+        email,
+        password,
+        displayName: displayName || email.split('@')[0],
+        emailVerified: false,
+      });
+      console.log('✅ User created in Firebase Auth.');
+    }
+
+    // Set custom claims
+    await admin.auth().setCustomUserClaims(userRecord.uid, {
+      role,
+      officeId,
+      type: 'voice',
+    });
+    console.log('✅ Custom claims set.');
+
+    // Create user document in Firestore
+    await admin
+      .firestore()
+      .collection('offices')
+      .doc(officeId)
+      .collection('users')
+      .doc(userRecord.uid)
+      .set(
+        {
+          uid: userRecord.uid,
+          email: userRecord.email,
+          displayName: userRecord.displayName || displayName || '',
+          role,
+          invitedAt: admin.firestore.FieldValue.serverTimestamp(),
+          disabled: false,
+        },
+        { merge: true }
+      );
+    console.log('✅ Firestore user document created/updated.');
+
+    console.log('\n═══════════════════════════════════════════════════════════');
+    console.log('✅ SUCCESS! User setup complete');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log(`Email: ${email}`);
+    console.log(`Role: ${role}`);
+    console.log(`Office ID: ${officeId}`);
+    console.log(`UID: ${userRecord.uid}`);
+    console.log('═══════════════════════════════════════════════════════════\n');
+  } catch (error) {
+    console.error('\n❌ Error:', error.message);
+    if (error.code) {
+      console.error(`   Error code: ${error.code}`);
+    }
+  }
+}
+
 async function main() {
   console.log('Merxus Test User Setup Script\n');
   console.log('This script will help you create test users with proper custom claims.\n');
@@ -328,16 +557,22 @@ async function main() {
     const choice = await question(
       'Choose an option:\n' +
       '1. Create Restaurant User\n' +
-      '2. Create Merxus Admin\n' +
-      '3. Exit\n' +
+      '2. Create Voice Portal Company Admin\n' +
+      '3. Create Super Admin\n' +
+      '4. Create Merxus Admin\n' +
+      '5. Exit\n' +
       'Choice: '
     );
 
     if (choice === '1') {
       await setupRestaurantUser();
     } else if (choice === '2') {
-      await setupMerxusAdmin();
+      await setupVoiceUser();
     } else if (choice === '3') {
+      await setupSuperAdmin();
+    } else if (choice === '4') {
+      await setupMerxusAdmin();
+    } else if (choice === '5') {
       break;
     } else {
       console.log('Invalid choice.');

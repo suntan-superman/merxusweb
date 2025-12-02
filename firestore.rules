@@ -13,6 +13,18 @@ service cloud.firestore {
              request.auth.token.restaurantId == restaurantId;
     }
     
+    // Helper function to check if user belongs to office
+    function belongsToOffice(officeId) {
+      return isAuthenticated() && 
+             request.auth.token.officeId == officeId;
+    }
+    
+    // Helper function to check if user belongs to agent
+    function belongsToAgent(agentId) {
+      return isAuthenticated() && 
+             request.auth.token.agentId == agentId;
+    }
+    
     // Helper function to check if user is owner
     function isOwner(restaurantId) {
       return belongsToRestaurant(restaurantId) && 
@@ -30,7 +42,8 @@ service cloud.firestore {
     function isMerxusAdmin() {
       return isAuthenticated() && 
              (request.auth.token.role == 'merxus_admin' || 
-              request.auth.token.role == 'merxus_support');
+              request.auth.token.role == 'merxus_support' ||
+              request.auth.token.role == 'super_admin');
     }
     
     // Restaurant data - ALL subcollections under a restaurant
@@ -42,16 +55,44 @@ service cloud.firestore {
       allow read, write: if isMerxusAdmin();
     }
     
+    // Office/Voice data - ALL subcollections under an office
+    // Uses recursive wildcard to match any depth
+    match /offices/{officeId}/{document=**} {
+      // Office users can read/write their own data
+      allow read, write: if belongsToOffice(officeId);
+      // Merxus admins can read/write all office data
+      allow read, write: if isMerxusAdmin();
+    }
+    
+    // Agent/Real Estate data - ALL subcollections under an agent
+    // Uses recursive wildcard to match any depth
+    match /agents/{agentId}/{document=**} {
+      // Agent users can read/write their own data
+      allow read, write: if belongsToAgent(agentId);
+      // Merxus admins can read/write all agent data
+      allow read, write: if isMerxusAdmin();
+    }
+    
     // Merxus admin collections
     match /merxus/{document=**} {
       allow read, write: if isMerxusAdmin();
     }
     
-    // Call sessions - backend writes, restaurant users can read their calls
+    // Call sessions - backend writes, users can read their own calls
     match /callSessions/{callId} {
+      // Restaurant users can read calls for their restaurant
       allow read: if isAuthenticated() && 
                     resource.data.restaurantId == request.auth.token.restaurantId;
-      allow write: if false; // Only backend can write
+      // Office/Voice users can read calls for their office
+      allow read: if isAuthenticated() && 
+                    resource.data.officeId == request.auth.token.officeId;
+      // Agent/Real Estate users can read calls for their agent
+      allow read: if isAuthenticated() && 
+                    resource.data.agentId == request.auth.token.agentId;
+      // Merxus admins can read all calls
+      allow read: if isMerxusAdmin();
+      // Only backend can write
+      allow write: if false;
     }
   }
 }

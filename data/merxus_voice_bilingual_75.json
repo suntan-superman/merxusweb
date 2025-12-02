@@ -1,0 +1,2188 @@
+{
+    "categories": {
+        "Professional Services": [
+            {
+                "industry": "Law Office",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted law office provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de law office. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Accounting & Tax Services",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted accounting & tax services provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de accounting & tax services. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Insurance Agency",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted insurance agency provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de insurance agency. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Real Estate Brokerage",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted real estate brokerage provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de real estate brokerage. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Consulting Firm",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted consulting firm provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de consulting firm. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Marketing Agency",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted marketing agency provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de marketing agency. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Financial Advisor",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted financial advisor provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de financial advisor. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Architectural Firm",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted architectural firm provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de architectural firm. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Engineering Firm",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted engineering firm provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de engineering firm. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Notary Services",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted notary services provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de notary services. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            }
+        ],
+        "Home & Repair Services": [
+            {
+                "industry": "HVAC Services",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted hvac services provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de hvac services. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Plumbing Services",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted plumbing services provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de plumbing services. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Electrical Services",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted electrical services provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de electrical services. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Landscaping & Lawn Care",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted landscaping & lawn care provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de landscaping & lawn care. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Pest Control",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted pest control provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de pest control. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Roofing Services",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted roofing services provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de roofing services. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Garage Door Repair",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted garage door repair provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de garage door repair. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Window Cleaning",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted window cleaning provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de window cleaning. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Handyman Services",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted handyman services provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de handyman services. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Solar Installation",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted solar installation provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de solar installation. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            }
+        ],
+        "Health & Wellness": [
+            {
+                "industry": "Dental Office",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted dental office provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de dental office. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Chiropractor",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted chiropractor provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de chiropractor. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Optometry / Eye Care",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted optometry / eye care provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de optometry / eye care. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Primary Care Clinic",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted primary care clinic provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de primary care clinic. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Physical Therapy",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted physical therapy provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de physical therapy. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Massage Therapy",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted massage therapy provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de massage therapy. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Nutritionist",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted nutritionist provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de nutritionist. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Holistic Wellness Center",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted holistic wellness center provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de holistic wellness center. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Urgent Care",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted urgent care provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de urgent care. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Podiatry Clinic",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted podiatry clinic provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de podiatry clinic. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            }
+        ],
+        "Beauty & Personal Care": [
+            {
+                "industry": "Hair Salon",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted hair salon provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de hair salon. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Barbershop",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted barbershop provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de barbershop. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Nail Salon",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted nail salon provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de nail salon. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Spa / Day Spa",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted spa / day spa provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de spa / day spa. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Laser Hair Removal",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted laser hair removal provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de laser hair removal. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Tattoo Studio",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted tattoo studio provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de tattoo studio. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Cosmetic Clinic",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted cosmetic clinic provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de cosmetic clinic. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Skincare Clinic",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted skincare clinic provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de skincare clinic. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Beauty Supply Store",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted beauty supply store provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de beauty supply store. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Personal Stylist",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted personal stylist provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de personal stylist. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            }
+        ],
+        "Retail & Consumer Services": [
+            {
+                "industry": "Retail Store / Boutique",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted retail store / boutique provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de retail store / boutique. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Auto Sales",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted auto sales provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de auto sales. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Auto Detailing",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted auto detailing provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de auto detailing. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Jewelry Store",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted jewelry store provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de jewelry store. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Furniture Store",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted furniture store provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de furniture store. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Pet Store",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted pet store provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de pet store. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Clothing Store",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted clothing store provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de clothing store. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Electronics Shop",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted electronics shop provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de electronics shop. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Thrift Store",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted thrift store provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de thrift store. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Office Supply Store",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted office supply store provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de office supply store. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            }
+        ],
+        "Food & Hospitality (Non-Restaurant)": [
+            {
+                "industry": "Coffee Shop",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted coffee shop provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de coffee shop. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Bakery",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted bakery provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de bakery. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Catering Service",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted catering service provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de catering service. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Food Truck",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted food truck provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de food truck. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Snack Shop",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted snack shop provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de snack shop. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Ice Cream Parlor",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted ice cream parlor provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de ice cream parlor. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Event Venue",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted event venue provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de event venue. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Bed & Breakfast",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted bed & breakfast provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de bed & breakfast. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Hotel Front Desk",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted hotel front desk provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de hotel front desk. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Banquet Hall",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted banquet hall provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de banquet hall. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            }
+        ],
+        "Transportation & Logistics": [
+            {
+                "industry": "Moving Company",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted moving company provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de moving company. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Courier / Delivery Service",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted courier / delivery service provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de courier / delivery service. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Trucking Company",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted trucking company provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de trucking company. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Taxi / Ride Service",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted taxi / ride service provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de taxi / ride service. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Towing Service",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted towing service provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de towing service. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Auto Rental",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted auto rental provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de auto rental. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Logistics Management",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted logistics management provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de logistics management. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Freight Broker",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted freight broker provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de freight broker. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Airport Shuttle",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted airport shuttle provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de airport shuttle. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            },
+            {
+                "industry": "Boat Rental",
+                "english": {
+                    "greeting": "Thank you for calling [Business Name], your trusted boat rental provider. How can I help you today?",
+                    "intent_options": [
+                        "New inquiry",
+                        "Existing customer request",
+                        "Scheduling or appointments",
+                        "Pricing or quote request"
+                    ],
+                    "followup_questions": [
+                        "Can you provide more details about your request?",
+                        "What is the best phone number for follow-up?",
+                        "When do you need this service?"
+                    ]
+                },
+                "spanish": {
+                    "saludo": "Gracias por llamar a [Nombre del Negocio], su proveedor confiable de boat rental. ¿En qué puedo ayudarle hoy?",
+                    "opciones_intencion": [
+                        "Consulta nueva",
+                        "Solicitud de cliente existente",
+                        "Citas o programación",
+                        "Solicitud de precios o cotización"
+                    ],
+                    "preguntas_seguimiento": [
+                        "¿Puede darme más detalles sobre su solicitud?",
+                        "¿Cuál es el mejor número para devolverle la llamada?",
+                        "¿Cuándo necesita este servicio?"
+                    ]
+                }
+            }
+        ]
+    }
+}

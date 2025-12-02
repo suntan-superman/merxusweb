@@ -1,0 +1,119 @@
+{
+    "categorias": {
+        "Servicios Profesionales": [
+            {
+                "tipo": "Oficina Legal",
+                "saludo": "Gracias por llamar a [Nombre del Negocio], su equipo legal de confianza. ¿En qué puedo ayudarle hoy?",
+                "opciones_intencion": [
+                    "Consulta nueva",
+                    "Actualización de caso existente",
+                    "Pregunta de facturación",
+                    "Entrega de documentos"
+                ],
+                "preguntas_seguimiento": [
+                    "¿Puede decirme brevemente de qué trata su asunto legal?",
+                    "¿Es usted un cliente nuevo o existente?",
+                    "¿Cuál es el mejor número para devolverle la llamada el abogado?"
+                ]
+            },
+            {
+                "tipo": "Contabilidad y Servicios de Impuestos",
+                "saludo": "Ha llamado a [Nombre del Negocio] Servicios de Impuestos y Contabilidad. ¿Cómo puedo ayudarle?",
+                "opciones_intencion": [
+                    "Preparación de impuestos",
+                    "Contabilidad",
+                    "Avisos del IRS",
+                    "Programar una cita"
+                ],
+                "preguntas_seguimiento": [
+                    "¿Está llamando por impuestos personales o de negocio?",
+                    "¿Tiene alguna fecha límite próxima?",
+                    "¿Puede proporcionarme su correo electrónico para enviarle los formularios necesarios?"
+                ]
+            }
+        ],
+        "Servicios del Hogar y Reparación": [
+            {
+                "tipo": "Servicios de HVAC",
+                "saludo": "Gracias por llamar a [Nombre del Negocio], expertos en calefacción y aire acondicionado. ¿Cómo puedo ayudarle hoy?",
+                "opciones_intencion": [
+                    "Reparación de aire acondicionado",
+                    "Reparación de calefacción",
+                    "Mantenimiento anual",
+                    "Cotización de instalación"
+                ],
+                "preguntas_seguimiento": [
+                    "¿Su sistema está funcionando en este momento?",
+                    "¿Qué tan pronto necesita el servicio?",
+                    "¿Qué marca o modelo tiene?"
+                ]
+            },
+            {
+                "tipo": "Servicios de Plomería",
+                "saludo": "Gracias por llamar a [Nombre del Negocio] Plomería. ¿Cómo puedo asistirle?",
+                "opciones_intencion": [
+                    "Reparación de fuga",
+                    "Drenaje tapado",
+                    "Problema con calentador de agua",
+                    "Servicio de emergencia"
+                ],
+                "preguntas_seguimiento": [
+                    "¿Está el agua contenida o sigue fluyendo?",
+                    "¿Cuánto tiempo lleva ocurriendo el problema?",
+                    "¿Cuál es la dirección donde se necesita el servicio?"
+                ]
+            }
+        ],
+        "Salud y Bienestar": [
+            {
+                "tipo": "Consultorio Dental",
+                "saludo": "Ha llamado a [Nombre del Negocio] Cuidado Dental. ¿Cómo puedo ayudarle?",
+                "opciones_intencion": [
+                    "Programar una cita",
+                    "Dolor dental",
+                    "Consulta de seguimiento",
+                    "Información para nuevos pacientes"
+                ],
+                "preguntas_seguimiento": [
+                    "¿Es una emergencia?",
+                    "¿Nos ha visitado antes?",
+                    "¿Tiene seguro dental?"
+                ]
+            }
+        ],
+        "Belleza y Cuidado Personal": [
+            {
+                "tipo": "Salón de Belleza",
+                "saludo": "Gracias por llamar a [Nombre del Negocio] Salón. ¿En qué puedo ayudarle?",
+                "opciones_intencion": [
+                    "Agendar una cita",
+                    "Consultar disponibilidad",
+                    "Información de servicios",
+                    "Solicitud de estilista"
+                ],
+                "preguntas_seguimiento": [
+                    "¿Qué servicio desea?",
+                    "¿Tiene un estilista preferido?",
+                    "¿Qué días le funcionan mejor?"
+                ]
+            }
+        ],
+        "Tiendas y Servicios de Consumo": [
+            {
+                "tipo": "Tienda Minorista / Boutique",
+                "saludo": "Gracias por llamar a [Nombre del Negocio]. ¿Cómo puedo ayudarle hoy?",
+                "opciones_intencion": [
+                    "Disponibilidad de productos",
+                    "Horario de la tienda",
+                    "Precios",
+                    "Órdenes o recogidas"
+                ],
+                "preguntas_seguimiento": [
+                    "¿Qué producto está buscando?",
+                    "¿Desea que lo reservemos para usted?",
+                    "¿Quiere que le avisemos si cambia la disponibilidad?"
+                ]
+            }
+        ]
+    }
+}

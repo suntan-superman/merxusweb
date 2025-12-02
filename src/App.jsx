@@ -19,12 +19,29 @@ import CustomersPage from './pages/restaurant/CustomersPage';
 import MenuPage from './pages/restaurant/MenuPage';
 import SettingsPage from './pages/restaurant/SettingsPage';
 import UsersPage from './pages/restaurant/UsersPage';
+import VoiceLayout from './components/layout/VoiceLayout';
+import VoiceDashboardPage from './pages/voice/VoiceDashboardPage';
+import VoiceCallsPage from './pages/voice/VoiceCallsPage';
+import CallRoutingPage from './pages/voice/CallRoutingPage';
+import VoicemailPage from './pages/voice/VoicemailPage';
+import VoiceSettingsPage from './pages/voice/VoiceSettingsPage';
+import VoiceUsersPage from './pages/voice/VoiceUsersPage';
 import MerxusLayout from './components/layout/MerxusLayout';
 import MerxusDashboardPage from './pages/merxus/MerxusDashboardPage';
 import RestaurantsPage from './pages/merxus/RestaurantsPage';
 import CreateRestaurantPage from './pages/merxus/CreateRestaurantPage';
 import AnalyticsPage from './pages/merxus/AnalyticsPage';
 import SystemSettingsPage from './pages/merxus/SystemSettingsPage';
+import TenantSelectorPage from './pages/merxus/TenantSelectorPage';
+import VoiceAdminPage from './pages/merxus/VoiceAdminPage';
+import EstateLayout from './components/layout/EstateLayout';
+import EstateDashboardPage from './pages/estate/EstateDashboardPage';
+import EstateListingsPage from './pages/estate/EstateListingsPage';
+import EstateLeadsPage from './pages/estate/EstateLeadsPage';
+import EstateShowingsPage from './pages/estate/EstateShowingsPage';
+import EstateCallsPage from './pages/estate/EstateCallsPage';
+import EstateSettingsPage from './pages/estate/EstateSettingsPage';
+import EstateUsersPage from './pages/estate/EstateUsersPage';
 
 // Register Syncfusion license from environment variable
 const syncfusionKey = import.meta.env.VITE_SYNCFUSION_KEY;
@@ -82,6 +99,53 @@ function App() {
                     <Route path="*" element={<Navigate to="/restaurant" replace />} />
                   </Route>
 
+                  {/* Voice portal routes */}
+                  <Route
+                    path="/voice/*"
+                    element={
+                      <ProtectedRoute requireAuth requireVoice>
+                        <VoiceLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<VoiceDashboardPage />} />
+                    <Route path="calls" element={<VoiceCallsPage />} />
+                    <Route path="routing" element={<CallRoutingPage />} />
+                    <Route path="voicemail" element={<VoicemailPage />} />
+                    <Route path="settings" element={<VoiceSettingsPage />} />
+                    <Route path="users" element={<VoiceUsersPage />} />
+                    <Route path="*" element={<Navigate to="/voice" replace />} />
+                  </Route>
+
+                  {/* Real Estate portal routes */}
+                  <Route
+                    path="/estate/*"
+                    element={
+                      <ProtectedRoute requireAuth requireRealEstate>
+                        <EstateLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<EstateDashboardPage />} />
+                    <Route path="listings" element={<EstateListingsPage />} />
+                    <Route path="leads" element={<EstateLeadsPage />} />
+                    <Route path="showings" element={<EstateShowingsPage />} />
+                    <Route path="calls" element={<EstateCallsPage />} />
+                    <Route path="settings" element={<EstateSettingsPage />} />
+                    <Route path="users" element={<EstateUsersPage />} />
+                    <Route path="*" element={<Navigate to="/estate" replace />} />
+                  </Route>
+
+                  {/* Super-admin tenant selector (standalone page) */}
+                  <Route
+                    path="/merxus/select-tenant"
+                    element={
+                      <ProtectedRoute requireAuth requireMerxus>
+                        <TenantSelectorPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   {/* Merxus admin portal routes */}
                   <Route
                     path="/merxus/*"
@@ -92,6 +156,7 @@ function App() {
                     }
                   >
                     <Route index element={<MerxusDashboardPage />} />
+                    <Route path="voice-admin" element={<VoiceAdminPage />} />
                     <Route path="restaurants" element={<RestaurantsPage />} />
                     <Route path="restaurants/new" element={<CreateRestaurantPage />} />
                     <Route path="analytics" element={<AnalyticsPage />} />

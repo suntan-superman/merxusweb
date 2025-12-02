@@ -1,19 +1,20 @@
 import { Link } from 'react-router-dom';
+import TenantSelector from '../components/TenantSelector';
 
 const Home = () => {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-50 to-white py-20 px-4">
+      <section className="bg-gradient-to-br from-primary-50 to-white pt-12 pb-8 px-4">
         <div className="container mx-auto max-w-4xl text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            AI Assistant for Restaurants
+          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
+            AI Phone Assistant for Your Business
           </h1>
           <p className="text-xl md:text-2xl text-gray-700 mb-8">
-            24/7 Virtual Host that Answers Calls, Takes Orders, and Books Reservations
+            24/7 Virtual Receptionist that Answers Calls, Handles Inquiries, and Never Misses a Customer
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/onboarding" className="btn-primary text-lg px-8 py-3">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-4">
+            <Link to="#choose-service" className="btn-primary text-lg px-8 py-3">
               Get Started Free
             </Link>
             <Link to="/features" className="btn-secondary text-lg px-8 py-3">
@@ -23,6 +24,11 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Tenant Selection Section */}
+      <section id="choose-service" className="-mt-4">
+        <TenantSelector />
+      </section>
+
       {/* Problem Section */}
       <section className="py-16 px-4 bg-white">
         <div className="container mx-auto max-w-4xl">
@@ -30,7 +36,7 @@ const Home = () => {
             The Problem
           </h2>
           <p className="text-lg text-gray-700 text-center max-w-2xl mx-auto">
-            Restaurants lose customers every day due to missed calls, long hold times, and overwhelmed staff.
+            Businesses lose customers every day due to missed calls, long hold times, and overwhelmed staff. Every unanswered call is a lost opportunity.
           </p>
         </div>
       </section>
@@ -116,11 +122,11 @@ const Home = () => {
           </h2>
           <div className="space-y-8">
             {[
-              { step: 1, text: "Customer calls your restaurant's phone number" },
+              { step: 1, text: "Customer calls your business phone number" },
               { step: 2, text: 'The AI receptionist answers immediately' },
-              { step: 3, text: 'It handles reservations, orders, and questions using your menu & rules' },
+              { step: 3, text: 'It handles inquiries, routing, and requests using your business rules' },
               { step: 4, text: 'It transfers to a human or sends an SMS summary when needed' },
-              { step: 5, text: 'You receive simple reports on calls, bookings, and orders' },
+              { step: 5, text: 'You receive simple reports on calls, messages, and inquiries' },
             ].map((item) => (
               <div key={item.step} className="flex items-start">
                 <div className="flex-shrink-0">
@@ -144,8 +150,8 @@ const Home = () => {
           <p className="text-xl mb-8 text-primary-100">
             Try it free for 14 days – cancel anytime
           </p>
-          <Link to="/onboarding" className="btn-secondary bg-white text-primary-600 hover:bg-primary-50 inline-block">
-            Schedule a Demo
+          <Link to="#choose-service" className="btn-secondary bg-white text-primary-600 hover:bg-primary-50 inline-block">
+            Get Started
           </Link>
         </div>
       </section>

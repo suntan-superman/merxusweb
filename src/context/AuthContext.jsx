@@ -56,7 +56,11 @@ export function AuthProvider({ children }) {
         const claimsObj = {
           role: claims.role,
           restaurantId: claims.restaurantId,
+          officeId: claims.officeId,  // Support for voice/office tenants
+          agentId: claims.agentId,  // NEW: Support for real estate agents
           type: claims.type,
+          tenantType: claims.type,  // Alias for clarity
+          tenantId: claims.restaurantId || claims.officeId || claims.agentId,  // Unified tenant ID
         };
         
         // Use a promise to ensure state is updated
@@ -107,7 +111,9 @@ export function AuthProvider({ children }) {
               setUserClaims({
                 role: existingClaims.role,
                 restaurantId: existingClaims.restaurantId,
+                officeId: existingClaims.officeId,  // NEW: Support for voice/office tenants
                 type: existingClaims.type,
+                tenantType: existingClaims.type,  // Alias for clarity
               });
             }
             return true;
@@ -394,9 +400,15 @@ export function AuthProvider({ children }) {
     loading,
     userClaims,
     restaurantId: userClaims?.restaurantId,  // Expose restaurantId directly for convenience
+    officeId: userClaims?.officeId,  // Expose officeId for voice tenants
+    agentId: userClaims?.agentId,  // NEW: Expose agentId for real estate agents
+    tenantId: userClaims?.restaurantId || userClaims?.officeId || userClaims?.agentId,  // Unified tenant ID
+    tenantType: userClaims?.type,  // 'restaurant' | 'voice' | 'real_estate' | 'merxus'
     refreshToken,
     signOut: handleSignOut,
     isRestaurantUser: userClaims?.type === 'restaurant',
+    isVoiceUser: userClaims?.type === 'voice',  // Check if user is voice tenant
+    isRealEstateUser: userClaims?.type === 'real_estate',  // NEW: Check if user is real estate agent
     isMerxusAdmin: userClaims?.type === 'merxus',
     isOwner: userClaims?.role === 'owner',
     isManager: userClaims?.role === 'manager',
@@ -414,7 +426,14 @@ export function AuthProvider({ children }) {
         token,
         loading,
         userClaims,
+        restaurantId: userClaims?.restaurantId,
+        officeId: userClaims?.officeId,
+        agentId: userClaims?.agentId,  // NEW
+        tenantId: userClaims?.restaurantId || userClaims?.officeId || userClaims?.agentId,
+        tenantType: userClaims?.type,
         isRestaurantUser: userClaims?.type === 'restaurant',
+        isVoiceUser: userClaims?.type === 'voice',
+        isRealEstateUser: userClaims?.type === 'real_estate',  // NEW
         isMerxusAdmin: userClaims?.type === 'merxus',
         isOwner: userClaims?.role === 'owner',
         isManager: userClaims?.role === 'manager',

@@ -1,16 +1,52 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation } from 'react-router-dom';
+import { fetchSettings } from '../../api/settings';
+import { fetchVoiceSettings } from '../../api/voice';
 
 export default function Topbar({ onMenuClick }) {
   const { userClaims } = useAuth();
   const location = useLocation();
+  const [companyName, setCompanyName] = useState(null);
+
+  // Fetch company name based on tenant type
+  useEffect(() => {
+    async function fetchCompanyName() {
+      if (location.pathname.startsWith('/merxus')) {
+        setCompanyName(null);
+        return;
+      }
+
+      if (userClaims?.restaurantId) {
+        try {
+          const settings = await fetchSettings();
+          setCompanyName(settings?.name || null);
+        } catch (error) {
+          console.error('[Topbar] Error fetching restaurant name:', error);
+        }
+      } else if (userClaims?.officeId) {
+        try {
+          const settings = await fetchVoiceSettings();
+          setCompanyName(settings?.name || null);
+        } catch (error) {
+          console.error('[Topbar] Error fetching office name:', error);
+        }
+      }
+    }
+
+    fetchCompanyName();
+  }, [userClaims?.restaurantId, userClaims?.officeId, location.pathname]);
 
   // Determine title based on current route
   const getTitle = () => {
     if (location.pathname.startsWith('/merxus')) {
       return 'Merxus Admin Dashboard';
+    } else if (companyName) {
+      return companyName;
     } else if (userClaims?.restaurantId) {
       return 'Restaurant Portal';
+    } else if (userClaims?.officeId) {
+      return 'Voice Portal';
     }
     return 'Merxus Dashboard';
   };

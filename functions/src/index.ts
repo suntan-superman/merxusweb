@@ -20,13 +20,29 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Apply auth middleware to all routes except health
+// Import onboarding routes (public - no auth required)
+import * as onboardingRoutes from './routes/onboarding';
+
+// Apply auth middleware to all routes EXCEPT public ones
 app.use((req, res, next) => {
-  if (req.path === '/health') {
+  // Skip auth for health check and public onboarding routes
+  const publicPaths = ['/health', '/onboarding/office', '/onboarding/restaurant', '/onboarding/agent', '/onboarding/resend-email'];
+  const isPublicPath = publicPaths.includes(req.path);
+  
+  if (isPublicPath) {
+    console.log(`[AUTH] Skipping auth for public path: ${req.path}`);
     return next();
   }
+  
+  console.log(`[AUTH] Requiring auth for path: ${req.path}`);
   return authenticate(req, res, next);
 });
+
+// Public onboarding routes (no auth required - registered AFTER middleware)
+app.post('/onboarding/office', onboardingRoutes.createOffice);
+app.post('/onboarding/restaurant', onboardingRoutes.createRestaurantPublic);
+app.post('/onboarding/agent', onboardingRoutes.createAgent);
+app.post('/onboarding/resend-email', onboardingRoutes.resendInvitationEmail);
 
 // Import routes
 import * as ordersRoutes from './routes/orders';
@@ -35,6 +51,8 @@ import * as callsRoutes from './routes/calls';
 import * as customersRoutes from './routes/customers';
 import * as menuRoutes from './routes/menu';
 import * as settingsRoutes from './routes/settings';
+import * as voiceRoutes from './routes/voice';
+import * as estateRoutes from './routes/estate';
 import * as adminUsersRoutes from './routes/adminUsers';
 import * as merxusRoutes from './routes/merxus';
 import * as adminRoutes from './routes/admin';
@@ -69,6 +87,25 @@ app.patch('/menu/:id', menuRoutes.toggleAvailability);
 // Settings routes
 app.get('/settings', settingsRoutes.getSettings);
 app.patch('/settings', settingsRoutes.updateSettings);
+
+// Voice/Office routes
+app.get('/voice/settings', voiceRoutes.getVoiceSettings);
+app.patch('/voice/settings', voiceRoutes.updateVoiceSettings);
+
+// Estate/Real Estate routes
+app.get('/estate/settings', estateRoutes.getEstateSettings);
+app.patch('/estate/settings', estateRoutes.updateEstateSettings);
+app.get('/estate/listings', estateRoutes.getListings);
+app.post('/estate/listings', estateRoutes.createListing);
+app.patch('/estate/listings/:id', estateRoutes.updateListing);
+app.delete('/estate/listings/:id', estateRoutes.deleteListing);
+app.get('/estate/leads', estateRoutes.getLeads);
+app.patch('/estate/leads/:id', estateRoutes.updateLead);
+app.get('/estate/showings', estateRoutes.getShowings);
+app.post('/estate/showings', estateRoutes.createShowing);
+app.patch('/estate/showings/:id', estateRoutes.updateShowing);
+app.delete('/estate/showings/:id', estateRoutes.deleteShowing);
+app.get('/estate/calls', estateRoutes.getCalls);
 
 // Admin Users routes
 app.get('/admin/users', adminUsersRoutes.getUsers);

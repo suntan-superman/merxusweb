@@ -1,0 +1,673 @@
+import { useState, useEffect } from 'react';
+import FormModal from '../common/FormModal';
+
+const PROPERTY_TYPES = [
+  { value: 'single_family', label: 'Single Family' },
+  { value: 'condo', label: 'Condo' },
+  { value: 'townhouse', label: 'Townhouse' },
+  { value: 'multi_family', label: 'Multi-Family' },
+  { value: 'land', label: 'Land' },
+  { value: 'other', label: 'Other' },
+];
+
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'Active' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'contingent', label: 'Contingent' },
+  { value: 'sold', label: 'Sold' },
+  { value: 'withdrawn', label: 'Withdrawn' },
+];
+
+export default function ListingForm({ open, onClose, onSave, editing = null }) {
+  const [form, setForm] = useState({
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
+    mls_id: '',
+    price: '',
+    beds: '',
+    baths: '',
+    sq_ft: '',
+    lot_sq_ft: '',
+    property_type: 'single_family',
+    status: 'active',
+    year_built: '',
+    has_pool: false,
+    has_garage: false,
+    parking_spaces: '',
+    features: [],
+    highlights_en: '',
+    highlights_es: '',
+    remarks_en: '',
+    remarks_es: '',
+    photos: [],
+    virtual_tour_url: '',
+    showing_instructions: '',
+    open_house: {
+      date: '',
+      start: '',
+      end: '',
+    },
+  });
+
+  const [newFeature, setNewFeature] = useState('');
+  const [newPhoto, setNewPhoto] = useState('');
+
+  useEffect(() => {
+    if (editing) {
+      setForm({
+        address: editing.address || '',
+        city: editing.city || '',
+        state: editing.state || '',
+        zip: editing.zip || '',
+        mls_id: editing.mls_id || '',
+        price: editing.price || '',
+        beds: editing.beds || '',
+        baths: editing.baths || '',
+        sq_ft: editing.sq_ft || '',
+        lot_sq_ft: editing.lot_sq_ft || '',
+        property_type: editing.property_type || 'single_family',
+        status: editing.status || 'active',
+        year_built: editing.year_built || '',
+        has_pool: editing.has_pool || false,
+        has_garage: editing.has_garage || false,
+        parking_spaces: editing.parking_spaces || '',
+        features: editing.features || [],
+        highlights_en: editing.highlights_en || '',
+        highlights_es: editing.highlights_es || '',
+        remarks_en: editing.remarks_en || '',
+        remarks_es: editing.remarks_es || '',
+        photos: editing.photos || [],
+        virtual_tour_url: editing.virtual_tour_url || '',
+        showing_instructions: editing.showing_instructions || '',
+        open_house: editing.open_house || { date: '', start: '', end: '' },
+      });
+    } else {
+      // Reset form for new listing
+      setForm({
+        address: '',
+        city: '',
+        state: '',
+        zip: '',
+        mls_id: '',
+        price: '',
+        beds: '',
+        baths: '',
+        sq_ft: '',
+        lot_sq_ft: '',
+        property_type: 'single_family',
+        status: 'active',
+        year_built: '',
+        has_pool: false,
+        has_garage: false,
+        parking_spaces: '',
+        features: [],
+        highlights_en: '',
+        highlights_es: '',
+        remarks_en: '',
+        remarks_es: '',
+        photos: [],
+        virtual_tour_url: '',
+        showing_instructions: '',
+        open_house: { date: '', start: '', end: '' },
+      });
+    }
+  }, [editing, open]);
+
+  function handleChange(e) {
+    const { name, value, type, checked } = e.target;
+    if (name.startsWith('open_house.')) {
+      const field = name.split('.')[1];
+      setForm((prev) => ({
+        ...prev,
+        open_house: { ...prev.open_house, [field]: value },
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      }));
+    }
+  }
+
+  function handleAddFeature() {
+    if (newFeature.trim()) {
+      setForm((prev) => ({
+        ...prev,
+        features: [...prev.features, newFeature.trim()],
+      }));
+      setNewFeature('');
+    }
+  }
+
+  function handleRemoveFeature(index) {
+    setForm((prev) => ({
+      ...prev,
+      features: prev.features.filter((_, i) => i !== index),
+    }));
+  }
+
+  function handleAddPhoto() {
+    if (newPhoto.trim()) {
+      setForm((prev) => ({
+        ...prev,
+        photos: [...prev.photos, newPhoto.trim()],
+      }));
+      setNewPhoto('');
+    }
+  }
+
+  function handleRemovePhoto(index) {
+    setForm((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index),
+    }));
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    
+    // Convert string numbers to actual numbers
+    const listingData = {
+      ...form,
+      price: form.price ? parseFloat(form.price) : null,
+      beds: form.beds ? parseInt(form.beds, 10) : null,
+      baths: form.baths ? parseFloat(form.baths) : null,
+      sq_ft: form.sq_ft ? parseInt(form.sq_ft, 10) : null,
+      lot_sq_ft: form.lot_sq_ft ? parseInt(form.lot_sq_ft, 10) : null,
+      year_built: form.year_built ? parseInt(form.year_built, 10) : null,
+      parking_spaces: form.parking_spaces ? parseInt(form.parking_spaces, 10) : null,
+      open_house: {
+        date: form.open_house.date || null,
+        start: form.open_house.start || null,
+        end: form.open_house.end || null,
+      },
+    };
+
+    onSave(listingData);
+  }
+
+  if (!open) return null;
+
+  return (
+    <FormModal
+      isOpen={open}
+      onClose={onClose}
+      title={editing ? 'Edit Listing' : 'Add New Listing'}
+      width="900px"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Information */}
+        <div>
+          <h3 className="text-md font-semibold text-gray-900 mb-3">Basic Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Address *
+              </label>
+              <input
+                type="text"
+                name="address"
+                required
+                value={form.address}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="123 Main St"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                City *
+              </label>
+              <input
+                type="text"
+                name="city"
+                required
+                value={form.city}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Bakersfield"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                State *
+              </label>
+              <input
+                type="text"
+                name="state"
+                required
+                value={form.state}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="CA"
+                maxLength={2}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                ZIP Code *
+              </label>
+              <input
+                type="text"
+                name="zip"
+                required
+                value={form.zip}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="93312"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                MLS ID
+              </label>
+              <input
+                type="text"
+                name="mls_id"
+                value={form.mls_id}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="202512345"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status *
+              </label>
+              <select
+                name="status"
+                required
+                value={form.status}
+                onChange={handleChange}
+                className="input-field"
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Pricing & Details */}
+        <div>
+          <h3 className="text-md font-semibold text-gray-900 mb-3">Pricing & Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Price *
+              </label>
+              <input
+                type="number"
+                name="price"
+                required
+                value={form.price}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="585000"
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Bedrooms
+              </label>
+              <input
+                type="number"
+                name="beds"
+                value={form.beds}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="4"
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Bathrooms
+              </label>
+              <input
+                type="number"
+                name="baths"
+                step="0.5"
+                value={form.baths}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="3"
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Square Feet
+              </label>
+              <input
+                type="number"
+                name="sq_ft"
+                value={form.sq_ft}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="2650"
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lot Square Feet
+              </label>
+              <input
+                type="number"
+                name="lot_sq_ft"
+                value={form.lot_sq_ft}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="7405"
+                min="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Property Type *
+              </label>
+              <select
+                name="property_type"
+                required
+                value={form.property_type}
+                onChange={handleChange}
+                className="input-field"
+              >
+                {PROPERTY_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Year Built
+              </label>
+              <input
+                type="number"
+                name="year_built"
+                value={form.year_built}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="2015"
+                min="1800"
+                max={new Date().getFullYear() + 1}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Parking Spaces
+              </label>
+              <input
+                type="number"
+                name="parking_spaces"
+                value={form.parking_spaces}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="3"
+                min="0"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div>
+          <h3 className="text-md font-semibold text-gray-900 mb-3">Features</h3>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddFeature())}
+                className="input-field flex-1"
+                placeholder="Add a feature (e.g., Open-concept kitchen)"
+              />
+              <button
+                type="button"
+                onClick={handleAddFeature}
+                className="btn-secondary"
+              >
+                Add
+              </button>
+            </div>
+            {form.features.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {form.features.map((feature, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                  >
+                    {feature}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFeature(index)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-4 mt-3">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="has_pool"
+                checked={form.has_pool}
+                onChange={handleChange}
+                className="rounded border-gray-300 text-primary-600"
+              />
+              <span className="text-sm text-gray-700">Has Pool</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="has_garage"
+                checked={form.has_garage}
+                onChange={handleChange}
+                className="rounded border-gray-300 text-primary-600"
+              />
+              <span className="text-sm text-gray-700">Has Garage</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Highlights & Remarks */}
+        <div>
+          <h3 className="text-md font-semibold text-gray-900 mb-3">Highlights & Remarks</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Highlights (English)
+              </label>
+              <textarea
+                name="highlights_en"
+                rows="3"
+                value={form.highlights_en}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Beautiful 4-bed, 3-bath home in Northwest Bakersfield..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Highlights (Spanish)
+              </label>
+              <textarea
+                name="highlights_es"
+                rows="3"
+                value={form.highlights_es}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Hermosa casa de 4 recámaras y 3 baños..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Remarks (English)
+              </label>
+              <textarea
+                name="remarks_en"
+                rows="3"
+                value={form.remarks_en}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Located in a quiet cul-de-sac..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Remarks (Spanish)
+              </label>
+              <textarea
+                name="remarks_es"
+                rows="3"
+                value={form.remarks_es}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Ubicada en una calle sin salida tranquila..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Open House */}
+        <div>
+          <h3 className="text-md font-semibold text-gray-900 mb-3">Open House</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date
+              </label>
+              <input
+                type="date"
+                name="open_house.date"
+                value={form.open_house.date}
+                onChange={handleChange}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Time
+              </label>
+              <input
+                type="time"
+                name="open_house.start"
+                value={form.open_house.start}
+                onChange={handleChange}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Time
+              </label>
+              <input
+                type="time"
+                name="open_house.end"
+                value={form.open_house.end}
+                onChange={handleChange}
+                className="input-field"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Photos & Virtual Tour */}
+        <div>
+          <h3 className="text-md font-semibold text-gray-900 mb-3">Photos & Virtual Tour</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Photo URLs
+              </label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="url"
+                  value={newPhoto}
+                  onChange={(e) => setNewPhoto(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPhoto())}
+                  className="input-field flex-1"
+                  placeholder="https://example.com/photo.jpg"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddPhoto}
+                  className="btn-secondary"
+                >
+                  Add
+                </button>
+              </div>
+              {form.photos.length > 0 && (
+                <div className="space-y-1">
+                  {form.photos.map((photo, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600 truncate flex-1">{photo}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(index)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Virtual Tour URL
+              </label>
+              <input
+                type="url"
+                name="virtual_tour_url"
+                value={form.virtual_tour_url}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="https://example.com/tour"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Showing Instructions
+              </label>
+              <textarea
+                name="showing_instructions"
+                rows="3"
+                value={form.showing_instructions}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Special instructions for showing this property..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Form Actions */}
+        <div className="flex justify-end gap-3 pt-4 border-t">
+          <button type="button" onClick={onClose} className="btn-secondary">
+            Cancel
+          </button>
+          <button type="submit" className="btn-primary">
+            {editing ? 'Update Listing' : 'Create Listing'}
+          </button>
+        </div>
+      </form>
+    </FormModal>
+  );
+}
+

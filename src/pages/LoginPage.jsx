@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
+import { resendInvitationEmail } from '../api/voice';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,12 +13,40 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
+  const [showPasswordSetup, setShowPasswordSetup] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSetupEmail, setPasswordSetupEmail] = useState('');
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendEmailMessage, setResendEmailMessage] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user, userClaims, loading: authLoading } = useAuth();
   
   const invited = searchParams.get('fromInvite') === 'true';
+  const oobCode = searchParams.get('oobCode');
+  const mode = searchParams.get('mode');
+  const officeId = searchParams.get('officeId');
+  const restaurantId = searchParams.get('restaurantId');
+  const agentId = searchParams.get('agentId');
+  
+  // Check if this is a password reset link from invitation
+  useEffect(() => {
+    if (oobCode && mode === 'resetPassword') {
+      // Verify the code and get the email
+      verifyPasswordResetCode(auth, oobCode)
+        .then((email) => {
+          setPasswordSetupEmail(email);
+          setShowPasswordSetup(true);
+          setEmail(email); // Pre-fill email
+        })
+        .catch((err) => {
+          console.error('Error verifying password reset code:', err);
+          setError('Invalid or expired password reset link. Please request a new one.');
+        });
+    }
+  }, [oobCode, mode]);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -28,7 +57,16 @@ export default function LoginPage() {
         if (userClaims) {
           // Determine redirect based on user type
           if (userClaims.type === 'merxus') {
+            // Super-admins get a tenant selector, regular admins go to restaurant portal
+            if (userClaims.role === 'super_admin') {
+              navigate('/merxus/select-tenant', { replace: true });
+            } else {
             navigate('/merxus', { replace: true });
+            }
+          } else if (userClaims.type === 'voice') {
+            navigate('/voice', { replace: true });
+          } else if (userClaims.type === 'real_estate') {
+            navigate('/estate', { replace: true });
           } else if (userClaims.type === 'restaurant') {
             navigate('/restaurant', { replace: true });
           } else {
@@ -39,9 +77,10 @@ export default function LoginPage() {
           }
         } else {
           // User is logged in but claims haven't loaded yet
-          // Give it a bit more time, then redirect to restaurant as fallback
-          console.warn('User logged in but custom claims not yet loaded. Redirecting to restaurant...');
-          navigate('/restaurant', { replace: true });
+          // Give it a bit more time, then redirect based on URL params or home
+          const redirectPath = agentId ? '/estate' : officeId ? '/voice' : restaurantId ? '/restaurant' : '/';
+          console.warn('User logged in but custom claims not yet loaded. Redirecting to:', redirectPath);
+          navigate(redirectPath, { replace: true });
         }
       }, 500); // Small delay to allow claims to load
 
@@ -82,6 +121,95 @@ export default function LoginPage() {
     }
   };
 
+  const handleResendInvitationEmail = async () => {
+    if (!prefillEmail) {
+      setError('Email address is required to resend invitation');
+      return;
+    }
+
+    setResendingEmail(true);
+    setResendEmailMessage(null);
+    setError('');
+
+    try {
+      const result = await resendInvitationEmail(prefillEmail);
+      setResendEmailMessage({
+        type: 'success',
+        text: result.message || 'Invitation email has been resent successfully',
+        link: result.invitationLink,
+      });
+      
+      // If SendGrid didn't work, try Firebase Auth as backup
+      if (!result.emailSent) {
+        try {
+          await sendPasswordResetEmail(auth, prefillEmail, {
+            url: `${window.location.origin}/login?mode=resetPassword${agentId ? `&agentId=${agentId}` : ''}${officeId ? `&officeId=${officeId}` : ''}${restaurantId ? `&restaurantId=${restaurantId}` : ''}`,
+            handleCodeInApp: false,
+          });
+          setResendEmailMessage({
+            type: 'success',
+            text: 'Invitation email has been resent via Firebase Auth',
+            link: result.invitationLink,
+          });
+        } catch (firebaseError) {
+          console.log('Firebase Auth backup also failed:', firebaseError);
+        }
+      }
+    } catch (err) {
+      console.error('Error resending invitation email:', err);
+      setResendEmailMessage({
+        type: 'error',
+        text: err.message || 'Failed to resend invitation email. Please try again.',
+      });
+    } finally {
+      setResendingEmail(false);
+    }
+  };
+
+  const handlePasswordSetup = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    // Validate password strength
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (!oobCode) {
+      setError('Invalid password reset link');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Confirm password reset with the code
+      await confirmPasswordReset(auth, oobCode, newPassword);
+      
+      // Password set successfully - now sign them in
+      await signInWithEmailAndPassword(auth, passwordSetupEmail, newPassword);
+      
+      // Force token refresh to get latest claims
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await currentUser.getIdToken(true);
+      }
+      
+      // Navigation will be handled by useEffect once userClaims are loaded
+    } catch (err) {
+      console.error('Password setup error:', err);
+      setError(getErrorMessage(err.code));
+      setLoading(false);
+    }
+  };
+
   const getErrorMessage = (code) => {
     switch (code) {
       case 'auth/user-not-found':
@@ -98,6 +226,19 @@ export default function LoginPage() {
         return 'An error occurred. Please try again.';
     }
   };
+
+  // Get success message from navigation state
+  const locationState = location.state;
+  const successMessage = locationState?.message;
+  const prefillEmail = locationState?.email || passwordSetupEmail;
+  const invitationLink = locationState?.invitationLink;
+
+  // Pre-fill email if provided (must be before early returns per Rules of Hooks)
+  useEffect(() => {
+    if (prefillEmail && !email && !showPasswordSetup) {
+      setEmail(prefillEmail);
+    }
+  }, [prefillEmail, email, showPasswordSetup]);
 
   // Show loading while checking auth state or redirecting
   if (authLoading || (user && !userClaims)) {
@@ -123,17 +264,174 @@ export default function LoginPage() {
             Sign in to Merxus
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Restaurant Portal & Admin Dashboard
+            Sign in to access your portal
           </p>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8">
-          {invited && (
-            <div className="mb-4 rounded-md bg-primary-50 border border-primary-200 px-4 py-3 text-sm text-primary-800">
-              <p className="font-semibold mb-1">Welcome to Merxus!</p>
-              <p>Your account has been set up. Please log in with your email and set your password using "Forgot Password" if needed.</p>
+          {successMessage && !showPasswordSetup && (
+            <div className="mb-6 rounded-md bg-green-50 border-2 border-green-300 px-6 py-4 text-sm text-green-800">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3 flex-1">
+                  <p className="font-semibold text-base mb-2">Account Created Successfully!</p>
+                  <p className="mb-2">{successMessage}</p>
+                  
+                  {invitationLink ? (
+                    <div className="mt-3 p-3 bg-white rounded border border-green-200">
+                      <p className="font-semibold text-sm mb-2">🔗 Password Setup Link:</p>
+                      <p className="text-xs text-gray-600 mb-2">Click the link below to set your password:</p>
+                      <a 
+                        href={invitationLink}
+                        className="block text-xs text-primary-600 hover:text-primary-700 break-all underline mb-2"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {invitationLink}
+                      </a>
+                      <button
+                        onClick={() => window.location.href = invitationLink}
+                        className="btn-primary text-sm py-2 px-4 w-full"
+                      >
+                        Open Password Setup Link
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-3 p-3 bg-white rounded border border-green-200">
+                      <p className="font-semibold text-sm mb-1">📧 Next Steps:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-xs">
+                        <li>Check your email inbox (and spam folder) for the invitation email</li>
+                        <li>Click the "Set Up Your Account" link in the email</li>
+                        <li>You'll be brought back here to set your password</li>
+                        <li>Once your password is set, you'll be automatically signed in</li>
+                      </ol>
+                    </div>
+                  )}
+                  
+                  {prefillEmail && (
+                    <div className="mt-3">
+                      <p className="text-xs text-green-700 mb-2">
+                        Account email: <strong>{prefillEmail}</strong>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleResendInvitationEmail}
+                        disabled={resendingEmail}
+                        className="text-xs text-primary-600 hover:text-primary-700 underline disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {resendingEmail ? 'Sending...' : '📧 Resend Invitation Email'}
+                      </button>
+                    </div>
+                  )}
+                  
+                  {resendEmailMessage && (
+                    <div className={`mt-3 p-3 rounded border ${
+                      resendEmailMessage.type === 'success' 
+                        ? 'bg-green-50 border-green-200 text-green-800' 
+                        : 'bg-red-50 border-red-200 text-red-800'
+                    }`}>
+                      <p className="text-xs font-semibold mb-1">
+                        {resendEmailMessage.type === 'success' ? '✓' : '✗'} {resendEmailMessage.text}
+                      </p>
+                      {resendEmailMessage.link && (
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-600 mb-1">Direct link:</p>
+                          <a 
+                            href={resendEmailMessage.link} 
+                            className="text-xs text-primary-600 hover:text-primary-700 break-all underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {resendEmailMessage.link}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
+          
+          {showPasswordSetup ? (
+            <div className="space-y-4">
+              <div className="mb-4 rounded-md bg-primary-50 border border-primary-200 px-4 py-3 text-sm text-primary-800">
+                <p className="font-semibold mb-1">Welcome to Merxus!</p>
+                <p>Please set a password for your account to continue.</p>
+              </div>
+              
+              <form onSubmit={handlePasswordSetup} className="space-y-4">
+                <div>
+                  <label htmlFor="setup-email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email address
+                  </label>
+                  <input
+                    id="setup-email"
+                    type="email"
+                    value={passwordSetupEmail}
+                    disabled
+                    className="input-field bg-gray-50"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-2">
+                    New Password
+                  </label>
+                  <input
+                    id="new-password"
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="input-field"
+                    placeholder="Enter your new password"
+                    minLength={6}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
+                </div>
+
+                <div>
+                  <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirm-password"
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="input-field"
+                    placeholder="Confirm your new password"
+                    minLength={6}
+                  />
+                </div>
+
+                {error && (
+                  <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || !newPassword || !confirmPassword}
+                  className="btn-primary w-full"
+                >
+                  {loading ? 'Setting Password...' : 'Set Password & Sign In'}
+                </button>
+              </form>
+            </div>
+          ) : invited && !showResetForm ? (
+            <div className="mb-4 rounded-md bg-primary-50 border border-primary-200 px-4 py-3 text-sm text-primary-800">
+              <p className="font-semibold mb-1">Welcome to Merxus!</p>
+              <p>Your account has been set up. Please set your password using "Forgot Password" below, then sign in.</p>
+            </div>
+          ) : null}
           {error && (
             <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
               {error}
@@ -197,6 +495,12 @@ export default function LoginPage() {
             </form>
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
+              {successMessage && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+                  <p className="font-semibold">⚠️ Can't sign in yet?</p>
+                  <p className="mt-1">If you just created an account, you need to set your password first. Check your email for the invitation link with "Set Up Your Account" button.</p>
+                </div>
+              )}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email address

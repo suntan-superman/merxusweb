@@ -1,0 +1,299 @@
+{
+    "categories": {
+        "Professional Services": [
+            {
+                "type": "Law Office",
+                "greeting": "Thank you for calling [Business Name], your trusted legal team. How may I assist you today?",
+                "intent_options": [
+                    "New consultation",
+                    "Existing case update",
+                    "Billing question",
+                    "Document submission"
+                ],
+                "followup_questions": [
+                    "Can you tell me briefly what your legal matter concerns?",
+                    "Are you a new or existing client?",
+                    "What is the best callback number for the attorney?"
+                ]
+            },
+            {
+                "type": "Accounting & Tax Services",
+                "greeting": "You\u2019ve reached [Business Name] Tax & Accounting. How may I help you?",
+                "intent_options": [
+                    "Tax preparation",
+                    "Bookkeeping",
+                    "IRS notices",
+                    "Appointment scheduling"
+                ],
+                "followup_questions": [
+                    "Are you calling about personal or business taxes?",
+                    "Do you have a deadline coming up?",
+                    "May I have your email so we can send you required documents?"
+                ]
+            },
+            {
+                "type": "Insurance Agency",
+                "greeting": "Thank you for calling [Agency Name] Insurance. How can I assist today?",
+                "intent_options": [
+                    "Insurance quote",
+                    "Claims support",
+                    "Policy change",
+                    "Billing question"
+                ],
+                "followup_questions": [
+                    "Are you interested in auto, home, commercial, or life insurance?",
+                    "Is this regarding an existing policy?",
+                    "What is your preferred method of follow-up?"
+                ]
+            },
+            {
+                "type": "Real Estate Brokerage",
+                "greeting": "Thank you for calling [Business Name] Real Estate. How may I help?",
+                "intent_options": [
+                    "Buying a home",
+                    "Selling a home",
+                    "Rental inquiries",
+                    "Speaking with an agent"
+                ],
+                "followup_questions": [
+                    "Are you currently working with an agent?",
+                    "Which property or area are you interested in?",
+                    "What is your ideal timeline?"
+                ]
+            }
+        ],
+        "Home & Repair Services": [
+            {
+                "type": "HVAC Services",
+                "greeting": "Thank you for calling [Business Name], your heating and cooling experts. How can I help today?",
+                "intent_options": [
+                    "AC repair",
+                    "Heating repair",
+                    "Annual maintenance",
+                    "Installation quote"
+                ],
+                "followup_questions": [
+                    "Is your system currently running?",
+                    "How soon do you need service?",
+                    "What brand or model do you have?"
+                ]
+            },
+            {
+                "type": "Plumbing Services",
+                "greeting": "Thanks for calling [Business Name] Plumbing. How can I assist?",
+                "intent_options": [
+                    "Leak repair",
+                    "Drain clog",
+                    "Water heater issue",
+                    "Emergency service"
+                ],
+                "followup_questions": [
+                    "Is water currently flowing or contained?",
+                    "How long has the issue been happening?",
+                    "What is the property address for service?"
+                ]
+            },
+            {
+                "type": "Electrical Services",
+                "greeting": "You\u2019ve reached [Business Name] Electrical Services. What can we help you with today?",
+                "intent_options": [
+                    "Power outage",
+                    "Light or outlet issue",
+                    "Panel upgrade",
+                    "Inspection or estimate"
+                ],
+                "followup_questions": [
+                    "Is this affecting one room or your whole property?",
+                    "Has any work been done recently?",
+                    "Do you need same-day service?"
+                ]
+            },
+            {
+                "type": "Landscaping & Lawn Care",
+                "greeting": "Thank you for calling [Business Name] Landscaping. How may I help?",
+                "intent_options": [
+                    "Maintenance service",
+                    "Landscaping quote",
+                    "Irrigation issue",
+                    "Seasonal cleanup"
+                ],
+                "followup_questions": [
+                    "What size is the property?",
+                    "Which services are you looking for?",
+                    "Do you prefer weekly or bi-weekly visits?"
+                ]
+            },
+            {
+                "type": "Pest Control",
+                "greeting": "You\u2019ve reached [Business Name] Pest Control. What issue can we help with today?",
+                "intent_options": [
+                    "Bug treatment",
+                    "Rodent problem",
+                    "Inspection",
+                    "Ongoing service"
+                ],
+                "followup_questions": [
+                    "What type of pest are you experiencing?",
+                    "Is the issue indoors or outdoors?",
+                    "How urgent is the situation?"
+                ]
+            },
+            {
+                "type": "Roofing Services",
+                "greeting": "Thank you for calling [Business Name] Roofing. How can I help you today?",
+                "intent_options": [
+                    "Roof leak",
+                    "Inspection",
+                    "New roof quote",
+                    "Insurance repair"
+                ],
+                "followup_questions": [
+                    "Is the leak active right now?",
+                    "What type of roof do you have?",
+                    "Has your insurance been contacted?"
+                ]
+            }
+        ],
+        "Health & Wellness": [
+            {
+                "type": "Dental Office",
+                "greeting": "You\u2019ve reached [Business Name] Dental Care. How can I assist?",
+                "intent_options": [
+                    "Appointment scheduling",
+                    "Tooth pain",
+                    "Follow-up visit",
+                    "New patient information"
+                ],
+                "followup_questions": [
+                    "Is this an emergency?",
+                    "Have you been seen here before?",
+                    "Do you have dental insurance?"
+                ]
+            },
+            {
+                "type": "Chiropractor",
+                "greeting": "Thank you for calling [Business Name] Chiropractic. How may I help you?",
+                "intent_options": [
+                    "New patient appointment",
+                    "Pain or injury consultation",
+                    "Follow-up appointment",
+                    "Insurance question"
+                ],
+                "followup_questions": [
+                    "Where are you experiencing discomfort?",
+                    "When did the pain begin?",
+                    "Do you prefer the earliest appointment or a specific day?"
+                ]
+            },
+            {
+                "type": "Optometry / Eye Care",
+                "greeting": "Thank you for calling [Business Name] Eye Care. How can we help?",
+                "intent_options": [
+                    "Eye exam",
+                    "Glasses or contacts",
+                    "Prescription update",
+                    "Medical eye concern"
+                ],
+                "followup_questions": [
+                    "Are you a returning patient?",
+                    "Do you have vision insurance?",
+                    "Is this for an adult or child?"
+                ]
+            }
+        ],
+        "Beauty & Personal Care": [
+            {
+                "type": "Hair Salon",
+                "greeting": "Thank you for calling [Business Name] Salon. How may I help?",
+                "intent_options": [
+                    "Book an appointment",
+                    "Check availability",
+                    "Service pricing",
+                    "Stylist request"
+                ],
+                "followup_questions": [
+                    "Which service are you looking for?",
+                    "Do you have a preferred stylist?",
+                    "What days work best for you?"
+                ]
+            },
+            {
+                "type": "Barbershop",
+                "greeting": "You\u2019ve reached [Business Name] Barbershop. How can I help today?",
+                "intent_options": [
+                    "Haircut appointment",
+                    "Walk-in availability",
+                    "Beard trim",
+                    "Pricing inquiry"
+                ],
+                "followup_questions": [
+                    "Which service do you need?",
+                    "Are you booking for today?",
+                    "Any specific barber you prefer?"
+                ]
+            },
+            {
+                "type": "Spa / Massage Therapy",
+                "greeting": "Thank you for calling [Business Name] Spa. How can we assist?",
+                "intent_options": [
+                    "Massage appointment",
+                    "Facial or skincare",
+                    "Gift card inquiry",
+                    "Package information"
+                ],
+                "followup_questions": [
+                    "Which service are you interested in?",
+                    "Do you prefer a male or female therapist?",
+                    "What day and time work best for you?"
+                ]
+            }
+        ],
+        "Retail & Consumer Services": [
+            {
+                "type": "Retail Store / Boutique",
+                "greeting": "Thank you for calling [Business Name]. How may I help today?",
+                "intent_options": [
+                    "Product availability",
+                    "Store hours",
+                    "Pricing",
+                    "Order or pickup"
+                ],
+                "followup_questions": [
+                    "Which product are you looking for?",
+                    "Do you need this held for pickup?",
+                    "Would you like us to notify you if stock changes?"
+                ]
+            },
+            {
+                "type": "Auto Sales",
+                "greeting": "Thank you for calling [Business Name] Auto Sales. How may I assist?",
+                "intent_options": [
+                    "Vehicle availability",
+                    "Finance questions",
+                    "Trade-in estimate",
+                    "Test drive scheduling"
+                ],
+                "followup_questions": [
+                    "Which vehicle are you interested in?",
+                    "Are you planning to trade in a car?",
+                    "When would you like to schedule a visit?"
+                ]
+            },
+            {
+                "type": "Auto Detailing",
+                "greeting": "Thanks for calling [Business Name] Auto Detailing. What can we help you with?",
+                "intent_options": [
+                    "Detailing appointment",
+                    "Service pricing",
+                    "Mobile detailing request",
+                    "Package information"
+                ],
+                "followup_questions": [
+                    "What make and model is your vehicle?",
+                    "Are you interested in interior, exterior, or both?",
+                    "Do you\u9700\u8981 mobile service at your location?"
+                ]
+            }
+        ]
+    }
+}

@@ -24,9 +24,18 @@ export default function AutoRedirect() {
     if (isPublicRoute) {
       // Redirect based on user type
       if (userClaims.type === 'merxus') {
-        navigate('/merxus', { replace: true });
+        // Super-admins get a tenant selector, regular admins go to restaurant portal
+        if (userClaims.role === 'super_admin') {
+          navigate('/merxus/select-tenant', { replace: true });
+        } else {
+          navigate('/merxus', { replace: true });
+        }
       } else if (userClaims.type === 'restaurant') {
         navigate('/restaurant', { replace: true });
+      } else if (userClaims.type === 'voice') {
+        navigate('/voice', { replace: true });
+      } else if (userClaims.type === 'real_estate') {
+        navigate('/estate', { replace: true });
       }
     }
   }, [user, loading, userClaims, location.pathname, navigate]);

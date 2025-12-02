@@ -1,0 +1,64 @@
+{
+    "business_types": [
+        {
+            "type": "HVAC",
+            "prompt": "Thank you for calling [Business Name], your local heating and air specialists. How can I help you today? Are you looking for a repair, a quote, or routine maintenance?"
+        },
+        {
+            "type": "Plumber",
+            "prompt": "Thanks for calling [Business Name] Plumbing. How can I assist you? Is this about a leak, a clog, water heater issues, or scheduling a service call?"
+        },
+        {
+            "type": "Electrician",
+            "prompt": "You\u2019ve reached [Business Name] Electrical Services. Are you calling about an outage, an installation, troubleshooting, or a service appointment?"
+        },
+        {
+            "type": "Auto Repair",
+            "prompt": "Thank you for calling [Business Name] Auto Repair. Are you calling about repairs, diagnostics, oil changes, or to check the status of your vehicle?"
+        },
+        {
+            "type": "Salon/Barbershop",
+            "prompt": "Thanks for calling [Business Name] Salon. How can I help you today? Are you booking an appointment, checking availability, or asking about services or pricing?"
+        },
+        {
+            "type": "Dental Office",
+            "prompt": "You\u2019ve reached [Business Name] Dental Care. How can I assist you? Is this regarding an appointment, a dental concern, insurance, or new patient information?"
+        },
+        {
+            "type": "Law Office",
+            "prompt": "Thank you for calling [Law Firm Name]. How may I direct your call? Are you seeking legal consultation, following up on a case, or requesting information?"
+        },
+        {
+            "type": "Real Estate",
+            "prompt": "You\u2019ve reached [Business Name] Real Estate. How can I help you today? Are you calling about buying, selling, renting, or a specific property?"
+        },
+        {
+            "type": "Cleaning Services",
+            "prompt": "Thank you for calling [Business Name] Cleaning Services. How can I help you today? Are you looking for a quote, scheduling service, or asking about availability?"
+        },
+        {
+            "type": "Landscaping",
+            "prompt": "You\u2019ve reached [Business Name] Landscaping. How can I assist you? Are you requesting a quote, scheduling maintenance, or asking about specific services?"
+        },
+        {
+            "type": "Pest Control",
+            "prompt": "Thanks for calling [Business Name] Pest Control. How can I help you today? Is this regarding an inspection, ongoing service, or an urgent pest issue?"
+        },
+        {
+            "type": "Insurance Agency",
+            "prompt": "Thank you for calling [Agency Name] Insurance. How may I assist you? Are you asking about quotes, claims, billing, or coverage information?"
+        },
+        {
+            "type": "Gym/Fitness Studio",
+            "prompt": "You\u2019ve reached [Business Name] Fitness. Are you calling about membership options, class schedules, personal training, or facility hours?"
+        },
+        {
+            "type": "Retail Shop",
+            "prompt": "Thank you for calling [Business Name]. How can I help you today? Are you checking product availability, store hours, or placing an order?"
+        },
+        {
+            "type": "Accounting/Tax Prep",
+            "prompt": "You\u2019ve reached [Business Name] Tax & Accounting. How may I assist you? Is this regarding tax filing, bookkeeping, appointments, or general questions?"
+        }
+    ]
+}
