@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tenantType = searchParams.get('type') || 'restaurant'; // Default to restaurant for backward compatibility
+  const selectedPlan = searchParams.get('plan') || null; // Plan from pricing page
   const isVoice = tenantType === 'voice';
   const isRealEstate = tenantType === 'real_estate';
 
@@ -26,10 +27,43 @@ const Onboarding = () => {
     brokerage: '',
     licenseNumber: '',
     markets: '',
+    // Plan selection (from pricing page)
+    selectedPlan: selectedPlan || null,
   });
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Pricing information based on tenant type and plan
+  const getPricingInfo = () => {
+    if (isRealEstate) {
+      if (selectedPlan === 'basic') {
+        return { monthly: 49, setup: 49, planName: 'Basic' };
+      } else if (selectedPlan === 'professional') {
+        return { monthly: 79, setup: 99, planName: 'Professional' };
+      }
+      return { monthly: 49, setup: 49, planName: 'Basic' }; // Default
+    } else if (isVoice) {
+      if (selectedPlan === 'basic') {
+        return { monthly: 49, setup: 49, planName: 'Basic' };
+      } else if (selectedPlan === 'professional') {
+        return { monthly: 99, setup: 149, planName: 'Professional' };
+      } else if (selectedPlan === 'enterprise') {
+        return { monthly: 199, setup: 249, planName: 'Enterprise' };
+      }
+      return { monthly: 49, setup: 49, planName: 'Basic' }; // Default
+    } else {
+      // Restaurant
+      if (selectedPlan === 'basic') {
+        return { monthly: 199, setup: 299, planName: 'Basic' };
+      } else if (selectedPlan === 'enterprise') {
+        return { monthly: 499, setup: 999, planName: 'Enterprise' };
+      }
+      return { monthly: 199, setup: 299, planName: 'Basic' }; // Default
+    }
+  };
+
+  const pricingInfo = getPricingInfo();
 
   // Scroll to top when component mounts or tenant type changes
   useEffect(() => {
@@ -104,6 +138,7 @@ const Onboarding = () => {
             displayName: formData.ownerName,
             role: 'owner',
           },
+          plan: formData.selectedPlan, // Pass selected plan to backend
         });
         const result = res.data;
         
@@ -184,6 +219,7 @@ const Onboarding = () => {
             displayName: formData.ownerName,
             role: 'owner',
           },
+          plan: formData.selectedPlan, // Pass selected plan to backend
         });
         
         console.log('Office creation result:', result);
@@ -269,6 +305,7 @@ const Onboarding = () => {
             displayName: formData.ownerName,
             role: 'owner',
           },
+          plan: formData.selectedPlan, // Pass selected plan to backend
         });
         const result = res.data;
         
@@ -369,13 +406,51 @@ const Onboarding = () => {
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Get Started with {isRealEstate ? 'Merxus Real Estate' : isVoice ? 'Merxus Voice' : 'Merxus'}
           </h1>
-          <p className="text-xl text-gray-700">
+          <p className="text-xl text-gray-700 mb-4">
             {isRealEstate
               ? 'Fill out your agent information to begin'
               : isVoice
               ? 'Fill out your business information to begin'
               : 'Fill out your restaurant information to begin'}
           </p>
+          
+          {/* Selected Plan Display */}
+          {selectedPlan ? (
+            <div className="inline-block px-6 py-3 mb-4 bg-primary-50 border-2 border-primary-200 rounded-lg">
+              <p className="text-sm text-gray-600 mb-1">Selected Plan</p>
+              <p className="text-lg font-semibold text-primary-700">
+                {pricingInfo.planName} - ${pricingInfo.monthly}/month
+              </p>
+              <p className="text-sm text-gray-600">
+                Setup Fee: ${pricingInfo.setup} one-time
+              </p>
+              <Link 
+                to="/pricing" 
+                className="text-xs text-primary-600 hover:text-primary-700 underline mt-1 inline-block"
+              >
+                Change plan
+              </Link>
+            </div>
+          ) : (
+            <div className="inline-block px-6 py-3 mb-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
+              <p className="text-sm text-gray-700 mb-2">
+                <span className="font-semibold">No plan selected.</span> You can choose a plan after your trial.
+              </p>
+              <Link 
+                to="/pricing" 
+                className="text-sm text-primary-600 hover:text-primary-700 underline font-semibold"
+              >
+                View pricing plans →
+              </Link>
+            </div>
+          )}
+          
+          {/* Trial Information */}
+          <div className="mt-4">
+            <p className="text-sm text-gray-600">
+              <span className="font-semibold text-primary-600">14-day free trial</span> • No credit card required to start
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-6">
@@ -637,10 +712,19 @@ const Onboarding = () => {
               className="btn-primary w-full text-lg py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || !isFormValid()}
             >
-              {loading ? 'Creating...' : 'Continue Setup'}
+              {loading ? 'Creating...' : 'Start Free Trial'}
             </button>
             <p className="text-center text-sm text-gray-600 mt-4">
-              By continuing, you agree to our 14-day free trial. Cancel anytime.
+              By continuing, you agree to our{' '}
+              <span className="font-semibold">14-day free trial</span>. 
+              {selectedPlan && (
+                <>
+                  {' '}After your trial, you'll be charged{' '}
+                  <span className="font-semibold">${pricingInfo.monthly}/month</span> 
+                  {' '}with a <span className="font-semibold">${pricingInfo.setup} setup fee</span>.
+                </>
+              )}
+              {' '}Cancel anytime.
             </p>
           </div>
         </form>

@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
-import { fetchCallTranscript } from '../../api/calls';
+import { fetchCallTranscript, translateCallTranscript } from '../../api/calls';
 
 export default function CallDetailDrawer({ open, onClose, call }) {
   const [loading, setLoading] = useState(false);
   const [transcript, setTranscript] = useState(null);
+  const [translatedTranscript, setTranslatedTranscript] = useState(null);
+  const [detectedLanguage, setDetectedLanguage] = useState(null);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -15,7 +19,14 @@ export default function CallDetailDrawer({ open, onClose, call }) {
         setError(null);
 
         const data = await fetchCallTranscript(call.id);
-        setTranscript(data.transcript);
+        setTranscript(data.transcript || data.callerTranscript || data.assistantTranscript);
+        setTranslatedTranscript(data.translatedTranscript);
+        setDetectedLanguage(data.detectedLanguage);
+        
+        // Auto-show translation if available
+        if (data.translatedTranscript) {
+          setShowTranslation(true);
+        }
       } catch (err) {
         console.error(err);
         setError('Failed to load transcript.');
@@ -26,6 +37,23 @@ export default function CallDetailDrawer({ open, onClose, call }) {
 
     loadTranscript();
   }, [open, call]);
+
+  async function handleTranslate() {
+    try {
+      setTranslating(true);
+      setError(null);
+
+      const data = await translateCallTranscript(call.id, 'en');
+      setTranslatedTranscript(data.translatedTranscript);
+      setDetectedLanguage(data.detectedLanguage);
+      setShowTranslation(true);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to translate transcript.');
+    } finally {
+      setTranslating(false);
+    }
+  }
 
   if (!open || !call) return null;
 
@@ -82,7 +110,51 @@ export default function CallDetailDrawer({ open, onClose, call }) {
           )}
 
           <section>
-            <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">Full Transcript</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold uppercase text-gray-500">
+                {showTranslation && translatedTranscript ? 'Translated Transcript' : 'Full Transcript'}
+              </h3>
+              
+              <div className="flex items-center gap-2">
+                {detectedLanguage && detectedLanguage !== 'en' && detectedLanguage !== 'unknown' && (
+                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                    {detectedLanguage.toUpperCase()}
+                  </span>
+                )}
+                
+                {!loading && transcript && (
+                  <div className="flex gap-2">
+                    {translatedTranscript && (
+                      <button
+                        onClick={() => setShowTranslation(!showTranslation)}
+                        className="text-xs px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                      >
+                        {showTranslation ? 'Show Original' : 'Show Translation'}
+                      </button>
+                    )}
+                    
+                    {!translatedTranscript && (
+                      <button
+                        onClick={handleTranslate}
+                        disabled={translating}
+                        className="text-xs px-3 py-1 rounded-md bg-primary-600 hover:bg-primary-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                      >
+                        {translating ? (
+                          <>
+                            <span className="animate-spin">⏳</span>
+                            Translating...
+                          </>
+                        ) : (
+                          <>
+                            🌐 Translate to English
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
 
             {loading && (
               <p className="text-xs text-gray-500 mt-2">Loading transcript…</p>
@@ -93,9 +165,17 @@ export default function CallDetailDrawer({ open, onClose, call }) {
             )}
 
             {!loading && transcript && (
-              <pre className="mt-2 whitespace-pre-wrap rounded-md bg-gray-50 p-3 text-xs text-gray-800 border">
-                {transcript}
-              </pre>
+              <div className="mt-2 space-y-2">
+                <pre className="whitespace-pre-wrap rounded-md bg-gray-50 p-3 text-xs text-gray-800 border">
+                  {showTranslation && translatedTranscript ? translatedTranscript : transcript}
+                </pre>
+                
+                {showTranslation && translatedTranscript && detectedLanguage && detectedLanguage !== 'en' && (
+                  <p className="text-xs text-gray-500 italic">
+                    ✓ Translated from {getLanguageName(detectedLanguage)} to English
+                  </p>
+                )}
+              </div>
             )}
 
             {!loading && !transcript && !error && (
@@ -161,5 +241,27 @@ function formatDate(date) {
     dateStyle: 'short',
     timeStyle: 'short',
   });
+}
+
+function getLanguageName(code) {
+  const languageNames = {
+    'es': 'Spanish',
+    'fr': 'French',
+    'de': 'German',
+    'it': 'Italian',
+    'pt': 'Portuguese',
+    'zh': 'Chinese',
+    'ja': 'Japanese',
+    'ko': 'Korean',
+    'ar': 'Arabic',
+    'ru': 'Russian',
+    'hi': 'Hindi',
+    'vi': 'Vietnamese',
+    'th': 'Thai',
+    'pl': 'Polish',
+    'nl': 'Dutch',
+    'tr': 'Turkish',
+  };
+  return languageNames[code] || code.toUpperCase();
 }
 

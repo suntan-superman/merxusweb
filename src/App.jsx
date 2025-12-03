@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { registerLicense } from '@syncfusion/ej2-base';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -183,9 +183,9 @@ function App() {
                       <div>
                         <h4 className="mb-4 font-semibold">Quick Links</h4>
                         <ul className="space-y-2 text-gray-400">
-                          <li><a href="/features" className="transition-colors hover:text-primary-400">Features</a></li>
-                          <li><a href="/pricing" className="transition-colors hover:text-primary-400">Pricing</a></li>
-                          <li><a href="/onboarding" className="transition-colors hover:text-primary-400">Get Started</a></li>
+                          <li><Link to="/features" className="transition-colors hover:text-primary-400">Features</Link></li>
+                          <li><Link to="/pricing" className="transition-colors hover:text-primary-400">Pricing</Link></li>
+                          <li><Link to="/onboarding" className="transition-colors hover:text-primary-400">Get Started</Link></li>
                         </ul>
                       </div>
                       <div>

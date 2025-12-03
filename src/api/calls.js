@@ -15,6 +15,11 @@ export async function fetchCallTranscript(callId) {
   return res.data;
 }
 
+export async function translateCallTranscript(callId, targetLanguage = 'en') {
+  const res = await apiClient.post(`/calls/${callId}/translate`, { targetLanguage });
+  return res.data;
+}
+
 export async function getCall(callId) {
   const res = await apiClient.get(`/calls/${callId}`);
   return res.data;

@@ -28,12 +28,16 @@ const NavBar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/features" className="text-gray-700 hover:text-primary-600 transition-colors">
-              Features
-            </Link>
-            <Link to="/pricing" className="text-gray-700 hover:text-primary-600 transition-colors">
-              Pricing
-            </Link>
+            {!user && (
+              <>
+                <Link to="/features" className="text-gray-700 hover:text-primary-600 transition-colors">
+                  Features
+                </Link>
+                <Link to="/pricing" className="text-gray-700 hover:text-primary-600 transition-colors">
+                  Pricing
+                </Link>
+              </>
+            )}
             {user ? (
               <>
                 <Link to="/restaurant" className="text-gray-700 hover:text-primary-600 transition-colors">
@@ -76,20 +80,24 @@ const NavBar = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-4">
-            <Link
-              to="/features"
-              className="block text-gray-700 hover:text-primary-600 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Features
-            </Link>
-            <Link
-              to="/pricing"
-              className="block text-gray-700 hover:text-primary-600 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Pricing
-            </Link>
+            {!user && (
+              <>
+                <Link
+                  to="/features"
+                  className="block text-gray-700 hover:text-primary-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Features
+                </Link>
+                <Link
+                  to="/pricing"
+                  className="block text-gray-700 hover:text-primary-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Pricing
+                </Link>
+              </>
+            )}
             {user ? (
               <>
                 <Link

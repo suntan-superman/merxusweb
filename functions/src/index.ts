@@ -56,6 +56,7 @@ import * as estateRoutes from './routes/estate';
 import * as adminUsersRoutes from './routes/adminUsers';
 import * as merxusRoutes from './routes/merxus';
 import * as adminRoutes from './routes/admin';
+import * as devicesRoutes from './routes/devices';
 
 // Orders routes
 app.get('/orders', ordersRoutes.getOrders);
@@ -71,6 +72,7 @@ app.delete('/reservations/:id', reservationsRoutes.deleteReservation);
 // Calls routes
 app.get('/calls', callsRoutes.getCalls);
 app.get('/calls/:id/transcript', callsRoutes.getCallTranscript);
+app.post('/calls/:id/translate', callsRoutes.translateCallTranscript);
 
 // Customers routes
 app.get('/customers', customersRoutes.getCustomers);
@@ -131,6 +133,12 @@ app.patch('/merxus/settings', merxusRoutes.updateSystemSettings);
 
 // Admin routes (for setting up test users - Merxus admin only)
 app.post('/admin/test-user', adminRoutes.createTestUser);
+
+// Device management routes
+app.post('/devices/register', devicesRoutes.registerDevice);
+app.post('/devices/deactivate', devicesRoutes.deactivateDevice);
+app.get('/devices', devicesRoutes.getDevices);
+app.get('/devices/check-limit', devicesRoutes.checkDeviceLimit);
 
 // Export the Express app as a Cloud Function
 // Use App Engine default service account instead of Compute Engine default
