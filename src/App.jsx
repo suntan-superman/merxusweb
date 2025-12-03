@@ -42,6 +42,8 @@ import EstateShowingsPage from './pages/estate/EstateShowingsPage';
 import EstateCallsPage from './pages/estate/EstateCallsPage';
 import EstateSettingsPage from './pages/estate/EstateSettingsPage';
 import EstateUsersPage from './pages/estate/EstateUsersPage';
+import SupportPage from './pages/SupportPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 
 // Register Syncfusion license from environment variable
 const syncfusionKey = import.meta.env.VITE_SYNCFUSION_KEY;
@@ -65,8 +67,10 @@ function App() {
       <AuthProvider>
         <Router>
         <Routes>
-          {/* Public routes */}
+          {/* Public routes - no NavBar */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route
             path="/*"
             element={
@@ -169,11 +173,11 @@ function App() {
                 </Routes>
                 <footer className="mt-20 text-white bg-gray-900">
                   <div className="container px-4 py-8 mx-auto">
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
                       <div>
                         <h3 className="mb-4 text-xl font-bold text-primary-400">Merxus</h3>
                         <p className="text-gray-400">
-                          24/7 AI Virtual Host for Restaurants
+                          Your AI Phone Assistant
                         </p>
                       </div>
                       <div>
@@ -185,14 +189,25 @@ function App() {
                         </ul>
                       </div>
                       <div>
+                        <h4 className="mb-4 font-semibold">Support</h4>
+                        <ul className="space-y-2 text-gray-400">
+                          <li><a href="/support" className="transition-colors hover:text-primary-400">Help Center</a></li>
+                          <li><a href="/privacy-policy" className="transition-colors hover:text-primary-400">Privacy Policy</a></li>
+                          <li><a href="mailto:support@merxus.ai" className="transition-colors hover:text-primary-400">Contact Us</a></li>
+                        </ul>
+                      </div>
+                      <div>
                         <h4 className="mb-4 font-semibold">Contact</h4>
                         <p className="text-gray-400">
                           Schedule a 15-minute demo to get started.
                         </p>
+                        <a href="mailto:support@merxus.ai" className="text-primary-400 hover:text-primary-300">
+                          support@merxus.ai
+                        </a>
                       </div>
                     </div>
                     <div className="pt-8 mt-8 text-center text-gray-400 border-t border-gray-800">
-                      <p>&copy; 2024 Merxus. All rights reserved.</p>
+                      <p>&copy; 2025 Workside Software LLC. All rights reserved.</p>
                     </div>
                   </div>
                 </footer>
