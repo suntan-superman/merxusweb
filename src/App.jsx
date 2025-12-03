@@ -34,6 +34,7 @@ import AnalyticsPage from './pages/merxus/AnalyticsPage';
 import SystemSettingsPage from './pages/merxus/SystemSettingsPage';
 import TenantSelectorPage from './pages/merxus/TenantSelectorPage';
 import VoiceAdminPage from './pages/merxus/VoiceAdminPage';
+import SuperAdminUsersPage from './pages/merxus/SuperAdminUsersPage';
 import EstateLayout from './components/layout/EstateLayout';
 import EstateDashboardPage from './pages/estate/EstateDashboardPage';
 import EstateListingsPage from './pages/estate/EstateListingsPage';
@@ -165,6 +166,7 @@ function App() {
                     <Route path="restaurants/new" element={<CreateRestaurantPage />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
                     <Route path="settings" element={<SystemSettingsPage />} />
+                    <Route path="users" element={<SuperAdminUsersPage />} />
                     <Route path="*" element={<Navigate to="/merxus" replace />} />
                   </Route>
                   

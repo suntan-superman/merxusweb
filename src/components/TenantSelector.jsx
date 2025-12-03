@@ -6,10 +6,10 @@ import { Link } from 'react-router-dom';
  */
 export default function TenantSelector() {
   return (
-    <div className="pt-8 pb-16 px-4 bg-white">
+    <div className="pt-12 pb-16 px-4">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
             Choose Your Service
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -56,20 +56,12 @@ export default function TenantSelector() {
                   <span>Order & reservation tracking</span>
                 </li>
               </ul>
-              <div className="flex gap-3 w-full">
-                <Link
-                  to="/login"
-                  className="btn-secondary flex-1 text-center"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/onboarding?type=restaurant"
-                  className="btn-primary flex-1 text-center"
-                >
-                  Sign Up
-                </Link>
-              </div>
+              <Link
+                to="/onboarding?type=restaurant"
+                className="btn-primary w-full text-center"
+              >
+                Get Started
+              </Link>
             </div>
           </div>
 
@@ -111,20 +103,12 @@ export default function TenantSelector() {
                   <span>24/7 professional answering</span>
                 </li>
               </ul>
-              <div className="flex gap-3 w-full">
-                <Link
-                  to="/login"
-                  className="btn-secondary flex-1 text-center"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/onboarding?type=voice"
-                  className="btn-primary flex-1 text-center"
-                >
-                  Sign Up
-                </Link>
-              </div>
+              <Link
+                to="/onboarding?type=voice"
+                className="btn-primary w-full text-center"
+              >
+                Get Started
+              </Link>
             </div>
           </div>
 
@@ -166,20 +150,12 @@ export default function TenantSelector() {
                   <span>Bilingual support</span>
                 </li>
               </ul>
-              <div className="flex gap-3 w-full">
-                <Link
-                  to="/login"
-                  className="btn-secondary flex-1 text-center"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/onboarding?type=real_estate"
-                  className="btn-primary flex-1 text-center"
-                >
-                  Sign Up
-                </Link>
-              </div>
+              <Link
+                to="/onboarding?type=real_estate"
+                className="btn-primary w-full text-center"
+              >
+                Get Started
+              </Link>
             </div>
           </div>
         </div>

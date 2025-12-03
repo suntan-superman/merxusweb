@@ -12,7 +12,9 @@ import {
   Search,
   Resize,
 } from '@syncfusion/ej2-react-grids';
+import toast from 'react-hot-toast';
 import FormModal from '../../common/FormModal';
+import ConfirmationModal from '../../common/ConfirmationModal';
 import { 
   getServicesForIndustry, 
   convertServicesToObjects 
@@ -46,6 +48,8 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
     category: '',
     notes: '',
   });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'service'|'product', item: {} }
 
   // Update local state when settings change
   useEffect(() => {
@@ -145,11 +149,26 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
   }
 
   function handleDeleteService(service) {
-    const serviceName = service.name || service.name_en || 'this service';
-    if (window.confirm(`Delete service "${serviceName}"?`)) {
-      const newServices = services.filter(s => s !== service);
+    setDeleteTarget({ type: 'service', item: service });
+    setShowDeleteConfirm(true);
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === 'service') {
+      const newServices = services.filter(s => s !== deleteTarget.item);
       handleSaveServices(newServices);
+      const serviceName = deleteTarget.item.name || deleteTarget.item.name_en || 'Service';
+      toast.success(`${serviceName} deleted successfully`);
+    } else if (deleteTarget.type === 'product') {
+      const newProducts = products.filter(p => p !== deleteTarget.item);
+      handleSaveProducts(newProducts);
+      toast.success(`${deleteTarget.item.name} deleted successfully`);
     }
+
+    setShowDeleteConfirm(false);
+    setDeleteTarget(null);
   }
 
   function handleAddProduct() {
@@ -201,10 +220,8 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
   }
 
   function handleDeleteProduct(product) {
-    if (window.confirm(`Delete product "${product.name}"?`)) {
-      const newProducts = products.filter(p => p !== product);
-      handleSaveProducts(newProducts);
-    }
+    setDeleteTarget({ type: 'product', item: product });
+    setShowDeleteConfirm(true);
   }
 
   // Service grid templates
@@ -657,6 +674,22 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
           </div>
         </form>
       </FormModal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTarget(null);
+        }}
+        onConfirm={confirmDelete}
+        title={`Delete ${deleteTarget?.type === 'service' ? 'Service' : 'Product'}`}
+        message={`Are you sure you want to delete "${deleteTarget?.type === 'service' 
+          ? (deleteTarget?.item?.name || deleteTarget?.item?.name_en || 'this service')
+          : (deleteTarget?.item?.name || 'this product')}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

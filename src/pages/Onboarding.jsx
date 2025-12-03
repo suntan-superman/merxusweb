@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import InvitationLinkModal from '../components/common/InvitationLinkModal';
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -33,6 +35,8 @@ const Onboarding = () => {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showInvitationModal, setShowInvitationModal] = useState(false);
+  const [invitationData, setInvitationData] = useState(null);
 
   // Pricing information based on tenant type and plan
   const getPricingInfo = () => {
@@ -176,30 +180,13 @@ const Onboarding = () => {
             } 
           });
         } else {
-          // Neither SendGrid nor Firebase Auth worked - show the invitation link directly
-          const useLink = window.confirm(
-            `Agent account created successfully!\n\n` +
-            `However, the invitation email could not be sent automatically.\n\n` +
-            `Would you like to open the password setup link now?\n\n` +
-            `(If you click Cancel, you can find the link in the browser console)`
-          );
-          
-          if (useLink && result.invitationLink) {
-            window.location.href = result.invitationLink;
-          } else {
-            alert(
-              `Agent account created successfully!\n\n` +
-              `Password Setup Link:\n${result.invitationLink}\n\n` +
-              `Please copy this link and open it in your browser to set your password.`
-            );
-            navigate('/login', { 
-              state: { 
-                message: 'Agent account created successfully! Please use the password setup link shown in the alert to set your password.',
-                email: formData.ownerEmail,
-                invitationLink: result.invitationLink
-              } 
-            });
-          }
+          // Neither SendGrid nor Firebase Auth worked - show the invitation link modal
+          setInvitationData({
+            link: result.invitationLink,
+            email: formData.ownerEmail,
+            tenantType: 'real_estate'
+          });
+          setShowInvitationModal(true);
         }
       } else if (isVoice) {
         const { createOffice } = await import('../api/voice');
@@ -259,32 +246,13 @@ const Onboarding = () => {
             } 
           });
         } else {
-          // Neither SendGrid nor Firebase Auth worked - show the invitation link directly
-          const useLink = window.confirm(
-            `Office created successfully!\n\n` +
-            `However, the invitation email could not be sent automatically.\n\n` +
-            `Would you like to open the password setup link now?\n\n` +
-            `(If you click Cancel, you can find the link in the browser console)`
-          );
-          
-          if (useLink && result.invitationLink) {
-            // Open the invitation link in the same window
-            window.location.href = result.invitationLink;
-          } else {
-            // Show the link in an alert so user can copy it
-            alert(
-              `Office created successfully!\n\n` +
-              `Password Setup Link:\n${result.invitationLink}\n\n` +
-              `Please copy this link and open it in your browser to set your password.`
-            );
-            navigate('/login', { 
-              state: { 
-                message: 'Office created successfully! Please use the password setup link shown in the alert to set your password.',
-                email: formData.ownerEmail,
-                invitationLink: result.invitationLink
-              } 
-            });
-          }
+          // Neither SendGrid nor Firebase Auth worked - show the invitation link modal
+          setInvitationData({
+            link: result.invitationLink,
+            email: formData.ownerEmail,
+            tenantType: 'voice'
+          });
+          setShowInvitationModal(true);
         }
       } else {
         // Use public onboarding endpoint for restaurants
@@ -343,32 +311,13 @@ const Onboarding = () => {
             } 
           });
         } else {
-          // Neither SendGrid nor Firebase Auth worked - show the invitation link directly
-          const useLink = window.confirm(
-            `Restaurant created successfully!\n\n` +
-            `However, the invitation email could not be sent automatically.\n\n` +
-            `Would you like to open the password setup link now?\n\n` +
-            `(If you click Cancel, you can find the link in the browser console)`
-          );
-          
-          if (useLink && result.invitationLink) {
-            // Open the invitation link in the same window
-            window.location.href = result.invitationLink;
-          } else {
-            // Show the link in an alert so user can copy it
-            alert(
-              `Restaurant created successfully!\n\n` +
-              `Password Setup Link:\n${result.invitationLink}\n\n` +
-              `Please copy this link and open it in your browser to set your password.`
-            );
-            navigate('/login', { 
-              state: { 
-                message: 'Restaurant created successfully! Please use the password setup link shown in the alert to set your password.',
-                email: formData.ownerEmail,
-                invitationLink: result.invitationLink
-              } 
-            });
-          }
+          // Neither SendGrid nor Firebase Auth worked - show the invitation link modal
+          setInvitationData({
+            link: result.invitationLink,
+            email: formData.ownerEmail,
+            tenantType: 'restaurant'
+          });
+          setShowInvitationModal(true);
         }
       }
     } catch (err) {
@@ -385,8 +334,8 @@ const Onboarding = () => {
       // Show error in UI
       setError(errorMessage);
       
-      // Also show alert for visibility
-      alert(`Error: ${errorMessage}\n\nPlease check the console for more details.`);
+      // Show toast notification
+      toast.error(errorMessage);
       
       // If it's a user creation error, provide more specific guidance
       if (errorMessage.includes('user') || errorMessage.includes('email')) {
@@ -729,6 +678,24 @@ const Onboarding = () => {
           </div>
         </form>
       </div>
+
+      {/* Invitation Link Modal */}
+      <InvitationLinkModal
+        isOpen={showInvitationModal}
+        onClose={() => {
+          setShowInvitationModal(false);
+          // Navigate to login after closing
+          navigate('/login', {
+            state: {
+              message: 'Account created successfully! Please use the password setup link to complete your registration.',
+              email: invitationData?.email
+            }
+          });
+        }}
+        invitationLink={invitationData?.link}
+        email={invitationData?.email}
+        tenantType={invitationData?.tenantType}
+      />
     </div>
   );
 };

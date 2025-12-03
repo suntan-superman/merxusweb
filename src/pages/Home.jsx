@@ -5,32 +5,32 @@ const Home = () => {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-50 to-white pt-12 pb-8 px-4">
+      <section className="bg-gradient-to-br from-primary-50 to-white pt-12 pb-2 px-4">
         <div className="container mx-auto max-w-4xl text-center">
           <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
             AI Phone Assistant for Your Business
           </h1>
-          <p className="text-xl md:text-2xl text-gray-700 mb-8">
+          <p className="text-xl md:text-2xl text-gray-700 mb-2">
             24/7 Virtual Receptionist that Answers Calls, Handles Inquiries, and Never Misses a Customer
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-4">
+          {/* <div className="flex flex-col sm:flex-row gap-4 justify-center mb-4">
             <Link to="#choose-service" className="btn-primary text-lg px-8 py-3">
               Get Started Free
             </Link>
             <Link to="/features" className="btn-secondary text-lg px-8 py-3">
               Learn More
             </Link>
-          </div>
+          </div> */}
         </div>
       </section>
 
       {/* Tenant Selection Section */}
-      <section id="choose-service" className="-mt-4">
+      <section id="choose-service" className="bg-white">
         <TenantSelector />
       </section>
 
       {/* Problem Section */}
-      <section className="py-16 px-4 bg-white">
+      <section className="pt-8 pb-8 px-4 bg-white">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 text-center">
             The Problem
@@ -42,7 +42,7 @@ const Home = () => {
       </section>
 
       {/* Solution Section */}
-      <section className="py-16 px-4 bg-primary-50">
+      <section className="py-8 px-4 bg-primary-50">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 text-center">
             The Solution
@@ -54,7 +54,7 @@ const Home = () => {
       </section>
 
       {/* Key Features */}
-      <section className="py-16 px-4 bg-white">
+      <section className="py-8 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12 text-center">
             Key Features
@@ -87,7 +87,7 @@ const Home = () => {
       </section>
 
       {/* Benefits */}
-      <section className="py-16 px-4 bg-primary-50">
+      <section className="py-8 px-4 bg-primary-50">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12 text-center">
             Benefits
@@ -115,7 +115,7 @@ const Home = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 px-4 bg-white">
+      <section className="py-8 px-4 bg-white">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12 text-center">
             How It Works

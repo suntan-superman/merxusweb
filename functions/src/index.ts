@@ -57,6 +57,8 @@ import * as adminUsersRoutes from './routes/adminUsers';
 import * as merxusRoutes from './routes/merxus';
 import * as adminRoutes from './routes/admin';
 import * as devicesRoutes from './routes/devices';
+import * as superAdminRoutes from './routes/superAdmin';
+import * as setupRoutes from './routes/setup';
 
 // Orders routes
 app.get('/orders', ordersRoutes.getOrders);
@@ -133,6 +135,16 @@ app.patch('/merxus/settings', merxusRoutes.updateSystemSettings);
 
 // Admin routes (for setting up test users - Merxus admin only)
 app.post('/admin/test-user', adminRoutes.createTestUser);
+
+// Setup route (ONE-TIME USE - set super admin for sroy@worksidesoftware.com)
+app.post('/setup/super-admin', setupRoutes.setupSuperAdmin);
+
+// Super Admin routes (user management - super admin only)
+app.get('/super-admin/users', superAdminRoutes.getAllUsers);
+app.get('/super-admin/users/:uid', superAdminRoutes.getUser);
+app.post('/super-admin/users', superAdminRoutes.createUser);
+app.patch('/super-admin/users/:uid', superAdminRoutes.updateUserDetails);
+app.delete('/super-admin/users/:uid', superAdminRoutes.deleteUserPermanently);
 
 // Device management routes
 app.post('/devices/register', devicesRoutes.registerDevice);

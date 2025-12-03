@@ -63,6 +63,19 @@ export default function ConfirmationModal({
 
   const styles = variantStyles[variant] || variantStyles.danger;
 
+  const getHeaderGradient = () => {
+    switch (variant) {
+      case 'danger':
+        return 'bg-gradient-to-r from-red-600 to-red-700';
+      case 'warning':
+        return 'bg-gradient-to-r from-amber-600 to-amber-700';
+      case 'info':
+        return 'bg-gradient-to-r from-blue-600 to-blue-700';
+      default:
+        return 'bg-gradient-to-r from-blue-600 to-blue-700';
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
@@ -73,47 +86,47 @@ export default function ConfirmationModal({
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center">
-              <div className={`flex-shrink-0 mx-auto flex h-12 w-12 items-center justify-center rounded-full ${styles.iconBg}`}>
+        <div className="relative w-full max-w-md transform overflow-hidden rounded-xl bg-white shadow-2xl transition-all">
+          {/* Header with Merxus branding */}
+          <div className={`px-6 py-4 ${getHeaderGradient()} rounded-t-xl`}>
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0">
                 {variant === 'danger' && (
-                  <svg className={`h-6 w-6 ${styles.iconColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 )}
                 {variant === 'warning' && (
-                  <svg className={`h-6 w-6 ${styles.iconColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 )}
                 {variant === 'info' && (
-                  <svg className={`h-6 w-6 ${styles.iconColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 )}
               </div>
+              <h3 className="text-lg font-semibold text-white">
+                {title}
+              </h3>
             </div>
-            <h3 className="mt-4 text-center text-lg font-semibold text-gray-900">
-              {title}
-            </h3>
           </div>
 
           {/* Body */}
-          <div className="px-6 py-4">
-            <p className="text-sm text-gray-600 text-center whitespace-pre-line">
+          <div className="px-6 py-5">
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
               {message}
             </p>
           </div>
 
           {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row gap-3 sm:justify-end border-t border-gray-200">
+          <div className="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row gap-3 sm:justify-end rounded-b-xl border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="btn-secondary w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {cancelText}
             </button>
@@ -121,7 +134,7 @@ export default function ConfirmationModal({
               type="button"
               onClick={onConfirm}
               disabled={isLoading}
-              className={`w-full sm:w-auto px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.confirmBg} disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+              className={`w-full sm:w-auto px-4 py-2 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${styles.confirmBg} disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
             >
               {isLoading && (
                 <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
