@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import VoiceSidebar from './VoiceSidebar';
 import Topbar from './Topbar';
+import FeedbackButton from '../FeedbackButton';
 
 export default function VoiceLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,6 +35,9 @@ export default function VoiceLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Floating Feedback Button */}
+      <FeedbackButton />
     </div>
   );
 }

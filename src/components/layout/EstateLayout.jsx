@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import EstateSidebar from './EstateSidebar';
 import Topbar from './Topbar';
+import FeedbackButton from '../FeedbackButton';
 
 export default function EstateLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,6 +35,9 @@ export default function EstateLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Floating Feedback Button */}
+      <FeedbackButton />
     </div>
   );
 }

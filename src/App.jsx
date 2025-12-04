@@ -45,6 +45,7 @@ import EstateSettingsPage from './pages/estate/EstateSettingsPage';
 import EstateUsersPage from './pages/estate/EstateUsersPage';
 import SupportPage from './pages/SupportPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import BillingPage from './pages/BillingPage';
 
 // Register Syncfusion license from environment variable
 const syncfusionKey = import.meta.env.VITE_SYNCFUSION_KEY;
@@ -101,6 +102,7 @@ function App() {
                     <Route path="menu" element={<MenuPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                     <Route path="users" element={<UsersPage />} />
+                    <Route path="billing" element={<BillingPage />} />
                     <Route path="*" element={<Navigate to="/restaurant" replace />} />
                   </Route>
 
@@ -119,6 +121,7 @@ function App() {
                     <Route path="voicemail" element={<VoicemailPage />} />
                     <Route path="settings" element={<VoiceSettingsPage />} />
                     <Route path="users" element={<VoiceUsersPage />} />
+                    <Route path="billing" element={<BillingPage />} />
                     <Route path="*" element={<Navigate to="/voice" replace />} />
                   </Route>
 
@@ -138,6 +141,7 @@ function App() {
                     <Route path="calls" element={<EstateCallsPage />} />
                     <Route path="settings" element={<EstateSettingsPage />} />
                     <Route path="users" element={<EstateUsersPage />} />
+                    <Route path="billing" element={<BillingPage />} />
                     <Route path="*" element={<Navigate to="/estate" replace />} />
                   </Route>
 

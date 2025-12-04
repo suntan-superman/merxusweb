@@ -1,0 +1,43 @@
+{
+  "restaurant": {
+    "basic": {
+      "productId": "prod_TXYqTm46q4fOyx",
+      "monthlyPriceId": "price_1SaTiq1Zrio8XYGpVbLOdG1h",
+      "setupPriceId": "price_1SaTiq1Zrio8XYGpYgf4UQ64"
+    },
+    "enterprise": {
+      "productId": "prod_TXYqTsGNRCccvu",
+      "monthlyPriceId": "price_1SaTir1Zrio8XYGpRmHgzIVd",
+      "setupPriceId": "price_1SaTir1Zrio8XYGpZcqmUMe4"
+    }
+  },
+  "voice": {
+    "basic": {
+      "productId": "prod_TXYqmmfo9eQWJY",
+      "monthlyPriceId": "price_1SaTis1Zrio8XYGpyH0wqOvj",
+      "setupPriceId": "price_1SaTis1Zrio8XYGpqMK6mMPy"
+    },
+    "professional": {
+      "productId": "prod_TXYqox0oFQCrxk",
+      "monthlyPriceId": "price_1SaTis1Zrio8XYGplKIocRQ2",
+      "setupPriceId": "price_1SaTit1Zrio8XYGphGRk2AQA"
+    },
+    "enterprise": {
+      "productId": "prod_TXYqhuZRIsngGW",
+      "monthlyPriceId": "price_1SaTit1Zrio8XYGp4o1d897J",
+      "setupPriceId": "price_1SaTit1Zrio8XYGpSM6pEe9i"
+    }
+  },
+  "real_estate": {
+    "basic": {
+      "productId": "prod_TXYqgDwx5T7foi",
+      "monthlyPriceId": "price_1SaTiu1Zrio8XYGphGDXBd0c",
+      "setupPriceId": "price_1SaTiu1Zrio8XYGplnkVzjZa"
+    },
+    "professional": {
+      "productId": "prod_TXYqgcLMmMs3LQ",
+      "monthlyPriceId": "price_1SaTiv1Zrio8XYGpM9fEi8d7",
+      "setupPriceId": "price_1SaTiv1Zrio8XYGpM3sBvi2Y"
+    }
+  }
+}

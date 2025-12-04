@@ -397,7 +397,7 @@ const Onboarding = () => {
           {/* Trial Information */}
           <div className="mt-4">
             <p className="text-sm text-gray-600">
-              <span className="font-semibold text-primary-600">14-day free trial</span> • No credit card required to start
+              <span className="font-semibold text-primary-600">30-day free trial</span> • Setup fee charged upfront
             </p>
           </div>
         </div>
@@ -661,16 +661,16 @@ const Onboarding = () => {
               className="btn-primary w-full text-lg py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || !isFormValid()}
             >
-              {loading ? 'Creating...' : 'Start Free Trial'}
+              {loading ? 'Creating...' : 'Create Account'}
             </button>
             <p className="text-center text-sm text-gray-600 mt-4">
               By continuing, you agree to our{' '}
-              <span className="font-semibold">14-day free trial</span>. 
+              <span className="font-semibold">30-day free trial</span>. 
               {selectedPlan && (
                 <>
+                  {' '}You'll pay a <span className="font-semibold">${pricingInfo.setup} setup fee</span> today.
                   {' '}After your trial, you'll be charged{' '}
-                  <span className="font-semibold">${pricingInfo.monthly}/month</span> 
-                  {' '}with a <span className="font-semibold">${pricingInfo.setup} setup fee</span>.
+                  <span className="font-semibold">${pricingInfo.monthly}/month</span>.
                 </>
               )}
               {' '}Cancel anytime.

@@ -67,6 +67,7 @@ export default function Sidebar() {
         <NavItem to="/restaurant/customers" label="Customers" icon="👥" />
         <NavItem to="/restaurant/menu" label="Menu" icon="🍽️" />
         <NavItem to="/restaurant/settings" label="Settings" icon="⚙️" />
+        <NavItem to="/restaurant/billing" label="Billing" icon="💳" />
         {isOwner && (
           <NavItem to="/restaurant/users" label="Team & Access" icon="👤" />
         )}

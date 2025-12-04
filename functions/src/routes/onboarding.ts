@@ -104,6 +104,7 @@ export async function createOffice(req: Request, res: Response): Promise<void> {
       await admin.auth().setCustomUserClaims(userRecord.uid, {
         role: 'owner',
         officeId,
+        tenantId: officeId,
         type: 'voice',
       });
     } catch (error: any) {
@@ -121,6 +122,7 @@ export async function createOffice(req: Request, res: Response): Promise<void> {
           await admin.auth().setCustomUserClaims(userRecord.uid, {
             role: 'owner',
             officeId,
+            tenantId: officeId,
             type: 'voice',
           });
         } catch (createError: any) {
@@ -318,6 +320,7 @@ Use the restaurant's cuisine style and personality in your tone.`;
       await admin.auth().setCustomUserClaims(userRecord.uid, {
         role: 'owner',
         restaurantId,
+        tenantId: restaurantId,
         type: 'restaurant',
       });
     } catch (error: any) {
@@ -337,6 +340,7 @@ Use the restaurant's cuisine style and personality in your tone.`;
           await admin.auth().setCustomUserClaims(userRecord.uid, {
             role: 'owner',
             restaurantId,
+            tenantId: restaurantId,
             type: 'restaurant',
           });
         } catch (createError: any) {
@@ -552,6 +556,7 @@ export async function createAgent(req: Request, res: Response): Promise<void> {
       await admin.auth().setCustomUserClaims(userRecord.uid, {
         role: 'owner',
         agentId,
+        tenantId: agentId,
         type: 'real_estate',
       });
     } catch (error: any) {
@@ -569,6 +574,7 @@ export async function createAgent(req: Request, res: Response): Promise<void> {
           await admin.auth().setCustomUserClaims(userRecord.uid, {
             role: 'owner',
             agentId,
+            tenantId: agentId,
             type: 'real_estate',
           });
         } catch (createError: any) {

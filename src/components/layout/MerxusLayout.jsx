@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import MerxusSidebar from './MerxusSidebar';
 import Topbar from './Topbar';
+import FeedbackButton from '../FeedbackButton';
 
 export default function MerxusLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -36,6 +37,9 @@ export default function MerxusLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Floating Feedback Button */}
+      <FeedbackButton />
     </div>
   );
 }

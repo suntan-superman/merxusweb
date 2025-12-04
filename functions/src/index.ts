@@ -25,8 +25,8 @@ import * as onboardingRoutes from './routes/onboarding';
 
 // Apply auth middleware to all routes EXCEPT public ones
 app.use((req, res, next) => {
-  // Skip auth for health check and public onboarding routes
-  const publicPaths = ['/health', '/onboarding/office', '/onboarding/restaurant', '/onboarding/agent', '/onboarding/resend-email'];
+  // Skip auth for health check, public onboarding routes, and Stripe webhook
+  const publicPaths = ['/health', '/onboarding/office', '/onboarding/restaurant', '/onboarding/agent', '/onboarding/resend-email', '/billing/webhook'];
   const isPublicPath = publicPaths.includes(req.path);
   
   if (isPublicPath) {
@@ -59,6 +59,8 @@ import * as adminRoutes from './routes/admin';
 import * as devicesRoutes from './routes/devices';
 import * as superAdminRoutes from './routes/superAdmin';
 import * as setupRoutes from './routes/setup';
+import billingRoutes from './routes/billing';
+import * as authRoutes from './routes/auth';
 
 // Orders routes
 app.get('/orders', ordersRoutes.getOrders);
@@ -151,6 +153,13 @@ app.post('/devices/register', devicesRoutes.registerDevice);
 app.post('/devices/deactivate', devicesRoutes.deactivateDevice);
 app.get('/devices', devicesRoutes.getDevices);
 app.get('/devices/check-limit', devicesRoutes.checkDeviceLimit);
+
+// Billing routes (Stripe integration)
+app.use('/billing', billingRoutes);
+
+// Auth utility routes (authenticated)
+app.post('/auth/refresh-claims', authRoutes.refreshClaims);
+app.get('/auth/claims', authRoutes.getClaims);
 
 // Export the Express app as a Cloud Function
 // Use App Engine default service account instead of Compute Engine default

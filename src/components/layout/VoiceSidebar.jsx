@@ -64,6 +64,7 @@ export default function VoiceSidebar() {
         <NavItem to="/voice/routing" label="Call Routing" icon="🔄" />
         <NavItem to="/voice/voicemail" label="Voicemail" icon="📬" />
         <NavItem to="/voice/settings" label="Settings" icon="⚙️" />
+        <NavItem to="/voice/billing" label="Billing" icon="💳" />
         {isOwner && (
           <NavItem to="/voice/users" label="Team & Access" icon="👤" />
         )}

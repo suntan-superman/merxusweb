@@ -395,15 +395,15 @@ export default function Pricing() {
             <div className="p-6 bg-white rounded-lg shadow-md">
               <h3 className="mb-2 font-semibold text-gray-900">Do you offer a free trial?</h3>
               <p className="text-gray-700">
-                Yes! All plans include a 14-day free trial. No credit card required to start your trial. 
-                You can explore all features risk-free before committing to a paid plan.
+                Yes! All plans include a 30-day free trial. The one-time setup fee is charged upfront, then you have 30 days to try the service before monthly billing begins. 
+                You can explore all features and cancel anytime during the trial.
               </p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-md">
               <h3 className="mb-2 font-semibold text-gray-900">What happens after my trial ends?</h3>
               <p className="text-gray-700">
-                After your 14-day trial, you'll need to select a plan and provide payment information to continue using Merxus. 
-                We'll send you reminders before your trial ends so you don't miss out.
+                After your 30-day trial, your monthly subscription will automatically begin. Your card on file will be charged the monthly subscription fee. 
+                You can cancel anytime before the trial ends to avoid being charged. We'll send you reminders before your trial ends.
               </p>
             </div>
           </div>
@@ -413,7 +413,7 @@ export default function Pricing() {
         <div className="text-center">
           <h2 className="mb-4 text-3xl font-bold text-gray-900">Ready to Get Started?</h2>
           <p className="mb-8 text-gray-600">
-            Start your 14-day free trial today. No credit card required.
+            Start your 30-day free trial today. Setup fee charged upfront, monthly billing starts after trial.
           </p>
           <div className="flex flex-col gap-4 justify-center sm:flex-row">
             {user ? (
@@ -436,7 +436,7 @@ export default function Pricing() {
                   to="/onboarding" 
                   className="inline-block px-8 py-3 text-lg font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors text-center"
                 >
-                  Start Free Trial
+                  Get Started
                 </Link>
                 <Link 
                   to="/" 
