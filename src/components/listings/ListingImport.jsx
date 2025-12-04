@@ -107,14 +107,17 @@ export default function ListingImport({ onImportComplete, onClose }) {
       address: ['address', 'street', 'street address'],
       city: ['city'],
       state: ['state'],
-      zip: ['zip', 'zipcode', 'postal code', 'postal'],
+      zipCode: ['zip', 'zipcode', 'zip code', 'postal code', 'postal'],
       price: ['price', 'list price', 'asking price'],
       sqft: ['sqft', 'sq ft', 'square feet', 'square footage', 'sqfeet'],
-      beds: ['beds', 'bedrooms', 'bed', 'br'],
-      baths: ['baths', 'bathrooms', 'bath', 'ba'],
-      lotsize: ['lotsize', 'lot size', 'lot sq ft', 'lot sqft', 'acreage', 'acres'],
-      neighborhood: ['neighborhood', 'neighbourhood', 'area', 'subdivision'],
-      notes: ['notes', 'description', 'remarks', 'features', 'comments'],
+      bedrooms: ['beds', 'bedrooms', 'bed', 'br'],
+      bathrooms: ['baths', 'bathrooms', 'bath', 'ba'],
+      propertyType: ['property type', 'type', 'property_type', 'propertytype'],
+      status: ['status', 'listing status'],
+      lotSize: ['lotsize', 'lot size', 'lot sq ft', 'lot sqft', 'acreage', 'acres'],
+      mlsNumber: ['mls', 'mls number', 'mls#', 'mlsnumber', 'mls_number'],
+      yearBuilt: ['year built', 'yearbuilt', 'year_built', 'built'],
+      description: ['description', 'notes', 'remarks', 'features', 'comments'],
     };
 
     // Find column indices
@@ -143,46 +146,65 @@ export default function ListingImport({ onImportComplete, onClose }) {
       
       if (!address || !city) continue; // Skip rows without required fields
 
+      // Get property type, normalize to match mobile app format
+      let propertyType = values[columnIndices.propertyType]?.trim().toLowerCase() || '';
+      const typeMap = {
+        'single family': 'Single Family',
+        'single_family': 'Single Family',
+        'singlefamily': 'Single Family',
+        'sfh': 'Single Family',
+        'condo': 'Condo',
+        'condominium': 'Condo',
+        'townhouse': 'Townhouse',
+        'townhome': 'Townhouse',
+        'multi family': 'Multi-Family',
+        'multi-family': 'Multi-Family',
+        'multifamily': 'Multi-Family',
+      };
+      propertyType = typeMap[propertyType] || 'Single Family'; // Default
+
+      // Get status, normalize
+      let status = values[columnIndices.status]?.trim().toLowerCase() || 'active';
+      const statusMap = {
+        'active': 'active',
+        'for sale': 'active',
+        'pending': 'pending',
+        'under contract': 'pending',
+        'sold': 'sold',
+        'closed': 'sold',
+      };
+      status = statusMap[status] || 'active';
+
       const listing = {
         address,
-        city: city,
+        city,
         state: values[columnIndices.state]?.trim() || '',
-        zip: values[columnIndices.zip]?.trim() || '',
-        price: parseFloat(values[columnIndices.price]?.replace(/[^0-9.]/g, '') || '0') || null,
-        sq_ft: parseInt(values[columnIndices.sqft]?.replace(/[^0-9]/g, '') || '0', 10) || null,
-        beds: parseInt(values[columnIndices.beds]?.replace(/[^0-9]/g, '') || '0', 10) || null,
-        baths: parseFloat(values[columnIndices.baths]?.replace(/[^0-9.]/g, '') || '0') || null,
-        property_type: 'single_family', // Default
-        status: 'active',
-        features: [],
+        zipCode: values[columnIndices.zipCode]?.trim() || '',
+        price: parseFloat(values[columnIndices.price]?.replace(/[^0-9.]/g, '') || '0') || 0,
+        sqft: parseInt(values[columnIndices.sqft]?.replace(/[^0-9]/g, '') || '0', 10) || 0,
+        bedrooms: parseInt(values[columnIndices.bedrooms]?.replace(/[^0-9]/g, '') || '0', 10) || 0,
+        bathrooms: parseFloat(values[columnIndices.bathrooms]?.replace(/[^0-9.]/g, '') || '0') || 0,
+        propertyType,
+        status,
+        mlsNumber: values[columnIndices.mlsNumber]?.trim() || '',
+        yearBuilt: values[columnIndices.yearBuilt]?.trim() || '',
+        description: values[columnIndices.description]?.trim() || '',
       };
 
       // Handle lot size (could be in sq ft or acres)
-      const lotSize = values[columnIndices.lotsize]?.trim() || '';
-      if (lotSize) {
-        if (lotSize.toLowerCase().includes('acre')) {
-          const acres = parseFloat(lotSize.replace(/[^0-9.]/g, ''));
+      const lotSizeRaw = values[columnIndices.lotSize]?.trim() || '';
+      if (lotSizeRaw) {
+        if (lotSizeRaw.toLowerCase().includes('acre')) {
+          const acres = parseFloat(lotSizeRaw.replace(/[^0-9.]/g, ''));
           if (acres) {
-            listing.lot_sq_ft = Math.round(acres * 43560); // Convert acres to sq ft
+            listing.lotSize = `${acres} acres`;
           }
         } else {
-          listing.lot_sq_ft = parseInt(lotSize.replace(/[^0-9]/g, ''), 10) || null;
+          const sqft = parseInt(lotSizeRaw.replace(/[^0-9]/g, ''), 10);
+          if (sqft) {
+            listing.lotSize = `${sqft} sqft`;
+          }
         }
-      }
-
-      // Handle notes/features
-      const notes = values[columnIndices.notes]?.trim() || '';
-      if (notes) {
-        // Split by common delimiters and add as features
-        const features = notes.split(/[;,|]/).map(f => f.trim()).filter(Boolean);
-        listing.features = features;
-        listing.remarks_en = notes;
-      }
-
-      // Neighborhood as a feature
-      const neighborhood = values[columnIndices.neighborhood]?.trim() || '';
-      if (neighborhood) {
-        listing.features.push(`Neighborhood: ${neighborhood}`);
       }
 
       listings.push(listing);
@@ -212,14 +234,17 @@ export default function ListingImport({ onImportComplete, onClose }) {
             address: ['address', 'street', 'street address'],
             city: ['city'],
             state: ['state'],
-            zip: ['zip', 'zipcode', 'postal code', 'postal'],
+            zipCode: ['zip', 'zipcode', 'zip code', 'postal code', 'postal'],
             price: ['price', 'list price', 'asking price'],
             sqft: ['sqft', 'sq ft', 'square feet', 'square footage', 'sqfeet'],
-            beds: ['beds', 'bedrooms', 'bed', 'br'],
-            baths: ['baths', 'bathrooms', 'bath', 'ba'],
-            lotsize: ['lotsize', 'lot size', 'lot sq ft', 'lot sqft', 'acreage', 'acres'],
-            neighborhood: ['neighborhood', 'neighbourhood', 'area', 'subdivision'],
-            notes: ['notes', 'description', 'remarks', 'features', 'comments'],
+            bedrooms: ['beds', 'bedrooms', 'bed', 'br'],
+            bathrooms: ['baths', 'bathrooms', 'bath', 'ba'],
+            propertyType: ['property type', 'type', 'property_type', 'propertytype'],
+            status: ['status', 'listing status'],
+            lotSize: ['lotsize', 'lot size', 'lot sq ft', 'lot sqft', 'acreage', 'acres'],
+            mlsNumber: ['mls', 'mls number', 'mls#', 'mlsnumber', 'mls_number'],
+            yearBuilt: ['year built', 'yearbuilt', 'year_built', 'built'],
+            description: ['description', 'notes', 'remarks', 'features', 'comments'],
           };
 
           const columnIndices = {};
@@ -246,42 +271,65 @@ export default function ListingImport({ onImportComplete, onClose }) {
             
             if (!address || !city) continue;
 
+            // Get property type, normalize to match mobile app format
+            let propertyType = String(row[columnIndices.propertyType] || '').trim().toLowerCase();
+            const typeMap = {
+              'single family': 'Single Family',
+              'single_family': 'Single Family',
+              'singlefamily': 'Single Family',
+              'sfh': 'Single Family',
+              'condo': 'Condo',
+              'condominium': 'Condo',
+              'townhouse': 'Townhouse',
+              'townhome': 'Townhouse',
+              'multi family': 'Multi-Family',
+              'multi-family': 'Multi-Family',
+              'multifamily': 'Multi-Family',
+            };
+            propertyType = typeMap[propertyType] || 'Single Family'; // Default
+
+            // Get status, normalize
+            let status = String(row[columnIndices.status] || '').trim().toLowerCase() || 'active';
+            const statusMap = {
+              'active': 'active',
+              'for sale': 'active',
+              'pending': 'pending',
+              'under contract': 'pending',
+              'sold': 'sold',
+              'closed': 'sold',
+            };
+            status = statusMap[status] || 'active';
+
             const listing = {
               address,
               city,
               state: String(row[columnIndices.state] || '').trim() || '',
-              zip: String(row[columnIndices.zip] || '').trim() || '',
-              price: parseFloat(String(row[columnIndices.price] || '0').replace(/[^0-9.]/g, '')) || null,
-              sq_ft: parseInt(String(row[columnIndices.sqft] || '0').replace(/[^0-9]/g, ''), 10) || null,
-              beds: parseInt(String(row[columnIndices.beds] || '0').replace(/[^0-9]/g, ''), 10) || null,
-              baths: parseFloat(String(row[columnIndices.baths] || '0').replace(/[^0-9.]/g, '')) || null,
-              property_type: 'single_family',
-              status: 'active',
-              features: [],
+              zipCode: String(row[columnIndices.zipCode] || '').trim() || '',
+              price: parseFloat(String(row[columnIndices.price] || '0').replace(/[^0-9.]/g, '')) || 0,
+              sqft: parseInt(String(row[columnIndices.sqft] || '0').replace(/[^0-9]/g, ''), 10) || 0,
+              bedrooms: parseInt(String(row[columnIndices.bedrooms] || '0').replace(/[^0-9]/g, ''), 10) || 0,
+              bathrooms: parseFloat(String(row[columnIndices.bathrooms] || '0').replace(/[^0-9.]/g, '')) || 0,
+              propertyType,
+              status,
+              mlsNumber: String(row[columnIndices.mlsNumber] || '').trim() || '',
+              yearBuilt: String(row[columnIndices.yearBuilt] || '').trim() || '',
+              description: String(row[columnIndices.description] || '').trim() || '',
             };
 
-            const lotSize = String(row[columnIndices.lotsize] || '').trim();
-            if (lotSize) {
-              if (lotSize.toLowerCase().includes('acre')) {
-                const acres = parseFloat(lotSize.replace(/[^0-9.]/g, ''));
+            // Handle lot size (could be in sq ft or acres)
+            const lotSizeRaw = String(row[columnIndices.lotSize] || '').trim();
+            if (lotSizeRaw) {
+              if (lotSizeRaw.toLowerCase().includes('acre')) {
+                const acres = parseFloat(lotSizeRaw.replace(/[^0-9.]/g, ''));
                 if (acres) {
-                  listing.lot_sq_ft = Math.round(acres * 43560);
+                  listing.lotSize = `${acres} acres`;
                 }
               } else {
-                listing.lot_sq_ft = parseInt(lotSize.replace(/[^0-9]/g, ''), 10) || null;
+                const sqft = parseInt(lotSizeRaw.replace(/[^0-9]/g, ''), 10);
+                if (sqft) {
+                  listing.lotSize = `${sqft} sqft`;
+                }
               }
-            }
-
-            const notes = String(row[columnIndices.notes] || '').trim();
-            if (notes) {
-              const features = notes.split(/[;,|]/).map(f => f.trim()).filter(Boolean);
-              listing.features = features;
-              listing.remarks_en = notes;
-            }
-
-            const neighborhood = String(row[columnIndices.neighborhood] || '').trim();
-            if (neighborhood) {
-              listing.features.push(`Neighborhood: ${neighborhood}`);
             }
 
             listings.push(listing);
@@ -424,11 +472,13 @@ export default function ListingImport({ onImportComplete, onClose }) {
             <p className="font-medium mb-1">File Format:</p>
             <p className="text-xs mb-2">
               <strong>Required columns:</strong> Address, City<br />
-              <strong>Optional columns:</strong> State, Zip, Price, SqFt, Beds, Baths, LotSize, Neighborhood, Notes
+              <strong>Optional columns:</strong> State, Zip/ZipCode, Price, SqFt, Bedrooms, Bathrooms, PropertyType, Status, LotSize, MLSNumber, YearBuilt, Description
             </p>
             <p className="text-xs">
-              Column names are flexible (e.g., "SqFt", "Square Feet", "Sq Ft" all work).<br />
-              Lot size can be in square feet or acres (e.g., "0.34 acres" or "14810 sq ft").
+              <strong>Column names are flexible:</strong> "SqFt", "Square Feet", "Sq Ft" all work.<br />
+              <strong>Property Types:</strong> Single Family, Condo, Townhouse, Multi-Family (default: Single Family)<br />
+              <strong>Status:</strong> active, pending, sold (default: active)<br />
+              <strong>Lot size:</strong> Can be in square feet or acres (e.g., "0.34 acres" or "14810 sqft").
             </p>
           </div>
         </div>

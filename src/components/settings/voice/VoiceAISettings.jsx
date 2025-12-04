@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import VoicePromptDropdown from './VoicePromptDropdown';
+import { getPromptsForIndustry } from '../../../../data/voicePromptLibraryWithRouting';
 
 export default function VoiceAISettings({ settings, onSave, saving, businessType = null }) {
   const [form, setForm] = useState({
@@ -16,7 +17,6 @@ export default function VoiceAISettings({ settings, onSave, saving, businessType
   useEffect(() => {
     if (businessType?.category && businessType?.industry && !form.systemPrompt) {
       // Try to find and set the default English prompt for this business type
-      const { getPromptsForIndustry } = require('../../../../data/voicePromptLibraryWithRouting');
       const prompts = getPromptsForIndustry(businessType.category, businessType.industry);
       const englishPrompt = prompts.find(p => p.language === 'en');
       if (englishPrompt) {

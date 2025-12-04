@@ -1,0 +1,11 @@
+Address,City,State,ZipCode,Price,Bedrooms,Bathrooms,SqFt,PropertyType,Status,LotSize,MLSNumber,YearBuilt,Description
+123 Main Street,Los Angeles,CA,90001,850000,4,2.5,2400,Single Family,active,0.25 acres,MLS123456,2018,Beautiful single family home with modern kitchen and spacious backyard. Great location near schools and shopping.
+456 Oak Avenue,San Diego,CA,92101,625000,3,2,1800,Condo,active,,,2020,Stunning condo in downtown with city views. Updated appliances and open floor plan.
+789 Pine Drive,San Francisco,CA,94102,1200000,5,3.5,3200,Single Family,pending,8000 sqft,MLS789012,2015,Luxury home with high-end finishes throughout. Chef's kitchen and master suite with spa bath.
+321 Elm Court,Sacramento,CA,95814,475000,2,2,1400,Townhouse,active,,,2019,Modern townhouse with garage parking. Low HOA fees and resort-style amenities.
+654 Maple Lane,Oakland,CA,94601,950000,4,3,2800,Single Family,sold,0.33 acres,MLS345678,2010,Charming family home with hardwood floors and updated kitchen. Large lot with fruit trees.
+987 Cedar Boulevard,Fresno,CA,93701,385000,3,2,1650,Single Family,active,7200 sqft,MLS901234,2016,Move-in ready home in great neighborhood. Energy efficient with solar panels.
+147 Birch Street,Long Beach,CA,90802,725000,3,2.5,2100,Townhouse,active,,,2021,Brand new construction townhome. Smart home features and designer finishes.
+258 Willow Way,San Jose,CA,95110,1450000,4,3,2600,Single Family,pending,0.28 acres,MLS567890,2017,Tech-friendly home in prime Silicon Valley location. Home office and EV charging.
+369 Spruce Avenue,Riverside,CA,92501,525000,4,2,2200,Single Family,active,9500 sqft,MLS234567,2012,Spacious family home with pool and RV parking. Updated bathrooms and fresh paint.
+741 Redwood Drive,Anaheim,CA,92801,695000,3,2.5,1950,Condo,active,,,2022,Luxury condo with resort amenities including pool and fitness center. Close to entertainment.

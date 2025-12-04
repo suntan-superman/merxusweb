@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import FormModal from '../common/FormModal';
 
 const PROPERTY_TYPES = [
-  { value: 'single_family', label: 'Single Family' },
-  { value: 'condo', label: 'Condo' },
-  { value: 'townhouse', label: 'Townhouse' },
-  { value: 'multi_family', label: 'Multi-Family' },
-  { value: 'land', label: 'Land' },
-  { value: 'other', label: 'Other' },
+  { value: 'Single Family', label: 'Single Family' },
+  { value: 'Condo', label: 'Condo' },
+  { value: 'Townhouse', label: 'Townhouse' },
+  { value: 'Multi-Family', label: 'Multi-Family' },
+  { value: 'Land', label: 'Land' },
+  { value: 'Other', label: 'Other' },
 ];
 
 const STATUS_OPTIONS = [
@@ -23,16 +23,17 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
     address: '',
     city: '',
     state: '',
-    zip: '',
-    mls_id: '',
+    zipCode: '',
+    mlsNumber: '',
     price: '',
-    beds: '',
-    baths: '',
-    sq_ft: '',
-    lot_sq_ft: '',
-    property_type: 'single_family',
+    bedrooms: '',
+    bathrooms: '',
+    sqft: '',
+    lotSize: '',
+    propertyType: 'Single Family',
     status: 'active',
-    year_built: '',
+    yearBuilt: '',
+    description: '',
     has_pool: false,
     has_garage: false,
     parking_spaces: '',
@@ -60,16 +61,17 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
         address: editing.address || '',
         city: editing.city || '',
         state: editing.state || '',
-        zip: editing.zip || '',
-        mls_id: editing.mls_id || '',
+        zipCode: editing.zipCode || editing.zip || '',
+        mlsNumber: editing.mlsNumber || editing.mls_id || '',
         price: editing.price || '',
-        beds: editing.beds || '',
-        baths: editing.baths || '',
-        sq_ft: editing.sq_ft || '',
-        lot_sq_ft: editing.lot_sq_ft || '',
-        property_type: editing.property_type || 'single_family',
+        bedrooms: editing.bedrooms || editing.beds || '',
+        bathrooms: editing.bathrooms || editing.baths || '',
+        sqft: editing.sqft || editing.sq_ft || '',
+        lotSize: editing.lotSize || editing.lot_sq_ft || '',
+        propertyType: editing.propertyType || editing.property_type || 'Single Family',
         status: editing.status || 'active',
-        year_built: editing.year_built || '',
+        yearBuilt: editing.yearBuilt || editing.year_built || '',
+        description: editing.description || editing.remarks_en || '',
         has_pool: editing.has_pool || false,
         has_garage: editing.has_garage || false,
         parking_spaces: editing.parking_spaces || '',
@@ -89,16 +91,17 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
         address: '',
         city: '',
         state: '',
-        zip: '',
-        mls_id: '',
+        zipCode: '',
+        mlsNumber: '',
         price: '',
-        beds: '',
-        baths: '',
-        sq_ft: '',
-        lot_sq_ft: '',
-        property_type: 'single_family',
+        bedrooms: '',
+        bathrooms: '',
+        sqft: '',
+        lotSize: '',
+        propertyType: 'Single Family',
         status: 'active',
-        year_built: '',
+        yearBuilt: '',
+        description: '',
         has_pool: false,
         has_garage: false,
         parking_spaces: '',
@@ -171,12 +174,11 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
     // Convert string numbers to actual numbers
     const listingData = {
       ...form,
-      price: form.price ? parseFloat(form.price) : null,
-      beds: form.beds ? parseInt(form.beds, 10) : null,
-      baths: form.baths ? parseFloat(form.baths) : null,
-      sq_ft: form.sq_ft ? parseInt(form.sq_ft, 10) : null,
-      lot_sq_ft: form.lot_sq_ft ? parseInt(form.lot_sq_ft, 10) : null,
-      year_built: form.year_built ? parseInt(form.year_built, 10) : null,
+      price: form.price ? parseFloat(form.price) : 0,
+      bedrooms: form.bedrooms ? parseInt(form.bedrooms, 10) : 0,
+      bathrooms: form.bathrooms ? parseFloat(form.bathrooms) : 0,
+      sqft: form.sqft ? parseInt(form.sqft, 10) : 0,
+      yearBuilt: form.yearBuilt || '',
       parking_spaces: form.parking_spaces ? parseInt(form.parking_spaces, 10) : null,
       open_house: {
         date: form.open_house.date || null,
@@ -251,9 +253,9 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
               </label>
               <input
                 type="text"
-                name="zip"
+                name="zipCode"
                 required
-                value={form.zip}
+                value={form.zipCode}
                 onChange={handleChange}
                 className="input-field"
                 placeholder="93312"
@@ -261,15 +263,15 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                MLS ID
+                MLS Number
               </label>
               <input
                 type="text"
-                name="mls_id"
-                value={form.mls_id}
+                name="mlsNumber"
+                value={form.mlsNumber}
                 onChange={handleChange}
                 className="input-field"
-                placeholder="202512345"
+                placeholder="MLS202512345"
               />
             </div>
             <div>
@@ -318,8 +320,8 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
               </label>
               <input
                 type="number"
-                name="beds"
-                value={form.beds}
+                name="bedrooms"
+                value={form.bedrooms}
                 onChange={handleChange}
                 className="input-field"
                 placeholder="4"
@@ -332,9 +334,9 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
               </label>
               <input
                 type="number"
-                name="baths"
+                name="bathrooms"
                 step="0.5"
-                value={form.baths}
+                value={form.bathrooms}
                 onChange={handleChange}
                 className="input-field"
                 placeholder="3"
@@ -347,8 +349,8 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
               </label>
               <input
                 type="number"
-                name="sq_ft"
-                value={form.sq_ft}
+                name="sqft"
+                value={form.sqft}
                 onChange={handleChange}
                 className="input-field"
                 placeholder="2650"
@@ -357,16 +359,15 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lot Square Feet
+                Lot Size
               </label>
               <input
-                type="number"
-                name="lot_sq_ft"
-                value={form.lot_sq_ft}
+                type="text"
+                name="lotSize"
+                value={form.lotSize}
                 onChange={handleChange}
                 className="input-field"
-                placeholder="7405"
-                min="0"
+                placeholder="0.25 acres or 7405 sqft"
               />
             </div>
             <div>
@@ -374,9 +375,9 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
                 Property Type *
               </label>
               <select
-                name="property_type"
+                name="propertyType"
                 required
-                value={form.property_type}
+                value={form.propertyType}
                 onChange={handleChange}
                 className="input-field"
               >
@@ -392,14 +393,13 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
                 Year Built
               </label>
               <input
-                type="number"
-                name="year_built"
-                value={form.year_built}
+                type="text"
+                name="yearBuilt"
+                value={form.yearBuilt}
                 onChange={handleChange}
                 className="input-field"
                 placeholder="2015"
-                min="1800"
-                max={new Date().getFullYear() + 1}
+                maxLength="4"
               />
             </div>
             <div>
@@ -484,9 +484,29 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
           </div>
         </div>
 
-        {/* Highlights & Remarks */}
+        {/* Description */}
         <div>
-          <h3 className="text-md font-semibold text-gray-900 mb-3">Highlights & Remarks</h3>
+          <h3 className="text-md font-semibold text-gray-900 mb-3">Description</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Property Description
+              </label>
+              <textarea
+                name="description"
+                rows="4"
+                value={form.description}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Beautiful home with modern kitchen and spacious backyard. Great location near schools and shopping..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Highlights & Remarks (Advanced - Optional) */}
+        <div>
+          <h3 className="text-md font-semibold text-gray-900 mb-3">Bilingual Content (Optional)</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
