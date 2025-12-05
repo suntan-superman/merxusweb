@@ -4,6 +4,7 @@ import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import { updateLead, fetchFlyerLogs } from '../../api/estate';
 import LeadsTable from '../../components/leads/LeadsTable';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import LeadDetailModal from '../../components/leads/LeadDetailModal';
 
 export default function EstateLeadsPage() {
   const { agentId } = useAuth();
@@ -33,7 +34,6 @@ export default function EstateLeadsPage() {
 
   function handleEdit(lead) {
     setSelectedLead(lead);
-    // TODO: Open lead detail modal/drawer
   }
 
   async function loadFlyerLogs() {
@@ -82,40 +82,14 @@ export default function EstateLeadsPage() {
         onStatusChange={handleStatusChange}
       />
 
-      {/* TODO: Lead Detail Modal/Drawer */}
+      {/* Lead Detail Modal */}
       {selectedLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Lead Details</h3>
-              <button
-                onClick={() => setSelectedLead(null)}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <strong>Name:</strong> {selectedLead.caller_name || 'Unknown'}
-              </div>
-              <div>
-                <strong>Phone:</strong> {selectedLead.caller_phone || 'N/A'}
-              </div>
-              <div>
-                <strong>Email:</strong> {selectedLead.caller_email || 'N/A'}
-              </div>
-              <div>
-                <strong>Priority:</strong> {selectedLead.priority || 'warm'}
-              </div>
-              {selectedLead.notes && (
-                <div>
-                  <strong>Notes:</strong> {selectedLead.notes}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <LeadDetailModal
+          lead={selectedLead}
+          flyerLogs={flyerLogs}
+          onClose={() => setSelectedLead(null)}
+          onUpdate={loadFlyerLogs}
+        />
       )}
     </div>
   );

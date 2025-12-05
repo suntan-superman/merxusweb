@@ -575,12 +575,15 @@ export async function getSystemAnalytics(req: AuthenticatedRequest, res: Respons
       });
     }
 
-    // Get calls this month
+    // Get calls this month and calculate avg duration
     const thisMonth = new Date();
     thisMonth.setDate(1);
     thisMonth.setHours(0, 0, 0, 0);
 
     let callsThisMonth = 0;
+    let totalCallDuration = 0;
+    let callsWithDuration = 0;
+    
     for (const restaurantId of restaurantIds) {
       const callsSnap = await db
         .collection('restaurants')
@@ -589,6 +592,50 @@ export async function getSystemAnalytics(req: AuthenticatedRequest, res: Respons
         .where('startedAt', '>=', admin.firestore.Timestamp.fromDate(thisMonth))
         .get();
       callsThisMonth += callsSnap.size;
+      
+      // Calculate total duration for average
+      callsSnap.docs.forEach((doc) => {
+        const data = doc.data();
+        const duration = data.durationSec || data.duration || 0;
+        if (duration > 0) {
+          totalCallDuration += duration;
+          callsWithDuration++;
+        }
+      });
+    }
+
+    // Calculate avg duration in minutes
+    const avgCallDuration = callsWithDuration > 0 
+      ? Math.round((totalCallDuration / callsWithDuration) / 60 * 10) / 10 // Round to 1 decimal
+      : 0;
+
+    // Calculate active users (logged in within last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    let activeUsers = 0;
+    for (const restaurantId of restaurantIds) {
+      const usersSnap = await db
+        .collection('restaurants')
+        .doc(restaurantId)
+        .collection('users')
+        .get();
+      
+      usersSnap.docs.forEach((doc) => {
+        const data = doc.data();
+        if (data.lastLoginAt) {
+          const lastLogin = data.lastLoginAt.toDate ? data.lastLoginAt.toDate() : new Date(data.lastLoginAt);
+          if (lastLogin >= thirtyDaysAgo) {
+            activeUsers++;
+          }
+        } else {
+          // If no lastLoginAt, consider them active if recently invited
+          const invitedAt = data.invitedAt ? new Date(data.invitedAt) : null;
+          if (invitedAt && invitedAt >= thirtyDaysAgo) {
+            activeUsers++;
+          }
+        }
+      });
     }
 
     res.json({
@@ -597,11 +644,11 @@ export async function getSystemAnalytics(req: AuthenticatedRequest, res: Respons
       totalCalls,
       callsThisMonth,
       totalUsers,
-      activeUsers: totalUsers, // TODO: Calculate based on last login
+      activeUsers,
       ordersByStatus,
       ordersByType,
       usersByRole,
-      avgCallDuration: 5, // TODO: Calculate from actual call data
+      avgCallDuration,
     });
   } catch (err: any) {
     console.error('Error fetching analytics:', err);

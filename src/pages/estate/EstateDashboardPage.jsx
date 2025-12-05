@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
+import FlyerMetricsDashboard from '../../components/estate/FlyerMetricsDashboard';
 
 export default function EstateDashboardPage() {
   const { user, userClaims, agentId } = useAuth();
@@ -209,6 +210,9 @@ export default function EstateDashboardPage() {
           color="gray"
         />
       </div>
+
+      {/* Flyer Metrics Dashboard */}
+      <FlyerMetricsDashboard />
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

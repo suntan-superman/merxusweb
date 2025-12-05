@@ -61,6 +61,7 @@ import * as superAdminRoutes from './routes/superAdmin';
 import * as setupRoutes from './routes/setup';
 import billingRoutes from './routes/billing';
 import * as authRoutes from './routes/auth';
+import toastRoutes from './routes/toast';
 
 // Orders routes
 app.get('/orders', ordersRoutes.getOrders);
@@ -94,9 +95,24 @@ app.patch('/menu/:id', menuRoutes.toggleAvailability);
 app.get('/settings', settingsRoutes.getSettings);
 app.patch('/settings', settingsRoutes.updateSettings);
 
+// Toast POS Integration routes (for restaurant tenants)
+app.use('/', toastRoutes);
+
 // Voice/Office routes
 app.get('/voice/settings', voiceRoutes.getVoiceSettings);
 app.patch('/voice/settings', voiceRoutes.updateVoiceSettings);
+
+// Voice Users routes
+app.get('/voice/users', voiceRoutes.getVoiceUsers);
+app.post('/voice/users/invite', voiceRoutes.inviteVoiceUser);
+app.patch('/voice/users/:uid', voiceRoutes.updateVoiceUser);
+app.delete('/voice/users/:uid', voiceRoutes.deleteVoiceUser);
+
+// Voice routing rules
+app.get('/voice/routing-rules', voiceRoutes.getRoutingRules);
+app.post('/voice/routing-rules', voiceRoutes.createRoutingRule);
+app.patch('/voice/routing-rules/:ruleId', voiceRoutes.updateRoutingRule);
+app.delete('/voice/routing-rules/:ruleId', voiceRoutes.deleteRoutingRule);
 
 // Estate/Real Estate routes
 app.get('/estate/settings', estateRoutes.getEstateSettings);
@@ -183,4 +199,58 @@ export const api = functions
     serviceAccount: 'merxus-f0872@appspot.gserviceaccount.com',
   })
   .https.onRequest(app);
+
+// ---------------------------------------------------------------------
+// TOAST POS INTEGRATION - CLOUD FUNCTIONS
+// ---------------------------------------------------------------------
+
+import { autoPushOrderToToast, scheduleMenuSync } from './integrations/toast';
+
+/**
+ * Firestore Trigger: Auto-push orders to Toast when created
+ */
+export const onOrderCreated = functions
+  .region('us-central1')
+  .firestore
+  .document('restaurants/{restaurantId}/orders/{orderId}')
+  .onCreate(async (snap, context) => {
+    const { restaurantId, orderId } = context.params;
+    const orderData = snap.data();
+
+    console.log('📦 New order created, checking Toast auto-push:', {
+      restaurantId,
+      orderId,
+      source: orderData.source,
+    });
+
+    // Only auto-push orders from AI phone (not manual orders)
+    if (orderData.source === 'phone_ai' || orderData.source === 'ai_phone') {
+      try {
+        await autoPushOrderToToast(restaurantId, orderId);
+      } catch (error) {
+        console.error('Failed to auto-push order to Toast:', error);
+        // Don't throw - let order be created even if Toast push fails
+      }
+    }
+  });
+
+/**
+ * Scheduled Function: Sync menus from Toast hourly
+ */
+export const scheduledToastMenuSync = functions
+  .region('us-central1')
+  .pubsub
+  .schedule('0 * * * *') // Every hour at :00
+  .timeZone('America/Los_Angeles')
+  .onRun(async () => {
+    console.log('⏰ Running scheduled Toast menu sync...');
+    
+    try {
+      await scheduleMenuSync();
+      console.log('✅ Scheduled menu sync completed');
+    } catch (error) {
+      console.error('❌ Scheduled menu sync failed:', error);
+      throw error; // Re-throw so Cloud Scheduler marks as failed
+    }
+  });
 

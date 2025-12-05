@@ -43,6 +43,7 @@ import EstateShowingsPage from './pages/estate/EstateShowingsPage';
 import EstateCallsPage from './pages/estate/EstateCallsPage';
 import EstateSettingsPage from './pages/estate/EstateSettingsPage';
 import EstateUsersPage from './pages/estate/EstateUsersPage';
+import FlyerApprovalsPage from './pages/estate/FlyerApprovalsPage';
 import SupportPage from './pages/SupportPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import BillingPage from './pages/BillingPage';
@@ -135,10 +136,12 @@ function App() {
                     }
                   >
                     <Route index element={<EstateDashboardPage />} />
+                    <Route path="dashboard" element={<EstateDashboardPage />} />
                     <Route path="listings" element={<EstateListingsPage />} />
                     <Route path="leads" element={<EstateLeadsPage />} />
                     <Route path="showings" element={<EstateShowingsPage />} />
                     <Route path="calls" element={<EstateCallsPage />} />
+                    <Route path="flyers/approvals" element={<FlyerApprovalsPage />} />
                     <Route path="settings" element={<EstateSettingsPage />} />
                     <Route path="users" element={<EstateUsersPage />} />
                     <Route path="billing" element={<BillingPage />} />

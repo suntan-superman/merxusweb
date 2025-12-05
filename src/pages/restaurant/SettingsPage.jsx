@@ -96,7 +96,7 @@ export default function SettingsPage() {
       <RestaurantProfile settings={settings} onSave={handleSave} saving={saving} />
       <BusinessHours settings={settings} onSave={handleSave} saving={saving} />
       <NotificationSettings settings={settings} onSave={handleSave} saving={saving} />
-      <POSIntegration settings={settings} onSave={handleSave} saving={saving} />
+      <POSIntegration />
       <AISettings settings={settings} onSave={handleSave} saving={saving} />
     </div>
   );

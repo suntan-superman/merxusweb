@@ -43,3 +43,24 @@ export async function resendInvitationEmail(email) {
   }
 }
 
+// Routing Rules
+export async function getRoutingRules() {
+  const res = await apiClient.get('/voice/routing-rules');
+  return res.data;
+}
+
+export async function createRoutingRule(ruleData) {
+  const res = await apiClient.post('/voice/routing-rules', ruleData);
+  return res.data;
+}
+
+export async function updateRoutingRule(ruleId, updates) {
+  const res = await apiClient.patch(`/voice/routing-rules/${ruleId}`, updates);
+  return res.data;
+}
+
+export async function deleteRoutingRule(ruleId) {
+  const res = await apiClient.delete(`/voice/routing-rules/${ruleId}`);
+  return res.data;
+}
+
