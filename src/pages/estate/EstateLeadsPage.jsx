@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
-import { updateLead } from '../../api/estate';
+import { updateLead, fetchFlyerLogs } from '../../api/estate';
 import LeadsTable from '../../components/leads/LeadsTable';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
@@ -9,6 +9,8 @@ export default function EstateLeadsPage() {
   const { agentId } = useAuth();
   const [error, setError] = useState(null);
   const [selectedLead, setSelectedLead] = useState(null);
+  const [flyerLogs, setFlyerLogs] = useState([]);
+  const [flyerLogsError, setFlyerLogsError] = useState(null);
 
   const { data: leads = [], loading } = useFirestoreCollection(
     agentId ? `agents/${agentId}/leads` : null,
@@ -33,6 +35,21 @@ export default function EstateLeadsPage() {
     setSelectedLead(lead);
     // TODO: Open lead detail modal/drawer
   }
+
+  async function loadFlyerLogs() {
+    try {
+      setFlyerLogsError(null);
+      const data = await fetchFlyerLogs({ limit: 200 });
+      setFlyerLogs(data);
+    } catch (err) {
+      console.error(err);
+      setFlyerLogsError('Failed to load flyer logs.');
+    }
+  }
+
+  useEffect(() => {
+    loadFlyerLogs();
+  }, []);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -60,6 +77,7 @@ export default function EstateLeadsPage() {
 
       <LeadsTable
         leads={leads}
+        flyerLogs={flyerLogs}
         onEdit={handleEdit}
         onStatusChange={handleStatusChange}
       />

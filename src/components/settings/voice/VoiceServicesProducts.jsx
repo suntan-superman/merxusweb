@@ -156,13 +156,26 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
   function confirmDelete() {
     if (!deleteTarget) return;
 
+    const targetName = (deleteTarget.item?.name || deleteTarget.item?.name_en || '').toLowerCase();
+    const targetCategory = (deleteTarget.item?.category || '').toLowerCase();
+
     if (deleteTarget.type === 'service') {
-      const newServices = services.filter(s => s !== deleteTarget.item);
+      const newServices = services.filter((s) => {
+        const nameMatch = (s.name || s.name_en || '').toLowerCase() === targetName;
+        const categoryMatch = (s.category || '').toLowerCase() === targetCategory;
+        // Remove the first matching item (name + category)
+        return !(nameMatch && categoryMatch);
+      });
       handleSaveServices(newServices);
       const serviceName = deleteTarget.item.name || deleteTarget.item.name_en || 'Service';
       toast.success(`${serviceName} deleted successfully`);
     } else if (deleteTarget.type === 'product') {
-      const newProducts = products.filter(p => p !== deleteTarget.item);
+      const targetNotes = (deleteTarget.item?.notes || '').toLowerCase();
+      const newProducts = products.filter((p) => {
+        const nameMatch = (p.name || '').toLowerCase() === targetName;
+        const notesMatch = (p.notes || '').toLowerCase() === targetNotes;
+        return !(nameMatch && notesMatch);
+      });
       handleSaveProducts(newProducts);
       toast.success(`${deleteTarget.item.name} deleted successfully`);
     }
@@ -268,13 +281,21 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
     return (
       <div className="flex items-center gap-2">
         <button
-          onClick={() => handleEditService(props)}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditService(props);
+          }}
           className="text-primary-600 hover:text-primary-800 text-sm font-medium"
         >
           Edit
         </button>
         <button
-          onClick={() => handleDeleteService(props)}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteService(props);
+          }}
           className="text-red-600 hover:text-red-800 text-sm font-medium"
         >
           Delete
@@ -302,13 +323,21 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
     return (
       <div className="flex items-center gap-2">
         <button
-          onClick={() => handleEditProduct(props)}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditProduct(props);
+          }}
           className="text-primary-600 hover:text-primary-800 text-sm font-medium"
         >
           Edit
         </button>
         <button
-          onClick={() => handleDeleteProduct(props)}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteProduct(props);
+          }}
           className="text-red-600 hover:text-red-800 text-sm font-medium"
         >
           Delete

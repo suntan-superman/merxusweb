@@ -1,0 +1,41 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isMerxusAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'merxus_admin' ||
+         request.auth.token.role == 'merxus_support' ||
+         request.auth.token.role == 'super_admin');
+    }
+
+    // Agent / Real Estate flyers - PUBLIC READ (must be first/most specific)
+    match /agents/{agentId}/listings/{listingId}/flyers/{allPaths=**} {
+      allow read: if true; // Public read for email links
+      allow write, delete: if isMerxusAdmin() || (isAuthenticated() && request.auth.token.agentId == agentId);
+    }
+    
+    // All other agent files require authentication
+    match /agents/{agentId}/{allPaths=**} {
+      allow read, write: if isMerxusAdmin() || (isAuthenticated() && request.auth.token.agentId == agentId);
+    }
+
+    // Restaurants
+    match /restaurants/{restaurantId}/{allPaths=**} {
+      allow read, write: if isMerxusAdmin() || (isAuthenticated() && request.auth.token.restaurantId == restaurantId);
+    }
+
+    // Offices / Voice
+    match /offices/{officeId}/{allPaths=**} {
+      allow read, write: if isMerxusAdmin() || (isAuthenticated() && request.auth.token.officeId == officeId);
+    }
+
+    // Merxus admin-only area
+    match /merxus/{allPaths=**} {
+      allow read, write: if isMerxusAdmin();
+    }
+  }
+}

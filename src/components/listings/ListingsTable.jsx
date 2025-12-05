@@ -16,17 +16,46 @@ import {
 
 const GRID_STORAGE_KEY = 'merxus_estate_listings_grid_columns';
 
-export default function ListingsTable({ listings, onEdit, onDelete, onStatusChange }) {
+export default function ListingsTable({
+  listings,
+  flyerLogs = [],
+  onEdit,
+  onDelete,
+  onStatusChange,
+  onTestSend,
+}) {
   const gridData = useMemo(() => {
     if (!listings) return [];
-    return listings.map((listing) => ({
-      ...listing,
-      formattedPrice: listing.price ? `$${listing.price.toLocaleString()}` : 'N/A',
-      formattedAddress: formatAddress(listing),
-      formattedDate: formatDate(listing.createdAt),
-      statusBadge: listing.status || 'active',
-    }));
-  }, [listings]);
+
+    // Map latest flyer log by listingId
+    const flyerByListing = {};
+    flyerLogs.forEach((log) => {
+      if (!log.listingId) return;
+      const ts = log.sentAt?.toMillis?.() || 0;
+      if (!flyerByListing[log.listingId] || ts > flyerByListing[log.listingId].ts) {
+        flyerByListing[log.listingId] = {
+          status: log.status || 'sent',
+          isTest: !!log.isTest,
+          sentAt: log.sentAt,
+          ts,
+        };
+      }
+    });
+
+    return listings.map((listing) => {
+      const flyerLog = flyerByListing[listing.id] || null;
+      return {
+        ...listing,
+        formattedPrice: listing.price ? `$${listing.price.toLocaleString()}` : 'N/A',
+        formattedAddress: formatAddress(listing),
+        formattedDate: formatDate(listing.createdAt),
+        statusBadge: listing.status || 'active',
+        flyerStatus: flyerLog?.status || null,
+        flyerSentAt: flyerLog?.sentAt || null,
+        flyerIsTest: flyerLog?.isTest || false,
+      };
+    });
+  }, [listings, flyerLogs]);
 
   if (!listings || listings.length === 0) {
     return (
@@ -128,6 +157,12 @@ export default function ListingsTable({ listings, onEdit, onDelete, onStatusChan
         Edit
       </button>
       <button
+        onClick={() => onTestSend && onTestSend(props)}
+        className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+      >
+        Test send
+      </button>
+      <button
         onClick={() => onDelete && onDelete(props)}
         className="text-red-600 hover:text-red-700 text-sm font-medium"
       >
@@ -135,6 +170,29 @@ export default function ListingsTable({ listings, onEdit, onDelete, onStatusChan
       </button>
     </div>
   );
+
+  const flyerTemplate = (props) => {
+    if (!props.flyerStatus) {
+      return <span className="text-xs text-gray-500">No sends</span>;
+    }
+    const badgeClass =
+      props.flyerStatus === 'sent'
+        ? 'inline-flex items-center rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs font-medium'
+        : 'inline-flex items-center rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-xs font-medium';
+    return (
+      <div className="flex flex-col text-xs text-gray-700 gap-1">
+        <span className={badgeClass}>
+          {props.flyerStatus}
+          {props.flyerIsTest ? ' (test)' : ''}
+        </span>
+        {props.flyerSentAt?.toDate && (
+          <span className="text-[11px] text-gray-500">
+            {formatDate(props.flyerSentAt)}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -197,6 +255,14 @@ export default function ListingsTable({ listings, onEdit, onDelete, onStatusChan
             minWidth={120}
             allowFiltering={true}
             allowSorting={true}
+          />
+          <ColumnDirective
+            field="flyerStatus"
+            headerText="Flyer"
+            width={getColumnWidth('flyerStatus', 120)}
+            minWidth={100}
+            template={flyerTemplate}
+            allowFiltering={false}
           />
           <ColumnDirective
             field="actions"

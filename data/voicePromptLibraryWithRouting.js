@@ -1,3 +1,6 @@
+const GENERAL_CATEGORY = 'General';
+const GENERAL_INDUSTRY = 'General';
+
 /**
  * Voice Portal Prompt Library with Routing and FAQs
  * Generated from merxus_voice_bilingual_75_with_faqs_routing.json
@@ -130,13 +133,18 @@ function buildPromptFromComponents(langData, industryName, language, faqs = []) 
  * Get all unique categories
  */
 export function getCategories() {
-  return [...new Set(VOICE_PROMPT_LIBRARY.map(p => p.category))].sort();
+  const categories = new Set(VOICE_PROMPT_LIBRARY.map(p => p.category));
+  categories.add(GENERAL_CATEGORY);
+  return [...categories].sort();
 }
 
 /**
  * Get industries for a specific category
  */
 export function getIndustriesForCategory(category) {
+  if (category === GENERAL_CATEGORY) {
+    return [GENERAL_INDUSTRY];
+  }
   return [...new Set(
     VOICE_PROMPT_LIBRARY
       .filter(p => p.category === category)

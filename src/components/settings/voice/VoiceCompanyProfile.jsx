@@ -16,17 +16,28 @@ export default function VoiceCompanyProfile({ settings, onSave, saving }) {
     },
   });
 
-  const [categories] = useState(getCategories());
+  const [categories] = useState(() => {
+    const base = getCategories();
+    return Array.from(new Set([...base, 'General']));
+  });
   const [industries, setIndustries] = useState([]);
 
   // Load industries when category changes
   useEffect(() => {
     if (form.businessType.category) {
-      const categoryIndustries = getIndustriesForCategory(form.businessType.category);
+      const categoryIndustries = form.businessType.category === 'General'
+        ? ['General']
+        : getIndustriesForCategory(form.businessType.category);
+
       setIndustries(categoryIndustries);
       
-      // Reset industry if it's not in the new category
-      if (form.businessType.industry && !categoryIndustries.includes(form.businessType.industry)) {
+      // Reset or default industry when category changes
+      if (form.businessType.category === 'General') {
+        setForm((prev) => ({
+          ...prev,
+          businessType: { ...prev.businessType, industry: 'General' },
+        }));
+      } else if (form.businessType.industry && !categoryIndustries.includes(form.businessType.industry)) {
         setForm((prev) => ({
           ...prev,
           businessType: { ...prev.businessType, industry: '' },
@@ -40,7 +51,9 @@ export default function VoiceCompanyProfile({ settings, onSave, saving }) {
   // Initialize industries if category is already set
   useEffect(() => {
     if (settings.businessType?.category) {
-      const categoryIndustries = getIndustriesForCategory(settings.businessType.category);
+      const categoryIndustries = settings.businessType.category === 'General'
+        ? ['General']
+        : getIndustriesForCategory(settings.businessType.category);
       setIndustries(categoryIndustries);
     }
   }, []);

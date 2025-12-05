@@ -1,8 +1,151 @@
+// Flyer metrics (sent/pending/failed)
+export async function getFlyerMetrics(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const agentId = req.user?.agentId;
+    if (!agentId) {
+      res.status(403).json({ error: 'Agent ID required' });
+      return;
+    }
+
+    const queueSnap = await db
+      .collection('agents')
+      .doc(agentId)
+      .collection('flyerSendQueue')
+      .get();
+
+    const logsSnap = await db
+      .collection('agents')
+      .doc(agentId)
+      .collection('emailLogs')
+      .get();
+
+    const metrics = {
+      queue: {
+        pending: 0,
+        declined: 0,
+        failed: 0,
+        sent: 0,
+        total: queueSnap.size,
+      },
+      logs: {
+        sent: 0,
+        failed: 0,
+        total: logsSnap.size,
+      },
+    };
+
+    queueSnap.forEach((doc) => {
+      const status = doc.data()?.status || 'pending_agent_approval';
+      if (status === 'pending_agent_approval' || status === 'auto_send_ready') metrics.queue.pending += 1;
+      else if (status === 'declined') metrics.queue.declined += 1;
+      else if (status === 'failed') metrics.queue.failed += 1;
+      else if (status === 'sent') metrics.queue.sent += 1;
+    });
+
+    logsSnap.forEach((doc) => {
+      const status = doc.data()?.status || 'sent';
+      if (status === 'sent') metrics.logs.sent += 1;
+      else metrics.logs.failed += 1;
+    });
+
+    res.json(metrics);
+  } catch (err: any) {
+    console.error('Error fetching flyer metrics:', err);
+    res.status(500).json({ error: 'Failed to fetch flyer metrics' });
+  }
+}
 import { Response } from 'express';
 import * as admin from 'firebase-admin';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { sendEmail } from '../utils/email';
 
 const db = admin.firestore();
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Shared helper to send a listing flyer email and log the event.
+ */
+async function sendFlyerEmailInternal(params: {
+  agentId: string;
+  listingId: string;
+  leadEmail: string;
+  leadName?: string | null;
+  callId?: string | null;
+  leadId?: string | null;
+  isTest?: boolean;
+}) {
+  const { agentId, listingId, leadEmail, leadName, callId, leadId, isTest = false } = params;
+
+  if (!EMAIL_REGEX.test(leadEmail)) {
+    throw new Error('Invalid email format');
+  }
+
+  // Fetch listing
+  const listingRef = db.collection('agents').doc(agentId).collection('listings').doc(listingId);
+  const listingSnap = await listingRef.get();
+
+  if (!listingSnap.exists) {
+    throw new Error('Listing not found');
+  }
+
+  const listing = listingSnap.data() || {};
+  const address = listing.address || listing.propertyAddress || 'Property listing';
+  const flyerUrl = listing.flyerUrl || listing.flyerURL || null;
+  const price = listing.price ? `$${listing.price.toLocaleString?.() || listing.price}` : null;
+  const beds = listing.bedrooms || listing.beds;
+  const baths = listing.bathrooms || listing.baths;
+  const sqft = listing.squareFeet || listing.sqft;
+
+  if (!flyerUrl) {
+    throw new Error('No flyer on this listing');
+  }
+
+  // Build email content
+  const subject = `Listing flyer: ${address}`;
+  const details: string[] = [];
+  if (price) details.push(`<strong>Price:</strong> ${price}`);
+  if (beds || baths) details.push(`<strong>Beds/Baths:</strong> ${beds ?? '-'} / ${baths ?? '-'}`);
+  if (sqft) details.push(`<strong>Sq Ft:</strong> ${sqft}`);
+  if (listing.description) details.push(`<p>${listing.description}</p>`);
+
+  const flyerSection = `<p>You can view or download the flyer here: <a href="${flyerUrl}" target="_blank" rel="noopener noreferrer">${flyerUrl}</a></p>`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
+      <h2 style="margin: 0 0 12px 0;">${address}</h2>
+      ${details.length ? `<div style="margin-bottom: 12px;">${details.join('<br/>')}</div>` : ''}
+      ${flyerSection}
+      <p>Sent by Merxus AI on behalf of your agent.</p>
+    </div>
+  `;
+
+  const sendOk = await sendEmail({
+    to: leadEmail,
+    subject,
+    html,
+    disableClickTracking: true, // Prevent SendGrid from wrapping long Firebase Storage URLs
+  });
+
+  const logData = {
+    agentId,
+    listingId,
+    leadEmail,
+    leadName: leadName || null,
+    callId: callId || null,
+    leadId: leadId || null,
+    isTest,
+    status: sendOk ? 'sent' : 'failed',
+    sentAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  await db.collection('agents').doc(agentId).collection('emailLogs').add(logData);
+
+  if (!sendOk) {
+    throw new Error('Failed to send email via SendGrid');
+  }
+
+  return logData;
+}
 
 // Get estate settings
 export async function getEstateSettings(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -37,6 +180,7 @@ export async function getEstateSettings(req: AuthenticatedRequest, res: Response
         markets: [],
         languagesSupported: ['en', 'es'],
         timezone: 'America/Los_Angeles',
+        autoSendFlyers: false,
         businessHours: {
           monday: { open: '09:00', close: '18:00', closed: false },
           tuesday: { open: '09:00', close: '18:00', closed: false },
@@ -487,6 +631,252 @@ export async function getCalls(req: AuthenticatedRequest, res: Response): Promis
   } catch (err: any) {
     console.error('Error fetching calls:', err);
     res.status(500).json({ error: 'Failed to fetch calls' });
+  }
+}
+
+// Send listing flyer via email
+export async function sendListingFlyer(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const agentId = req.user?.agentId;
+    const { listingId, leadEmail, leadName, callId, leadId = null, confirmation = false } = req.body || {};
+
+    if (!agentId) {
+      res.status(403).json({ error: 'Agent ID required' });
+      return;
+    }
+
+    if (!listingId || !leadEmail) {
+      res.status(400).json({ error: 'listingId and leadEmail are required' });
+      return;
+    }
+
+    if (!confirmation) {
+      res.status(400).json({ error: 'Email send requires explicit confirmation' });
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(leadEmail)) {
+      res.status(400).json({ error: 'Invalid email format' });
+      return;
+    }
+
+    const logData = await sendFlyerEmailInternal({
+      agentId,
+      listingId,
+      leadEmail,
+      leadName,
+      callId,
+      leadId,
+      isTest: false,
+    });
+
+    res.json({ message: 'Flyer sent', log: logData });
+  } catch (err: any) {
+    console.error('Error sending listing flyer:', err);
+    res.status(500).json({ error: 'Failed to send listing flyer' });
+  }
+}
+
+// Send test flyer (manual test to a specified email)
+export async function sendListingFlyerTest(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const agentId = req.user?.agentId;
+    const { listingId, testEmail } = req.body || {};
+
+    if (!agentId) {
+      res.status(403).json({ error: 'Agent ID required' });
+      return;
+    }
+
+    if (!listingId || !testEmail) {
+      res.status(400).json({ error: 'listingId and testEmail are required' });
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(testEmail)) {
+      res.status(400).json({ error: 'Invalid email format' });
+      return;
+    }
+
+    const logData = await sendFlyerEmailInternal({
+      agentId,
+      listingId,
+      leadEmail: testEmail,
+      leadName: 'Test Recipient',
+      callId: null,
+      leadId: null,
+      isTest: true,
+    });
+
+    res.json({ message: 'Test flyer sent', log: logData });
+  } catch (err: any) {
+    console.error('Error sending test flyer:', err);
+    res.status(500).json({ error: 'Failed to send test flyer' });
+  }
+}
+
+// Get flyer send queue (pending/declined/failed)
+export async function getFlyerQueue(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const agentId = req.user?.agentId;
+    if (!agentId) {
+      res.status(403).json({ error: 'Agent ID required' });
+      return;
+    }
+
+    const limit = Number(req.query.limit || 50);
+    const queueSnap = await db
+      .collection('agents')
+      .doc(agentId)
+      .collection('flyerSendQueue')
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get();
+
+    const items = queueSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    res.json(items);
+  } catch (err: any) {
+    console.error('Error fetching flyer queue:', err);
+    res.status(500).json({ error: 'Failed to fetch flyer queue' });
+  }
+}
+
+// Get recent flyer send logs (sent/failed)
+export async function getFlyerLogs(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const agentId = req.user?.agentId;
+    if (!agentId) {
+      res.status(403).json({ error: 'Agent ID required' });
+      return;
+    }
+
+    const limit = Number(req.query.limit || 50);
+    const listingIdFilter = req.query.listingId as string | undefined;
+    const leadIdFilter = req.query.leadId as string | undefined;
+
+    let query: FirebaseFirestore.Query = db
+      .collection('agents')
+      .doc(agentId)
+      .collection('emailLogs')
+      .orderBy('sentAt', 'desc')
+      .limit(limit);
+
+    if (listingIdFilter) {
+      query = query.where('listingId', '==', listingIdFilter);
+    }
+    if (leadIdFilter) {
+      query = query.where('leadId', '==', leadIdFilter);
+    }
+
+    const snap = await query.get();
+    const items = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    res.json(items);
+  } catch (err: any) {
+    console.error('Error fetching flyer logs:', err);
+    res.status(500).json({ error: 'Failed to fetch flyer logs' });
+  }
+}
+
+// Approve and send a queued flyer (requires flyerUrl and listingId)
+export async function approveFlyerQueue(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const agentId = req.user?.agentId;
+    const { id } = req.params;
+
+    if (!agentId) {
+      res.status(403).json({ error: 'Agent ID required' });
+      return;
+    }
+
+    const queueRef = db.collection('agents').doc(agentId).collection('flyerSendQueue').doc(id);
+    const queueSnap = await queueRef.get();
+
+    if (!queueSnap.exists) {
+      res.status(404).json({ error: 'Queue item not found' });
+      return;
+    }
+
+    const queue = queueSnap.data() || {};
+    if (queue.status && queue.status !== 'pending_agent_approval' && queue.status !== 'auto_send_ready') {
+      res.status(400).json({ error: `Queue item not pending: ${queue.status}` });
+      return;
+    }
+
+    if (!queue.listingId || !queue.flyerUrl || !queue.leadEmail) {
+      res.status(400).json({ error: 'Queue item missing listingId, flyerUrl, or leadEmail' });
+      return;
+    }
+
+    try {
+      const logData = await sendFlyerEmailInternal({
+        agentId,
+        listingId: queue.listingId,
+        leadEmail: queue.leadEmail,
+        leadName: queue.leadName || null,
+        callId: queue.callSid || queue.callId || null,
+      });
+
+      await queueRef.set(
+        {
+          status: 'sent',
+          consentConfirmed: true,
+          sentAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastError: null,
+          emailLog: logData,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      res.json({ message: 'Flyer sent', log: logData });
+    } catch (sendErr: any) {
+      await queueRef.set(
+        {
+          status: 'failed',
+          lastError: sendErr?.message || 'Unknown send error',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      res.status(500).json({ error: sendErr?.message || 'Failed to send flyer' });
+    }
+  } catch (err: any) {
+    console.error('Error approving flyer queue:', err);
+    res.status(500).json({ error: 'Failed to approve flyer queue' });
+  }
+}
+
+// Decline a queued flyer
+export async function declineFlyerQueue(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const agentId = req.user?.agentId;
+    const { id } = req.params;
+
+    if (!agentId) {
+      res.status(403).json({ error: 'Agent ID required' });
+      return;
+    }
+
+    const queueRef = db.collection('agents').doc(agentId).collection('flyerSendQueue').doc(id);
+    const queueSnap = await queueRef.get();
+
+    if (!queueSnap.exists) {
+      res.status(404).json({ error: 'Queue item not found' });
+      return;
+    }
+
+    await queueRef.set(
+      {
+        status: 'declined',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    res.json({ message: 'Flyer request declined' });
+  } catch (err: any) {
+    console.error('Error declining flyer queue:', err);
+    res.status(500).json({ error: 'Failed to decline flyer queue' });
   }
 }
 

@@ -16,17 +16,39 @@ import {
 
 const GRID_STORAGE_KEY = 'merxus_estate_leads_grid_columns';
 
-export default function LeadsTable({ leads, onEdit, onStatusChange }) {
+export default function LeadsTable({ leads, flyerLogs = [], onEdit, onStatusChange }) {
   const gridData = useMemo(() => {
     if (!leads) return [];
-    return leads.map((lead) => ({
-      ...lead,
-      formattedDate: formatDate(lead.captured_at || lead.createdAt),
-      formattedPhone: formatPhone(lead.caller_phone),
-      interestedListingsCount: lead.interested_listing_ids?.length || 0,
-      priorityBadge: lead.priority || 'warm',
-    }));
-  }, [leads]);
+
+    const flyerByLead = {};
+    flyerLogs.forEach((log) => {
+      const leadId = log.leadId;
+      if (!leadId) return;
+      const ts = log.sentAt?.toMillis?.() || 0;
+      if (!flyerByLead[leadId] || ts > flyerByLead[leadId].ts) {
+        flyerByLead[leadId] = {
+          status: log.status || 'sent',
+          isTest: !!log.isTest,
+          sentAt: log.sentAt,
+          ts,
+        };
+      }
+    });
+
+    return leads.map((lead) => {
+      const flyerLog = flyerByLead[lead.id] || null;
+      return {
+        ...lead,
+        formattedDate: formatDate(lead.captured_at || lead.createdAt),
+        formattedPhone: formatPhone(lead.caller_phone),
+        interestedListingsCount: lead.interested_listing_ids?.length || 0,
+        priorityBadge: lead.priority || 'warm',
+        flyerStatus: flyerLog?.status || null,
+        flyerSentAt: flyerLog?.sentAt || null,
+        flyerIsTest: flyerLog?.isTest || false,
+      };
+    });
+  }, [leads, flyerLogs]);
 
   if (!leads || leads.length === 0) {
     return (
@@ -117,6 +139,29 @@ export default function LeadsTable({ leads, onEdit, onStatusChange }) {
       )}
     </div>
   );
+
+  const flyerTemplate = (props) => {
+    if (!props.flyerStatus) {
+      return <span className="text-xs text-gray-500">No sends</span>;
+    }
+    const badgeClass =
+      props.flyerStatus === 'sent'
+        ? 'inline-flex items-center rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs font-medium'
+        : 'inline-flex items-center rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-xs font-medium';
+    return (
+      <div className="flex flex-col text-xs text-gray-700 gap-1">
+        <span className={badgeClass}>
+          {props.flyerStatus}
+          {props.flyerIsTest ? ' (test)' : ''}
+        </span>
+        {props.flyerSentAt?.toDate && (
+          <span className="text-[11px] text-gray-500">
+            {formatDate(props.flyerSentAt)}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   const listingsTemplate = (props) => (
     <div className="text-sm text-gray-900">
@@ -223,6 +268,14 @@ export default function LeadsTable({ leads, onEdit, onStatusChange }) {
             minWidth={120}
             allowFiltering={true}
             allowSorting={true}
+          />
+          <ColumnDirective
+            field="flyerStatus"
+            headerText="Flyer"
+            width={getColumnWidth('flyerStatus', 120)}
+            minWidth={100}
+            template={flyerTemplate}
+            allowFiltering={false}
           />
           <ColumnDirective
             field="actions"

@@ -112,6 +112,20 @@ app.post('/estate/showings', estateRoutes.createShowing);
 app.patch('/estate/showings/:id', estateRoutes.updateShowing);
 app.delete('/estate/showings/:id', estateRoutes.deleteShowing);
 app.get('/estate/calls', estateRoutes.getCalls);
+app.post('/estate/listings/:id/send-flyer', (req, res, next) => {
+  // map param to body for handler
+  req.body = { ...(req.body || {}), listingId: req.params.id };
+  return estateRoutes.sendListingFlyer(req as any, res);
+});
+app.post('/estate/listings/:id/send-flyer-test', (req, res, next) => {
+  req.body = { ...(req.body || {}), listingId: req.params.id };
+  return estateRoutes.sendListingFlyerTest(req as any, res);
+});
+app.get('/estate/flyers/queue', estateRoutes.getFlyerQueue);
+app.post('/estate/flyers/queue/:id/approve', estateRoutes.approveFlyerQueue);
+app.post('/estate/flyers/queue/:id/decline', estateRoutes.declineFlyerQueue);
+app.get('/estate/flyers/logs', estateRoutes.getFlyerLogs);
+app.get('/estate/flyers/metrics', estateRoutes.getFlyerMetrics);
 
 // Admin Users routes
 app.get('/admin/users', adminUsersRoutes.getUsers);

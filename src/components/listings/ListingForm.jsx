@@ -1,5 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../firebase/config';
+import { useAuth } from '../../context/AuthContext';
 import FormModal from '../common/FormModal';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 const PROPERTY_TYPES = [
   { value: 'Single Family', label: 'Single Family' },
@@ -18,7 +22,9 @@ const STATUS_OPTIONS = [
   { value: 'withdrawn', label: 'Withdrawn' },
 ];
 
-export default function ListingForm({ open, onClose, onSave, editing = null }) {
+export default function ListingForm({ open, onClose, onSave, editing = null, onTestSend = null }) {
+  const { agentId } = useAuth();
+  const fileInputRef = useRef(null);
   const [form, setForm] = useState({
     address: '',
     city: '',
@@ -38,10 +44,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
     has_garage: false,
     parking_spaces: '',
     features: [],
-    highlights_en: '',
-    highlights_es: '',
-    remarks_en: '',
-    remarks_es: '',
+    highlights: '',
     photos: [],
     virtual_tour_url: '',
     showing_instructions: '',
@@ -50,10 +53,17 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
       start: '',
       end: '',
     },
+    flyerUrl: '',
   });
 
   const [newFeature, setNewFeature] = useState('');
   const [newPhoto, setNewPhoto] = useState('');
+  const flyerAvailable = !!(editing?.flyerUrl || editing?.flyerURL);
+  const [flyerStatus, setFlyerStatus] = useState(null); // { type: 'success'|'error'|'info', message: string }
+  const [uploading, setUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   useEffect(() => {
     if (editing) {
@@ -76,14 +86,12 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
         has_garage: editing.has_garage || false,
         parking_spaces: editing.parking_spaces || '',
         features: editing.features || [],
-        highlights_en: editing.highlights_en || '',
-        highlights_es: editing.highlights_es || '',
-        remarks_en: editing.remarks_en || '',
-        remarks_es: editing.remarks_es || '',
+        highlights: editing.highlights || editing.highlights_en || '',
         photos: editing.photos || [],
         virtual_tour_url: editing.virtual_tour_url || '',
         showing_instructions: editing.showing_instructions || '',
         open_house: editing.open_house || { date: '', start: '', end: '' },
+        flyerUrl: editing.flyerUrl || editing.flyerURL || '',
       });
     } else {
       // Reset form for new listing
@@ -106,20 +114,20 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
         has_garage: false,
         parking_spaces: '',
         features: [],
-        highlights_en: '',
-        highlights_es: '',
-        remarks_en: '',
-        remarks_es: '',
+        highlights: '',
         photos: [],
         virtual_tour_url: '',
         showing_instructions: '',
         open_house: { date: '', start: '', end: '' },
+        flyerUrl: '',
       });
     }
+    setHasUnsavedChanges(false);
   }, [editing, open]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
+    setHasUnsavedChanges(true);
     if (name.startsWith('open_house.')) {
       const field = name.split('.')[1];
       setForm((prev) => ({
@@ -136,6 +144,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
 
   function handleAddFeature() {
     if (newFeature.trim()) {
+      setHasUnsavedChanges(true);
       setForm((prev) => ({
         ...prev,
         features: [...prev.features, newFeature.trim()],
@@ -145,6 +154,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
   }
 
   function handleRemoveFeature(index) {
+    setHasUnsavedChanges(true);
     setForm((prev) => ({
       ...prev,
       features: prev.features.filter((_, i) => i !== index),
@@ -153,6 +163,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
 
   function handleAddPhoto() {
     if (newPhoto.trim()) {
+      setHasUnsavedChanges(true);
       setForm((prev) => ({
         ...prev,
         photos: [...prev.photos, newPhoto.trim()],
@@ -162,10 +173,25 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
   }
 
   function handleRemovePhoto(index) {
+    setHasUnsavedChanges(true);
     setForm((prev) => ({
       ...prev,
       photos: prev.photos.filter((_, i) => i !== index),
     }));
+  }
+
+  function handleClose() {
+    if (hasUnsavedChanges) {
+      setShowCloseConfirm(true);
+    } else {
+      onClose();
+    }
+  }
+
+  function handleConfirmClose() {
+    setShowCloseConfirm(false);
+    setHasUnsavedChanges(false);
+    onClose();
   }
 
   function handleSubmit(e) {
@@ -185,21 +211,117 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
         start: form.open_house.start || null,
         end: form.open_house.end || null,
       },
+      flyerUrl: form.flyerUrl || '',
     };
 
+    setHasUnsavedChanges(false);
     onSave(listingData);
   }
 
+  const handleFlyerFileSelect = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFlyerUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!editing?.id) {
+      setFlyerStatus({ type: 'error', message: 'Save the listing first, then upload a flyer.' });
+      return;
+    }
+
+    if (!agentId) {
+      setFlyerStatus({ type: 'error', message: 'Missing agent ID; re-authenticate and retry.' });
+      return;
+    }
+
+    const isPdf = file.type === 'application/pdf';
+    const isImage = file.type.startsWith('image/');
+    if (!isPdf && !isImage) {
+      setFlyerStatus({ type: 'error', message: 'Only PDF or image files are allowed.' });
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setFlyerStatus({ type: 'info', message: 'Uploading flyer…' });
+      const safeName = file.name.replace(/\s+/g, '-');
+      const path = `agents/${agentId}/listings/${editing.id}/flyers/${Date.now()}-${safeName}`;
+      const storageRef = ref(storage, path);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setForm((prev) => ({ ...prev, flyerUrl: url }));
+      setHasUnsavedChanges(true);
+      setFlyerStatus({ type: 'success', message: 'Flyer uploaded. Click Save to commit.' });
+    } catch (err) {
+      console.error('Flyer upload error:', err);
+      setFlyerStatus({ type: 'error', message: 'Upload failed. Please retry.' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (!open) return null;
 
+  const headerActions = (
+    <>
+      <button type="button" onClick={handleClose} className="btn-secondary">
+        Cancel
+      </button>
+      <button type="submit" form="listing-form" className="btn-primary">
+        {editing ? 'Update Listing' : 'Create Listing'}
+      </button>
+    </>
+  );
+
   return (
+    <>
     <FormModal
       isOpen={open}
-      onClose={onClose}
+      onClose={handleClose}
       title={editing ? 'Edit Listing' : 'Add New Listing'}
       width="900px"
+      resizable={true}
+      storageKey="listing-form-modal"
+      headerActions={headerActions}
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="listing-form" onSubmit={handleSubmit} className="space-y-4">
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            {[
+              { id: 'basic', label: 'Basic Info', icon: 'home' },
+              { id: 'details', label: 'Property Details', icon: 'info' },
+              { id: 'marketing', label: 'Marketing', icon: 'description' },
+              { id: 'media', label: 'Flyer & Media', icon: 'photo' },
+              { id: 'showing', label: 'Showing', icon: 'event' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm
+                  ${activeTab === tab.id
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }
+                `}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div className="py-4" style={{ minHeight: '600px' }}>
+        {activeTab === 'basic' && (
+        <div>
         {/* Basic Information */}
         <div>
           <h3 className="text-md font-semibold text-gray-900 mb-3">Basic Information</h3>
@@ -294,7 +416,11 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
             </div>
           </div>
         </div>
+        </div>
+        )}
 
+        {activeTab === 'details' && (
+        <div>
         {/* Pricing & Details */}
         <div>
           <h3 className="text-md font-semibold text-gray-900 mb-3">Pricing & Details</h3>
@@ -483,7 +609,11 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
             </label>
           </div>
         </div>
+        </div>
+        )}
 
+        {activeTab === 'marketing' && (
+        <div>
         {/* Description */}
         <div>
           <h3 className="text-md font-semibold text-gray-900 mb-3">Description</h3>
@@ -510,59 +640,27 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Highlights (English)
+                Highlights
               </label>
               <textarea
-                name="highlights_en"
-                rows="3"
-                value={form.highlights_en}
+                name="highlights"
+                rows="4"
+                value={form.highlights}
                 onChange={handleChange}
                 className="input-field"
-                placeholder="Beautiful 4-bed, 3-bath home in Northwest Bakersfield..."
+                placeholder="Beautiful 4-bed, 3-bath home in Northwest Bakersfield with modern finishes..."
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Highlights (Spanish)
-              </label>
-              <textarea
-                name="highlights_es"
-                rows="3"
-                value={form.highlights_es}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="Hermosa casa de 4 recámaras y 3 baños..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Remarks (English)
-              </label>
-              <textarea
-                name="remarks_en"
-                rows="3"
-                value={form.remarks_en}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="Located in a quiet cul-de-sac..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Remarks (Spanish)
-              </label>
-              <textarea
-                name="remarks_es"
-                rows="3"
-                value={form.remarks_es}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="Ubicada en una calle sin salida tranquila..."
-              />
+              <p className="text-xs text-gray-500 mt-1">
+                Enter highlights in English. The AI assistant will translate for Spanish-speaking callers automatically.
+              </p>
             </div>
           </div>
         </div>
+        </div>
+        )}
 
+        {activeTab === 'showing' && (
+        <div>
         {/* Open House */}
         <div>
           <h3 className="text-md font-semibold text-gray-900 mb-3">Open House</h3>
@@ -603,6 +701,92 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
                 className="input-field"
               />
             </div>
+          </div>
+        </div>
+        </div>
+        )}
+
+        {activeTab === 'media' && (
+        <div>
+        {/* Flyer Upload */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-md font-semibold text-gray-900">Flyer</h3>
+              <p className="text-sm text-gray-600">
+                Upload a PDF or image to include in flyer emails.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleFlyerFileSelect}
+                disabled={uploading || !editing}
+                title={editing ? '' : 'Save the listing before uploading'}
+              >
+                {uploading ? 'Uploading…' : 'Upload Flyer'}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setForm((prev) => ({ ...prev, flyerUrl: '' }));
+                  setFlyerStatus({ type: 'info', message: 'Flyer removed. Save to apply.' });
+                }}
+                disabled={!form.flyerUrl}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf,image/*"
+            className="hidden"
+            onChange={handleFlyerUpload}
+          />
+
+          <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Flyer URL (optional)
+            </label>
+            <input
+              type="url"
+              name="flyerUrl"
+              value={form.flyerUrl}
+              onChange={(e) => setForm((prev) => ({ ...prev, flyerUrl: e.target.value }))}
+              className="input-field"
+              placeholder="https://your-storage.com/flyers/listing.pdf"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              You can paste a URL or upload to generate one. Remember to save after changes.
+            </p>
+            {form.flyerUrl && (
+              <a
+                href={form.flyerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-600 text-sm inline-flex items-center gap-1 mt-2"
+              >
+                View current flyer
+              </a>
+            )}
+            {flyerStatus && (
+              <p
+                className={`text-xs mt-2 ${
+                  flyerStatus.type === 'error'
+                    ? 'text-red-600'
+                    : flyerStatus.type === 'success'
+                    ? 'text-green-700'
+                    : 'text-gray-600'
+                }`}
+              >
+                {flyerStatus.message}
+              </p>
+            )}
           </div>
         </div>
 
@@ -677,17 +861,47 @@ export default function ListingForm({ open, onClose, onSave, editing = null }) {
           </div>
         </div>
 
-        {/* Form Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <button type="button" onClick={onClose} className="btn-secondary">
-            Cancel
-          </button>
-          <button type="submit" className="btn-primary">
-            {editing ? 'Update Listing' : 'Create Listing'}
-          </button>
+        {/* Test Send Flyer (only for editing) */}
+        {editing && onTestSend && (
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Test Flyer Email</p>
+                <p className="text-xs text-gray-600">
+                  {flyerAvailable
+                    ? 'Send a test flyer email to verify content and formatting.'
+                    : 'Upload a flyer above to enable test sends.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                className={`btn-secondary ${!flyerAvailable ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={() => flyerAvailable && onTestSend(editing)}
+                disabled={!flyerAvailable}
+              >
+                Send Test
+              </button>
+            </div>
+          </div>
+        )}
+
+        </div>
+        )}
         </div>
       </form>
     </FormModal>
+
+    <ConfirmationModal
+      isOpen={showCloseConfirm}
+      onClose={() => setShowCloseConfirm(false)}
+      onConfirm={handleConfirmClose}
+      title="Unsaved Changes"
+      message="You have unsaved changes. Are you sure you want to close? All changes will be lost."
+      confirmText="Close Without Saving"
+      cancelText="Keep Editing"
+      variant="warning"
+    />
+    </>
   );
 }
 

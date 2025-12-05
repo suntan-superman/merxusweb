@@ -10,6 +10,7 @@ interface EmailOptions {
   text?: string;
   templateId?: string;
   dynamicTemplateData?: Record<string, any>;
+  disableClickTracking?: boolean;
 }
 
 /**
@@ -66,6 +67,15 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       msg.text = options.text || options.html.replace(/<[^>]*>/g, '');
     } else {
       throw new Error('Either templateId with dynamicTemplateData or html must be provided');
+    }
+
+    // Disable click tracking if requested (prevents SendGrid from wrapping URLs)
+    if (options.disableClickTracking) {
+      msg.trackingSettings = {
+        clickTracking: {
+          enable: false,
+        },
+      };
     }
 
     await sgMail.default.send(msg);
