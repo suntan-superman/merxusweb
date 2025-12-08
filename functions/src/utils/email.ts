@@ -358,3 +358,143 @@ export async function sendTeamInvitation(
   });
 }
 
+/**
+ * Send new signup notification to sales team
+ * Alerts sales@merxusllc.com whenever a new tenant is created
+ */
+export async function sendSalesNotification(signupData: {
+  tenantType: string;
+  businessName: string;
+  ownerName: string;
+  ownerEmail: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  plan?: string;
+  twilioNumber?: string;
+  tenantId: string;
+}): Promise<boolean> {
+  const {
+    tenantType,
+    businessName,
+    ownerName,
+    ownerEmail,
+    phone,
+    address,
+    city,
+    state,
+    zip,
+    plan,
+    twilioNumber,
+    tenantId,
+  } = signupData;
+
+  // Format tenant type for display
+  const tenantTypeDisplay = {
+    'restaurant': '🍽️ Restaurant',
+    'voice': '📞 Professional Office',
+    'real_estate': '🏡 Real Estate',
+    'general': '💼 General Business',
+  }[tenantType] || tenantType;
+
+  // Build location string
+  const location = [city, state, zip].filter(Boolean).join(', ');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>New Merxus Signup!</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #10b981; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: white; margin: 0;">🎉 New Signup!</h1>
+      </div>
+      <div style="background-color: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+        <p style="font-size: 16px; color: #10b981; font-weight: bold;">A new user just signed up for Merxus!</p>
+        
+        <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280; width: 35%;">Tenant Type:</td>
+            <td style="padding: 12px 0;">${tenantTypeDisplay}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Business Name:</td>
+            <td style="padding: 12px 0;">${businessName}</td>
+          </tr>
+          ${plan ? `
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Plan:</td>
+            <td style="padding: 12px 0;">${plan}</td>
+          </tr>
+          ` : ''}
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Owner Name:</td>
+            <td style="padding: 12px 0;">${ownerName}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Email:</td>
+            <td style="padding: 12px 0;"><a href="mailto:${ownerEmail}" style="color: #10b981;">${ownerEmail}</a></td>
+          </tr>
+          ${phone ? `
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Phone:</td>
+            <td style="padding: 12px 0;"><a href="tel:${phone}" style="color: #10b981;">${phone}</a></td>
+          </tr>
+          ` : ''}
+          ${twilioNumber ? `
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Twilio Number:</td>
+            <td style="padding: 12px 0;"><a href="tel:${twilioNumber}" style="color: #10b981;">${twilioNumber}</a></td>
+          </tr>
+          ` : ''}
+          ${location ? `
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Location:</td>
+            <td style="padding: 12px 0;">${location}</td>
+          </tr>
+          ` : ''}
+          ${address ? `
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Address:</td>
+            <td style="padding: 12px 0;">${address}</td>
+          </tr>
+          ` : ''}
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Tenant ID:</td>
+            <td style="padding: 12px 0; font-family: monospace; font-size: 12px;">${tenantId}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 12px 0; font-weight: bold; color: #6b7280;">Signed Up:</td>
+            <td style="padding: 12px 0;">${new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} PST</td>
+          </tr>
+        </table>
+
+        <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #065f46;">
+            <strong>Next Steps:</strong><br>
+            • Follow up with a welcome call<br>
+            • Schedule onboarding/demo if needed<br>
+            • Monitor for support requests
+          </p>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #9ca3af;">
+        <p>This is an automated notification from Merxus.</p>
+        <p>© ${new Date().getFullYear()} Merxus. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: 'sales@merxusllc.com',
+    subject: `🎉 New ${tenantTypeDisplay} Signup - ${businessName}`,
+    html,
+  });
+}
+

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as admin from 'firebase-admin';
+import { sendSalesNotification } from '../utils/email';
 
 const db = admin.firestore();
 
@@ -210,6 +211,18 @@ export async function createOffice(req: Request, res: Response): Promise<void> {
     if (!emailSent) {
     }
 
+    // Send sales notification (non-blocking)
+    sendSalesNotification({
+      tenantType: 'voice',
+      businessName: office.name,
+      ownerName: owner.displayName,
+      ownerEmail: owner.email,
+      phone: office.phoneNumber,
+      address: office.address,
+      twilioNumber: office.twilioPhoneNumber,
+      tenantId: officeId,
+    }).catch((error) => console.error('Failed to send sales notification:', error));
+
     res.status(201).json({
       officeId,
       message: 'Office created successfully',
@@ -397,6 +410,18 @@ Use the restaurant's cuisine style and personality in your tone.`;
     } catch (emailError: any) {
       // SendGrid failed, will fall back to Firebase Auth
     }
+
+    // Send sales notification (non-blocking)
+    sendSalesNotification({
+      tenantType: 'restaurant',
+      businessName: restaurant.name,
+      ownerName: manager.displayName,
+      ownerEmail: manager.email,
+      phone: restaurant.phoneNumber,
+      address: restaurant.address,
+      twilioNumber: restaurant.twilioPhoneNumber,
+      tenantId: restaurantId,
+    }).catch((error) => console.error('Failed to send sales notification:', error));
 
     res.status(201).json({
       restaurantId,
@@ -659,6 +684,18 @@ export async function createAgent(req: Request, res: Response): Promise<void> {
     // OR the frontend can call sendPasswordResetEmail() with the same email
     if (!emailSent) {
     }
+
+    // Send sales notification (non-blocking)
+    sendSalesNotification({
+      tenantType: 'real_estate',
+      businessName: agent.brandName || `${agent.name} Team`,
+      ownerName: agent.name,
+      ownerEmail: owner.email,
+      phone: agent.phoneNumber,
+      address: agent.address,
+      twilioNumber: agent.twilioPhoneNumber,
+      tenantId: agentId,
+    }).catch((error) => console.error('Failed to send sales notification:', error));
 
     res.status(201).json({
       agentId,
