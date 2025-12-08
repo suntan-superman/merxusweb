@@ -43,9 +43,9 @@ export default function EstateSidebar() {
   const isManager = userClaims?.role === 'manager';
 
   return (
-    <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
+    <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen">
       {/* Agent Name */}
-      <div className="px-5 py-5 border-b border-gray-200">
+      <div className="px-5 py-5 border-b border-gray-200 flex-shrink-0">
         <NavLink to="/estate" className="block">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🏡</span>
@@ -57,8 +57,8 @@ export default function EstateSidebar() {
         </NavLink>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      {/* Navigation - Scrollable */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <NavItem to="/estate" label="Dashboard" icon="📊" />
         <NavItem to="/estate/listings" label="Listings" icon="🏠" />
         <NavItem to="/estate/leads" label="Leads" icon="👥" />
@@ -71,8 +71,8 @@ export default function EstateSidebar() {
         )}
       </nav>
 
-      {/* User Info */}
-      <div className="px-3 py-4 border-t border-gray-200">
+      {/* User Info - Sticky at Bottom */}
+      <div className="px-3 py-4 border-t border-gray-200 flex-shrink-0 bg-white">
         <div className="flex items-center space-x-3 mb-3">
           <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
             <span className="text-primary-600 font-semibold text-sm">
@@ -106,8 +106,8 @@ function NavItem({ to, label, icon }) {
       className={({ isActive }) =>
         `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
           isActive
-            ? 'bg-primary-50 text-primary-700'
-            : 'text-gray-700 hover:bg-gray-100'
+            ? 'bg-green-50 text-green-700'
+            : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
         }`
       }
     >

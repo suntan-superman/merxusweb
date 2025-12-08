@@ -62,6 +62,7 @@ import * as setupRoutes from './routes/setup';
 import billingRoutes from './routes/billing';
 import * as authRoutes from './routes/auth';
 import toastRoutes from './routes/toast';
+import * as twilioProvisioningRoutes from './routes/twilioProvisioning';
 
 // Orders routes
 app.get('/orders', ordersRoutes.getOrders);
@@ -190,6 +191,12 @@ app.use('/billing', billingRoutes);
 // Auth utility routes (authenticated)
 app.post('/auth/refresh-claims', authRoutes.refreshClaims);
 app.get('/auth/claims', authRoutes.getClaims);
+
+// Twilio Provisioning routes (authenticated)
+app.get('/twilio-provisioning/search', twilioProvisioningRoutes.searchAvailableNumbers);
+app.post('/twilio-provisioning/purchase', twilioProvisioningRoutes.purchasePhoneNumber);
+app.post('/twilio-provisioning/release', twilioProvisioningRoutes.releasePhoneNumber);
+app.post('/twilio-provisioning/validate', twilioProvisioningRoutes.validateTwilioCredentials);
 
 // Export the Express app as a Cloud Function
 // Use App Engine default service account instead of Compute Engine default

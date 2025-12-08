@@ -10,6 +10,7 @@ import Home from './pages/Home';
 import Features from './pages/Features';
 import Pricing from './pages/Pricing';
 import Onboarding from './pages/Onboarding';
+import OnboardingWizardDemo from './pages/OnboardingWizardDemo';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/restaurant/DashboardPage';
 import OrdersPage from './pages/restaurant/OrdersPage';
@@ -35,9 +36,11 @@ import SystemSettingsPage from './pages/merxus/SystemSettingsPage';
 import TenantSelectorPage from './pages/merxus/TenantSelectorPage';
 import VoiceAdminPage from './pages/merxus/VoiceAdminPage';
 import SuperAdminUsersPage from './pages/merxus/SuperAdminUsersPage';
+import SetupWizardPage from './pages/merxus/SetupWizardPage';
 import EstateLayout from './components/layout/EstateLayout';
 import EstateDashboardPage from './pages/estate/EstateDashboardPage';
 import EstateListingsPage from './pages/estate/EstateListingsPage';
+import ListingDetailPage from './pages/estate/ListingDetailPage';
 import EstateLeadsPage from './pages/estate/EstateLeadsPage';
 import EstateShowingsPage from './pages/estate/EstateShowingsPage';
 import EstateCallsPage from './pages/estate/EstateCallsPage';
@@ -85,6 +88,7 @@ function App() {
                   <Route path="/features" element={<Features />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/onboarding-wizard-demo" element={<OnboardingWizardDemo />} />
                   
                   {/* Restaurant portal routes */}
                   <Route
@@ -138,6 +142,7 @@ function App() {
                     <Route index element={<EstateDashboardPage />} />
                     <Route path="dashboard" element={<EstateDashboardPage />} />
                     <Route path="listings" element={<EstateListingsPage />} />
+                    <Route path="listings/:id" element={<ListingDetailPage />} />
                     <Route path="leads" element={<EstateLeadsPage />} />
                     <Route path="showings" element={<EstateShowingsPage />} />
                     <Route path="calls" element={<EstateCallsPage />} />
@@ -174,6 +179,7 @@ function App() {
                     <Route path="analytics" element={<AnalyticsPage />} />
                     <Route path="settings" element={<SystemSettingsPage />} />
                     <Route path="users" element={<SuperAdminUsersPage />} />
+                    <Route path="setup-wizard" element={<SetupWizardPage />} />
                     <Route path="*" element={<Navigate to="/merxus" replace />} />
                   </Route>
                   

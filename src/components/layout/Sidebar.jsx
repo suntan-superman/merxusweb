@@ -44,9 +44,9 @@ export default function Sidebar() {
   const isManager = userClaims?.role === 'manager';
 
   return (
-    <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
+    <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen">
       {/* Restaurant Name */}
-      <div className="px-5 py-5 border-b border-gray-200">
+      <div className="px-5 py-5 border-b border-gray-200 flex-shrink-0">
         <NavLink to="/restaurant" className="block">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🍽️</span>
@@ -58,8 +58,8 @@ export default function Sidebar() {
         </NavLink>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      {/* Navigation - Scrollable */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <NavItem to="/restaurant" label="Dashboard" icon="📊" />
         <NavItem to="/restaurant/orders" label="Orders" icon="📦" />
         <NavItem to="/restaurant/reservations" label="Reservations" icon="📅" />
@@ -73,8 +73,8 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* User Info */}
-      <div className="px-3 py-4 border-t border-gray-200">
+      {/* User Info - Sticky at Bottom */}
+      <div className="px-3 py-4 border-t border-gray-200 flex-shrink-0 bg-white">
         <div className="flex items-center space-x-3 mb-3">
           <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
             <span className="text-primary-600 font-semibold text-sm">
@@ -108,8 +108,8 @@ function NavItem({ to, label, icon }) {
       className={({ isActive }) =>
         `flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
           isActive
-            ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-600'
-            : 'text-gray-700 hover:bg-gray-100'
+            ? 'bg-green-50 text-green-700 border-l-4 border-green-600'
+            : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
         }`
       }
     >

@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import {
   GridComponent,
   ColumnsDirective,
@@ -149,25 +150,35 @@ export default function ListingsTable({
   };
 
   const actionsTemplate = (props) => (
-    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-      <button
-        onClick={() => onEdit && onEdit(props)}
-        className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-      >
-        Edit
-      </button>
-      <button
-        onClick={() => onTestSend && onTestSend(props)}
-        className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-      >
-        Test send
-      </button>
-      <button
-        onClick={() => onDelete && onDelete(props)}
-        className="text-red-600 hover:text-red-700 text-sm font-medium"
-      >
-        Delete
-      </button>
+    <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center gap-2">
+        <Link
+          to={`/estate/listings/${props.id}`}
+          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+        >
+          View
+        </Link>
+        <button
+          onClick={() => onEdit && onEdit(props)}
+          className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+        >
+          Edit
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onTestSend && onTestSend(props)}
+          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+        >
+          Test send
+        </button>
+        <button
+          onClick={() => onDelete && onDelete(props)}
+          className="text-red-600 hover:text-red-700 text-sm font-medium"
+        >
+          Delete
+        </button>
+      </div>
     </div>
   );
 
@@ -267,8 +278,8 @@ export default function ListingsTable({
           <ColumnDirective
             field="actions"
             headerText="Actions"
-            width={getColumnWidth('actions', 120)}
-            minWidth={100}
+            width={getColumnWidth('actions', 140)}
+            minWidth={120}
             template={actionsTemplate}
             allowFiltering={false}
             allowSorting={false}
