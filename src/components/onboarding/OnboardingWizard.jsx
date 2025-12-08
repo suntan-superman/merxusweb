@@ -63,12 +63,22 @@ export default function OnboardingWizard({ onClose, onComplete, userEmail, tenan
     }
     if (currentStep === 3) {
       // Validate Twilio credentials
-      const phoneValid = /^\+?1?\d{10,15}$/.test(wizardData.twilioPhoneNumber?.replace(/[\s\-\(\)]/g, ''));
-      return (
-        phoneValid &&
-        wizardData.twilioAccountSid?.trim() &&
-        wizardData.twilioAuthToken?.trim()
-      );
+      const cleanedPhone = wizardData.twilioPhoneNumber?.replace(/[\s\-\(\)]/g, '') || '';
+      const phoneValid = /^\+?1?\d{10,15}$/.test(cleanedPhone);
+      const hasAccountSid = !!wizardData.twilioAccountSid?.trim();
+      const hasAuthToken = !!wizardData.twilioAuthToken?.trim();
+      
+      // Debug logging
+      console.log('[Wizard] Step 3 validation:', {
+        twilioPhoneNumber: wizardData.twilioPhoneNumber,
+        cleanedPhone,
+        phoneValid,
+        hasAccountSid,
+        hasAuthToken,
+        canProceed: phoneValid && hasAccountSid && hasAuthToken,
+      });
+      
+      return phoneValid && hasAccountSid && hasAuthToken;
     }
     return true; // Other steps can proceed
   };
@@ -94,13 +104,29 @@ export default function OnboardingWizard({ onClose, onComplete, userEmail, tenan
   // Progress calculation
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
+  // Step 5 title based on tenant type
+  const getStep5Title = () => {
+    switch (wizardData.tenantType) {
+      case 'restaurant':
+        return 'Restaurant Settings';
+      case 'real_estate':
+        return 'Real Estate Settings';
+      case 'voice':
+        return 'Office Settings';
+      case 'general':
+        return 'Business Settings';
+      default:
+        return 'Industry Settings';
+    }
+  };
+
   // Step titles
   const stepTitles = [
     'Choose Your Industry',
     'Business Details',
     'Twilio Phone Setup',
     'AI Voice Selection',
-    'Customize Your AI',
+    getStep5Title(),
     'Test Your AI',
     'All Set!',
   ];

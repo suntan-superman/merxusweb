@@ -193,9 +193,10 @@ app.post('/auth/refresh-claims', authRoutes.refreshClaims);
 app.get('/auth/claims', authRoutes.getClaims);
 
 // Twilio Provisioning routes (authenticated)
-app.get('/twilio-provisioning/search', twilioProvisioningRoutes.searchAvailableNumbers);
-app.post('/twilio-provisioning/purchase', twilioProvisioningRoutes.purchasePhoneNumber);
-app.post('/twilio-provisioning/release', twilioProvisioningRoutes.releasePhoneNumber);
+app.get('/twilio-provisioning/search', authenticate, twilioProvisioningRoutes.searchAvailableNumbers);
+app.get('/twilio-provisioning/list', authenticate, twilioProvisioningRoutes.listPurchasedNumbers);
+app.post('/twilio-provisioning/purchase', authenticate, twilioProvisioningRoutes.purchasePhoneNumber);
+app.post('/twilio-provisioning/release', authenticate, twilioProvisioningRoutes.releasePhoneNumber);
 app.post('/twilio-provisioning/validate', twilioProvisioningRoutes.validateTwilioCredentials);
 
 // Export the Express app as a Cloud Function

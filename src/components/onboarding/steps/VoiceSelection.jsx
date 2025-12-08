@@ -52,20 +52,54 @@ const VOICES = [
   },
 ];
 
-export default function VoiceSelection({ selectedVoice, onSelect, tenantType }) {
+export default function VoiceSelection({ selectedVoice, onSelect, tenantType}) {
   const [playingVoice, setPlayingVoice] = useState(null);
 
   const handlePlaySample = (voiceId) => {
-    // In real implementation, this would play actual audio samples
+    // Stop any currently playing speech
+    window.speechSynthesis.cancel();
+
     if (playingVoice === voiceId) {
       setPlayingVoice(null);
-    } else {
-      setPlayingVoice(voiceId);
-      // Simulate audio playback
-      setTimeout(() => {
-        setPlayingVoice(null);
-      }, 3000);
+      return;
     }
+
+    setPlayingVoice(voiceId);
+
+    // Use browser's speech synthesis as a demo
+    const sampleText = "Hello! This is a sample of how this voice sounds. Thank you for choosing Merxus AI.";
+    const utterance = new SpeechSynthesisUtterance(sampleText);
+    
+    // Try to match voice characteristics (limited browser support)
+    const voices = window.speechSynthesis.getVoices();
+    const voiceConfig = VOICES.find(v => v.id === voiceId);
+    
+    if (voiceConfig) {
+      // Try to find a matching voice based on gender
+      const matchingVoice = voices.find(v => 
+        voiceConfig.gender === 'Female' ? v.name.toLowerCase().includes('female') : 
+        voiceConfig.gender === 'Male' ? v.name.toLowerCase().includes('male') :
+        true
+      );
+      
+      if (matchingVoice) {
+        utterance.voice = matchingVoice;
+      }
+    }
+    
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    utterance.onend = () => {
+      setPlayingVoice(null);
+    };
+
+    utterance.onerror = () => {
+      setPlayingVoice(null);
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
   // Get industry name for recommendation matching

@@ -11,6 +11,14 @@ export async function searchAvailableNumbers(areaCode) {
 }
 
 /**
+ * List all unassigned Twilio numbers
+ */
+export async function listUnassignedNumbers() {
+  const response = await apiClient.get('/twilio-provisioning/list');
+  return response.data;
+}
+
+/**
  * Purchase a Twilio phone number
  */
 export async function purchasePhoneNumber(phoneNumber, tenantType, tenantId, friendlyName, skipDbSave = false) {
