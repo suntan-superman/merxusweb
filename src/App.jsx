@@ -49,6 +49,7 @@ import EstateUsersPage from './pages/estate/EstateUsersPage';
 import FlyerApprovalsPage from './pages/estate/FlyerApprovalsPage';
 import SupportPage from './pages/SupportPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 import BillingPage from './pages/BillingPage';
 
 // Register Syncfusion license from environment variable
@@ -77,6 +78,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/support" element={<SupportPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route
             path="/*"
             element={
@@ -208,7 +210,7 @@ function App() {
                         <ul className="space-y-2 text-gray-400">
                           <li><a href="/support" className="transition-colors hover:text-primary-400">Help Center</a></li>
                           <li><a href="/privacy-policy" className="transition-colors hover:text-primary-400">Privacy Policy</a></li>
-                          <li><a href="mailto:support@merxus.ai" className="transition-colors hover:text-primary-400">Contact Us</a></li>
+                          <li><a href="mailto:support@merxusllc.com" className="transition-colors hover:text-primary-400">Contact Us</a></li>
                         </ul>
                       </div>
                       <div>
@@ -216,8 +218,8 @@ function App() {
                         <p className="text-gray-400">
                           Schedule a 15-minute demo to get started.
                         </p>
-                        <a href="mailto:support@merxus.ai" className="text-primary-400 hover:text-primary-300">
-                          support@merxus.ai
+                        <a href="mailto:support@merxusllc.com" className="text-primary-400 hover:text-primary-300">
+                          support@merxusllc.com
                         </a>
                       </div>
                     </div>

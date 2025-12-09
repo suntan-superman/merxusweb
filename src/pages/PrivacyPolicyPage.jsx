@@ -243,7 +243,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <div className="mt-4 space-y-2">
               <p className="text-gray-700">
-                <strong>Email:</strong> <a href="mailto:support@merxusllc.com" className="text-green-600 hover:text-green-700">support@merxus.ai</a>
+                <strong>Email:</strong> <a href="mailto:support@merxusllc.com" className="text-green-600 hover:text-green-700">support@merxusllc.com</a>
               </p>
               <p className="text-gray-700">
                 <strong>Service:</strong> Merxus AI Phone Assistant Platform
