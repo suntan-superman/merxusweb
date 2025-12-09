@@ -19,24 +19,24 @@ const VOICES = [
     recommended: ['Restaurant', 'Real Estate'],
   },
   {
-    id: 'fable',
-    name: 'Fable',
+    id: 'ballad',
+    name: 'Ballad',
     gender: 'Male',
     description: 'Confident and authoritative - ideal for professional services',
     personality: 'Authoritative, confident, trustworthy',
     recommended: ['Professional Office', 'Real Estate', 'General'],
   },
   {
-    id: 'onyx',
-    name: 'Onyx',
+    id: 'verse',
+    name: 'Verse',
     gender: 'Male',
     description: 'Deep and reassuring - excellent for formal settings',
     personality: 'Calm, reassuring, professional',
     recommended: ['Professional Office', 'General'],
   },
   {
-    id: 'nova',
-    name: 'Nova',
+    id: 'coral',
+    name: 'Coral',
     gender: 'Female',
     description: 'Bright and energetic - great for sales and customer service',
     personality: 'Energetic, enthusiastic, helpful',
@@ -129,10 +129,13 @@ export default function VoiceSelection({ selectedVoice, onSelect, tenantType}) {
           const isPlaying = playingVoice === voice.id;
 
           return (
-            <button
+            <div
               key={voice.id}
-              onClick={() => onSelect(voice.id)}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+              onClick={() => {
+                console.log('🎤 [VoiceSelection] User clicked voice:', voice.id, voice.name);
+                onSelect(voice.id);
+              }}
+              className={`w-full p-4 rounded-xl border-2 transition-all cursor-pointer ${
                 isSelected
                   ? 'border-green-500 bg-green-50 shadow-lg shadow-green-500/20'
                   : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
@@ -193,7 +196,7 @@ export default function VoiceSelection({ selectedVoice, onSelect, tenantType}) {
                   {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
                 </button>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>

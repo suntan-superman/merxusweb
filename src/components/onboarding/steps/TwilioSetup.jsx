@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Phone, Key, ExternalLink, CheckCircle2, AlertCircle, Video, Search, ShoppingCart, Sparkles, Loader } from 'lucide-react';
 import { searchAvailableNumbers, purchasePhoneNumber, listUnassignedNumbers } from '../../../api/twilioProvisioning';
 import { toast } from 'react-toastify';
+import { formatPhoneDisplay, formatPhoneInput } from '../../../utils/phoneFormatter';
 
 export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
   const [showHelp, setShowHelp] = useState(false);
@@ -22,7 +23,6 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     console.log('Account SID:', data.twilioAccountSid);
     console.log('Auth Token:', data.twilioAuthToken);
     console.log('Phone SID:', data.twilioPhoneSid);
-    console.log('Full data object:', JSON.stringify(data, null, 2));
     
     // Check if already have an auto-provisioned number
     if (data.twilioPhoneNumber && 
@@ -196,7 +196,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                     <div key={num.sid} className="bg-white rounded-lg p-3 border border-blue-200 flex items-center justify-between">
                       <div>
                         <p className="font-mono text-lg font-bold text-gray-900">
-                          {num.phoneNumber}
+                          {formatPhoneDisplay(num.phoneNumber)}
                         </p>
                         {num.friendlyName && num.friendlyName !== num.phoneNumber && (
                           <p className="text-xs text-gray-500 mt-1">{num.friendlyName}</p>
@@ -318,7 +318,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                             </div>
                             <div>
                               <p className="font-bold text-xl text-gray-900 group-hover:text-green-700 transition-colors">
-                                {number.phoneNumber}
+                                {formatPhoneDisplay(number.phoneNumber)}
                               </p>
                               <p className="text-sm text-gray-600">
                                 📍 {number.locality}, {number.region} {number.postalCode}

@@ -9,6 +9,8 @@ export default function MenuImport({ onImportComplete, onClose, createItemFn }) 
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0, percent: 0 });
+  const [validation, setValidation] = useState(null); // { errors: [], warnings: [], valid: count }
 
   function handleFileSelect(e) {
     const selectedFile = e.target.files[0];
@@ -22,8 +24,9 @@ export default function MenuImport({ onImportComplete, onClose, createItemFn }) 
     setFile(selectedFile);
     setError(null);
     setSuccess(null);
+    setValidation(null);
 
-    // Preview the file
+    // Preview and validate the file
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target.result;
@@ -33,8 +36,65 @@ export default function MenuImport({ onImportComplete, onClose, createItemFn }) 
         totalLines: lines.length - 1, // Subtract header
         preview: previewLines.join('\n'),
       });
+
+      // Validate menu items
+      try {
+        const items = parseCSV(text);
+        const validationResult = validateMenuItems(items);
+        setValidation(validationResult);
+      } catch (err) {
+        setError(err.message);
+      }
     };
     reader.readAsText(selectedFile);
+  }
+
+  function validateMenuItems(items) {
+    const errors = [];
+    const warnings = [];
+    let validCount = 0;
+
+    items.forEach((item, index) => {
+      const rowNum = index + 2; // +2 for header and 0-index
+
+      // Required field errors
+      if (!item.name || !item.name.trim()) {
+        errors.push(`Row ${rowNum}: Missing required field 'Name'`);
+      }
+      if (!item.price || item.price === 0) {
+        errors.push(`Row ${rowNum}: Missing or invalid 'Price'`);
+      }
+      if (!item.category || !item.category.trim()) {
+        errors.push(`Row ${rowNum}: Missing required field 'Category'`);
+      }
+
+      // Warnings for recommended fields
+      if (!item.description || !item.description.trim()) {
+        warnings.push(`Row ${rowNum}: Missing description for "${item.name || 'item'}"`);
+      }
+
+      // Price validation
+      if (item.price && item.price < 0) {
+        errors.push(`Row ${rowNum}: Price cannot be negative for "${item.name || 'item'}"`);
+      }
+      if (item.price && item.price > 10000) {
+        warnings.push(`Row ${rowNum}: Unusually high price ($${item.price}) for "${item.name || 'item'}"`);
+      }
+
+      // Count valid rows (has required fields)
+      if (item.name && item.price && item.category) {
+        validCount++;
+      }
+    });
+
+    return {
+      errors,
+      warnings: warnings.slice(0, 10), // Limit warnings to first 10
+      validCount,
+      totalCount: items.length,
+      hasErrors: errors.length > 0,
+      hasWarnings: warnings.length > 0,
+    };
   }
 
   function parseCSVLine(line) {
@@ -148,12 +208,16 @@ export default function MenuImport({ onImportComplete, onClose, createItemFn }) 
         throw new Error('No valid menu items found in CSV file');
       }
 
-      // Import items one by one
+      // Import items one by one with progress
       let successCount = 0;
       let errorCount = 0;
       const errors = [];
+      const totalItems = items.length;
 
-      for (const item of items) {
+      setProgress({ current: 0, total: totalItems, percent: 0 });
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         try {
           await createItem(item);
           successCount++;
@@ -161,6 +225,15 @@ export default function MenuImport({ onImportComplete, onClose, createItemFn }) 
           errorCount++;
           errors.push(`${item.name}: ${err.message || 'Failed to create'}`);
         }
+
+        // Update progress
+        const currentProgress = i + 1;
+        const percentComplete = Math.round((currentProgress / totalItems) * 100);
+        setProgress({ 
+          current: currentProgress, 
+          total: totalItems, 
+          percent: percentComplete 
+        });
       }
 
       if (successCount > 0) {
@@ -248,6 +321,115 @@ export default function MenuImport({ onImportComplete, onClose, createItemFn }) 
             </div>
           )}
 
+          {importing && progress.total > 0 && (
+            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-green-900">
+                  Importing Menu Items... {progress.current} of {progress.total}
+                </h4>
+                <span className="text-2xl font-bold text-green-600">{progress.percent}%</span>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
+                <div 
+                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-300 ease-out"
+                  style={{ width: `${progress.percent}%` }}
+                />
+              </div>
+              
+              <p className="text-sm text-green-700">
+                Processing item {progress.current} of {progress.total}...
+              </p>
+            </div>
+          )}
+
+          {/* Validation Results */}
+          {validation && !importing && (
+            <div className="space-y-3">
+              {/* Summary */}
+              <div className={`rounded-xl p-4 border-2 ${
+                validation.hasErrors 
+                  ? 'bg-red-50 border-red-200' 
+                  : validation.hasWarnings 
+                  ? 'bg-yellow-50 border-yellow-200' 
+                  : 'bg-green-50 border-green-200'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className={`font-bold ${
+                    validation.hasErrors ? 'text-red-900' : 
+                    validation.hasWarnings ? 'text-yellow-900' : 
+                    'text-green-900'
+                  }`}>
+                    Validation Results
+                  </h4>
+                  <span className={`text-lg font-bold ${
+                    validation.hasErrors ? 'text-red-600' : 
+                    validation.hasWarnings ? 'text-yellow-600' : 
+                    'text-green-600'
+                  }`}>
+                    {validation.validCount} / {validation.totalCount} Valid
+                  </span>
+                </div>
+                
+                {validation.hasErrors && (
+                  <p className="text-sm text-red-700">
+                    ⚠️ {validation.errors.length} error(s) found. Please fix required fields before importing.
+                  </p>
+                )}
+                
+                {!validation.hasErrors && validation.hasWarnings && (
+                  <p className="text-sm text-yellow-700">
+                    ⚠️ {validation.warnings.length} warning(s). You can proceed, but some items may be incomplete.
+                  </p>
+                )}
+                
+                {!validation.hasErrors && !validation.hasWarnings && (
+                  <p className="text-sm text-green-700">
+                    ✅ All menu items look good! Ready to import.
+                  </p>
+                )}
+              </div>
+
+              {/* Errors */}
+              {validation.hasErrors && (
+                <div className="bg-white border-2 border-red-200 rounded-lg p-4">
+                  <h5 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                    <span className="text-red-600">❌</span>
+                    Errors ({validation.errors.length})
+                  </h5>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {validation.errors.map((error, idx) => (
+                      <div key={idx} className="text-xs text-red-700 font-mono bg-red-50 px-2 py-1 rounded">
+                        {error}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Warnings */}
+              {validation.hasWarnings && (
+                <div className="bg-white border-2 border-yellow-200 rounded-lg p-4">
+                  <h5 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                    <span className="text-yellow-600">⚠️</span>
+                    Warnings ({validation.warnings.length})
+                  </h5>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {validation.warnings.map((warning, idx) => (
+                      <div key={idx} className="text-xs text-yellow-700 font-mono bg-yellow-50 px-2 py-1 rounded">
+                        {warning}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-yellow-600 mt-2">
+                    These are optional fields. You can still import, but menu items may be incomplete.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
             <p className="font-medium mb-1">CSV Format:</p>
             <p className="text-xs">
@@ -271,10 +453,11 @@ export default function MenuImport({ onImportComplete, onClose, createItemFn }) 
           <button
             type="button"
             onClick={handleImport}
-            disabled={!file || importing}
+            disabled={!file || importing || (validation && validation.hasErrors)}
             className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            title={validation && validation.hasErrors ? 'Fix errors before importing' : ''}
           >
-            {importing ? 'Importing...' : 'Import Menu Items'}
+            {importing ? 'Importing...' : validation && validation.hasErrors ? 'Fix Errors First' : 'Import Menu Items'}
           </button>
         </footer>
       </div>

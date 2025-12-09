@@ -71,7 +71,7 @@ export async function createOffice(req: Request, res: Response): Promise<void> {
       officeId,
       name: office.name,
       email: office.email,
-      phoneNumber: office.phoneNumber || '', // Optional - Twilio number will be configured later
+      phoneNumber: office.phoneNumber || '', // Contact phone number
       address: office.address || '',
       websiteUrl: office.websiteUrl || '',
       businessType: office.businessType || '',
@@ -91,10 +91,15 @@ export async function createOffice(req: Request, res: Response): Promise<void> {
       notifyEmailAddresses: [office.email],
       aiConfig: {
         model: 'gpt-4o-mini',
-        voiceName: 'alloy',
+        voiceName: office.aiVoice || 'alloy',
         language: 'en-US',
         systemPrompt: defaultVoicePrompt,
       },
+      // Twilio configuration
+      twilioPhoneNumber: office.twilioPhoneNumber || '',
+      twilioNumberSid: office.twilioPhoneSid || '',
+      twilioAccountSid: office.twilioAccountSid || '',
+      twilioAuthToken: office.twilioAuthToken || '',
     });
 
     // Create owner user
@@ -115,6 +120,7 @@ export async function createOffice(req: Request, res: Response): Promise<void> {
           userRecord = await admin.auth().createUser({
             email: owner.email,
             displayName: owner.displayName,
+            password: owner.password || undefined, // Use provided password or let Firebase handle it
             emailVerified: false,
             disabled: false,
           });
@@ -318,10 +324,15 @@ Use the restaurant's cuisine style and personality in your tone.`;
       notifyEmailAddresses: [restaurant.email],
       aiConfig: {
         model: 'gpt-4o-mini',
-        voiceName: 'alloy',
+        voiceName: restaurant.aiVoice || 'alloy',
         language: 'en-US',
         systemPrompt: defaultPrompt,
       },
+      // Twilio configuration
+      twilioPhoneNumber: restaurant.twilioPhoneNumber || '',
+      twilioNumberSid: restaurant.twilioPhoneSid || '',
+      twilioAccountSid: restaurant.twilioAccountSid || '',
+      twilioAuthToken: restaurant.twilioAuthToken || '',
     });
 
     // Create manager/owner user
@@ -344,6 +355,7 @@ Use the restaurant's cuisine style and personality in your tone.`;
           userRecord = await admin.auth().createUser({
             email: manager.email,
             displayName: manager.displayName,
+            password: manager.password || undefined, // Use provided password or let Firebase handle it
             emailVerified: false,
             disabled: false,
           });
@@ -462,9 +474,38 @@ export async function createAgent(req: Request, res: Response): Promise<void> {
   try {
     const { agent, owner } = req.body;
 
+    console.log('🎤 [createAgent] Request received');
+    console.log('🎤 [createAgent] agent.aiVoice from request:', agent.aiVoice);
+
     if (!agent.name || !agent.email) {
       res.status(400).json({ error: 'Agent name and email are required' });
       return;
+    }
+
+    // Check if user with this email already exists
+    try {
+      const existingUser = await admin.auth().getUserByEmail(owner.email);
+      if (existingUser) {
+        // User exists - check if they already have an agent account
+        const existingAgents = await db.collection('agents')
+          .where('email', '==', owner.email)
+          .get();
+        
+        if (!existingAgents.empty) {
+          console.error(`⚠️ Attempted to create duplicate agent for email: ${owner.email}`);
+          res.status(409).json({ 
+            error: 'An account with this email already exists',
+            details: 'This email is already registered in the system. Please use a different email or contact support.'
+          });
+          return;
+        }
+      }
+    } catch (emailCheckError: any) {
+      // If user not found, that's fine - we'll create them
+      if (emailCheckError.code !== 'auth/user-not-found') {
+        console.error('Error checking for existing user:', emailCheckError);
+        // Continue anyway - better to allow signup than block legitimate users
+      }
     }
 
     if (!owner.email || !owner.displayName) {
@@ -546,31 +587,37 @@ export async function createAgent(req: Request, res: Response): Promise<void> {
       },
       notifySmsNumbers: [],
       notifyEmailAddresses: [agent.email],
-      aiConfig: {
-        model: 'gpt-4o-mini',
-        voiceName: 'alloy',
-        language: 'en-US',
-        systemPrompt: defaultRealEstatePrompt.replace('[Agent Name]', agent.name).replace('[Brand Name]', brandName),
-        promptMetadata: {
-          routing: {},
-          languageConfig: {
-            default: 'en',
-            methods: [
-              {
-                type: 'menu',
-                dtmf: { '1': 'en', '2': 'es' },
-                prompt_en: 'For English, press 1. Para español, presione 2.',
-                prompt_es: 'Para inglés, presione 1. Para español, presione 2.',
-              },
-            ],
-            fallback: 'en',
+      aiConfig: (() => {
+        const voiceName = agent.aiVoice || 'alloy';
+        console.log('🎤 [createAgent] Setting aiConfig.voiceName to:', voiceName);
+        return {
+          model: 'gpt-4o-mini',
+          voiceName: voiceName,
+          language: 'en-US',
+          systemPrompt: defaultRealEstatePrompt.replace('[Agent Name]', agent.name).replace('[Brand Name]', brandName),
+          promptMetadata: {
+            routing: {},
+            languageConfig: {
+              default: 'en',
+              methods: [
+                {
+                  type: 'menu',
+                  dtmf: { '1': 'en', '2': 'es' },
+                  prompt_en: 'For English, press 1. Para español, presione 2.',
+                  prompt_es: 'Para inglés, presione 1. Para español, presione 2.',
+                },
+              ],
+              fallback: 'en',
+            },
+            faqs: [],
           },
-          faqs: [],
-        },
-      },
-      // Twilio configuration (to be set up later)
-      twilioPhoneNumber: '',
-      twilioNumberSid: '',
+        };
+      })(),
+      // Twilio configuration
+      twilioPhoneNumber: agent.twilioPhoneNumber || '',
+      twilioNumberSid: agent.twilioPhoneSid || '',
+      twilioAccountSid: agent.twilioAccountSid || '',
+      twilioAuthToken: agent.twilioAuthToken || '',
     });
 
     // Create owner user
@@ -591,6 +638,7 @@ export async function createAgent(req: Request, res: Response): Promise<void> {
           userRecord = await admin.auth().createUser({
             email: owner.email,
             displayName: owner.displayName,
+            password: owner.password || undefined, // Use provided password or let Firebase handle it
             emailVerified: false,
             disabled: false,
           });

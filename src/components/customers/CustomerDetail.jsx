@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchCustomerDetail, updateCustomer } from '../../api/customers';
+import { formatPhoneDisplay } from '../../utils/phoneFormatter';
 
 export default function CustomerDetail({ open, onClose, customerId }) {
   const [loading, setLoading] = useState(false);
@@ -67,7 +68,7 @@ export default function CustomerDetail({ open, onClose, customerId }) {
             <h2 className="text-lg font-semibold text-gray-900">Customer Details</h2>
             {customer && (
               <p className="text-xs text-gray-500">
-                {customer.phone}
+                {formatPhoneDisplay(customer.phone)}
                 {customer.email ? ` • ${customer.email}` : ''}
               </p>
             )}

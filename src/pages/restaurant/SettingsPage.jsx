@@ -6,12 +6,21 @@ import NotificationSettings from '../../components/settings/NotificationSettings
 import POSIntegration from '../../components/settings/POSIntegration';
 import AISettings from '../../components/settings/AISettings';
 
+const TABS = [
+  { id: 'profile', label: 'Profile', icon: '🏪' },
+  { id: 'hours', label: 'Business Hours', icon: '🕐' },
+  { id: 'notifications', label: 'Notifications', icon: '🔔' },
+  { id: 'pos', label: 'POS Integration', icon: '💳' },
+  { id: 'ai', label: 'AI & Voice', icon: '🤖' },
+];
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [activeTab, setActiveTab] = useState('profile');
 
   async function load() {
     try {
@@ -41,7 +50,6 @@ export default function SettingsPage() {
       setSettings(newSettings);
       setSuccess('Settings saved successfully!');
       
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error(err);
@@ -74,31 +82,69 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
         <p className="text-sm text-gray-600 mt-1">
           Configure your restaurant profile, hours, notifications, and integrations
         </p>
       </div>
 
+      {/* Status Messages */}
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
       {success && (
-        <div className="rounded-md bg-primary-50 border border-primary-200 px-4 py-3 text-sm text-primary-700">
+        <div className="mb-4 rounded-md bg-primary-50 border border-primary-200 px-4 py-3 text-sm text-primary-700">
           {success}
         </div>
       )}
 
-      <RestaurantProfile settings={settings} onSave={handleSave} saving={saving} />
-      <BusinessHours settings={settings} onSave={handleSave} saving={saving} />
-      <NotificationSettings settings={settings} onSave={handleSave} saving={saving} />
-      <POSIntegration />
-      <AISettings settings={settings} onSave={handleSave} saving={saving} />
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="-mb-px flex space-x-2 overflow-x-auto">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`
+                whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm transition-colors
+                flex items-center gap-2
+                ${
+                  activeTab === tab.id
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }
+              `}
+            >
+              <span className="text-lg">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 overflow-y-auto">
+        {activeTab === 'profile' && (
+          <RestaurantProfile settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'hours' && (
+          <BusinessHours settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'notifications' && (
+          <NotificationSettings settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'pos' && (
+          <POSIntegration />
+        )}
+        {activeTab === 'ai' && (
+          <AISettings settings={settings} onSave={handleSave} saving={saving} />
+        )}
+      </div>
     </div>
   );
 }
-

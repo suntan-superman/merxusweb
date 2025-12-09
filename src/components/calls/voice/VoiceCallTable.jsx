@@ -13,6 +13,7 @@ import {
   Search,
   Resize,
 } from '@syncfusion/ej2-react-grids';
+import { formatPhoneDisplay } from '../../../utils/phoneFormatter';
 
 const GRID_STORAGE_KEY = 'merxus_voice_calls_grid_columns';
 
@@ -148,7 +149,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
   const callerTemplate = (props) => (
     <div className="leading-tight py-1">
       <div className="text-sm text-gray-900 truncate">{props.callerInfo?.name || 'Unknown'}</div>
-      <div className="text-[11px] text-gray-400 mt-1">{formatPhone(props.callerInfo?.phone)}</div>
+      <div className="text-[11px] text-gray-400 mt-1">{formatPhoneDisplay(props.callerInfo?.phone)}</div>
     </div>
   );
 
@@ -289,19 +290,3 @@ function formatDuration(seconds) {
   const secs = Math.round(seconds % 60);
   return `${mins}m ${secs}s`;
 }
-
-function formatPhone(phone) {
-  if (!phone) return '';
-  // Format phone number: +15551234567 -> (555) 123-4567
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.length === 11 && cleaned.startsWith('1')) {
-    const match = cleaned.match(/^1(\d{3})(\d{3})(\d{4})$/);
-    if (match) return `(${match[1]}) ${match[2]}-${match[3]}`;
-  }
-  if (cleaned.length === 10) {
-    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-    if (match) return `(${match[1]}) ${match[2]}-${match[3]}`;
-  }
-  return phone;
-}
-

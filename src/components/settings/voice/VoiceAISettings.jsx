@@ -112,13 +112,20 @@ export default function VoiceAISettings({ settings, onSave, saving, businessType
             onChange={handleChange}
             className="input-field"
           >
-            <option value="alloy">Alloy</option>
-            <option value="echo">Echo</option>
-            <option value="fable">Fable</option>
-            <option value="onyx">Onyx</option>
-            <option value="nova">Nova</option>
-            <option value="shimmer">Shimmer</option>
+            <option value="alloy">Alloy (Neutral)</option>
+            <option value="ash">Ash (Male)</option>
+            <option value="ballad">Ballad (Male)</option>
+            <option value="cedar">Cedar (Male)</option>
+            <option value="coral">Coral (Female)</option>
+            <option value="echo">Echo (Male)</option>
+            <option value="marin">Marin (Female)</option>
+            <option value="sage">Sage (Female)</option>
+            <option value="shimmer">Shimmer (Female)</option>
+            <option value="verse">Verse (Male)</option>
           </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Select the voice for your AI assistant. All voices support multiple languages.
+          </p>
         </div>
 
         <div>

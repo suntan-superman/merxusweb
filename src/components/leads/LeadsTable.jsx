@@ -13,6 +13,7 @@ import {
   Search,
   Resize,
 } from '@syncfusion/ej2-react-grids';
+import { formatPhoneDisplay } from '../../utils/phoneFormatter';
 
 const GRID_STORAGE_KEY = 'merxus_estate_leads_grid_columns';
 
@@ -40,7 +41,7 @@ export default function LeadsTable({ leads, flyerLogs = [], onEdit, onStatusChan
       return {
         ...lead,
         formattedDate: formatDate(lead.captured_at || lead.createdAt),
-        formattedPhone: formatPhone(lead.caller_phone),
+        formattedPhone: formatPhoneDisplay(lead.caller_phone),
         interestedListingsCount: lead.interested_listing_ids?.length || 0,
         priorityBadge: lead.priority || 'warm',
         flyerStatus: flyerLog?.status || null,
@@ -311,14 +312,3 @@ function formatDate(dateField) {
     return 'Invalid Date';
   }
 }
-
-function formatPhone(phone) {
-  if (!phone) return 'N/A';
-  // Basic phone formatting
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.length === 10) {
-    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-  }
-  return phone;
-}
-

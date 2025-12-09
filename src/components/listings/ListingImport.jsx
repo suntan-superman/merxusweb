@@ -9,6 +9,8 @@ export default function ListingImport({ onImportComplete, onClose }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [fileType, setFileType] = useState(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0, percent: 0 });
+  const [validation, setValidation] = useState(null); // { errors: [], warnings: [], valid: count }
 
   function handleFileSelect(e) {
     const selectedFile = e.target.files[0];
@@ -27,11 +29,12 @@ export default function ListingImport({ onImportComplete, onClose }) {
     setFileType(isCSV ? 'csv' : 'excel');
     setError(null);
     setSuccess(null);
+    setValidation(null);
 
-    // Preview the file
+    // Preview and validate the file
     if (isCSV) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const text = event.target.result;
         const lines = text.split('\n').filter((line) => line.trim());
         const previewLines = lines.slice(0, 5); // Show first 5 lines
@@ -39,12 +42,21 @@ export default function ListingImport({ onImportComplete, onClose }) {
           totalLines: lines.length - 1, // Subtract header
           preview: previewLines.join('\n'),
         });
+
+        // Validate listings
+        try {
+          const listings = parseCSV(text);
+          const validationResult = validateListings(listings);
+          setValidation(validationResult);
+        } catch (err) {
+          setError(err.message);
+        }
       };
       reader.readAsText(selectedFile);
     } else {
       // Excel preview
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         try {
           const data = new Uint8Array(event.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
@@ -57,6 +69,11 @@ export default function ListingImport({ onImportComplete, onClose }) {
               totalLines: jsonData.length - 1,
               preview: previewLines.join('\n'),
             });
+
+            // Validate listings
+            const listings = await parseExcel(selectedFile);
+            const validationResult = validateListings(listings);
+            setValidation(validationResult);
           }
         } catch (err) {
           setError('Failed to read Excel file: ' + err.message);
@@ -64,6 +81,52 @@ export default function ListingImport({ onImportComplete, onClose }) {
       };
       reader.readAsArrayBuffer(selectedFile);
     }
+  }
+
+  function validateListings(listings) {
+    const errors = [];
+    const warnings = [];
+    let validCount = 0;
+
+    listings.forEach((listing, index) => {
+      const rowNum = index + 2; // +2 for header and 0-index
+
+      // Required field errors
+      if (!listing.address || !listing.address.trim()) {
+        errors.push(`Row ${rowNum}: Missing required field 'Address'`);
+      }
+      if (!listing.city || !listing.city.trim()) {
+        errors.push(`Row ${rowNum}: Missing required field 'City'`);
+      }
+
+      // Warnings for recommended fields
+      if (!listing.price || listing.price === 0) {
+        warnings.push(`Row ${rowNum}: Missing price for ${listing.address || 'listing'}`);
+      }
+      if (!listing.bedrooms || listing.bedrooms === 0) {
+        warnings.push(`Row ${rowNum}: Missing bedrooms for ${listing.address || 'listing'}`);
+      }
+      if (!listing.bathrooms || listing.bathrooms === 0) {
+        warnings.push(`Row ${rowNum}: Missing bathrooms for ${listing.address || 'listing'}`);
+      }
+      if (!listing.sqft || listing.sqft === 0) {
+        warnings.push(`Row ${rowNum}: Missing square footage for ${listing.address || 'listing'}`);
+      }
+
+      // Count valid rows (has required fields)
+      if (listing.address && listing.city) {
+        validCount++;
+      }
+    });
+
+    return {
+      errors,
+      warnings: warnings.slice(0, 10), // Limit warnings to first 10
+      validCount,
+      totalCount: listings.length,
+      hasErrors: errors.length > 0,
+      hasWarnings: warnings.length > 0,
+    };
   }
 
   function parseCSVLine(line) {
@@ -369,12 +432,16 @@ export default function ListingImport({ onImportComplete, onClose }) {
         throw new Error('No valid listings found in file');
       }
 
-      // Import listings one by one
+      // Import listings one by one with progress
       let successCount = 0;
       let errorCount = 0;
       const errors = [];
+      const totalListings = listings.length;
 
-      for (const listing of listings) {
+      setProgress({ current: 0, total: totalListings, percent: 0 });
+
+      for (let i = 0; i < listings.length; i++) {
+        const listing = listings[i];
         try {
           await createListing(listing);
           successCount++;
@@ -382,6 +449,15 @@ export default function ListingImport({ onImportComplete, onClose }) {
           errorCount++;
           errors.push(`${listing.address}: ${err.message || 'Failed to create'}`);
         }
+
+        // Update progress
+        const currentProgress = i + 1;
+        const percentComplete = Math.round((currentProgress / totalListings) * 100);
+        setProgress({ 
+          current: currentProgress, 
+          total: totalListings, 
+          percent: percentComplete 
+        });
       }
 
       if (successCount > 0) {
@@ -468,6 +544,115 @@ export default function ListingImport({ onImportComplete, onClose }) {
             </div>
           )}
 
+          {importing && progress.total > 0 && (
+            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-green-900">
+                  Importing Listings... {progress.current} of {progress.total}
+                </h4>
+                <span className="text-2xl font-bold text-green-600">{progress.percent}%</span>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
+                <div 
+                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-300 ease-out"
+                  style={{ width: `${progress.percent}%` }}
+                />
+              </div>
+              
+              <p className="text-sm text-green-700">
+                Processing listing {progress.current} of {progress.total}...
+              </p>
+            </div>
+          )}
+
+          {/* Validation Results */}
+          {validation && !importing && (
+            <div className="space-y-3">
+              {/* Summary */}
+              <div className={`rounded-xl p-4 border-2 ${
+                validation.hasErrors 
+                  ? 'bg-red-50 border-red-200' 
+                  : validation.hasWarnings 
+                  ? 'bg-yellow-50 border-yellow-200' 
+                  : 'bg-green-50 border-green-200'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className={`font-bold ${
+                    validation.hasErrors ? 'text-red-900' : 
+                    validation.hasWarnings ? 'text-yellow-900' : 
+                    'text-green-900'
+                  }`}>
+                    Validation Results
+                  </h4>
+                  <span className={`text-lg font-bold ${
+                    validation.hasErrors ? 'text-red-600' : 
+                    validation.hasWarnings ? 'text-yellow-600' : 
+                    'text-green-600'
+                  }`}>
+                    {validation.validCount} / {validation.totalCount} Valid
+                  </span>
+                </div>
+                
+                {validation.hasErrors && (
+                  <p className="text-sm text-red-700">
+                    ⚠️ {validation.errors.length} error(s) found. Please fix required fields before importing.
+                  </p>
+                )}
+                
+                {!validation.hasErrors && validation.hasWarnings && (
+                  <p className="text-sm text-yellow-700">
+                    ⚠️ {validation.warnings.length} warning(s). You can proceed, but some data may be incomplete.
+                  </p>
+                )}
+                
+                {!validation.hasErrors && !validation.hasWarnings && (
+                  <p className="text-sm text-green-700">
+                    ✅ All listings look good! Ready to import.
+                  </p>
+                )}
+              </div>
+
+              {/* Errors */}
+              {validation.hasErrors && (
+                <div className="bg-white border-2 border-red-200 rounded-lg p-4">
+                  <h5 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                    <span className="text-red-600">❌</span>
+                    Errors ({validation.errors.length})
+                  </h5>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {validation.errors.map((error, idx) => (
+                      <div key={idx} className="text-xs text-red-700 font-mono bg-red-50 px-2 py-1 rounded">
+                        {error}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Warnings */}
+              {validation.hasWarnings && (
+                <div className="bg-white border-2 border-yellow-200 rounded-lg p-4">
+                  <h5 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                    <span className="text-yellow-600">⚠️</span>
+                    Warnings ({validation.warnings.length})
+                  </h5>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {validation.warnings.map((warning, idx) => (
+                      <div key={idx} className="text-xs text-yellow-700 font-mono bg-yellow-50 px-2 py-1 rounded">
+                        {warning}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-yellow-600 mt-2">
+                    These are optional fields. You can still import, but listings may be incomplete.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
             <p className="font-medium mb-1">File Format:</p>
             <p className="text-xs mb-2">
@@ -496,10 +681,11 @@ export default function ListingImport({ onImportComplete, onClose }) {
           <button
             type="button"
             onClick={handleImport}
-            disabled={!file || importing}
+            disabled={!file || importing || (validation && validation.hasErrors)}
             className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            title={validation && validation.hasErrors ? 'Fix errors before importing' : ''}
           >
-            {importing ? 'Importing...' : 'Import Listings'}
+            {importing ? 'Importing...' : validation && validation.hasErrors ? 'Fix Errors First' : 'Import Listings'}
           </button>
         </footer>
       </div>

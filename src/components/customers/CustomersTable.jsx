@@ -1,3 +1,5 @@
+import { formatPhoneDisplay } from '../../utils/phoneFormatter';
+
 export default function CustomersTable({ customers, onCustomerClick }) {
   if (!customers || customers.length === 0) {
     return (
@@ -33,7 +35,7 @@ export default function CustomersTable({ customers, onCustomerClick }) {
               </td>
 
               <td className="px-4 py-3 align-top text-xs text-gray-700">
-                <div>{c.phone}</div>
+                <div>{formatPhoneDisplay(c.phone) || 'N/A'}</div>
                 {c.email && <div className="text-xs text-gray-500">{c.email}</div>}
               </td>
 

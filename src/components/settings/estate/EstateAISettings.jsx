@@ -42,12 +42,16 @@ export default function EstateAISettings({ settings, onSave, saving }) {
   }
 
   const VOICE_OPTIONS = [
-    { value: 'alloy', label: 'Alloy' },
-    { value: 'echo', label: 'Echo' },
-    { value: 'fable', label: 'Fable' },
-    { value: 'onyx', label: 'Onyx' },
-    { value: 'nova', label: 'Nova' },
-    { value: 'shimmer', label: 'Shimmer' },
+    { value: 'alloy', label: 'Alloy (Neutral)' },
+    { value: 'ash', label: 'Ash (Male)' },
+    { value: 'ballad', label: 'Ballad (Male)' },
+    { value: 'cedar', label: 'Cedar (Male)' },
+    { value: 'coral', label: 'Coral (Female)' },
+    { value: 'echo', label: 'Echo (Male)' },
+    { value: 'marin', label: 'Marin (Female)' },
+    { value: 'sage', label: 'Sage (Female)' },
+    { value: 'shimmer', label: 'Shimmer (Female)' },
+    { value: 'verse', label: 'Verse (Male)' },
   ];
 
   const LANGUAGE_OPTIONS = [

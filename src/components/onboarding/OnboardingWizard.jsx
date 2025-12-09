@@ -11,17 +11,19 @@ import ConfirmationModal from '../common/ConfirmationModal';
 
 const TOTAL_STEPS = 7;
 
-export default function OnboardingWizard({ onClose, onComplete, userEmail, tenantType: initialTenantType }) {
+export default function OnboardingWizard({ onClose, onComplete, onSwitchToOwner, userEmail, tenantType: initialTenantType }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [dataSaved, setDataSaved] = useState(false);
   const [wizardData, setWizardData] = useState({
     // Step 1: Industry
     tenantType: initialTenantType || null,
     
-    // Step 2: Business Basics
+    // Step 2: Business Basics (NEVER pre-populate email/password for security)
     businessName: '',
     ownerName: '',
-    email: userEmail || '',
+    email: '', // Always start blank
+    tempPassword: '', // Always start blank
     phone: '',
     address: '',
     city: '',
@@ -42,7 +44,17 @@ export default function OnboardingWizard({ onClose, onComplete, userEmail, tenan
   });
 
   const updateWizardData = (updates) => {
-    setWizardData((prev) => ({ ...prev, ...updates }));
+    // Log voice updates specifically
+    if (updates.aiVoice) {
+      console.log('🎤 [OnboardingWizard] updateWizardData called with aiVoice:', updates.aiVoice);
+    }
+    setWizardData((prev) => {
+      const newData = { ...prev, ...updates };
+      if (updates.aiVoice) {
+        console.log('🎤 [OnboardingWizard] New wizardData.aiVoice:', newData.aiVoice);
+      }
+      return newData;
+    });
   };
 
   const canProceed = () => {
@@ -54,6 +66,7 @@ export default function OnboardingWizard({ onClose, onComplete, userEmail, tenan
         wizardData.businessName?.trim() &&
         wizardData.ownerName?.trim() &&
         wizardData.email?.trim() &&
+        wizardData.tempPassword?.trim() && wizardData.tempPassword.length >= 6 &&
         wizardData.phone?.trim() &&
         wizardData.address?.trim() &&
         wizardData.city?.trim() &&
@@ -83,8 +96,20 @@ export default function OnboardingWizard({ onClose, onComplete, userEmail, tenan
     return true; // Other steps can proceed
   };
 
-  const goToNextStep = () => {
+  const goToNextStep = async () => {
     if (currentStep < TOTAL_STEPS && canProceed()) {
+      // Special handling: Save data at Step 5 (before test step)
+      if (currentStep === 5 && !dataSaved && onComplete) {
+        console.log('💾 Saving tenant data before test step...');
+        try {
+          await onComplete(wizardData, true); // Pass 'isPreSave' flag
+          setDataSaved(true);
+          console.log('✅ Data saved! User can now test at Step 6.');
+        } catch (error) {
+          console.error('❌ Failed to save data:', error);
+          // Don't block progression - user can still continue
+        }
+      }
       setCurrentStep(currentStep + 1);
     }
   };
@@ -96,8 +121,12 @@ export default function OnboardingWizard({ onClose, onComplete, userEmail, tenan
   };
 
   const handleComplete = async () => {
-    if (onComplete) {
-      await onComplete(wizardData);
+    // If data wasn't saved yet (user skipped through), save now
+    if (!dataSaved && onComplete) {
+      await onComplete(wizardData, false);
+    } else if (onComplete) {
+      // Data already saved, just trigger completion callback for redirect
+      await onComplete(wizardData, false);
     }
   };
 
@@ -260,6 +289,9 @@ export default function OnboardingWizard({ onClose, onComplete, userEmail, tenan
               <Completion
                 tenantType={wizardData.tenantType}
                 businessName={wizardData.businessName}
+                ownerEmail={wizardData.email}
+                ownerPassword={wizardData.tempPassword}
+                onSwitchToOwner={() => onSwitchToOwner(wizardData.email, wizardData.tempPassword)}
               />
             )}
           </div>

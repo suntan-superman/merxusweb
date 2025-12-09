@@ -1,10 +1,23 @@
-import { CheckCircle2, ArrowRight, Settings, Phone, BarChart3, Book } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, LogIn, ExternalLink } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 
-export default function Completion({ tenantType, businessName }) {
+export default function Completion({ tenantType, businessName, ownerEmail, ownerPassword, onSwitchToOwner }) {
+  const { userClaims } = useAuth();
+  const [switchingUser, setSwitchingUser] = useState(false);
+  
+  // Check if current user is super_admin/merxus
+  const isSuperAdmin = userClaims?.role === 'super_admin' || userClaims?.type === 'merxus';
+
+  const handleSwitchToOwner = async () => {
+    setSwitchingUser(true);
+    await onSwitchToOwner();
+    // onSwitchToOwner will handle the actual login and redirect
+  };
   // Get dashboard path based on tenant type
   const getDashboardPath = () => {
     const paths = {
-      restaurant: '/dashboard',
+      restaurant: '/restaurant/dashboard',
       real_estate: '/estate/dashboard',
       voice: '/voice/dashboard',
       general: '/dashboard',
@@ -12,37 +25,13 @@ export default function Completion({ tenantType, businessName }) {
     return paths[tenantType] || '/dashboard';
   };
 
-  // Get industry-specific next steps
-  const getNextSteps = () => {
-    if (tenantType === 'restaurant') {
-      return [
-        { icon: Settings, text: 'Upload your menu', description: 'Let customers order by phone' },
-        { icon: Phone, text: 'Test phone ordering', description: 'Make a test call to place an order' },
-        { icon: BarChart3, text: 'View call analytics', description: 'Track orders and reservations' },
-      ];
-    }
-    if (tenantType === 'real_estate') {
-      return [
-        { icon: Settings, text: 'Add your listings', description: 'Upload properties and flyers' },
-        { icon: Phone, text: 'Test showing scheduler', description: 'Call to schedule a property showing' },
-        { icon: BarChart3, text: 'View lead dashboard', description: 'Track inquiries and showings' },
-      ];
-    }
-    if (tenantType === 'voice') {
-      return [
-        { icon: Settings, text: 'Invite team members', description: 'Add users for call routing' },
-        { icon: Phone, text: 'Configure routing rules', description: 'Set up call forwarding' },
-        { icon: BarChart3, text: 'View call analytics', description: 'Track calls and messages' },
-      ];
-    }
-    return [
-      { icon: Settings, text: 'Customize AI prompts', description: 'Tailor responses to your needs' },
-      { icon: Phone, text: 'Test your AI', description: 'Make a call to try it out' },
-      { icon: BarChart3, text: 'View analytics', description: 'Track performance' },
-    ];
+  // Get action text based on tenant type
+  const getActionText = () => {
+    if (tenantType === 'restaurant') return 'Add Your Menu';
+    if (tenantType === 'real_estate') return 'Add Your Listings';
+    if (tenantType === 'voice') return 'Configure Routing';
+    return 'Configure Settings';
   };
-
-  const nextSteps = getNextSteps();
 
   return (
     <div className="py-4">
@@ -52,7 +41,7 @@ export default function Completion({ tenantType, businessName }) {
           <CheckCircle2 size={56} className="text-white" />
         </div>
         
-        <h3 className="text-3xl font-bold text-gray-900 mb-2">🎉 You're All Set!</h3>
+        <h3 className="text-3xl font-bold text-gray-900 mb-2">🎉 Setup Complete!</h3>
         <p className="text-lg text-gray-600 mb-1">
           {businessName ? `${businessName} is` : 'Your business is'} ready to go
         </p>
@@ -72,67 +61,82 @@ export default function Completion({ tenantType, businessName }) {
           </div>
           <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-green-600 mb-1">✓</div>
-            <p className="text-xs text-green-700 font-medium">Ready to Use</p>
+            <p className="text-xs text-green-700 font-medium">Account Created</p>
           </div>
         </div>
 
-        {/* Next Steps */}
-        <div>
-          <h4 className="font-bold text-gray-900 mb-3 text-center">Recommended Next Steps</h4>
-          <div className="space-y-3">
-            {nextSteps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <div key={index} className="bg-white border-2 border-gray-200 rounded-xl p-4 flex items-start gap-4 hover:border-green-300 hover:bg-green-50 transition-all">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Icon size={20} className="text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900">{step.text}</p>
-                    <p className="text-sm text-gray-600">{step.description}</p>
-                  </div>
-                  <ArrowRight size={20} className="text-gray-400 flex-shrink-0 mt-1" />
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        {/* Super Admin: Choice to continue as owner OR go to dashboard */}
+        {isSuperAdmin ? (
+          <div className="space-y-4">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-6">
+              <h4 className="font-bold text-gray-900 mb-2 text-lg">Ready to Finish Setup?</h4>
+              <p className="text-gray-700 mb-4">
+                The account has been created successfully. To complete setup and add data ({getActionText().toLowerCase()}), 
+                you can log in as the new owner.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Continue as Owner Button */}
+                <button
+                  onClick={handleSwitchToOwner}
+                  disabled={switchingUser}
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {switchingUser ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Switching User...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn size={20} />
+                      <span>Continue as Owner</span>
+                    </>
+                  )}
+                </button>
 
-        {/* Resources */}
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
-          <h4 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
-            <Book size={18} />
-            Helpful Resources
-          </h4>
-          <div className="space-y-2 text-sm text-blue-800">
-            <a href="#" className="flex items-center gap-2 hover:text-blue-900 transition-colors">
-              <span>📖</span>
-              <span>Getting Started Guide</span>
-            </a>
-            <a href="#" className="flex items-center gap-2 hover:text-blue-900 transition-colors">
-              <span>🎥</span>
-              <span>Video Tutorials</span>
-            </a>
-            <a href="#" className="flex items-center gap-2 hover:text-blue-900 transition-colors">
-              <span>💬</span>
-              <span>Join Community</span>
-            </a>
-            <a href="#" className="flex items-center gap-2 hover:text-blue-900 transition-colors">
-              <span>📧</span>
-              <span>Contact Support</span>
-            </a>
-          </div>
-        </div>
+                {/* View as Admin Button */}
+                <button
+                  onClick={() => window.location.href = getDashboardPath()}
+                  className="flex items-center justify-center gap-2 bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+                >
+                  <ExternalLink size={20} />
+                  <span>View as Admin</span>
+                </button>
+              </div>
 
-        {/* Final CTA */}
-        <div className="text-center">
-          <p className="text-sm text-gray-600 mb-4">
-            Ready to see your AI in action?
-          </p>
-          <div className="text-xs text-gray-500">
-            Click "Go to Dashboard" below to get started
+              <p className="text-xs text-gray-600 mt-3 text-center">
+                💡 <strong>Tip:</strong> "Continue as Owner" lets you add {getActionText().toLowerCase()} right away
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 text-sm text-blue-900">
+              <p className="font-semibold mb-1">Owner Credentials:</p>
+              <p className="text-blue-700 font-mono text-xs">
+                Email: {ownerEmail}<br />
+                Password: {ownerPassword}
+              </p>
+              <p className="text-xs text-blue-600 mt-2">
+                ℹ️ The owner can reset their password using the invitation email
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Regular Owner: Just go to dashboard */
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-6 text-center">
+            <h4 className="font-bold text-gray-900 mb-3 text-lg">What's Next?</h4>
+            <p className="text-gray-700 mb-4">
+              Your AI is ready to take calls! Head to your dashboard to {getActionText().toLowerCase()} and explore all features.
+            </p>
+            <button
+              onClick={() => window.location.href = getDashboardPath()}
+              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-md hover:shadow-lg"
+            >
+              <ExternalLink size={20} />
+              <span>Go to Dashboard</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

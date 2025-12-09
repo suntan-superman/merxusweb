@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { updateLead } from '../../api/estate';
 import { toast } from 'react-hot-toast';
 import FormModal from '../common/FormModal';
+import { formatPhoneDisplay, toE164 } from '../../utils/phoneFormatter';
 
 export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [] }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -73,8 +74,9 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
   }
 
   function handleCall() {
-    if (lead.caller_phone || lead.phone) {
-      window.location.href = `tel:${lead.caller_phone || lead.phone}`;
+    const phone = lead.caller_phone || lead.phone;
+    if (phone) {
+      window.location.href = `tel:${toE164(phone)}`;
     } else {
       toast.error('No phone number available');
     }
@@ -89,8 +91,9 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
   }
 
   function handleSMS() {
-    if (lead.caller_phone || lead.phone) {
-      window.location.href = `sms:${lead.caller_phone || lead.phone}`;
+    const phone = lead.caller_phone || lead.phone;
+    if (phone) {
+      window.location.href = `sms:${toE164(phone)}`;
     } else {
       toast.error('No phone number available');
     }
@@ -207,7 +210,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Phone</label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {lead.caller_phone || lead.phone || 'N/A'}
+                      {formatPhoneDisplay(lead.caller_phone || lead.phone) || 'N/A'}
                     </p>
                   </div>
                   <div>

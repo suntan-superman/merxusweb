@@ -1,11 +1,37 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchSystemAnalytics } from '../../api/merxus';
 import { useAuth } from '../../context/AuthContext';
 
 export default function MerxusDashboardPage() {
+  const navigate = useNavigate();
   const { user, userClaims } = useAuth();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Smart redirect: Send users to their tenant-specific dashboard
+  useEffect(() => {
+    if (userClaims && userClaims.type) {
+      const tenantType = userClaims.type;
+      
+      // Only redirect if NOT a merxus admin (merxus admins can see this page)
+      if (tenantType !== 'merxus') {
+        console.log('Redirecting non-admin user to tenant dashboard:', tenantType);
+        
+        const redirectPaths = {
+          restaurant: '/restaurant/dashboard',
+          voice: '/voice/dashboard',
+          real_estate: '/estate/dashboard',
+        };
+        
+        const targetPath = redirectPaths[tenantType];
+        if (targetPath) {
+          navigate(targetPath, { replace: true });
+          return;
+        }
+      }
+    }
+  }, [userClaims, navigate]);
 
   useEffect(() => {
     async function load() {
