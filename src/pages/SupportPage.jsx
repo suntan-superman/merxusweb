@@ -91,7 +91,7 @@ export default function SupportPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="px-4 py-12 mx-auto max-w-4xl sm:px-6 lg:px-8">
+      <div className="max-w-4xl px-4 py-12 mx-auto sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <Link 
@@ -115,7 +115,7 @@ export default function SupportPage() {
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="flex items-start">
-              <EnvelopeIcon className="flex-shrink-0 mt-1 mr-3 w-6 h-6 text-green-600" />
+              <EnvelopeIcon className="flex-shrink-0 w-6 h-6 mt-1 mr-3 text-green-600" />
               <div>
                 <h3 className="mb-1 font-medium text-gray-900">Email Support</h3>
                 <a 
@@ -130,7 +130,7 @@ export default function SupportPage() {
               </div>
             </div>
             <div className="flex items-start">
-              <DocumentTextIcon className="flex-shrink-0 mt-1 mr-3 w-6 h-6 text-green-600" />
+              <DocumentTextIcon className="flex-shrink-0 w-6 h-6 mt-1 mr-3 text-green-600" />
               <div>
                 <h3 className="mb-1 font-medium text-gray-900">Documentation</h3>
                 <Link 
@@ -150,7 +150,7 @@ export default function SupportPage() {
         {/* Contact Form */}
         <div className="p-8 mb-8 bg-white rounded-lg shadow-sm">
           <h2 className="flex items-center mb-6 text-2xl font-semibold text-gray-900">
-            <ChatBubbleLeftRightIcon className="mr-2 w-6 h-6 text-green-600" />
+            <ChatBubbleLeftRightIcon className="w-6 h-6 mr-2 text-green-600" />
             Send Us a Message
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -165,7 +165,7 @@ export default function SupportPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="px-3 py-2 w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                 />
               </div>
               <div>
@@ -178,7 +178,7 @@ export default function SupportPage() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="px-3 py-2 w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                 />
               </div>
             </div>
@@ -193,7 +193,7 @@ export default function SupportPage() {
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 placeholder="e.g., Password Reset, Feature Request, Bug Report"
-                className="px-3 py-2 w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
               />
             </div>
             <div>
@@ -207,23 +207,23 @@ export default function SupportPage() {
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 placeholder="Please describe your issue or question in detail..."
-                className="px-3 py-2 w-full rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
               />
             </div>
             {submitStatus === 'success' && (
-              <div className="p-3 text-sm text-green-800 bg-green-50 rounded-md border border-green-200">
+              <div className="p-3 text-sm text-green-800 border border-green-200 rounded-md bg-green-50">
                 ✓ Your support request has been submitted successfully! We've sent a confirmation email and will respond within 24 hours.
               </div>
             )}
             {submitStatus === 'error' && (
-              <div className="p-3 text-sm text-red-800 bg-red-50 rounded-md border border-red-200">
+              <div className="p-3 text-sm text-red-800 border border-red-200 rounded-md bg-red-50">
                 ✗ There was an error submitting your request. Please try again or email us directly at support@merxusllc.com
               </div>
             )}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 w-full text-white bg-green-600 rounded-md md:w-auto hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-2 text-white bg-green-600 rounded-md md:w-auto hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Opening Email...' : 'Send Message'}
             </button>
@@ -233,7 +233,7 @@ export default function SupportPage() {
         {/* FAQ Section */}
         <div className="p-8 bg-white rounded-lg shadow-sm">
           <h2 className="flex items-center mb-6 text-2xl font-semibold text-gray-900">
-            <QuestionMarkCircleIcon className="mr-2 w-6 h-6 text-green-600" />
+            <QuestionMarkCircleIcon className="w-6 h-6 mr-2 text-green-600" />
             Frequently Asked Questions
           </h2>
           <div className="space-y-6">
@@ -258,28 +258,28 @@ export default function SupportPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Link 
               to="/login" 
-              className="p-4 rounded-md border border-gray-200 transition-colors hover:border-green-500 hover:bg-green-50"
+              className="p-4 transition-colors border border-gray-200 rounded-md hover:border-green-500 hover:bg-green-50"
             >
               <h3 className="mb-1 font-medium text-gray-900">Login to Your Account</h3>
               <p className="text-sm text-gray-600">Access your dashboard and manage your business</p>
             </Link>
             <Link 
               to="/signup" 
-              className="p-4 rounded-md border border-gray-200 transition-colors hover:border-green-500 hover:bg-green-50"
+              className="p-4 transition-colors border border-gray-200 rounded-md hover:border-green-500 hover:bg-green-50"
             >
               <h3 className="mb-1 font-medium text-gray-900">Create an Account</h3>
               <p className="text-sm text-gray-600">Sign up for Merxus AI phone assistant</p>
             </Link>
             <Link 
               to="/privacy-policy" 
-              className="p-4 rounded-md border border-gray-200 transition-colors hover:border-green-500 hover:bg-green-50"
+              className="p-4 transition-colors border border-gray-200 rounded-md hover:border-green-500 hover:bg-green-50"
             >
               <h3 className="mb-1 font-medium text-gray-900">Privacy Policy</h3>
               <p className="text-sm text-gray-600">Learn how we protect your data and privacy</p>
             </Link>
             <a 
               href="mailto:support@merxusllc.com" 
-              className="p-4 rounded-md border border-gray-200 transition-colors hover:border-green-500 hover:bg-green-50"
+              className="p-4 transition-colors border border-gray-200 rounded-md hover:border-green-500 hover:bg-green-50"
             >
               <h3 className="mb-1 font-medium text-gray-900">Email Support</h3>
               <p className="text-sm text-gray-600">Get help from our support team</p>

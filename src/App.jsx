@@ -37,6 +37,7 @@ import TenantSelectorPage from './pages/merxus/TenantSelectorPage';
 import VoiceAdminPage from './pages/merxus/VoiceAdminPage';
 import SuperAdminUsersPage from './pages/merxus/SuperAdminUsersPage';
 import SetupWizardPage from './pages/merxus/SetupWizardPage';
+import TenantsManagementPage from './pages/merxus/TenantsManagementPage';
 import EstateLayout from './components/layout/EstateLayout';
 import EstateDashboardPage from './pages/estate/EstateDashboardPage';
 import EstateListingsPage from './pages/estate/EstateListingsPage';
@@ -175,6 +176,7 @@ function App() {
                     }
                   >
                     <Route index element={<MerxusDashboardPage />} />
+                    <Route path="tenants" element={<TenantsManagementPage />} />
                     <Route path="voice-admin" element={<VoiceAdminPage />} />
                     <Route path="restaurants" element={<RestaurantsPage />} />
                     <Route path="restaurants/new" element={<CreateRestaurantPage />} />

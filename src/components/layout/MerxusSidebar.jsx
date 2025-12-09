@@ -29,10 +29,11 @@ export default function MerxusSidebar() {
       {/* Navigation - Scrollable */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <NavItem to="/merxus" label="Dashboard" icon="📊" />
+        <NavItem to="/merxus/tenants" label="All Tenants" icon="👥" />
         <NavItem to="/merxus/restaurants" label="Restaurants" icon="🏪" />
         <NavItem to="/merxus/analytics" label="Analytics" icon="📈" />
         {userClaims?.role === 'super_admin' && (
-          <NavItem to="/merxus/users" label="Teams & Access" icon="👥" />
+          <NavItem to="/merxus/users" label="Teams & Access" icon="🔐" />
         )}
         {(userClaims?.role === 'super_admin' || userClaims?.role === 'merxus_admin') && (
           <NavItem to="/merxus/setup-wizard" label="Setup Wizard" icon="🚀" />

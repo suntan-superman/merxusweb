@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import * as admin from 'firebase-admin';
-import { sendSalesNotification } from '../utils/email';
+import { sendSalesNotification, notifySuperAdminsNewSignup } from '../utils/email';
 
 const db = admin.firestore();
 
@@ -229,6 +229,17 @@ export async function createOffice(req: Request, res: Response): Promise<void> {
       tenantId: officeId,
     }).catch((error) => console.error('Failed to send sales notification:', error));
 
+    // Notify all super admins of new signup (non-blocking)
+    notifySuperAdminsNewSignup('voice', {
+      id: officeId,
+      name: office.name,
+      email: office.email,
+      ownerName: owner.displayName,
+      ownerEmail: owner.email,
+      phone: office.phoneNumber,
+      twilioNumber: office.twilioPhoneNumber,
+    }).catch((error) => console.error('Failed to send super admin notification:', error));
+
     res.status(201).json({
       officeId,
       message: 'Office created successfully',
@@ -434,6 +445,17 @@ Use the restaurant's cuisine style and personality in your tone.`;
       twilioNumber: restaurant.twilioPhoneNumber,
       tenantId: restaurantId,
     }).catch((error) => console.error('Failed to send sales notification:', error));
+
+    // Notify all super admins of new signup (non-blocking)
+    notifySuperAdminsNewSignup('restaurant', {
+      id: restaurantId,
+      name: restaurant.name,
+      email: restaurant.email,
+      ownerName: manager.displayName,
+      ownerEmail: manager.email,
+      phone: restaurant.phoneNumber,
+      twilioNumber: restaurant.twilioPhoneNumber,
+    }).catch((error) => console.error('Failed to send super admin notification:', error));
 
     res.status(201).json({
       restaurantId,
@@ -744,6 +766,17 @@ export async function createAgent(req: Request, res: Response): Promise<void> {
       twilioNumber: agent.twilioPhoneNumber,
       tenantId: agentId,
     }).catch((error) => console.error('Failed to send sales notification:', error));
+
+    // Notify all super admins of new signup (non-blocking)
+    notifySuperAdminsNewSignup('real_estate', {
+      id: agentId,
+      name: agent.brandName || `${agent.name} Team`,
+      email: agent.email,
+      ownerName: agent.name,
+      ownerEmail: owner.email,
+      phone: agent.phoneNumber,
+      twilioNumber: agent.twilioPhoneNumber,
+    }).catch((error) => console.error('Failed to send super admin notification:', error));
 
     res.status(201).json({
       agentId,

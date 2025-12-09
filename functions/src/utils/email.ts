@@ -498,3 +498,213 @@ export async function sendSalesNotification(signupData: {
   });
 }
 
+/**
+ * Get all super admin email addresses from Firestore
+ */
+export async function getSuperAdminEmails(): Promise<string[]> {
+  try {
+    const admin = await import('firebase-admin');
+    const db = admin.default.firestore();
+    
+    // Query users collection for super admins
+    const usersSnapshot = await db.collection('users').where('role', '==', 'merxus_admin').get();
+    
+    const emails: string[] = [];
+    usersSnapshot.forEach(doc => {
+      const userData = doc.data();
+      if (userData.email && !userData.disabled) {
+        emails.push(userData.email);
+      }
+    });
+
+    console.log(`[getSuperAdminEmails] Found ${emails.length} active super admin(s)`);
+    return emails;
+  } catch (error) {
+    console.error('[getSuperAdminEmails] Error:', error);
+    return [];
+  }
+}
+
+/**
+ * Send notification to all super admins about new signup
+ */
+export async function notifySuperAdminsNewSignup(
+  tenantType: 'restaurant' | 'voice' | 'real_estate',
+  tenantData: {
+    id: string;
+    name: string;
+    email: string;
+    ownerName: string;
+    ownerEmail: string;
+    phone?: string;
+    twilioNumber?: string;
+  }
+): Promise<void> {
+  try {
+    const superAdminEmails = await getSuperAdminEmails();
+    
+    if (superAdminEmails.length === 0) {
+      console.warn('[notifySuperAdminsNewSignup] No super admins found to notify');
+      return;
+    }
+
+    const tenantTypeLabel = tenantType === 'real_estate' ? 'Real Estate Agent' : 
+                            tenantType === 'voice' ? 'Voice/Office' : 
+                            'Restaurant';
+
+    const subject = `🎉 New ${tenantTypeLabel} Signup: ${tenantData.name}`;
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+          .container { max-width: 650px; margin: 0 auto; padding: 0; }
+          .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px 30px; text-align: center; }
+          .header h1 { margin: 0; font-size: 32px; font-weight: 700; }
+          .header p { margin: 12px 0 0 0; opacity: 0.95; font-size: 18px; }
+          .content { background: #ffffff; padding: 40px 30px; }
+          .section-title { color: #111827; font-size: 20px; font-weight: 600; margin: 30px 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #10b981; }
+          .section-title:first-child { margin-top: 0; }
+          .info-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 15px 0; }
+          .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; }
+          .info-row:last-child { border-bottom: none; }
+          .label { font-weight: 600; color: #6b7280; flex-shrink: 0; margin-right: 20px; }
+          .value { color: #111827; text-align: right; word-break: break-word; }
+          .value code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: monospace; }
+          .cta-section { text-align: center; margin: 35px 0; }
+          .cta-button { display: inline-block; background: #10b981; color: white !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
+          .footer { text-align: center; padding: 30px; background: #f9fafb; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
+          .footer p { margin: 8px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎉 New Customer Signup!</h1>
+            <p>${tenantTypeLabel} Account Created</p>
+          </div>
+          
+          <div class="content">
+            <h2 class="section-title">Business Information</h2>
+            <div class="info-card">
+              <div class="info-row">
+                <span class="label">Business Name:</span>
+                <span class="value"><strong>${tenantData.name}</strong></span>
+              </div>
+              <div class="info-row">
+                <span class="label">Business Email:</span>
+                <span class="value">${tenantData.email}</span>
+              </div>
+              ${tenantData.phone ? `
+              <div class="info-row">
+                <span class="label">Business Phone:</span>
+                <span class="value">${tenantData.phone}</span>
+              </div>
+              ` : ''}
+              ${tenantData.twilioNumber ? `
+              <div class="info-row">
+                <span class="label">AI Phone Number:</span>
+                <span class="value"><strong>${tenantData.twilioNumber}</strong></span>
+              </div>
+              ` : ''}
+            </div>
+
+            <h2 class="section-title">Owner Information</h2>
+            <div class="info-card">
+              <div class="info-row">
+                <span class="label">Owner Name:</span>
+                <span class="value"><strong>${tenantData.ownerName}</strong></span>
+              </div>
+              <div class="info-row">
+                <span class="label">Owner Email:</span>
+                <span class="value">${tenantData.ownerEmail}</span>
+              </div>
+            </div>
+
+            <h2 class="section-title">Account Details</h2>
+            <div class="info-card">
+              <div class="info-row">
+                <span class="label">Account Type:</span>
+                <span class="value">${tenantTypeLabel}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Tenant ID:</span>
+                <span class="value"><code>${tenantData.id}</code></span>
+              </div>
+              <div class="info-row">
+                <span class="label">Trial Status:</span>
+                <span class="value">✅ <strong>14-day free trial started</strong></span>
+              </div>
+              <div class="info-row">
+                <span class="label">Created:</span>
+                <span class="value">${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+              </div>
+            </div>
+
+            <div class="cta-section">
+              <a href="https://app.merxus.com/merxus" class="cta-button">
+                View in Admin Dashboard →
+              </a>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p><strong>Merxus Platform</strong> • Super Admin Notification</p>
+            <p style="font-size: 12px; margin-top: 15px;">
+              This is an automated notification. You're receiving this because you're a Merxus super admin.
+            </p>
+            <p style="font-size: 12px; color: #9ca3af;">
+              © ${new Date().getFullYear()} Merxus. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+New ${tenantTypeLabel} Signup
+
+BUSINESS INFORMATION:
+- Business Name: ${tenantData.name}
+- Business Email: ${tenantData.email}
+${tenantData.phone ? `- Business Phone: ${tenantData.phone}\n` : ''}
+${tenantData.twilioNumber ? `- AI Phone Number: ${tenantData.twilioNumber}\n` : ''}
+
+OWNER INFORMATION:
+- Owner Name: ${tenantData.ownerName}
+- Owner Email: ${tenantData.ownerEmail}
+
+ACCOUNT DETAILS:
+- Account Type: ${tenantTypeLabel}
+- Tenant ID: ${tenantData.id}
+- Trial Status: 14-day free trial started
+- Created: ${new Date().toLocaleString()}
+
+View in Admin Dashboard: https://app.merxus.com/merxus
+
+---
+Merxus Platform - Super Admin Notification
+    `.trim();
+
+    // Send email to all super admins
+    const emailPromises = superAdminEmails.map(email => 
+      sendEmail({
+        to: email,
+        subject,
+        html,
+        text,
+      })
+    );
+
+    await Promise.all(emailPromises);
+    
+    console.log(`[notifySuperAdminsNewSignup] ✅ Sent notification to ${superAdminEmails.length} super admin(s): ${superAdminEmails.join(', ')}`);
+  } catch (error) {
+    console.error('[notifySuperAdminsNewSignup] Error sending notification:', error);
+    // Don't throw - notification failure shouldn't break signup
+  }
+}
+
