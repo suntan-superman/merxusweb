@@ -35,6 +35,7 @@ const Home = () => {
               controls 
               className="w-full"
               poster="/videos/poster.jpg"
+              crossOrigin="anonymous"
             >
               <source src="/videos/Merxus_AI_Demo.mp4" type="video/mp4" />
               Your browser does not support the video tag.
