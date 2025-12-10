@@ -34,7 +34,7 @@ const Home = () => {
             <video 
               controls 
               className="w-full"
-              poster="/videos/poster.jpg"
+              poster="/videos/poster.png"
               crossOrigin="anonymous"
             >
               <source src="/videos/Merxus_AI_Demo.mp4" type="video/mp4" />
