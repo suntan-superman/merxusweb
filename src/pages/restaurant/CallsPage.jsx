@@ -13,16 +13,17 @@ export default function CallsPage() {
   const [selectedCall, setSelectedCall] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Build Firestore collection path
-  const collectionPath = restaurantId ? `restaurants/${restaurantId}/calls` : null;
+  // Build Firestore collection path - query root callSessions filtered by restaurantId
+  const collectionPath = 'callSessions';
 
-  // Query options
+  // Query options - filter by restaurantId and order by date
   const queryOptions = useMemo(
     () => ({
-      orderBy: [{ field: 'startedAt', direction: 'desc' }],
+      where: restaurantId ? [{ field: 'restaurantId', operator: '==', value: restaurantId }] : [],
+      orderBy: [{ field: 'endedAt', direction: 'desc' }],
       limit: 100,
     }),
-    []
+    [restaurantId]
   );
 
   // Use Firestore real-time listener

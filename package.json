@@ -22,6 +22,7 @@
     "@syncfusion/ej2-navigations": "^31.2.3",
     "@syncfusion/ej2-popups": "^31.2.3",
     "@syncfusion/ej2-react-grids": "^31.2.3",
+    "@syncfusion/ej2-react-schedule": "^31.2.3",
     "@syncfusion/ej2-splitbuttons": "^31.2.3",
     "axios": "^1.6.2",
     "firebase": "^10.7.1",

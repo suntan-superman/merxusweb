@@ -94,6 +94,11 @@ service cloud.firestore {
       // Only backend can write
       allow write: if false;
     }
+
+    // Subscriptions collection - for admin billing management
+    match /subscriptions/{subscriptionId} {
+      // Only Merxus admins can read/write subscriptions
+      allow read, write: if isMerxusAdmin();
+    }
   }
 }
-

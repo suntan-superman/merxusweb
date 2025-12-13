@@ -13,6 +13,7 @@ import Onboarding from './pages/Onboarding';
 import OnboardingWizardDemo from './pages/OnboardingWizardDemo';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/restaurant/DashboardPage';
+import RestaurantDashboard from './components/restaurant/RestaurantDashboard';
 import OrdersPage from './pages/restaurant/OrdersPage';
 import ReservationsPage from './pages/restaurant/ReservationsPage';
 import CallsPage from './pages/restaurant/CallsPage';
@@ -103,6 +104,7 @@ function App() {
                     }
                   >
                     <Route index element={<DashboardPage />} />
+                    <Route path="active-dashboard" element={<RestaurantDashboard />} />
                     <Route path="orders" element={<OrdersPage />} />
                     <Route path="reservations" element={<ReservationsPage />} />
                     <Route path="calls" element={<CallsPage />} />

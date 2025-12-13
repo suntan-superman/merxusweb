@@ -24,7 +24,7 @@ export default function VoiceAdminPage() {
         <div className="text-6xl mb-4">📞</div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Voice Admin Portal</h2>
         <p className="text-gray-600 mb-6">
-          The voice service admin dashboard is coming soon. You'll be able to:
+          Manage voice service companies and oversee the voice platform
         </p>
         <ul className="text-left max-w-md mx-auto space-y-2 text-gray-600 mb-8">
           <li>• View and manage all voice service companies</li>

@@ -91,32 +91,86 @@ export default function OrderDetailDrawer({
           <section>
             <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">Items</h3>
             <div className="divide-y rounded-md border bg-gray-50">
-              {order.items?.map((item, idx) => (
-                <div key={idx} className="flex items-start justify-between px-3 py-2">
-                  <div className="text-sm text-gray-800">
-                    <span className="font-medium">{item.quantity}× </span>
-                    <span>{item.name}</span>
-                    {item.notes && (
-                      <div className="text-xs text-gray-500 mt-0.5">{item.notes}</div>
+              {order.items?.map((item, idx) => {
+                const unitPrice = parseFloat(item.unitPrice || item.price || 0);
+                const quantity = parseInt(item.quantity || 1);
+                const itemTotal = unitPrice * quantity;
+                
+                return (
+                  <div key={idx} className="flex items-start justify-between px-3 py-2">
+                    <div className="text-sm text-gray-800 flex-1">
+                      <span className="font-medium">{quantity}× </span>
+                      <span>{item.name}</span>
+                      {item.notes && (
+                        <div className="text-xs text-gray-500 mt-0.5">{item.notes}</div>
+                      )}
+                      {unitPrice > 0 && (
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          ${unitPrice.toFixed(2)} each
+                        </div>
+                      )}
+                    </div>
+                    {itemTotal > 0 && (
+                      <div className="text-sm text-gray-900 font-medium">
+                        ${itemTotal.toFixed(2)}
+                      </div>
                     )}
                   </div>
-                  <div className="text-sm text-gray-900 font-medium">
-                    ${(item.unitPrice * item.quantity).toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 
-          <section className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <h3 className="text-xs font-semibold uppercase text-gray-500 mb-1">Subtotal</h3>
-              <p className="text-gray-800">${order.subtotal?.toFixed(2)}</p>
-            </div>
-            <div>
-              <h3 className="text-xs font-semibold uppercase text-gray-500 mb-1">Total</h3>
-              <p className="text-gray-800 font-semibold">${order.total?.toFixed(2)}</p>
-            </div>
+          <section className="space-y-2 text-sm">
+            {(() => {
+              // Calculate subtotal from items if prices are available
+              const calculatedSubtotal = order.items?.reduce((sum, item) => {
+                const unitPrice = parseFloat(item.unitPrice || item.price || 0);
+                const quantity = parseInt(item.quantity || 1);
+                return sum + (unitPrice * quantity);
+              }, 0) || 0;
+              
+              const taxRate = parseFloat(order.taxRate || 0.075); // Default 7.5%
+              
+              // If we have a total but no item prices, calculate subtotal from total
+              let subtotal, tax, total;
+              if (order.total && calculatedSubtotal === 0) {
+                // Total is provided but items don't have prices
+                // Assume total includes tax, so back-calculate
+                total = parseFloat(order.total || 0);
+                subtotal = total / (1 + taxRate);
+                tax = total - subtotal;
+              } else if (calculatedSubtotal > 0) {
+                // We have item prices, calculate normally
+                subtotal = order.subtotal !== undefined ? parseFloat(order.subtotal || 0) : calculatedSubtotal;
+                tax = subtotal * taxRate;
+                total = order.total !== undefined ? parseFloat(order.total || 0) : (subtotal + tax);
+              } else {
+                // No data available
+                subtotal = parseFloat(order.subtotal || 0);
+                tax = subtotal * taxRate;
+                total = parseFloat(order.total || 0);
+              }
+              
+              return (
+                <>
+                  <div className="flex justify-between">
+                    <h3 className="text-xs font-semibold uppercase text-gray-500">Subtotal</h3>
+                    <p className="text-gray-800">${subtotal.toFixed(2)}</p>
+                  </div>
+                  <div className="flex justify-between">
+                    <h3 className="text-xs font-semibold uppercase text-gray-500">
+                      Tax ({(taxRate * 100).toFixed(2)}%)
+                    </h3>
+                    <p className="text-gray-800">${tax.toFixed(2)}</p>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t">
+                    <h3 className="text-xs font-semibold uppercase text-gray-500">Total</h3>
+                    <p className="text-gray-900 font-semibold text-base">${total.toFixed(2)}</p>
+                  </div>
+                </>
+              );
+            })()}
           </section>
 
           {(order.notes || (order.tags && order.tags.length > 0)) && (
@@ -155,18 +209,22 @@ export default function OrderDetailDrawer({
   );
 }
 
-function formatDateTime(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
+function formatDateTime(timestamp) {
+  if (!timestamp) return '';
+  // Handle Firestore Timestamp
+  const d = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+  if (isNaN(d.getTime())) return 'Invalid Date';
   return d.toLocaleString([], {
     dateStyle: 'short',
     timeStyle: 'short',
   });
 }
 
-function formatTime(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
+function formatTime(timestamp) {
+  if (!timestamp) return '';
+  // Handle Firestore Timestamp
+  const d = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+  if (isNaN(d.getTime())) return 'Invalid Date';
   return d.toLocaleTimeString([], {
     hour: 'numeric',
     minute: '2-digit',

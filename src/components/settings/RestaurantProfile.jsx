@@ -6,6 +6,7 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
     address: settings.address || '',
     timezone: settings.timezone || 'America/Los_Angeles',
     phoneNumber: settings.phoneNumber || '',
+    taxRate: settings.taxRate !== undefined ? (settings.taxRate * 100).toFixed(2) : '7.50',
   });
 
   function handleChange(e) {
@@ -15,7 +16,12 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    onSave(form);
+    // Convert tax rate percentage to decimal before saving
+    const dataToSave = {
+      ...form,
+      taxRate: parseFloat(form.taxRate) / 100,
+    };
+    onSave(dataToSave);
   }
 
   return (
@@ -89,6 +95,32 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
             className="input-field"
             placeholder="+15551234567"
           />
+        </div>
+
+        <div>
+          <label htmlFor="taxRate" className="block text-sm font-medium text-gray-700 mb-2">
+            Combined Tax Rate (%)
+          </label>
+          <div className="relative">
+            <input
+              id="taxRate"
+              name="taxRate"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              value={form.taxRate}
+              onChange={handleChange}
+              className="input-field pr-8"
+              placeholder="7.50"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+              %
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Default tax rate applied to all orders (default: 7.5%)
+          </p>
         </div>
 
         <button type="submit" className="btn-primary" disabled={saving}>

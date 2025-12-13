@@ -30,21 +30,21 @@ export default function CallTable({ calls, onCallClick }) {
             >
               <td className="px-4 py-3">
                 <div className="font-medium text-gray-900">
-                  {c.customerName || 'Unknown'}
+                  {c.parsedOrder?.name || c.customerName || 'Unknown'}
                 </div>
-                <div className="text-xs text-gray-500">{c.customerPhone}</div>
+                <div className="text-xs text-gray-500">{formatPhone(c.from || c.customerPhone)}</div>
               </td>
 
               <td className="px-4 py-3 text-xs capitalize text-gray-700">
-                {c.type}
+                {c.callType || c.type || 'call'}
               </td>
 
               <td className="px-4 py-3 text-xs text-gray-700">
-                {formatTime(c.startedAt)}
+                {formatTime(c.endedAt || c.startedAt)}
               </td>
 
               <td className="px-4 py-3 text-xs text-gray-700">
-                {Math.round(c.durationSec)}s
+                {c.durationSec ? Math.round(c.durationSec) + 's' : '-'}
               </td>
 
               <td className="px-4 py-3">
@@ -64,12 +64,21 @@ export default function CallTable({ calls, onCallClick }) {
   );
 }
 
-function formatTime(iso) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleString([], {
+function formatTime(timestamp) {
+  if (!timestamp) return '';
+  // Handle Firestore Timestamp objects
+  const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleString([], {
     dateStyle: 'short',
     timeStyle: 'short',
   });
+}
+
+function formatPhone(phone) {
+  if (!phone) return '';
+  // Remove +1 prefix if present
+  const cleaned = phone.replace(/^\+1/, '');
+  return cleaned;
 }
 
 function importanceClass(level) {

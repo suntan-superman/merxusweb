@@ -80,8 +80,11 @@ export default function SystemSettingsPage() {
         <p className="text-sm text-gray-600 mb-4">
           System-wide configuration options
         </p>
-        <div className="text-sm text-gray-500">
-          System settings configuration coming soon...
+        <div className="space-y-4">
+          <div className="border border-gray-200 rounded-lg p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">System Configuration</label>
+            <p className="text-sm text-gray-600">Settings management features will be available here.</p>
+          </div>
         </div>
       </div>
     </div>

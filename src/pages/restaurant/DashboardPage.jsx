@@ -171,6 +171,12 @@ export default function DashboardPage() {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <a 
+          href="/restaurant/active-dashboard" 
+          className="text-primary-600 hover:text-primary-700 font-medium text-sm mt-2 inline-block"
+        >
+          → Active Dashboard
+        </a>
         <p className="text-gray-600 mt-2">
           Welcome back{user?.displayName ? `, ${user.displayName}` : ''}!
         </p>

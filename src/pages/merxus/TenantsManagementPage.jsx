@@ -11,6 +11,8 @@ export default function TenantsManagementPage() {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingTenant, setEditingTenant] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tenantToToggle, setTenantToToggle] = useState(null);
 
@@ -62,19 +64,24 @@ export default function TenantsManagementPage() {
             const sub = subsSnapshot.docs[0].data();
             subscriptionStatus = sub.status || 'unknown';
             trialEndsAt = sub.trial_end;
+            console.log(`[TenantsManagement] ${tenantDoc.id} - Found subscription with status: "${subscriptionStatus}"`);
           } else {
             subscriptionStatus = 'No Subscription';
+            console.log(`[TenantsManagement] ${tenantDoc.id} - No subscription found`);
           }
         } catch (error) {
           console.error('Error loading subscription for', tenantDoc.id, error);
         }
 
+        // Store both phone fields consistently for all tenant types
         tenantsList.push({
           id: tenantDoc.id,
           name: settings.name || tenantData.name || 'Unknown',
           email: settings.email || tenantData.email || 'N/A',
-          phone: settings.phoneNumber || settings.twilioPhoneNumber || 'N/A',
-          twilioNumber: settings.twilioPhoneNumber || 'Not Configured',
+          // Always use twilioPhoneNumber for the primary display phone
+          phone: settings.twilioPhoneNumber || settings.phoneNumber || 'N/A',
+          phoneNumber: settings.phoneNumber || 'N/A', // Business phone
+          twilioPhoneNumber: settings.twilioPhoneNumber || 'N/A', // AI phone
           disabled: tenantData.disabled || false,
           createdAt: tenantData.createdAt?.toDate() || new Date(),
           subscriptionStatus,
@@ -101,6 +108,66 @@ export default function TenantsManagementPage() {
     setShowConfirmModal(true);
   };
 
+  const handleEditTenant = (tenant) => {
+    setEditingTenant(tenant);
+    setEditFormData({
+      name: tenant.name,
+      email: tenant.email,
+      phoneNumber: tenant.phoneNumber,
+      twilioPhoneNumber: tenant.twilioPhoneNumber,
+    });
+  };
+
+  const handleSaveTenant = async () => {
+    if (!editingTenant || !editFormData) return;
+
+    setSavingEdit(true);
+    try {
+      const collectionName = currentTab.collection;
+      
+      // Update meta/settings document - save both phone fields consistently
+      const settingsRef = doc(db, collectionName, editingTenant.id, 'meta', 'settings');
+      const updateObj = {
+        name: editFormData.name,
+        email: editFormData.email,
+      };
+      
+      // Save both phone fields for all tenant types consistently
+      if (editFormData.phoneNumber && editFormData.phoneNumber !== 'N/A') {
+        updateObj.phoneNumber = editFormData.phoneNumber;
+      }
+      if (editFormData.twilioPhoneNumber && editFormData.twilioPhoneNumber !== 'N/A') {
+        updateObj.twilioPhoneNumber = editFormData.twilioPhoneNumber;
+      }
+      
+      await updateDoc(settingsRef, updateObj);
+
+      // Update local state to reflect changes
+      const updatedTenants = tenants.map(t => 
+        t.id === editingTenant.id 
+          ? { 
+              ...t, 
+              name: editFormData.name, 
+              email: editFormData.email, 
+              phoneNumber: editFormData.phoneNumber,
+              twilioPhoneNumber: editFormData.twilioPhoneNumber,
+              phone: editFormData.twilioPhoneNumber || editFormData.phoneNumber // Display Twilio if available, else business phone
+            }
+          : t
+      );
+      setTenants(updatedTenants);
+
+      toast.success('Tenant updated successfully!');
+      setEditingTenant(null);
+      setEditFormData({});
+    } catch (error) {
+      console.error('Error saving tenant:', error);
+      toast.error('Failed to save tenant changes');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const confirmToggleTenant = async () => {
     if (!tenantToToggle) return;
 
@@ -122,10 +189,6 @@ export default function TenantsManagementPage() {
       setShowConfirmModal(false);
       setTenantToToggle(null);
     }
-  };
-
-  const handleEditTenant = (tenant) => {
-    setEditingTenant(tenant);
   };
 
   const getStatusBadge = (status) => {
@@ -306,8 +369,8 @@ export default function TenantsManagementPage() {
             <ColumnsDirective>
               <ColumnDirective field="name" headerText="Name" width="200" />
               <ColumnDirective field="email" headerText="Email" width="200" />
-              <ColumnDirective field="phone" headerText="Phone" width="150" />
-              <ColumnDirective field="twilioNumber" headerText="AI Phone #" width="150" />
+              <ColumnDirective field="phoneNumber" headerText="Business Phone" width="150" />
+              <ColumnDirective field="twilioPhoneNumber" headerText="AI Assistant Phone" width="150" />
               <ColumnDirective 
                 headerText="Status" 
                 width="180"
@@ -339,7 +402,7 @@ export default function TenantsManagementPage() {
         )}
       </div>
 
-      {/* Edit Modal (placeholder) */}
+      {/* Edit Modal */}
       {editingTenant && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
@@ -355,7 +418,8 @@ export default function TenantsManagementPage() {
                 </label>
                 <input
                   type="text"
-                  defaultValue={editingTenant.name}
+                  value={editFormData.name || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
@@ -366,38 +430,59 @@ export default function TenantsManagementPage() {
                 </label>
                 <input
                   type="email"
-                  defaultValue={editingTenant.email}
+                  value={editFormData.email || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone
+                  Business Phone Number
                 </label>
                 <input
                   type="tel"
-                  defaultValue={editingTenant.phone}
+                  value={editFormData.phoneNumber || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Main contact number for the business
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  AI Assistant Phone (Twilio)
+                </label>
+                <input
+                  type="tel"
+                  value={editFormData.twilioPhoneNumber || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, twilioPhoneNumber: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Phone number used for AI Assistant calls and voice interactions
+                </p>
               </div>
             </div>
 
             <div className="flex gap-3">
               <button
-                onClick={() => setEditingTenant(null)}
+                onClick={() => {
+                  setEditingTenant(null);
+                  setEditFormData({});
+                }}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  toast.info('Edit functionality coming soon!');
-                  setEditingTenant(null);
-                }}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                onClick={handleSaveTenant}
+                disabled={savingEdit}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                Save Changes
+                {savingEdit ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>

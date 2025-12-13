@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 import { fetchSettings } from '../../api/settings';
 import { fetchVoiceSettings } from '../../api/voice';
+import CallHQModal from '../CallHQModal';
 
 export default function Topbar({ onMenuClick }) {
   const { userClaims } = useAuth();
@@ -73,6 +74,9 @@ export default function Topbar({ onMenuClick }) {
           </div>
         </div>
         <div className="flex items-center space-x-2 md:space-x-4">
+          {/* HQ Phone Button */}
+          <CallHQModal />
+          
           {/* Notifications placeholder */}
           <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
