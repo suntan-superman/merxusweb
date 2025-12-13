@@ -1,15 +1,32 @@
 import { useEffect, useState } from 'react';
-import { fetchSystemAnalytics } from '../../api/merxus';
+import { fetchSystemAnalytics, fetchTenantAnalytics } from '../../api/merxus';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AnalyticsPage() {
+  const { userClaims } = useAuth();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isTenantAnalytics, setIsTenantAnalytics] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await fetchSystemAnalytics();
-        setAnalytics(data);
+        // Try tenant analytics first if user is not a merxus admin
+        if (userClaims?.role !== 'merxus_admin' && userClaims?.role !== 'merxus_support') {
+          try {
+            const data = await fetchTenantAnalytics();
+            setAnalytics(data);
+            setIsTenantAnalytics(true);
+          } catch (err) {
+            console.warn('Tenant analytics not available, falling back to system analytics:', err);
+            const data = await fetchSystemAnalytics();
+            setAnalytics(data);
+          }
+        } else {
+          // Merxus admin - show system analytics
+          const data = await fetchSystemAnalytics();
+          setAnalytics(data);
+        }
       } catch (err) {
         console.error('Failed to load analytics:', err);
       } finally {
@@ -17,7 +34,7 @@ export default function AnalyticsPage() {
       }
     }
     load();
-  }, []);
+  }, [userClaims]);
 
   if (loading) {
     return (
@@ -33,9 +50,13 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">System Analytics</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {isTenantAnalytics ? 'My Analytics' : 'System Analytics'}
+        </h1>
         <p className="text-gray-600 mt-2">
-          System-wide statistics and insights
+          {isTenantAnalytics 
+            ? `Statistics and insights for your ${analytics?.tenantType || 'account'}`
+            : 'System-wide statistics and insights'}
         </p>
       </div>
 

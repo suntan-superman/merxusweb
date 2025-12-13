@@ -162,6 +162,7 @@ app.post('/merxus/restaurants/:restaurantId/menu', merxusRoutes.createRestaurant
 app.put('/merxus/restaurants/:restaurantId/menu/:itemId', merxusRoutes.updateRestaurantMenuItem);
 app.delete('/merxus/restaurants/:restaurantId/menu/:itemId', merxusRoutes.deleteRestaurantMenuItem);
 app.patch('/merxus/restaurants/:restaurantId/menu/:itemId', merxusRoutes.toggleRestaurantMenuItemAvailability);
+app.get('/merxus/analytics/tenant', merxusRoutes.getTenantAnalytics);
 app.get('/merxus/analytics', merxusRoutes.getSystemAnalytics);
 app.get('/merxus/settings', merxusRoutes.getSystemSettings);
 app.patch('/merxus/settings', merxusRoutes.updateSystemSettings);

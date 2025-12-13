@@ -7,6 +7,7 @@ const RESERVATIONS_VIEW_KEY = 'merxus_dashboard_reservations_view';
 
 export default function DashboardPage() {
   const { user, userClaims, restaurantId } = useAuth();
+  const tenantType = userClaims?.type;
   
   // Load saved reservations view preference (today/week)
   const [reservationsView, setReservationsView] = useState(() => {
@@ -50,18 +51,19 @@ export default function DashboardPage() {
     return new Date(now.getFullYear(), now.getMonth(), diff);
   }, []);
 
-  // Fetch orders
-  const ordersCollectionPath = restaurantId ? `restaurants/${restaurantId}/orders` : null;
+  // ===== RESTAURANT-SPECIFIC DATA =====
+  // Fetch orders (restaurants only)
+  const ordersCollectionPath = (tenantType === 'restaurant' && restaurantId) ? `restaurants/${restaurantId}/orders` : null;
   const { data: orders = [], loading: ordersLoading } = useFirestoreCollection(
     ordersCollectionPath,
     {
       orderBy: [{ field: 'createdAt', direction: 'desc' }],
-      limit: 500, // Get enough to calculate stats
+      limit: 500,
     }
   );
 
-  // Fetch reservations
-  const reservationsCollectionPath = restaurantId ? `restaurants/${restaurantId}/reservations` : null;
+  // Fetch reservations (restaurants only)
+  const reservationsCollectionPath = (tenantType === 'restaurant' && restaurantId) ? `restaurants/${restaurantId}/reservations` : null;
   const { data: reservations = [], loading: reservationsLoading } = useFirestoreCollection(
     reservationsCollectionPath,
     {
@@ -70,53 +72,59 @@ export default function DashboardPage() {
     }
   );
 
-  // Fetch calls from callSessions collection (root level) filtered by restaurantId
+  // Fetch calls (all tenant types)
+  const callsQuery = tenantType === 'restaurant' 
+    ? { where: [{ field: 'restaurantId', operator: '==', value: restaurantId }] }
+    : tenantType === 'real_estate'
+    ? { where: [{ field: 'agentId', operator: '==', value: restaurantId }] }
+    : tenantType === 'voice' || tenantType === 'general'
+    ? { where: [{ field: 'officeId', operator: '==', value: restaurantId }] }
+    : {};
+
   const { data: calls = [], loading: callsLoading } = useFirestoreCollection(
     restaurantId ? 'callSessions' : null,
-    restaurantId
-      ? {
-          where: [{ field: 'restaurantId', operator: '==', value: restaurantId }],
-          orderBy: [{ field: 'createdAt', direction: 'desc' }],
-          limit: 500,
-        }
-      : {}
+    restaurantId ? {
+      ...callsQuery,
+      orderBy: [{ field: 'createdAt', direction: 'desc' }],
+      limit: 500,
+    } : {}
   );
 
   // Calculate stats
   const stats = useMemo(() => {
-    // Orders this month - handle Firestore Timestamp and regular dates
-    const ordersThisMonth = orders.filter((order) => {
-      if (!order.createdAt) return false;
-      
-      // Handle Firestore Timestamp - try multiple formats
-      let orderDate;
-      try {
-        if (typeof order.createdAt.toDate === 'function') {
-          orderDate = order.createdAt.toDate();
-        } else if (order.createdAt.seconds) {
-          orderDate = new Date(order.createdAt.seconds * 1000);
-        } else if (order.createdAt._seconds) {
-          orderDate = new Date(order.createdAt._seconds * 1000);
-        } else {
-          orderDate = new Date(order.createdAt);
-        }
+    // Orders this month (restaurants only)
+    let ordersThisMonth = 0;
+    if (tenantType === 'restaurant') {
+      ordersThisMonth = orders.filter((order) => {
+        if (!order.createdAt) return false;
         
-        // Check if date is valid
-        if (isNaN(orderDate.getTime())) {
+        let orderDate;
+        try {
+          if (typeof order.createdAt.toDate === 'function') {
+            orderDate = order.createdAt.toDate();
+          } else if (order.createdAt.seconds) {
+            orderDate = new Date(order.createdAt.seconds * 1000);
+          } else if (order.createdAt._seconds) {
+            orderDate = new Date(order.createdAt._seconds * 1000);
+          } else {
+            orderDate = new Date(order.createdAt);
+          }
+          
+          if (isNaN(orderDate.getTime())) {
+            return false;
+          }
+          
+          const orderYear = orderDate.getFullYear();
+          const orderMonth = orderDate.getMonth();
+          return orderYear === currentYearMonth.year && orderMonth === currentYearMonth.month;
+        } catch (err) {
+          console.error('Error parsing order date:', err, order);
           return false;
         }
-        
-        // Compare year and month directly (avoids timezone issues)
-        const orderYear = orderDate.getFullYear();
-        const orderMonth = orderDate.getMonth();
-        return orderYear === currentYearMonth.year && orderMonth === currentYearMonth.month;
-      } catch (err) {
-        console.error('Error parsing order date:', err, order);
-        return false;
-      }
-    });
+      }).length;
+    }
 
-    // Calls today - check both startedAt and createdAt fields
+    // Calls today
     const callsToday = calls.filter((call) => {
       const dateField = call.startedAt || call.createdAt;
       if (!dateField) return false;
@@ -124,166 +132,228 @@ export default function DashboardPage() {
       return callDate >= startOfToday;
     });
 
-    // Reservations - filter by today or this week based on toggle
-    const reservationsCount = reservations.filter((reservation) => {
-      if (!reservation.createdAt) return false;
-      
-      // Handle Firestore Timestamp
-      let reservationDate;
-      try {
-        if (typeof reservation.createdAt.toDate === 'function') {
-          reservationDate = reservation.createdAt.toDate();
-        } else if (reservation.createdAt.seconds) {
-          reservationDate = new Date(reservation.createdAt.seconds * 1000);
-        } else if (reservation.createdAt._seconds) {
-          reservationDate = new Date(reservation.createdAt._seconds * 1000);
-        } else {
-          reservationDate = new Date(reservation.createdAt);
-        }
+    // Reservations (restaurants only)
+    let reservationsCount = 0;
+    if (tenantType === 'restaurant') {
+      reservationsCount = reservations.filter((reservation) => {
+        if (!reservation.createdAt) return false;
         
-        if (isNaN(reservationDate.getTime())) {
+        let reservationDate;
+        try {
+          if (typeof reservation.createdAt.toDate === 'function') {
+            reservationDate = reservation.createdAt.toDate();
+          } else if (reservation.createdAt.seconds) {
+            reservationDate = new Date(reservation.createdAt.seconds * 1000);
+          } else if (reservation.createdAt._seconds) {
+            reservationDate = new Date(reservation.createdAt._seconds * 1000);
+          } else {
+            reservationDate = new Date(reservation.createdAt);
+          }
+          
+          if (isNaN(reservationDate.getTime())) {
+            return false;
+          }
+          
+          if (reservationsView === 'today') {
+            return reservationDate >= startOfToday;
+          } else {
+            return reservationDate >= startOfWeek;
+          }
+        } catch (err) {
+          console.error('Error parsing reservation date:', err, reservation);
           return false;
         }
-        
-        // Filter based on view preference
-        if (reservationsView === 'today') {
-          return reservationDate >= startOfToday;
-        } else {
-          // Week view
-          return reservationDate >= startOfWeek;
-        }
-      } catch (err) {
-        console.error('Error parsing reservation date:', err, reservation);
-        return false;
-      }
-    }).length;
+      }).length;
+    }
 
     return {
-      ordersThisMonth: ordersThisMonth.length,
+      ordersThisMonth,
       callsToday: callsToday.length,
       reservationsCount,
     };
-  }, [orders, calls, reservations, currentYearMonth, startOfToday, startOfWeek, reservationsView]);
+  }, [orders, calls, reservations, currentYearMonth, startOfToday, startOfWeek, reservationsView, tenantType]);
 
   const isLoading = ordersLoading || callsLoading || reservationsLoading;
+
+  // Get tenant-specific labels and colors
+  const getTenantLabel = () => {
+    switch (tenantType) {
+      case 'restaurant':
+        return 'Restaurant';
+      case 'real_estate':
+        return 'Real Estate Agency';
+      case 'voice':
+      case 'general':
+        return 'Office';
+      default:
+        return 'Business';
+    }
+  };
+
+  // Get Quick Action Links based on tenant type
+  const getQuickActions = () => {
+    const baseActions = [];
+    
+    if (tenantType === 'restaurant') {
+      return [
+        { href: '/restaurant/orders', icon: '📦', label: 'View Orders', desc: 'Manage incoming orders' },
+        { href: '/restaurant/menu', icon: '🍽️', label: 'Menu Management', desc: 'Add, edit, and manage menu items' },
+        { href: '/restaurant/settings', icon: '⚙️', label: 'Settings', desc: 'Configure restaurant, hours, AI settings' },
+        { href: '/restaurant/customers', icon: '👥', label: 'View Customers', desc: 'Manage customer relationships' },
+        { href: '/restaurant/calls', icon: '📞', label: 'Calls & Messages', desc: 'View call history and transcripts' },
+        userClaims?.role === 'owner' && { href: '/restaurant/users', icon: '👤', label: 'Team & Access', desc: 'Manage team members and permissions' },
+      ];
+    } else if (tenantType === 'real_estate') {
+      return [
+        { href: '/estate/listings', icon: '🏠', label: 'Manage Listings', desc: 'Add and manage property listings' },
+        { href: '/estate/settings', icon: '⚙️', label: 'Settings', desc: 'Configure agency details and AI settings' },
+        { href: '/estate/calls', icon: '📞', label: 'Calls & Messages', desc: 'View inquiry calls and messages' },
+        userClaims?.role === 'owner' && { href: '/estate/users', icon: '👤', label: 'Team & Access', desc: 'Manage team members and permissions' },
+      ];
+    } else if (tenantType === 'voice' || tenantType === 'general') {
+      return [
+        { href: '/office/settings', icon: '⚙️', label: 'Settings', desc: 'Configure office details and AI settings' },
+        { href: '/office/calls', icon: '📞', label: 'Calls & Messages', desc: 'View call history and transcripts' },
+        userClaims?.role === 'owner' && { href: '/office/users', icon: '👤', label: 'Team & Access', desc: 'Manage team members and permissions' },
+      ];
+    }
+
+    return baseActions.filter(Boolean);
+  };
 
   return (
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <a 
-          href="/restaurant/active-dashboard" 
-          className="text-primary-600 hover:text-primary-700 font-medium text-sm mt-2 inline-block"
-        >
-          → Active Dashboard
-        </a>
+        {tenantType === 'restaurant' && (
+          <a 
+            href="/restaurant/active-dashboard" 
+            className="text-primary-600 hover:text-primary-700 font-medium text-sm mt-2 inline-block"
+          >
+            → Active Dashboard
+          </a>
+        )}
         <p className="text-gray-600 mt-2">
           Welcome back{user?.displayName ? `, ${user.displayName}` : ''}!
         </p>
+        <p className="text-sm text-gray-500 mt-1">{getTenantLabel()}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Orders</h3>
-          {isLoading ? (
-            <LoadingSpinner text="" />
-          ) : (
-            <>
-              <p className="text-3xl font-bold text-primary-600">{stats.ordersThisMonth}</p>
-              <p className="text-sm text-gray-600 mt-2">This month</p>
-            </>
-          )}
-        </div>
-
-        <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Active Calls</h3>
-          {isLoading ? (
-            <LoadingSpinner text="" />
-          ) : (
-            <>
-              <p className="text-3xl font-bold text-primary-600">{stats.callsToday}</p>
-              <p className="text-sm text-gray-600 mt-2">Today</p>
-            </>
-          )}
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">Total Reservations</h3>
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setReservationsView('today')}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  reservationsView === 'today'
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Today
-              </button>
-              <button
-                onClick={() => setReservationsView('week')}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  reservationsView === 'week'
-                    ? 'bg-primary-600 text-white'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Week
-              </button>
-            </div>
+      {/* Restaurant-specific stats */}
+      {tenantType === 'restaurant' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Orders</h3>
+            {isLoading ? (
+              <LoadingSpinner text="" />
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-primary-600">{stats.ordersThisMonth}</p>
+                <p className="text-sm text-gray-600 mt-2">This month</p>
+              </>
+            )}
           </div>
-          {isLoading ? (
-            <LoadingSpinner text="" />
-          ) : (
-            <>
-              <p className="text-3xl font-bold text-primary-600">{stats.reservationsCount}</p>
-              <p className="text-sm text-gray-600 mt-2">
-                {reservationsView === 'today' ? 'Today' : 'This week'}
-              </p>
-            </>
+
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Active Calls</h3>
+            {isLoading ? (
+              <LoadingSpinner text="" />
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-primary-600">{stats.callsToday}</p>
+                <p className="text-sm text-gray-600 mt-2">Today</p>
+              </>
+            )}
+          </div>
+
+          <div className="card">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">Total Reservations</h3>
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setReservationsView('today')}
+                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                    reservationsView === 'today'
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => setReservationsView('week')}
+                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                    reservationsView === 'week'
+                      ? 'bg-primary-600 text-white'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Week
+                </button>
+              </div>
+            </div>
+            {isLoading ? (
+              <LoadingSpinner text="" />
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-primary-600">{stats.reservationsCount}</p>
+                <p className="text-sm text-gray-600 mt-2">
+                  {reservationsView === 'today' ? 'Today' : 'This week'}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* All tenant types - Calls stat */}
+      {(tenantType === 'real_estate' || tenantType === 'voice' || tenantType === 'general') && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="card">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Today's Calls</h3>
+            {isLoading ? (
+              <LoadingSpinner text="" />
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-primary-600">{stats.callsToday}</p>
+                <p className="text-sm text-gray-600 mt-2">Incoming inquiries</p>
+              </>
+            )}
+          </div>
+
+          {tenantType === 'real_estate' && (
+            <div className="card">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Active Listings</h3>
+              <p className="text-3xl font-bold text-primary-600">0</p>
+              <p className="text-sm text-gray-600 mt-2">Currently listed</p>
+            </div>
           )}
         </div>
-      </div>
+      )}
 
+      {/* Quick Actions */}
       <div className="mt-6 card">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <a href="/restaurant/orders" className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors">
-            <h3 className="font-semibold text-gray-900 mb-1">📦 View Orders</h3>
-            <p className="text-sm text-gray-600">Manage incoming orders</p>
-          </a>
-          <a href="/restaurant/menu" className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors">
-            <h3 className="font-semibold text-gray-900 mb-1">🍽️ Menu Management</h3>
-            <p className="text-sm text-gray-600">Add, edit, and manage menu items</p>
-          </a>
-          <a href="/restaurant/settings" className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors">
-            <h3 className="font-semibold text-gray-900 mb-1">⚙️ Settings</h3>
-            <p className="text-sm text-gray-600">Configure restaurant, hours, AI settings</p>
-          </a>
-          <a href="/restaurant/customers" className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors">
-            <h3 className="font-semibold text-gray-900 mb-1">👥 View Customers</h3>
-            <p className="text-sm text-gray-600">Manage customer relationships</p>
-          </a>
-          <a href="/restaurant/calls" className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors">
-            <h3 className="font-semibold text-gray-900 mb-1">📞 Calls & Messages</h3>
-            <p className="text-sm text-gray-600">View call history and transcripts</p>
-          </a>
-          {userClaims?.role === 'owner' && (
-            <a href="/restaurant/users" className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors">
-              <h3 className="font-semibold text-gray-900 mb-1">👤 Team & Access</h3>
-              <p className="text-sm text-gray-600">Manage team members and permissions</p>
+          {getQuickActions().map((action, idx) => (
+            <a key={idx} href={action.href} className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors">
+              <h3 className="font-semibold text-gray-900 mb-1">{action.icon} {action.label}</h3>
+              <p className="text-sm text-gray-600">{action.desc}</p>
             </a>
-          )}
+          ))}
         </div>
       </div>
 
+      {/* Account Info */}
       {userClaims && (
         <div className="mt-6 card">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Account Info</h3>
           <div className="text-sm text-gray-600 space-y-1">
+            <p>Type: <span className="font-medium text-gray-900">{getTenantLabel()}</span></p>
             <p>Role: <span className="font-medium text-gray-900">{userClaims.role}</span></p>
-            <p>Restaurant ID: <span className="font-medium text-gray-900">{userClaims.restaurantId || 'N/A'}</span></p>
+            {restaurantId && (
+              <p>ID: <span className="font-medium text-gray-900">{restaurantId}</span></p>
+            )}
             <p>Email: <span className="font-medium text-gray-900">{user?.email}</span></p>
           </div>
         </div>

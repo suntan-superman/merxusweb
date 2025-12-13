@@ -520,7 +520,152 @@ export async function deleteRestaurant(req: AuthenticatedRequest, res: Response)
   }
 }
 
-// Analytics
+// Tenant-specific analytics (for regular users)
+export async function getTenantAnalytics(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const userRole = req.user?.role;
+    const tenantId = req.user?.restaurantId || req.user?.officeId || req.user?.agentId;
+    const tenantType = req.user?.type;
+
+    // Check if user has access to a tenant
+    if (!tenantId || !['restaurant', 'voice', 'real_estate', 'general'].includes(tenantType || '')) {
+      res.status(403).json({ error: 'No tenant access' });
+      return;
+    }
+
+    // Validate user is owner or manager of the tenant
+    let tenantRef;
+    switch (tenantType) {
+      case 'restaurant':
+        tenantRef = db.collection('restaurants').doc(tenantId);
+        break;
+      case 'voice':
+      case 'general':
+        tenantRef = db.collection('offices').doc(tenantId);
+        break;
+      case 'real_estate':
+        tenantRef = db.collection('agents').doc(tenantId);
+        break;
+      default:
+        res.status(400).json({ error: 'Invalid tenant type' });
+        return;
+    }
+
+    const tenantDoc = await tenantRef.get();
+    if (!tenantDoc.exists) {
+      res.status(404).json({ error: 'Tenant not found' });
+      return;
+    }
+
+    // Build analytics for this tenant
+    let totalOrders = 0;
+    let totalCalls = 0;
+    let totalUsers = 0;
+    const ordersByStatus: Record<string, number> = {};
+    const ordersByType: Record<string, number> = {};
+    const usersByRole: Record<string, number> = {};
+
+    // Count orders and calls (only for restaurants)
+    if (tenantType === 'restaurant') {
+      const ordersSnap = await tenantRef
+        .collection('orders')
+        .get();
+      
+      totalOrders = ordersSnap.size;
+      ordersSnap.docs.forEach((doc) => {
+        const data = doc.data();
+        const status = data.status || 'pending';
+        const type = data.orderType || 'unknown';
+        ordersByStatus[status] = (ordersByStatus[status] || 0) + 1;
+        ordersByType[type] = (ordersByType[type] || 0) + 1;
+      });
+
+      const callsSnap = await tenantRef
+        .collection('calls')
+        .get();
+      totalCalls = callsSnap.size;
+    }
+
+    // Count users
+    const usersSnap = await tenantRef.collection('users').get();
+    totalUsers = usersSnap.size;
+    usersSnap.docs.forEach((doc) => {
+      const data = doc.data();
+      const role = data.role || 'unknown';
+      usersByRole[role] = (usersByRole[role] || 0) + 1;
+    });
+
+    // Get calls this month and calculate avg duration
+    const thisMonth = new Date();
+    thisMonth.setDate(1);
+    thisMonth.setHours(0, 0, 0, 0);
+
+    let callsThisMonth = 0;
+    let totalCallDuration = 0;
+    let callsWithDuration = 0;
+    
+    if (tenantType === 'restaurant') {
+      const callsSnap = await tenantRef
+        .collection('calls')
+        .where('startedAt', '>=', admin.firestore.Timestamp.fromDate(thisMonth))
+        .get();
+      callsThisMonth = callsSnap.size;
+      
+      callsSnap.docs.forEach((doc) => {
+        const data = doc.data();
+        const duration = data.durationSec || data.duration || 0;
+        if (duration > 0) {
+          totalCallDuration += duration;
+          callsWithDuration++;
+        }
+      });
+    }
+
+    // Calculate avg duration in minutes
+    const avgCallDuration = callsWithDuration > 0 
+      ? Math.round((totalCallDuration / callsWithDuration) / 60 * 10) / 10
+      : 0;
+
+    // Calculate active users (logged in within last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    let activeUsers = 0;
+    usersSnap.docs.forEach((doc) => {
+      const data = doc.data();
+      if (data.lastLoginAt) {
+        const lastLogin = data.lastLoginAt.toDate ? data.lastLoginAt.toDate() : new Date(data.lastLoginAt);
+        if (lastLogin >= thirtyDaysAgo) {
+          activeUsers++;
+        }
+      } else {
+        const invitedAt = data.invitedAt ? new Date(data.invitedAt) : null;
+        if (invitedAt && invitedAt >= thirtyDaysAgo) {
+          activeUsers++;
+        }
+      }
+    });
+
+    res.json({
+      tenantType,
+      tenantId,
+      totalOrders,
+      totalCalls,
+      callsThisMonth,
+      totalUsers,
+      activeUsers,
+      ordersByStatus,
+      ordersByType,
+      usersByRole,
+      avgCallDuration,
+    });
+  } catch (err: any) {
+    console.error('Error fetching tenant analytics:', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+}
+
+// System analytics (admin only)
 export async function getSystemAnalytics(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     if (!requireMerxusAdmin(req, res)) return;

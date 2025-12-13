@@ -63,6 +63,11 @@ export async function fetchSystemAnalytics() {
   return res.data;
 }
 
+export async function fetchTenantAnalytics() {
+  const res = await apiClient.get('/merxus/analytics/tenant');
+  return res.data;
+}
+
 // System Settings
 export async function fetchSystemSettings() {
   const res = await apiClient.get('/merxus/settings');
