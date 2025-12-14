@@ -65,8 +65,11 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Skip logging if explicitly suppressed (e.g., for expected 403/404 errors)
+    const shouldSuppressLogging = error.config?.headers?.['X-Suppress-Error-Log'] === 'true';
+    
     // Enhanced error logging in development
-    if (import.meta.env.DEV) {
+    if (import.meta.env.DEV && !shouldSuppressLogging) {
       console.error('❌ API Error:', {
         url: error.config?.url,
         baseURL: error.config?.baseURL,

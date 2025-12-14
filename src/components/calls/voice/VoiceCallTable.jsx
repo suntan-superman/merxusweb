@@ -22,13 +22,29 @@ export default function VoiceCallTable({ calls, onCallClick }) {
   const gridData = useMemo(() => {
     if (!calls) return [];
     return calls.map((call) => {
-      // Handle Firestore Timestamps
-      const startedAt = call.startedAt?.toDate ? call.startedAt.toDate() : 
-                       (call.startedAt?.seconds ? new Date(call.startedAt.seconds * 1000) : 
-                       (call.startedAt ? new Date(call.startedAt) : null));
-      const createdAt = call.createdAt?.toDate ? call.createdAt.toDate() : 
-                        (call.createdAt?.seconds ? new Date(call.createdAt.seconds * 1000) : 
-                        (call.createdAt ? new Date(call.createdAt) : null));
+      // Handle Firestore Timestamps - try multiple field names
+      let dateObj = null;
+      
+      // Try endedAt first (most common in callSessions)
+      if (call.endedAt) {
+        dateObj = call.endedAt?.toDate ? call.endedAt.toDate() : 
+                 (call.endedAt?.seconds ? new Date(call.endedAt.seconds * 1000) : 
+                 (call.endedAt instanceof Date ? call.endedAt : null));
+      }
+      
+      // Fall back to startedAt
+      if (!dateObj && call.startedAt) {
+        dateObj = call.startedAt?.toDate ? call.startedAt.toDate() : 
+                 (call.startedAt?.seconds ? new Date(call.startedAt.seconds * 1000) : 
+                 (call.startedAt instanceof Date ? call.startedAt : null));
+      }
+      
+      // Fall back to createdAt
+      if (!dateObj && call.createdAt) {
+        dateObj = call.createdAt?.toDate ? call.createdAt.toDate() : 
+                 (call.createdAt?.seconds ? new Date(call.createdAt.seconds * 1000) : 
+                 (call.createdAt instanceof Date ? call.createdAt : null));
+      }
       
       // Extract customer name from parsed data or direct field
       let customerName = call.customerName;
@@ -56,7 +72,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
       
       return {
         ...call,
-        formattedDate: formatDateTime(startedAt || createdAt),
+        formattedDate: formatDateTime(dateObj),
         formattedDuration: formatDuration(call.durationSec),
         callerInfo: {
           name: customerName || 'Unknown',
@@ -70,7 +86,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
 
   if (!calls || calls.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
         No calls to display.
       </div>
     );
@@ -147,7 +163,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
 
   // Custom cell templates
   const callerTemplate = (props) => (
-    <div className="leading-tight py-1">
+    <div className="py-1 leading-tight">
       <div className="text-sm text-gray-900 truncate">{props.callerInfo?.name || 'Unknown'}</div>
       <div className="text-[11px] text-gray-400 mt-1">{formatPhoneDisplay(props.callerInfo?.phone)}</div>
     </div>
@@ -155,7 +171,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
 
   const typeTemplate = (props) => (
     <div className="leading-tight">
-      <div className="capitalize text-gray-700 text-sm">{props.type || 'call'}</div>
+      <div className="text-sm text-gray-700 capitalize">{props.type || 'call'}</div>
     </div>
   );
 
@@ -174,13 +190,26 @@ export default function VoiceCallTable({ calls, onCallClick }) {
   };
 
   const summaryTemplate = (props) => (
-    <div className="text-xs text-gray-700 max-w-md truncate">
+    <div className="max-w-md text-xs text-gray-700 truncate">
       {props.transcriptSummary || props.summary || 'No summary available'}
     </div>
   );
 
+  const headerTemplate = (props) => (
+    <div style={{ fontSize: '14px', fontWeight: 'bold', padding: '12px 8px' }}>
+      {props.headerText}
+    </div>
+  );
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+      <style>{`
+        .voice-call-grid .e-headercell {
+          font-size: 16px !important;
+          font-weight: 700 !important;
+          padding: 12px 8px !important;
+        }
+      `}</style>
       <GridComponent
         ref={gridRef}
         dataSource={gridData}
@@ -199,11 +228,13 @@ export default function VoiceCallTable({ calls, onCallClick }) {
         enableHover={true}
         height="auto"
         rowHeight={60}
+        cssClass="voice-call-grid"
       >
         <ColumnsDirective>
           <ColumnDirective
             field="callerInfo"
-            headerText="Caller"
+            headerText="Call"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('callerInfo', 180)}
             minWidth={120}
             template={callerTemplate}
@@ -212,6 +243,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
           <ColumnDirective
             field="type"
             headerText="Type"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('type', 100)}
             minWidth={80}
             template={typeTemplate}
@@ -220,6 +252,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
           <ColumnDirective
             field="formattedDate"
             headerText="When"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('formattedDate', 160)}
             minWidth={120}
             allowFiltering={true}
@@ -228,6 +261,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
           <ColumnDirective
             field="formattedDuration"
             headerText="Duration"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('formattedDuration', 100)}
             minWidth={80}
             allowFiltering={true}
@@ -235,6 +269,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
           <ColumnDirective
             field="importanceBadge"
             headerText="Importance"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('importanceBadge', 120)}
             minWidth={100}
             template={importanceTemplate}
@@ -243,6 +278,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
           <ColumnDirective
             field="transcriptSummary"
             headerText="Summary"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('transcriptSummary', 300)}
             minWidth={200}
             template={summaryTemplate}

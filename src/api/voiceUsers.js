@@ -6,8 +6,21 @@ import apiClient from './client';
  * Get all voice/office users
  */
 export async function getVoiceUsers() {
-  const response = await apiClient.get('/voice/users');
-  return response.data;
+  try {
+    const response = await apiClient.get('/voice/users', {
+      headers: {
+        'X-Suppress-Error-Log': 'true' // Suppress 403/404 errors since endpoint may not exist
+      }
+    });
+    return response.data;
+  } catch (error) {
+    // If endpoint doesn't exist or returns 403, return empty array
+    if (error.response?.status === 403 || error.response?.status === 404) {
+      console.warn('[getVoiceUsers] Endpoint not available, returning empty array');
+      return [];
+    }
+    throw error;
+  }
 }
 
 /**

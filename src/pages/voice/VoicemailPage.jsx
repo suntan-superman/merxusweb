@@ -4,21 +4,63 @@ import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import CallDetailDrawer from '../../components/calls/CallDetailDrawer';
 
+// Helper to get date range based on filter
+function getDateRange(filter) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  switch (filter) {
+    case 'today':
+      return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+    case 'week':
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+      return { start: weekStart, end: new Date() };
+    case 'month':
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { start: monthStart, end: new Date() };
+    case 'all':
+    default:
+      return null;
+  }
+}
+
 export default function VoicemailPage() {
   const { officeId } = useAuth();
   const [selectedCall, setSelectedCall] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [dateFilter, setDateFilter] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('voicemailDateFilter') || 'all';
+    }
+    return 'all';
+  });
 
-  // Query for all calls for this office
+  // Persist filter to localStorage
+  useEffect(() => {
+    localStorage.setItem('voicemailDateFilter', dateFilter);
+  }, [dateFilter]);
+
+  // Query for all calls for this office with date range filter
   const queryOptions = useMemo(
-    () => ({
-      where: [
+    () => {
+      const dateRange = getDateRange(dateFilter);
+      const where = [
         { field: 'officeId', operator: '==', value: officeId },
-      ],
-      orderBy: [{ field: 'createdAt', direction: 'desc' }],
-      limit: 200, // Get more calls to filter for voicemails
-    }),
-    [officeId]
+      ];
+      
+      if (dateRange) {
+        where.push({ field: 'endedAt', operator: '>=', value: dateRange.start });
+        where.push({ field: 'endedAt', operator: '<=', value: dateRange.end });
+      }
+      
+      return {
+        where,
+        orderBy: [{ field: 'endedAt', direction: 'desc' }],
+        limit: 200, // Get more calls to filter for voicemails
+      };
+    },
+    [officeId, dateFilter]
   );
 
   // Use Firestore real-time listener
@@ -59,6 +101,25 @@ export default function VoicemailPage() {
           <p className="text-sm text-gray-600 mt-1">
             View and manage voicemail messages from callers
           </p>
+        </div>
+        
+        <div className="flex gap-2">
+          {['today', 'week', 'month', 'all'].map(filter => (
+            <button
+              key={filter}
+              onClick={() => setDateFilter(filter)}
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                dateFilter === filter
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {filter === 'today' && 'Today'}
+              {filter === 'week' && 'This Week'}
+              {filter === 'month' && 'This Month'}
+              {filter === 'all' && 'All'}
+            </button>
+          ))}
         </div>
       </div>
 

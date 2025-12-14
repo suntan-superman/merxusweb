@@ -1,16 +1,16 @@
 export default function CallTable({ calls, onCallClick }) {
   if (!calls || calls.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
         No calls to display.
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border bg-white">
-      <table className="min-w-full text-left text-sm">
-        <thead className="border-b bg-gray-50 text-xs uppercase text-gray-500">
+    <div className="overflow-x-auto bg-white border rounded-lg">
+      <table className="min-w-full text-sm text-left">
+        <thead className="text-sm text-gray-500 uppercase border-b bg-gray-50">
           <tr>
             <th className="px-4 py-3">Caller</th>
             <th className="px-4 py-3">Type</th>
@@ -26,7 +26,7 @@ export default function CallTable({ calls, onCallClick }) {
             <tr
               key={c.id}
               onClick={() => onCallClick(c)}
-              className="border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
+              className="border-b cursor-pointer last:border-b-0 hover:bg-gray-50"
             >
               <td className="px-4 py-3">
                 <div className="font-medium text-gray-900">
@@ -35,7 +35,7 @@ export default function CallTable({ calls, onCallClick }) {
                 <div className="text-xs text-gray-500">{formatPhone(c.from || c.customerPhone)}</div>
               </td>
 
-              <td className="px-4 py-3 text-xs capitalize text-gray-700">
+              <td className="px-4 py-3 text-xs text-gray-700 capitalize">
                 {c.callType || c.type || 'call'}
               </td>
 
@@ -53,7 +53,7 @@ export default function CallTable({ calls, onCallClick }) {
                 </span>
               </td>
 
-              <td className="px-4 py-3 text-xs text-gray-700 max-w-md truncate">
+              <td className="max-w-md px-4 py-3 text-xs text-gray-700 truncate">
                 {c.transcriptSummary || 'No summary available'}
               </td>
             </tr>

@@ -364,9 +364,9 @@ export async function createRoutingRule(req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Only admin can create rules
-    if (userRole !== 'admin') {
-      res.status(403).json({ error: 'Only admins can create routing rules' });
+    // Only owner/admin can create rules
+    if (userRole !== 'admin' && userRole !== 'owner') {
+      res.status(403).json({ error: 'Only admins and owners can create routing rules' });
       return;
     }
 
@@ -425,9 +425,9 @@ export async function updateRoutingRule(req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Only admin can update rules
-    if (userRole !== 'admin') {
-      res.status(403).json({ error: 'Only admins can update routing rules' });
+    // Only owner/admin can update rules
+    if (userRole !== 'admin' && userRole !== 'owner') {
+      res.status(403).json({ error: 'Only admins and owners can update routing rules' });
       return;
     }
 
@@ -473,9 +473,9 @@ export async function deleteRoutingRule(req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Only admin can delete rules
-    if (userRole !== 'admin') {
-      res.status(403).json({ error: 'Only admins can delete routing rules' });
+    // Only owner/admin can delete rules
+    if (userRole !== 'admin' && userRole !== 'owner') {
+      res.status(403).json({ error: 'Only admins and owners can delete routing rules' });
       return;
     }
 

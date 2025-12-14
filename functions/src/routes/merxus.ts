@@ -523,7 +523,6 @@ export async function deleteRestaurant(req: AuthenticatedRequest, res: Response)
 // Tenant-specific analytics (for regular users)
 export async function getTenantAnalytics(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const userRole = req.user?.role;
     const tenantId = req.user?.restaurantId || req.user?.officeId || req.user?.agentId;
     const tenantType = req.user?.type;
 

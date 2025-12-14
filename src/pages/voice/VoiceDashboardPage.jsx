@@ -28,12 +28,13 @@ export default function VoiceDashboardPage() {
   }, []);
 
   // Fetch calls from callSessions collection filtered by officeId
+  // Use 'endedAt' for filtering to match VoiceCallsPage behavior
   const { data: calls = [], loading: callsLoading } = useFirestoreCollection(
     officeId ? 'callSessions' : null,
     officeId
       ? {
           where: [{ field: 'officeId', operator: '==', value: officeId }],
-          orderBy: [{ field: 'createdAt', direction: 'desc' }],
+          orderBy: [{ field: 'endedAt', direction: 'desc' }],
           limit: 500,
         }
       : {}
@@ -59,21 +60,45 @@ export default function VoiceDashboardPage() {
       }
     };
 
+    // Try multiple date field names (priority: endedAt > startedAt > createdAt)
+    const getCallDate = (call) => {
+      const dateField = call.endedAt || call.startedAt || call.createdAt;
+      return parseDate(dateField);
+    };
+
+    // Debug: Log first call to see structure
+    if (calls.length > 0) {
+      console.log('📞 Sample call data:', {
+        callId: calls[0].id,
+        endedAt: calls[0].endedAt,
+        startedAt: calls[0].startedAt,
+        createdAt: calls[0].createdAt,
+        hasVoicemail: calls[0].hasVoicemail,
+        type: calls[0].type,
+        voicemail: calls[0].voicemail,
+        status: calls[0].status,
+        parsedDate: getCallDate(calls[0]),
+      });
+      console.log('📅 Time filters:', {
+        startOfToday: startOfToday.toISOString(),
+        startOfWeek: startOfWeek.toISOString(),
+        startOfMonth: startOfMonth.toISOString(),
+        now: new Date().toISOString(),
+      });
+    }
+
     const todayCalls = calls.filter((call) => {
-      const dateField = call.startedAt || call.createdAt;
-      const callDate = parseDate(dateField);
+      const callDate = getCallDate(call);
       return callDate && callDate >= startOfToday;
     });
 
     const weekCalls = calls.filter((call) => {
-      const dateField = call.startedAt || call.createdAt;
-      const callDate = parseDate(dateField);
+      const callDate = getCallDate(call);
       return callDate && callDate >= startOfWeek;
     });
 
     const monthCalls = calls.filter((call) => {
-      const dateField = call.startedAt || call.createdAt;
-      const callDate = parseDate(dateField);
+      const callDate = getCallDate(call);
       return callDate && callDate >= startOfMonth;
     });
 
@@ -86,13 +111,18 @@ export default function VoiceDashboardPage() {
 
     // Count missed calls (status === 'missed' or 'no-answer')
     const missedCalls = calls.filter((call) => {
-      const status = call.status?.toLowerCase();
+      const status = (call.status || '').toLowerCase();
       return status === 'missed' || status === 'no-answer' || status === 'no_answer';
     }).length;
 
-    // Count voicemails (has voicemail flag or transcript indicates voicemail)
+    // Count voicemails - match VoicemailPage logic
+    // Voicemail = duration >= 20 seconds AND has transcript
     const voicemails = calls.filter((call) => {
-      return call.hasVoicemail || call.type === 'voicemail' || call.voicemail;
+      const hasDuration = call.durationSec && call.durationSec >= 20;
+      const hasTranscript = call.transcript || 
+                           call.callerTranscript || 
+                           call.assistantTranscript;
+      return hasDuration && hasTranscript;
     }).length;
 
     return {

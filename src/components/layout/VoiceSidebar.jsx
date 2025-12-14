@@ -61,8 +61,8 @@ export default function VoiceSidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <NavItem to="/voice" label="Dashboard" icon="📊" />
         <NavItem to="/voice/calls" label="Calls & Messages" icon="📞" />
-        <NavItem to="/voice/routing" label="Call Routing" icon="🔄" />
         <NavItem to="/voice/voicemail" label="Voicemail" icon="📬" />
+        <NavItem to="/voice/routing" label="Call Routing" icon="🔄" />
         <NavItem to="/voice/settings" label="Settings" icon="⚙️" />
         <NavItem to="/voice/billing" label="Billing" icon="💳" />
         {isOwner && (
