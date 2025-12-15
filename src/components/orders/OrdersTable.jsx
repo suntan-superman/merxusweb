@@ -38,7 +38,7 @@ export default function OrdersTable({
 
   if (!orders || orders.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
         No orders to display.
       </div>
     );
@@ -115,8 +115,8 @@ export default function OrdersTable({
 
   // Custom cell templates
   const orderTemplate = (props) => (
-    <div className="leading-tight py-1">
-      <div className="font-medium text-gray-900 text-sm">{props.orderId}</div>
+    <div className="py-1 leading-tight">
+      <div className="text-sm font-medium text-gray-900">{props.orderId}</div>
       <div className="text-[11px] text-gray-400 mt-1 max-w-xs truncate">
         {props.itemsSummary}
       </div>
@@ -124,7 +124,7 @@ export default function OrdersTable({
   );
 
   const customerTemplate = (props) => (
-    <div className="leading-tight py-1">
+    <div className="py-1 leading-tight">
       <div className="text-sm text-gray-900 truncate">{props.customerName || 'Unknown'}</div>
       <div className="text-[11px] text-gray-400 mt-1">{formatPhone(props.customerPhone)}</div>
     </div>
@@ -132,7 +132,7 @@ export default function OrdersTable({
 
   const typeTemplate = (props) => (
     <div className="leading-tight">
-      <div className="capitalize text-gray-700 text-sm">{props.orderType}</div>
+      <div className="text-sm text-gray-700 capitalize">{props.orderType}</div>
       <div className="text-[10px] text-gray-400 mt-0.5">{props.sourceLabel}</div>
     </div>
   );
@@ -152,8 +152,14 @@ export default function OrdersTable({
     </div>
   );
 
+  const headerTemplate = (props) => (
+    <div style={{ fontSize: '12px', fontWeight: 'bold', padding: '12px 8px' }}>
+      {props.headerText}
+    </div>
+  );
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
       <GridComponent
         ref={gridRef}
         dataSource={gridData}
@@ -177,6 +183,7 @@ export default function OrdersTable({
           <ColumnDirective
             field="orderId"
             headerText="Order"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('orderId', 180)}
             minWidth={120}
             template={orderTemplate}
@@ -185,6 +192,7 @@ export default function OrdersTable({
           <ColumnDirective
             field="customerName"
             headerText="Customer"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('customerName', 160)}
             minWidth={120}
             template={customerTemplate}
@@ -193,6 +201,7 @@ export default function OrdersTable({
           <ColumnDirective
             field="orderType"
             headerText="Type"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('orderType', 110)}
             minWidth={90}
             template={typeTemplate}
@@ -201,6 +210,7 @@ export default function OrdersTable({
           <ColumnDirective
             field="formattedDate"
             headerText="Created"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('formattedDate', 140)}
             minWidth={100}
             allowFiltering={true}
@@ -209,6 +219,7 @@ export default function OrdersTable({
           <ColumnDirective
             field="formattedTotal"
             headerText="Total"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('formattedTotal', 100)}
             minWidth={80}
             textAlign="Right"
@@ -217,6 +228,7 @@ export default function OrdersTable({
           <ColumnDirective
             field="status"
             headerText="Status"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('status', 120)}
             minWidth={100}
             template={statusTemplate}
@@ -224,6 +236,7 @@ export default function OrdersTable({
           />
           <ColumnDirective
             headerText="Actions"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('actions', 150)}
             minWidth={120}
             template={actionsTemplate}

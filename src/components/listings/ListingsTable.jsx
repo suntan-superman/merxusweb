@@ -60,7 +60,7 @@ export default function ListingsTable({
 
   if (!listings || listings.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
         No listings to display.
       </div>
     );
@@ -113,8 +113,8 @@ export default function ListingsTable({
 
   // Custom cell templates
   const addressTemplate = (props) => (
-    <div className="leading-tight py-1">
-      <div className="text-sm text-gray-900 font-medium">{props.formattedAddress}</div>
+    <div className="py-1 leading-tight">
+      <div className="text-sm font-medium text-gray-900">{props.formattedAddress}</div>
       {props.mls_id && (
         <div className="text-[11px] text-gray-400 mt-1">MLS: {props.mls_id}</div>
       )}
@@ -154,13 +154,13 @@ export default function ListingsTable({
       <div className="flex items-center gap-2">
         <Link
           to={`/estate/listings/${props.id}`}
-          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          className="text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           View
         </Link>
         <button
           onClick={() => onEdit && onEdit(props)}
-          className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+          className="text-sm font-medium text-primary-600 hover:text-primary-700"
         >
           Edit
         </button>
@@ -168,13 +168,13 @@ export default function ListingsTable({
       <div className="flex items-center gap-2">
         <button
           onClick={() => onTestSend && onTestSend(props)}
-          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+          className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
         >
           Test send
         </button>
         <button
           onClick={() => onDelete && onDelete(props)}
-          className="text-red-600 hover:text-red-700 text-sm font-medium"
+          className="text-sm font-medium text-red-600 hover:text-red-700"
         >
           Delete
         </button>
@@ -191,7 +191,7 @@ export default function ListingsTable({
         ? 'inline-flex items-center rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs font-medium'
         : 'inline-flex items-center rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-xs font-medium';
     return (
-      <div className="flex flex-col text-xs text-gray-700 gap-1">
+      <div className="flex flex-col gap-1 text-xs text-gray-700">
         <span className={badgeClass}>
           {props.flyerStatus}
           {props.flyerIsTest ? ' (test)' : ''}
@@ -205,8 +205,14 @@ export default function ListingsTable({
     );
   };
 
+  const headerTemplate = (props) => (
+    <div style={{ fontSize: '12px', fontWeight: 'bold', padding: '12px 8px' }}>
+      {props.headerText}
+    </div>
+  );
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
       <GridComponent
         ref={gridRef}
         dataSource={gridData}
@@ -229,6 +235,7 @@ export default function ListingsTable({
           <ColumnDirective
             field="formattedAddress"
             headerText="Address"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('formattedAddress', 250)}
             minWidth={200}
             template={addressTemplate}
@@ -237,6 +244,7 @@ export default function ListingsTable({
           <ColumnDirective
             field="formattedPrice"
             headerText="Price"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('formattedPrice', 120)}
             minWidth={100}
             template={priceTemplate}
@@ -246,6 +254,7 @@ export default function ListingsTable({
           <ColumnDirective
             field="details"
             headerText="Details"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('details', 180)}
             minWidth={150}
             template={detailsTemplate}
@@ -254,6 +263,7 @@ export default function ListingsTable({
           <ColumnDirective
             field="statusBadge"
             headerText="Status"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('statusBadge', 120)}
             minWidth={100}
             template={statusTemplate}
@@ -262,6 +272,7 @@ export default function ListingsTable({
           <ColumnDirective
             field="formattedDate"
             headerText="Added"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('formattedDate', 140)}
             minWidth={120}
             allowFiltering={true}
@@ -270,6 +281,7 @@ export default function ListingsTable({
           <ColumnDirective
             field="flyerStatus"
             headerText="Flyer"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('flyerStatus', 120)}
             minWidth={100}
             template={flyerTemplate}
@@ -278,6 +290,7 @@ export default function ListingsTable({
           <ColumnDirective
             field="actions"
             headerText="Actions"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('actions', 140)}
             minWidth={120}
             template={actionsTemplate}

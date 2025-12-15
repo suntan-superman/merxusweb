@@ -38,7 +38,7 @@ export default function ReservationsTable({
 
   if (!reservations || reservations.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
         No reservations to display.
       </div>
     );
@@ -114,8 +114,8 @@ export default function ReservationsTable({
 
   // Custom cell templates
   const guestTemplate = (props) => (
-    <div className="leading-tight py-1">
-      <div className="font-medium text-gray-900 text-sm truncate">
+    <div className="py-1 leading-tight">
+      <div className="text-sm font-medium text-gray-900 truncate">
         {props.customerName || 'Unknown Guest'}
       </div>
       <div className="text-[11px] text-gray-400 mt-1">{props.formattedPhone}</div>
@@ -123,7 +123,7 @@ export default function ReservationsTable({
   );
 
   const dateTimeTemplate = (props) => (
-    <div className="leading-tight py-1">
+    <div className="py-1 leading-tight">
       <div className="text-sm font-medium text-gray-900">
         📅 {props.date || 'Date TBD'}
       </div>
@@ -143,7 +143,7 @@ export default function ReservationsTable({
   );
 
   const sourceTemplate = (props) => (
-    <div className="leading-tight py-1">
+    <div className="py-1 leading-tight">
       <div className="text-xs text-gray-700">{props.sourceLabel}</div>
       <div className="text-[10px] text-gray-400 mt-1">
         {props.createdAtFormatted}
@@ -166,8 +166,14 @@ export default function ReservationsTable({
     </div>
   );
 
+  const headerTemplate = (props) => (
+    <div style={{ fontSize: '12px', fontWeight: 'bold', padding: '12px 8px' }}>
+      {props.headerText}
+    </div>
+  );
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
       <GridComponent
         ref={gridRef}
         dataSource={gridData}
@@ -191,6 +197,7 @@ export default function ReservationsTable({
           <ColumnDirective
             field="customerName"
             headerText="Guest"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('customerName', 180)}
             minWidth={140}
             template={guestTemplate}
@@ -199,6 +206,7 @@ export default function ReservationsTable({
           <ColumnDirective
             field="date"
             headerText="Date & Time"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('date', 160)}
             minWidth={130}
             template={dateTimeTemplate}
@@ -208,6 +216,7 @@ export default function ReservationsTable({
           <ColumnDirective
             field="partySize"
             headerText="Party Size"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('partySize', 110)}
             minWidth={90}
             template={partySizeTemplate}
@@ -217,6 +226,7 @@ export default function ReservationsTable({
           <ColumnDirective
             field="source"
             headerText="Source"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('source', 130)}
             minWidth={100}
             template={sourceTemplate}
@@ -225,6 +235,7 @@ export default function ReservationsTable({
           <ColumnDirective
             field="status"
             headerText="Status"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('status', 120)}
             minWidth={100}
             template={statusTemplate}
@@ -232,6 +243,7 @@ export default function ReservationsTable({
           />
           <ColumnDirective
             headerText="Actions"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('actions', 170)}
             minWidth={140}
             template={actionsTemplate}
@@ -292,7 +304,7 @@ function StatusButtonGroup({ reservation, isUpdating, onStatusChange, reservatio
   const originalReservation = reservations?.find((r) => r.id === reservation.id) || reservation;
 
   return (
-    <div className="flex gap-1 justify-end">
+    <div className="flex justify-end gap-1">
       {actions.map((action) => (
         <button
           key={action.status}

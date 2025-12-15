@@ -216,7 +216,7 @@ export default function TenantsManagementPage() {
     return (
       <div className="flex items-center gap-2">
         {props.disabled && (
-          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded border border-red-300">
+          <span className="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 rounded">
             DISABLED
           </span>
         )}
@@ -230,7 +230,7 @@ export default function TenantsManagementPage() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => handleEditTenant(props)}
-          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+          className="p-2 text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
           title="Edit Tenant"
         >
           <Edit2 size={16} />
@@ -261,11 +261,17 @@ export default function TenantsManagementPage() {
     return `${daysLeft} days`;
   };
 
+  const headerTemplate = (props) => (
+    <div style={{ fontSize: '12px', fontWeight: 'bold', padding: '12px 8px' }}>
+      {props.headerText}
+    </div>
+  );
+
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tenant Management</h1>
+        <h1 className="mb-2 text-3xl font-bold text-gray-900">Tenant Management</h1>
         <p className="text-gray-600">Manage all customer accounts across all platforms</p>
       </div>
 
@@ -292,8 +298,8 @@ export default function TenantsManagementPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+      <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-4">
+        <div className="p-4 bg-white border border-gray-200 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-100 rounded-lg">
               <Users className="text-blue-600" size={24} />
@@ -305,7 +311,7 @@ export default function TenantsManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="p-4 bg-white border border-gray-200 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-green-100 rounded-lg">
               <CheckCircle className="text-green-600" size={24} />
@@ -319,7 +325,7 @@ export default function TenantsManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="p-4 bg-white border border-gray-200 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-yellow-100 rounded-lg">
               <AlertCircle className="text-yellow-600" size={24} />
@@ -333,7 +339,7 @@ export default function TenantsManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="p-4 bg-white border border-gray-200 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-red-100 rounded-lg">
               <XCircle className="text-red-600" size={24} />
@@ -349,10 +355,10 @@ export default function TenantsManagementPage() {
       </div>
 
       {/* Data Grid */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
+      <div className="p-4 bg-white border border-gray-200 rounded-lg">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            <div className="w-12 h-12 border-b-2 border-green-600 rounded-full animate-spin"></div>
           </div>
         ) : (
           <GridComponent
@@ -367,31 +373,35 @@ export default function TenantsManagementPage() {
             height="600"
           >
             <ColumnsDirective>
-              <ColumnDirective field="name" headerText="Name" width="200" />
-              <ColumnDirective field="email" headerText="Email" width="200" />
-              <ColumnDirective field="phoneNumber" headerText="Business Phone" width="150" />
-              <ColumnDirective field="twilioPhoneNumber" headerText="AI Assistant Phone" width="150" />
+              <ColumnDirective field="name" headerText="Name" width="200" headerTemplate={headerTemplate}/>
+              <ColumnDirective field="email" headerText="Email" width="200" headerTemplate={headerTemplate} />
+              <ColumnDirective field="phoneNumber" headerText="Business Phone" width="150" headerTemplate={headerTemplate}/>
+              <ColumnDirective field="twilioPhoneNumber" headerText="AI Assistant Phone" width="160" headerTemplate={headerTemplate}/>
               <ColumnDirective 
                 headerText="Status" 
-                width="180"
+                width="160"
+                headerTemplate={headerTemplate}
                 template={gridTemplate}
                 allowFiltering={false}
               />
               <ColumnDirective 
                 field="createdAt" 
-                headerText="Created" 
                 width="120"
+                headerTemplate={headerTemplate}
+                headerText="Created" 
                 template={dateTemplate}
               />
               <ColumnDirective 
                 headerText="Trial Left" 
                 width="100"
                 template={trialTemplate}
+                headerTemplate={headerTemplate}
                 allowFiltering={false}
               />
               <ColumnDirective 
                 headerText="Actions" 
                 width="120"
+                headerTemplate={headerTemplate}
                 template={actionsTemplate}
                 allowSorting={false}
                 allowFiltering={false}
@@ -404,16 +414,16 @@ export default function TenantsManagementPage() {
 
       {/* Edit Modal */}
       {editingTenant && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <h2 className="text-2xl font-bold mb-4">Edit Tenant: {editingTenant.name}</h2>
-            <p className="text-gray-600 mb-6">
-              Tenant ID: <code className="bg-gray-100 px-2 py-1 rounded">{editingTenant.id}</code>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-2xl p-6 mx-4 bg-white rounded-lg">
+            <h2 className="mb-4 text-2xl font-bold">Edit Tenant: {editingTenant.name}</h2>
+            <p className="mb-6 text-gray-600">
+              Tenant ID: <code className="px-2 py-1 bg-gray-100 rounded">{editingTenant.id}</code>
             </p>
             
-            <div className="space-y-4 mb-6">
+            <div className="mb-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block mb-2 text-sm font-medium text-gray-700">
                   Business Name
                 </label>
                 <input
@@ -425,7 +435,7 @@ export default function TenantsManagementPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block mb-2 text-sm font-medium text-gray-700">
                   Email
                 </label>
                 <input
@@ -437,7 +447,7 @@ export default function TenantsManagementPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block mb-2 text-sm font-medium text-gray-700">
                   Business Phone Number
                 </label>
                 <input
@@ -446,13 +456,13 @@ export default function TenantsManagementPage() {
                   onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="mt-1 text-xs text-gray-500">
                   Main contact number for the business
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block mb-2 text-sm font-medium text-gray-700">
                   AI Assistant Phone (Twilio)
                 </label>
                 <input
@@ -461,7 +471,7 @@ export default function TenantsManagementPage() {
                   onChange={(e) => setEditFormData({ ...editFormData, twilioPhoneNumber: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="mt-1 text-xs text-gray-500">
                   Phone number used for AI Assistant calls and voice interactions
                 </p>
               </div>
@@ -473,14 +483,14 @@ export default function TenantsManagementPage() {
                   setEditingTenant(null);
                   setEditFormData({});
                 }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-2 text-gray-800 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveTenant}
                 disabled={savingEdit}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {savingEdit ? 'Saving...' : 'Save Changes'}
               </button>

@@ -252,10 +252,10 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
       <div className="flex flex-col">
         <span className="font-medium">{displayName}</span>
         {service.name_es && service.name_es !== displayName && (
-          <span className="text-xs text-gray-500 italic">{service.name_es}</span>
+          <span className="text-xs italic text-gray-500">{service.name_es}</span>
         )}
         {hasSynonyms && allSynonyms.length > 0 && (
-          <span className="text-xs text-gray-400 mt-1" title={allSynonyms.join(', ')}>
+          <span className="mt-1 text-xs text-gray-400" title={allSynonyms.join(', ')}>
             Also: {allSynonyms.slice(0, 3).join(', ')}{allSynonyms.length > 3 ? '...' : ''}
           </span>
         )}
@@ -286,7 +286,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
             e.stopPropagation();
             handleEditService(props);
           }}
-          className="text-primary-600 hover:text-primary-800 text-sm font-medium"
+          className="text-sm font-medium text-primary-600 hover:text-primary-800"
         >
           Edit
         </button>
@@ -296,7 +296,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
             e.stopPropagation();
             handleDeleteService(props);
           }}
-          className="text-red-600 hover:text-red-800 text-sm font-medium"
+          className="text-sm font-medium text-red-600 hover:text-red-800"
         >
           Delete
         </button>
@@ -328,7 +328,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
             e.stopPropagation();
             handleEditProduct(props);
           }}
-          className="text-primary-600 hover:text-primary-800 text-sm font-medium"
+          className="text-sm font-medium text-primary-600 hover:text-primary-800"
         >
           Edit
         </button>
@@ -338,13 +338,19 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
             e.stopPropagation();
             handleDeleteProduct(props);
           }}
-          className="text-red-600 hover:text-red-800 text-sm font-medium"
+          className="text-sm font-medium text-red-600 hover:text-red-800"
         >
           Delete
         </button>
       </div>
     );
   };
+
+  const headerTemplate = (props) => (
+    <div style={{ fontSize: '12px', fontWeight: 'bold', padding: '12px 8px' }}>
+      {props.headerText}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -353,7 +359,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Services</h3>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="mt-1 text-sm text-gray-600">
               Manage the services your business offers. The AI will use this information to answer caller questions accurately.
             </p>
           </div>
@@ -367,7 +373,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
         </div>
 
         {services.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+          <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
             {businessType?.category && businessType?.industry ? (
               <div>
                 <p className="mb-2">No services configured yet.</p>
@@ -382,7 +388,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
                       handleSaveServices(serviceObjects);
                     }
                   }}
-                  className="text-primary-600 hover:text-primary-800 font-medium"
+                  className="font-medium text-primary-600 hover:text-primary-800"
                 >
                   Load suggested services for {businessType.industry}
                 </button>
@@ -392,7 +398,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
             <GridComponent
               dataSource={services}
               allowPaging={true}
@@ -406,6 +412,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
                 <ColumnDirective
                   field="name"
                   headerText="Service Name"
+                  headerTemplate={headerTemplate}
                   width={280}
                   template={serviceNameTemplate}
                   allowFiltering={true}
@@ -413,6 +420,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
                 <ColumnDirective
                   field="available"
                   headerText="Status"
+                  headerTemplate={headerTemplate}
                   width={120}
                   template={serviceAvailableTemplate}
                   allowFiltering={true}
@@ -420,17 +428,20 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
                 <ColumnDirective
                   field="price_range"
                   headerText="Price Range"
+                  headerTemplate={headerTemplate}
                   width={150}
                   allowFiltering={true}
                 />
                 <ColumnDirective
                   field="category"
                   headerText="Category"
+                  headerTemplate={headerTemplate}
                   width={150}
                   allowFiltering={true}
                 />
                 <ColumnDirective
                   headerText="Actions"
+                  headerTemplate={headerTemplate}
                   width={120}
                   template={serviceActionsTemplate}
                   allowFiltering={false}
@@ -448,7 +459,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Products</h3>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="mt-1 text-sm text-gray-600">
               Manage the products your business sells. Optional but helpful for retail businesses.
             </p>
           </div>
@@ -462,11 +473,11 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
         </div>
 
         {products.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+          <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
             <p>No products configured. Add products if your business sells physical items.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
             <GridComponent
               dataSource={products}
               allowPaging={true}
@@ -528,10 +539,10 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
             e.preventDefault();
             handleSaveService();
           }}
-          className="space-y-4 p-4"
+          className="p-4 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Service Name *
             </label>
             <input
@@ -550,14 +561,14 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
                 type="checkbox"
                 checked={serviceForm.available}
                 onChange={(e) => setServiceForm({ ...serviceForm, available: e.target.checked })}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="border-gray-300 rounded text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-gray-700">Available</span>
             </label>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Price Range (Optional)
             </label>
             <input
@@ -570,7 +581,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Category (Optional)
             </label>
             <input
@@ -583,7 +594,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Notes (Optional)
             </label>
             <textarea
@@ -622,10 +633,10 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
             e.preventDefault();
             handleSaveProduct();
           }}
-          className="space-y-4 p-4"
+          className="p-4 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Product Name *
             </label>
             <input
@@ -644,14 +655,14 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
                 type="checkbox"
                 checked={productForm.in_stock}
                 onChange={(e) => setProductForm({ ...productForm, in_stock: e.target.checked })}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="border-gray-300 rounded text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-gray-700">In Stock</span>
             </label>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Price Range (Optional)
             </label>
             <input
@@ -664,7 +675,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Category (Optional)
             </label>
             <input
@@ -677,7 +688,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Notes (Optional)
             </label>
             <textarea

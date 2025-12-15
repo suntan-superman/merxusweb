@@ -93,27 +93,27 @@ export default function RestaurantsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Restaurants</h1>
-          <p className="text-gray-600 mt-2">
+          <p className="mt-2 text-gray-600">
             Manage all restaurant accounts and settings
           </p>
         </div>
-        <div className="flex items-center space-x-4 flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2 space-x-4">
           <input
             type="text"
             placeholder="Search restaurants..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="input-field w-64"
+            className="w-64 input-field"
           />
           <label className="flex items-center space-x-2 text-sm text-gray-700">
             <input
               type="checkbox"
               checked={showDisabled}
               onChange={(e) => setShowDisabled(e.target.checked)}
-              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              className="border-gray-300 rounded text-primary-600 focus:ring-primary-500"
             />
             <span>Show disabled</span>
           </label>
@@ -127,21 +127,21 @@ export default function RestaurantsPage() {
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        <div className="px-4 py-3 text-sm text-red-700 border border-red-200 rounded-md bg-red-50">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="rounded-md bg-primary-50 border border-primary-200 px-4 py-3 text-sm text-primary-700">
+        <div className="px-4 py-3 text-sm border rounded-md bg-primary-50 border-primary-200 text-primary-700">
           {success}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className={selectedRestaurant ? 'lg:col-span-2' : 'lg:col-span-3'}>
           {loading ? (
-            <div className="text-center py-12 text-gray-600">Loading restaurants...</div>
+            <div className="py-12 text-center text-gray-600">Loading restaurants...</div>
           ) : (
             <RestaurantsTable
               restaurants={filtered}
@@ -154,8 +154,8 @@ export default function RestaurantsPage() {
         {selectedRestaurant && (
           <div className="lg:col-span-1">
             {loadingRestaurant ? (
-              <div className="card text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+              <div className="py-8 text-center card">
+                <div className="w-8 h-8 mx-auto border-b-2 rounded-full animate-spin border-primary-600"></div>
                 <p className="mt-4 text-gray-600">Loading restaurant details...</p>
               </div>
             ) : (

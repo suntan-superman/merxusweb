@@ -10,7 +10,7 @@ export async function createTestUser(req: AuthenticatedRequest, res: Response): 
   try {
     // Check if user is Merxus admin
     const userRole = req.user?.role;
-    if (userRole !== 'merxus_admin' && userRole !== 'merxus_support') {
+    if (userRole !== 'merxus_admin' && userRole !== 'merxus_support' && userRole !== 'super_admin') {
       res.status(403).json({ error: 'Admin access required' });
       return;
     }

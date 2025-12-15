@@ -12,7 +12,7 @@ export default function AnalyticsPage() {
     async function load() {
       try {
         // Try tenant analytics first if user is not a merxus admin
-        if (userClaims?.role !== 'merxus_admin' && userClaims?.role !== 'merxus_support') {
+        if (userClaims?.role !== 'merxus_admin' && userClaims?.role !== 'merxus_support' && userClaims?.role !== 'super_admin') {
           try {
             const data = await fetchTenantAnalytics();
             setAnalytics(data);

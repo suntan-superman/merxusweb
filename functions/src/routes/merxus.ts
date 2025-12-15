@@ -7,7 +7,7 @@ const db = admin.firestore();
 // Helper to check if user is Merxus admin
 function requireMerxusAdmin(req: AuthenticatedRequest, res: Response): boolean {
   const userRole = req.user?.role;
-  if (userRole !== 'merxus_admin' && userRole !== 'merxus_support') {
+  if (userRole !== 'merxus_admin' && userRole !== 'merxus_support' && userRole !== 'super_admin') {
     res.status(403).json({ error: 'Merxus admin access required' });
     return false;
   }

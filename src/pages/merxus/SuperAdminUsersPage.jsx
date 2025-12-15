@@ -131,7 +131,7 @@ export default function SuperAdminUsersPage() {
   const tenantIdTemplate = (props) => {
     const tenantId = props.restaurantId || props.officeId || props.agentId || props.tenantId || 'N/A';
     return (
-      <span className="text-xs font-mono text-gray-600" title={tenantId}>
+      <span className="font-mono text-xs text-gray-600" title={tenantId}>
         {tenantId.length > 20 ? `${tenantId.substring(0, 20)}...` : tenantId}
       </span>
     );
@@ -171,19 +171,25 @@ export default function SuperAdminUsersPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
+          <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin text-primary-600" />
           <p className="text-gray-600">Loading users...</p>
         </div>
       </div>
     );
   }
 
+   const headerTemplate = (props) => (
+    <div style={{ fontSize: '12px', fontWeight: 'bold', padding: '12px 8px' }}>
+      {props.headerText}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
             <Users className="w-8 h-8 text-primary-600" />
             User Management
           </h1>
@@ -195,14 +201,14 @@ export default function SuperAdminUsersPage() {
           <button
             onClick={loadUsers}
             disabled={loading}
-            className="btn-secondary flex items-center gap-2"
+            className="flex items-center gap-2 btn-secondary"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary flex items-center gap-2"
+            className="flex items-center gap-2 btn-primary"
           >
             <Plus className="w-4 h-4" />
             Create User
@@ -211,25 +217,25 @@ export default function SuperAdminUsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Total Users</h3>
+          <h3 className="mb-1 text-sm font-medium text-gray-600">Total Users</h3>
           <p className="text-2xl font-bold text-gray-900">{users.length}</p>
         </div>
         <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Active</h3>
+          <h3 className="mb-1 text-sm font-medium text-gray-600">Active</h3>
           <p className="text-2xl font-bold text-green-600">
             {users.filter(u => !u.disabled).length}
           </p>
         </div>
         <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Disabled</h3>
+          <h3 className="mb-1 text-sm font-medium text-gray-600">Disabled</h3>
           <p className="text-2xl font-bold text-red-600">
             {users.filter(u => u.disabled).length}
           </p>
         </div>
         <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Super Admins</h3>
+          <h3 className="mb-1 text-sm font-medium text-gray-600">Super Admins</h3>
           <p className="text-2xl font-bold text-purple-600">
             {users.filter(u => u.role === 'super_admin').length}
           </p>
@@ -237,7 +243,7 @@ export default function SuperAdminUsersPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="p-4 border border-red-200 rounded-lg bg-red-50">
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
@@ -250,7 +256,7 @@ export default function SuperAdminUsersPage() {
               type="checkbox"
               checked={includeDisabled}
               onChange={(e) => setIncludeDisabled(e.target.checked)}
-              className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+              className="w-4 h-4 rounded text-primary-600 focus:ring-primary-500"
             />
             <span className="text-sm text-gray-700">Include disabled users</span>
           </label>
@@ -270,41 +276,47 @@ export default function SuperAdminUsersPage() {
           height="600"
         >
           <ColumnsDirective>
-            <ColumnDirective field="email" headerText="Email" width="200" />
-            <ColumnDirective field="displayName" headerText="Name" width="150" />
+            <ColumnDirective field="email" headerText="Email" width="200" headerTemplate={headerTemplate}/>
+            <ColumnDirective field="displayName" headerText="Name" width="150" headerTemplate={headerTemplate}/>
             <ColumnDirective
               field="disabled"
               headerText="Status"
+              headerTemplate={headerTemplate}
               width="100"
               template={statusTemplate}
             />
             <ColumnDirective
               field="tenantType"
               headerText="Type"
+              headerTemplate={headerTemplate}
               width="130"
               template={tenantTypeTemplate}
             />
             <ColumnDirective
               field="role"
               headerText="Role"
+              headerTemplate={headerTemplate}
               width="100"
               template={roleTemplate}
             />
             <ColumnDirective
               headerText="Tenant ID"
+              headerTemplate={headerTemplate}
               width="180"
               template={tenantIdTemplate}
               allowSorting={false}
             />
-            <ColumnDirective field="phoneNumber" headerText="Phone" width="130" />
+            <ColumnDirective field="phoneNumber" headerText="Phone" width="130" headerTemplate={headerTemplate}/>
             <ColumnDirective
               field="createdAt"
               headerText="Created"
+              headerTemplate={headerTemplate}
               width="120"
               template={dateTemplate}
             />
             <ColumnDirective
               headerText="Actions"
+              headerTemplate={headerTemplate}
               width="100"
               template={actionsTemplate}
               allowSorting={false}

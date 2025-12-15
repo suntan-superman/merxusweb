@@ -281,66 +281,67 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
   const [editingItem, setEditingItem] = useState(null);
 
   return (
-    <div className="card sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Restaurant Details</h3>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          ✕
-        </button>
-      </div>
+    <>
+      <div className="card sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Restaurant Details</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            ✕
+          </button>
+        </div>
 
-      {!editing ? (
-        <>
-          {/* View Mode */}
-          <div className="space-y-4">
+        {!editing ? (
+          <>
+            {/* View Mode */}
+            <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block mb-1 text-xs font-medium text-gray-500">
                 Restaurant ID
               </label>
-              <p className="text-sm text-gray-900 font-mono">
+              <p className="font-mono text-sm text-gray-900">
                 {restaurant.restaurantId || restaurant.id}
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block mb-1 text-xs font-medium text-gray-500">
                 Name
               </label>
               <p className="text-sm text-gray-900">{restaurant.name || '—'}</p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block mb-1 text-xs font-medium text-gray-500">
                 Email
               </label>
               <p className="text-sm text-gray-900">{restaurant.email || '—'}</p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block mb-1 text-xs font-medium text-gray-500">
                 Phone
               </label>
               <p className="text-sm text-gray-900">{restaurant.phoneNumber || '—'}</p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block mb-1 text-xs font-medium text-gray-500">
                 Status
               </label>
               <p className="text-sm">
                 {restaurant.disabled ? (
-                  <span className="text-red-600 font-medium">Disabled</span>
+                  <span className="font-medium text-red-600">Disabled</span>
                 ) : (
-                  <span className="text-primary-600 font-medium">Active</span>
+                  <span className="font-medium text-primary-600">Active</span>
                 )}
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
+              <label className="block mb-1 text-xs font-medium text-gray-500">
                 Total Orders
               </label>
               <p className="text-sm text-gray-900">{restaurant.totalOrders || 0}</p>
@@ -349,13 +350,13 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
 
           <div className="mt-6 space-y-3">
             <div className="flex space-x-2">
-              <button onClick={() => setEditing(true)} className="btn-primary flex-1">
+              <button onClick={() => setEditing(true)} className="flex-1 btn-primary">
                 Edit
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting || restaurant.totalOrders > 0}
-                className="btn-secondary flex-1 text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 text-red-600 btn-secondary hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 title={restaurant.totalOrders > 0 ? 'Cannot delete restaurant with orders' : ''}
               >
                 {deleting ? 'Deleting...' : 'Delete'}
@@ -365,7 +366,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
             <button
               onClick={handleResendInvitation}
               disabled={resending}
-              className="btn-secondary w-full text-primary-600 hover:text-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-secondary text-primary-600 hover:text-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Resend invitation email to restaurant owner/manager"
             >
               {resending ? 'Sending...' : '📧 Resend Invitation Email'}
@@ -373,7 +374,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
           </div>
 
           {deleteError && (
-            <div className="mt-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <div className="px-4 py-3 mt-4 text-sm text-red-700 border border-red-200 rounded-md bg-red-50">
               {deleteError}
             </div>
           )}
@@ -397,7 +398,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     {resendMessage.link}
                   </a>
                   {resendMessage.email && (
-                    <p className="text-xs mt-1">Sent to: {resendMessage.email}</p>
+                    <p className="mt-1 text-xs">Sent to: {resendMessage.email}</p>
                   )}
                 </div>
               )}
@@ -430,7 +431,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
             {activeTab === 'basic' && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Restaurant Name *
                   </label>
                   <input
@@ -443,7 +444,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Email *
                   </label>
                   <input
@@ -457,7 +458,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Twilio Phone Number *
                   </label>
                   <input
@@ -469,13 +470,13 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     placeholder="+15551234567"
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="mt-1 text-xs text-gray-500">
                     The Twilio phone number assigned to this restaurant for AI call routing.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Twilio Number SID (Optional)
                   </label>
                   <input
@@ -485,14 +486,14 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     className="input-field"
                     placeholder="PNxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="mt-1 text-xs text-gray-500">
                     Twilio's unique identifier for the phone number (starts with "PN"). 
                     Found in your Twilio Console under Phone Numbers → Manage → Active Numbers.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Address
                   </label>
                   <input
@@ -505,7 +506,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Timezone *
                   </label>
                   <select
@@ -532,7 +533,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                       type="checkbox"
                       checked={form.disabled}
                       onChange={handleChange}
-                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      className="border-gray-300 rounded text-primary-600 focus:ring-primary-500"
                     />
                     <span className="text-sm text-gray-700">Disabled</span>
                   </label>
@@ -563,12 +564,12 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                         className="input-field w-28"
                       />
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-gray-700 ml-auto">
+                    <label className="flex items-center gap-2 ml-auto text-sm text-gray-700">
                       <input
                         type="checkbox"
                         checked={form.businessHours[day.key]?.closed || false}
                         onChange={(e) => handleHoursChange(day.key, 'closed', e.target.checked)}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        className="border-gray-300 rounded text-primary-600 focus:ring-primary-500"
                       />
                       Closed
                     </label>
@@ -581,7 +582,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
             {activeTab === 'ai' && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     AI Model
                   </label>
                   <select
@@ -597,7 +598,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Voice Name
                   </label>
                   <select
@@ -617,13 +618,13 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     <option value="shimmer">Shimmer (Female)</option>
                     <option value="verse">Verse (Male)</option>
                   </select>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="mt-1 text-xs text-gray-500">
                     Select the voice for your AI assistant
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Language
                   </label>
                   <input
@@ -634,7 +635,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     className="input-field"
                     placeholder="en-US"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="mt-1 text-xs text-gray-500">
                     Language code (e.g., en-US, es-ES, fr-FR)
                   </p>
                 </div>
@@ -653,7 +654,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
             {activeTab === 'notifications' && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Email Addresses (comma-separated)
                   </label>
                   <input
@@ -669,7 +670,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     SMS Numbers (comma-separated, E.164 format)
                   </label>
                   <input
@@ -697,14 +698,14 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     <button
                       type="button"
                       onClick={() => setImportOpen(true)}
-                      className="btn-secondary text-sm"
+                      className="text-sm btn-secondary"
                     >
                       📥 Import CSV
                     </button>
                     <button
                       type="button"
                       onClick={handleAddMenuItem}
-                      className="btn-primary text-sm"
+                      className="text-sm btn-primary"
                     >
                       + Add Item
                     </button>
@@ -712,18 +713,18 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                 </div>
 
                 {menuError && (
-                  <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                  <div className="px-4 py-3 text-sm text-red-700 border border-red-200 rounded-md bg-red-50">
                     {menuError}
                   </div>
                 )}
 
                 {menuLoading ? (
-                  <div className="text-center py-8 text-gray-600">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                  <div className="py-8 text-center text-gray-600">
+                    <div className="w-8 h-8 mx-auto border-b-2 rounded-full animate-spin border-primary-600"></div>
                     <p className="mt-4">Loading menu...</p>
                   </div>
                 ) : (
-                  <div className="max-h-96 overflow-y-auto">
+                  <div className="overflow-y-auto max-h-96">
                     <MenuTable
                       items={menu}
                       onEdit={handleEditMenuItem}
@@ -735,8 +736,8 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
               </div>
             )}
 
-            <div className="flex space-x-2 pt-4 border-t">
-              <button type="submit" className="btn-primary flex-1" disabled={saving}>
+            <div className="flex pt-4 space-x-2 border-t">
+              <button type="submit" className="flex-1 btn-primary" disabled={saving}>
                 {saving ? 'Saving…' : 'Save Changes'}
               </button>
               <button
@@ -758,7 +759,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     twilioNumberSid: restaurant?.twilioNumberSid || '',
                   });
                 }}
-                className="btn-secondary flex-1"
+                className="flex-1 btn-secondary"
               >
                 Cancel
               </button>
@@ -784,36 +785,37 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
               createItemFn={(item) => createRestaurantMenuItem(restaurant.id || restaurant.restaurantId, item)}
             />
           )}
-
-          {/* Delete Restaurant Confirmation Modal */}
-          <ConfirmationModal
-            isOpen={showDeleteModal}
-            onClose={() => setShowDeleteModal(false)}
-            onConfirm={confirmDelete}
-            title="Delete Restaurant"
-            message={`Are you sure you want to delete "${restaurant.name || restaurant.restaurantId}"? This action cannot be undone.`}
-            confirmText="Delete"
-            cancelText="Cancel"
-            variant="danger"
-            isLoading={deleting}
-          />
-
-          {/* Delete Menu Item Confirmation Modal */}
-          <ConfirmationModal
-            isOpen={showDeleteMenuItemModal}
-            onClose={() => {
-              setShowDeleteMenuItemModal(false);
-              setItemToDelete(null);
-            }}
-            onConfirm={confirmDeleteMenuItem}
-            title="Delete Menu Item"
-            message={itemToDelete ? `Are you sure you want to delete "${itemToDelete.name}"?` : ''}
-            confirmText="Delete"
-            cancelText="Cancel"
-            variant="danger"
-          />
         </>
       )}
-    </div>
+      </div>
+
+      {/* Delete Restaurant Confirmation Modal - Rendered outside card to prevent clipping */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        title="Delete Restaurant"
+        message={`Are you sure you want to delete "${restaurant.name || restaurant.restaurantId}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={deleting}
+      />
+
+      {/* Delete Menu Item Confirmation Modal - Rendered outside card to prevent clipping */}
+      <ConfirmationModal
+        isOpen={showDeleteMenuItemModal}
+        onClose={() => {
+          setShowDeleteMenuItemModal(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={confirmDeleteMenuItem}
+        title="Delete Menu Item"
+        message={itemToDelete ? `Are you sure you want to delete "${itemToDelete.name}"?` : ''}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
+    </>
   );
 }

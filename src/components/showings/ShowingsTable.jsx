@@ -30,7 +30,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
 
   if (!showings || showings.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
         No showings scheduled.
       </div>
     );
@@ -81,14 +81,14 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
   };
 
   const addressTemplate = (props) => (
-    <div className="text-sm text-gray-900 font-medium">
+    <div className="text-sm font-medium text-gray-900">
       {props.formattedAddress}
     </div>
   );
 
   const dateTimeTemplate = (props) => (
     <div className="leading-tight">
-      <div className="text-sm text-gray-900 font-medium">{props.formattedDate}</div>
+      <div className="text-sm font-medium text-gray-900">{props.formattedDate}</div>
       <div className="text-xs text-gray-500">{props.formattedTime}</div>
     </div>
   );
@@ -119,21 +119,27 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
       <button
         onClick={() => onEdit && onEdit(props)}
-        className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+        className="text-sm font-medium text-primary-600 hover:text-primary-700"
       >
         Edit
       </button>
       <button
         onClick={() => onDelete && onDelete(props)}
-        className="text-red-600 hover:text-red-700 text-sm font-medium"
+        className="text-sm font-medium text-red-600 hover:text-red-700"
       >
         Delete
       </button>
     </div>
   );
 
+   const headerTemplate = (props) => (
+    <div style={{ fontSize: '12px', fontWeight: 'bold', padding: '12px 8px' }}>
+      {props.headerText}
+    </div>
+  );
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
       <GridComponent
         ref={gridRef}
         dataSource={gridData}
@@ -156,6 +162,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
           <ColumnDirective
             field="formattedAddress"
             headerText="Property"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('formattedAddress', 250)}
             minWidth={200}
             template={addressTemplate}
@@ -164,6 +171,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
           <ColumnDirective
             field="formattedDate"
             headerText="Date & Time"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('formattedDate', 180)}
             minWidth={150}
             template={dateTimeTemplate}
@@ -173,6 +181,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
           <ColumnDirective
             field="contact_name"
             headerText="Contact"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('contact_name', 180)}
             minWidth={150}
             template={contactTemplate}
@@ -181,6 +190,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
           <ColumnDirective
             field="statusBadge"
             headerText="Status"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('statusBadge', 120)}
             minWidth={100}
             template={statusTemplate}
@@ -189,6 +199,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
           <ColumnDirective
             field="notes"
             headerText="Notes"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('notes', 200)}
             minWidth={150}
             allowFiltering={true}
@@ -196,6 +207,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
           <ColumnDirective
             field="actions"
             headerText="Actions"
+            headerTemplate={headerTemplate}
             width={getColumnWidth('actions', 120)}
             minWidth={100}
             template={actionsTemplate}
