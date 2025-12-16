@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import EscalatedCallsAlert from '../../components/calls/EscalatedCallsAlert';
 import VoiceCallTable from '../../components/calls/voice/VoiceCallTable';
 import CallDetailDrawer from '../../components/calls/CallDetailDrawer';
 
@@ -45,6 +46,8 @@ export default function EstateCallsPage() {
           </p>
         </div>
       </div>
+
+      <EscalatedCallsAlert calls={calls} />
 
       <VoiceCallTable calls={calls} onCallClick={handleCallClick} />
 

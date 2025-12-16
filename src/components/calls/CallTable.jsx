@@ -16,6 +16,7 @@ export default function CallTable({ calls, onCallClick }) {
             <th className="px-4 py-3">Type</th>
             <th className="px-4 py-3">When</th>
             <th className="px-4 py-3">Duration</th>
+            <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Importance</th>
             <th className="px-4 py-3">Summary</th>
           </tr>
@@ -45,6 +46,18 @@ export default function CallTable({ calls, onCallClick }) {
 
               <td className="px-4 py-3 text-xs text-gray-700">
                 {c.durationSec ? Math.round(c.durationSec) + 's' : '-'}
+              </td>
+
+              <td className="px-4 py-3">
+                {c.escalation?.triggered ? (
+                  <span className="inline-flex items-center rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-xs font-medium gap-1">
+                    🚨 Escalated
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs font-medium">
+                    Handled
+                  </span>
+                )}
               </td>
 
               <td className="px-4 py-3">

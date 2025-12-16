@@ -4,6 +4,7 @@ import { useNewItemNotifications } from '../../hooks/useNotifications';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import EscalatedCallsAlert from '../../components/calls/EscalatedCallsAlert';
 import VoiceCallTable from '../../components/calls/voice/VoiceCallTable';
 import CallDetailDrawer from '../../components/calls/CallDetailDrawer';
 
@@ -125,6 +126,8 @@ export default function VoiceCallsPage() {
           ))}
         </div>
       </div>
+
+      <EscalatedCallsAlert calls={calls} />
 
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
