@@ -3,6 +3,7 @@ import { fetchSettings, updateSettings } from '../../api/settings';
 import RestaurantProfile from '../../components/settings/RestaurantProfile';
 import BusinessHours from '../../components/settings/BusinessHours';
 import NotificationSettings from '../../components/settings/NotificationSettings';
+import ManagersSettings from '../../components/settings/ManagersSettings';
 import POSIntegration from '../../components/settings/POSIntegration';
 import AISettings from '../../components/settings/AISettings';
 
@@ -10,6 +11,7 @@ const TABS = [
   { id: 'profile', label: 'Profile', icon: '🏪' },
   { id: 'hours', label: 'Business Hours', icon: '🕐' },
   { id: 'notifications', label: 'Notifications', icon: '🔔' },
+  { id: 'managers', label: 'Managers', icon: '👥' },
   { id: 'pos', label: 'POS Integration', icon: '💳' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
 ];
@@ -137,6 +139,9 @@ export default function SettingsPage() {
         )}
         {activeTab === 'notifications' && (
           <NotificationSettings settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'managers' && (
+          <ManagersSettings settings={settings} onSave={handleSave} saving={saving} />
         )}
         {activeTab === 'pos' && (
           <POSIntegration />

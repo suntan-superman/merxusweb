@@ -4,10 +4,12 @@ import VoiceCompanyProfile from '../../components/settings/voice/VoiceCompanyPro
 import VoiceBusinessHours from '../../components/settings/voice/VoiceBusinessHours';
 import VoiceAISettings from '../../components/settings/voice/VoiceAISettings';
 import VoiceServicesProducts from '../../components/settings/voice/VoiceServicesProducts';
+import ManagersSettings from '../../components/settings/ManagersSettings';
 
 const TABS = [
   { id: 'profile', label: 'Company Profile', icon: '🏢' },
   { id: 'hours', label: 'Business Hours', icon: '🕐' },
+  { id: 'managers', label: 'Managers', icon: '👥' },
   { id: 'services', label: 'Services & Products', icon: '📦' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
 ];
@@ -132,6 +134,9 @@ export default function VoiceSettingsPage() {
         )}
         {activeTab === 'hours' && (
           <VoiceBusinessHours settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'managers' && (
+          <ManagersSettings settings={settings} onSave={handleSave} saving={saving} />
         )}
         {activeTab === 'services' && (
           <VoiceServicesProducts 

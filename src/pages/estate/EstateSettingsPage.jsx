@@ -5,12 +5,14 @@ import EstateAgentHighlights from '../../components/settings/estate/EstateAgentH
 import EstateBusinessHours from '../../components/settings/estate/EstateBusinessHours';
 import EstateAISettings from '../../components/settings/estate/EstateAISettings';
 import EstateRouting from '../../components/settings/estate/EstateRouting';
+import ManagersSettings from '../../components/settings/ManagersSettings';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: '👤' },
   { id: 'highlights', label: 'Highlights', icon: '⭐' },
   { id: 'hours', label: 'Business Hours', icon: '🕐' },
+  { id: 'managers', label: 'Managers', icon: '👥' },
   { id: 'routing', label: 'Call Routing', icon: '📞' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
 ];
@@ -131,6 +133,9 @@ export default function EstateSettingsPage() {
         )}
         {activeTab === 'hours' && (
           <EstateBusinessHours settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'managers' && (
+          <ManagersSettings settings={settings} onSave={handleSave} saving={saving} />
         )}
         {activeTab === 'routing' && (
           <EstateRouting settings={settings} onSave={handleSave} saving={saving} />
