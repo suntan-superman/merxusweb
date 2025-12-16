@@ -49,6 +49,7 @@ import EstateCallsPage from './pages/estate/EstateCallsPage';
 import EstateSettingsPage from './pages/estate/EstateSettingsPage';
 import EstateUsersPage from './pages/estate/EstateUsersPage';
 import FlyerApprovalsPage from './pages/estate/FlyerApprovalsPage';
+import FlyerMetricsPage from './pages/estate/FlyerMetricsPage';
 import SupportPage from './pages/SupportPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
@@ -152,6 +153,7 @@ function App() {
                     <Route path="showings" element={<EstateShowingsPage />} />
                     <Route path="calls" element={<EstateCallsPage />} />
                     <Route path="flyers/approvals" element={<FlyerApprovalsPage />} />
+                    <Route path="flyers/metrics" element={<FlyerMetricsPage />} />
                     <Route path="settings" element={<EstateSettingsPage />} />
                     <Route path="users" element={<EstateUsersPage />} />
                     <Route path="billing" element={<BillingPage />} />

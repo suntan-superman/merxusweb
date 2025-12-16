@@ -64,6 +64,7 @@ export default function EstateSidebar() {
         <NavItem to="/estate/leads" label="Leads" icon="👥" />
         <NavItem to="/estate/showings" label="Showings" icon="📅" />
         <NavItem to="/estate/calls" label="Calls & Messages" icon="📞" />
+        <NavItem to="/estate/flyers/metrics" label="Flyer Analytics" icon="📊" />
         <NavItem to="/estate/settings" label="Settings" icon="⚙️" />
         <NavItem to="/estate/billing" label="Billing" icon="💳" />
         {isOwner && (
