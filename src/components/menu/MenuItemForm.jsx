@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function MenuItemForm({ open, onClose, onSave, editing }) {
+export default function MenuItemForm({ open, onClose, onSave, editing, availableSides = [] }) {
   const [form, setForm] = useState(
     editing || {
       name: '',
@@ -9,8 +9,12 @@ export default function MenuItemForm({ open, onClose, onSave, editing }) {
       category: '',
       isAvailable: true,
       tags: [],
+      includedSides: [],
+      extraChargeSides: {},
     }
   );
+  const [newUpchargeSide, setNewUpchargeSide] = useState('');
+  const [newUpchargePrice, setNewUpchargePrice] = useState('');
 
   useEffect(() => {
     if (editing) {
@@ -23,6 +27,8 @@ export default function MenuItemForm({ open, onClose, onSave, editing }) {
         category: '',
         isAvailable: true,
         tags: [],
+        includedSides: [],
+        extraChargeSides: {},
       });
     }
   }, [editing, open]);
@@ -155,6 +161,116 @@ export default function MenuItemForm({ open, onClose, onSave, editing }) {
                 />
                 <span className="text-sm text-gray-700">Available</span>
               </label>
+            </div>
+
+            {/* Included Sides */}
+            <div className="border-t pt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Included Sides (select available options)
+              </label>
+              <div className="space-y-2 max-h-48 overflow-y-auto border rounded p-2 bg-gray-50">
+                {availableSides.length > 0 ? (
+                  availableSides.map((side) => (
+                    <label key={side} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={form.includedSides?.includes(side) || false}
+                        onChange={(e) => {
+                          setForm((prev) => {
+                            const sides = [...(prev.includedSides || [])];
+                            if (e.target.checked) {
+                              if (!sides.includes(side)) sides.push(side);
+                            } else {
+                              const idx = sides.indexOf(side);
+                              if (idx > -1) sides.splice(idx, 1);
+                            }
+                            return { ...prev, includedSides: sides };
+                          });
+                        }}
+                        className="rounded border-gray-300 text-primary-600"
+                      />
+                      <span className="text-sm text-gray-700">{side}</span>
+                    </label>
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-500 italic">No sides available. Create sides first.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Extra Charge Sides */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Extra Charge Sides
+              </label>
+              
+              {/* List of extra charge sides */}
+              {form.extraChargeSides && Object.keys(form.extraChargeSides).length > 0 && (
+                <div className="space-y-1 mb-3 max-h-32 overflow-y-auto border rounded p-2 bg-gray-50">
+                  {Object.entries(form.extraChargeSides).map(([side, price]) => (
+                    <div key={side} className="flex items-center justify-between text-sm bg-white p-1 rounded">
+                      <span className="text-gray-700">{side}: ${parseFloat(price).toFixed(2)}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm((prev) => {
+                            const updated = { ...prev.extraChargeSides };
+                            delete updated[side];
+                            return { ...prev, extraChargeSides: updated };
+                          });
+                        }}
+                        className="text-red-500 hover:text-red-700 text-xs font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Add new extra charge side */}
+              <div className="flex gap-2">
+                <select
+                  value={newUpchargeSide}
+                  onChange={(e) => setNewUpchargeSide(e.target.value)}
+                  className="input-field flex-1 text-sm"
+                >
+                  <option value="">Select a side...</option>
+                  {availableSides.map((side) => (
+                    <option key={side} value={side}>
+                      {side}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Price"
+                  value={newUpchargePrice}
+                  onChange={(e) => setNewUpchargePrice(e.target.value)}
+                  className="input-field w-20 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newUpchargeSide && newUpchargePrice) {
+                      setForm((prev) => ({
+                        ...prev,
+                        extraChargeSides: {
+                          ...prev.extraChargeSides,
+                          [newUpchargeSide]: parseFloat(newUpchargePrice),
+                        },
+                      }));
+                      setNewUpchargeSide('');
+                      setNewUpchargePrice('');
+                    }
+                  }}
+                  className="btn-primary text-sm px-3"
+                >
+                  Add
+                </button>
+              </div>
             </div>
           </div>
         </form>

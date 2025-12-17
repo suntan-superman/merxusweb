@@ -139,6 +139,9 @@ export default function MenuPage() {
         onClose={() => setFormOpen(false)}
         onSave={handleSave}
         editing={editingItem}
+        availableSides={menu
+          .filter(item => item.category === 'A La Carte Sides' || item.tags?.includes('side'))
+          .map(item => item.name)}
       />
 
       {importOpen && (

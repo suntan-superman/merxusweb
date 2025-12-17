@@ -12,12 +12,7 @@ const getApiBaseUrl = () => {
     return import.meta.env.VITE_API_BASE_URL;
   }
   
-  // For local development, use emulator URL
-  if (import.meta.env.DEV) {
-    return `http://localhost:5001/${projectId}/us-central1/api`;
-  }
-  
-  // For production, use deployed Cloud Functions URL
+  // Always use deployed Cloud Run backend (never local emulator in development)
   return `https://us-central1-${projectId}.cloudfunctions.net/api`;
 };
 

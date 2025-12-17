@@ -149,3 +149,101 @@ export async function toggleAvailability(req: AuthenticatedRequest, res: Respons
   }
 }
 
+export async function importMenuItems(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const restaurantId = req.user?.restaurantId;
+    if (!restaurantId) {
+      res.status(403).json({ error: 'Restaurant ID required' });
+      return;
+    }
+
+    const { items, mode = 'add' } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      res.status(400).json({ error: 'Items array is required and must not be empty' });
+      return;
+    }
+
+    if (!['add', 'replace'].includes(mode)) {
+      res.status(400).json({ error: 'Mode must be "add" or "replace"' });
+      return;
+    }
+
+    let replaced = 0;
+
+    // If mode is 'replace', delete all existing menu items first
+    if (mode === 'replace') {
+      const existing = await db
+        .collection('restaurants')
+        .doc(restaurantId)
+        .collection('menuItems')
+        .get();
+
+      replaced = existing.size;
+
+      // Delete in batches
+      const batch = admin.firestore().batch();
+      existing.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+    }
+
+    // Import new items in batches (Firestore batch limit is 500)
+    const collectionRef = db.collection('restaurants').doc(restaurantId).collection('menuItems');
+    let batch = admin.firestore().batch();
+    let batchCount = 0;
+    let success = 0;
+    let failed = 0;
+    const errors = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      try {
+        // Validate required fields
+        if (!item.name || !item.price) {
+          failed++;
+          errors.push(`Row ${i + 1}: Missing required fields (name, price)`);
+          continue;
+        }
+
+        const docRef = collectionRef.doc();
+        batch.set(docRef, {
+          ...item,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        batchCount++;
+        success++;
+
+        // Commit batch every 500 items
+        if (batchCount === 500) {
+          await batch.commit();
+          batch = admin.firestore().batch();
+          batchCount = 0;
+        }
+      } catch (err: any) {
+        failed++;
+        errors.push(`Row ${i + 1}: ${err.message}`);
+      }
+    }
+
+    // Commit remaining items
+    if (batchCount > 0) {
+      await batch.commit();
+    }
+
+    res.json({
+      success,
+      failed,
+      replaced: mode === 'replace' ? replaced : 0,
+      errors: errors.slice(0, 10), // Return first 10 errors
+    });
+  } catch (err: any) {
+    console.error('Error importing menu items:', err);
+    res.status(500).json({ error: 'Failed to import menu items: ' + err.message });
+  }
+}
+

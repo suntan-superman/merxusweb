@@ -775,6 +775,9 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
             }}
             onSave={handleSaveMenuItem}
             editing={editingItem}
+            availableSides={menu
+              .filter(item => item.category === 'A La Carte Sides' || item.tags?.includes('side'))
+              .map(item => item.name)}
           />
 
           {/* Menu Import Modal */}

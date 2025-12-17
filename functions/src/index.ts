@@ -91,6 +91,7 @@ app.post('/menu', menuRoutes.createMenuItem);
 app.put('/menu/:id', menuRoutes.updateMenuItem);
 app.delete('/menu/:id', menuRoutes.deleteMenuItem);
 app.patch('/menu/:id', menuRoutes.toggleAvailability);
+app.post('/menu/import', menuRoutes.importMenuItems);
 
 // Settings routes
 app.get('/settings', settingsRoutes.getSettings);

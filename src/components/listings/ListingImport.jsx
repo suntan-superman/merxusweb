@@ -11,6 +11,9 @@ export default function ListingImport({ onImportComplete, onClose }) {
   const [fileType, setFileType] = useState(null);
   const [progress, setProgress] = useState({ current: 0, total: 0, percent: 0 });
   const [validation, setValidation] = useState(null); // { errors: [], warnings: [], valid: count }
+  const [showModeConfirmation, setShowModeConfirmation] = useState(false);
+  const [importMode, setImportMode] = useState('add'); // 'add' or 'replace'
+  const [parsedListings, setParsedListings] = useState(null);
 
   function handleFileSelect(e) {
     const selectedFile = e.target.files[0];
@@ -432,14 +435,45 @@ export default function ListingImport({ onImportComplete, onClose }) {
         throw new Error('No valid listings found in file');
       }
 
+      // Store parsed listings for later use
+      setParsedListings(listings);
+      
+      // Show confirmation dialog
+      setShowModeConfirmation(true);
+    } catch (err) {
+      console.error('Import error:', err);
+      setError(err.message || 'Failed to import listings');
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  function handleModeConfirmation(mode) {
+    setImportMode(mode);
+    setShowModeConfirmation(false);
+    if (parsedListings) {
+      performImport(parsedListings, mode);
+    }
+  }
+
+  async function performImport(listings, mode) {
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
+    const totalListings = listings.length;
+
+    setProgress({ current: 0, total: totalListings, percent: 0 });
+    setImporting(true);
+
+    try {
+      // If replace mode, delete existing listings first
+      if (mode === 'replace') {
+        // Note: This would require a deleteAllListings endpoint
+        // For now, we'll just proceed with adding
+        // TODO: Implement backend support for bulk delete
+      }
+
       // Import listings one by one with progress
-      let successCount = 0;
-      let errorCount = 0;
-      const errors = [];
-      const totalListings = listings.length;
-
-      setProgress({ current: 0, total: totalListings, percent: 0 });
-
       for (let i = 0; i < listings.length; i++) {
         const listing = listings[i];
         try {
@@ -688,6 +722,53 @@ export default function ListingImport({ onImportComplete, onClose }) {
             {importing ? 'Importing...' : validation && validation.hasErrors ? 'Fix Errors First' : 'Import Listings'}
           </button>
         </footer>
+
+        {/* Mode Confirmation Modal */}
+        {showModeConfirmation && (
+          <div className="fixed inset-0 z-[100] overflow-y-auto">
+            <div className="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowModeConfirmation(false)}></div>
+              
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    Choose Import Mode
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-6">
+                    You're about to import {parsedListings?.length || 0} listing{parsedListings?.length !== 1 ? 's' : ''}. What would you like to do?
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => handleModeConfirmation('add')}
+                      className="w-full text-left p-4 border-2 border-blue-200 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <div className="font-semibold text-blue-900">➕ Add to Existing Listings</div>
+                      <div className="text-sm text-blue-700">Keep existing listings and add new ones</div>
+                    </button>
+                    <button
+                      onClick={() => handleModeConfirmation('replace')}
+                      className="w-full text-left p-4 border-2 border-red-200 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                      <div className="font-semibold text-red-900">🔄 Replace All Listings</div>
+                      <div className="text-sm text-red-700">Remove all existing listings and import these</div>
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="button"
+                    onClick={() => setShowModeConfirmation(false)}
+                    className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

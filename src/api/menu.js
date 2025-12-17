@@ -25,3 +25,12 @@ export async function toggleAvailability(id, isAvailable) {
   return res.data;
 }
 
+export async function importMenuItems(restaurantId, items, mode = 'add') {
+  const res = await apiClient.post('/menu/import', {
+    restaurantId,
+    items,
+    mode,
+  });
+  return res.data;
+}
+
