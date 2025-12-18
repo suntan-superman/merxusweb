@@ -820,6 +820,7 @@ export async function resendInvitationEmail(req: Request, res: Response): Promis
     const tenantType = customClaims.type;
     const officeId = customClaims.officeId;
     const restaurantId = customClaims.restaurantId;
+    const agentId = customClaims.agentId;
     const displayName = userRecord.displayName || email.split('@')[0];
 
     if (!tenantType) {
@@ -879,6 +880,31 @@ export async function resendInvitationEmail(req: Request, res: Response): Promis
           email,
           displayName,
           tenantName || 'your restaurant',
+          passwordResetLink
+        );
+      } catch (emailError: any) {
+      }
+    } else if (tenantType === 'real_estate' && agentId) {
+      // Real Estate Agent user
+      passwordResetLink = await admin.auth().generatePasswordResetLink(email, {
+        url: `${frontendUrl}/login?mode=resetPassword&agentId=${agentId}`,
+        handleCodeInApp: false,
+      });
+
+      // Get agent name
+      const agentDoc = await db.collection('agents').doc(agentId).get();
+      if (agentDoc.exists) {
+        const settingsDoc = await agentDoc.ref.collection('meta').doc('settings').get();
+        tenantName = settingsDoc.data()?.brandName || settingsDoc.data()?.name || 'your real estate business';
+      }
+
+      // Try to send email via SendGrid (use office invitation template for now)
+      try {
+        const { sendOfficeInvitation } = await import('../utils/email');
+        emailSent = await sendOfficeInvitation(
+          email,
+          displayName,
+          tenantName || 'your real estate business',
           passwordResetLink
         );
       } catch (emailError: any) {

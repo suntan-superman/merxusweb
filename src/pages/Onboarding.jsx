@@ -76,19 +76,24 @@ const Onboarding = () => {
 
   // Check if all required fields are filled (except websiteUrl)
   const isFormValid = () => {
+    // Base required fields for all types
     const requiredFields = {
       name: formData.name.trim(),
       address: formData.address.trim(),
       ownerEmail: formData.ownerEmail.trim(),
-      ownerName: formData.ownerName.trim(),
     };
 
     // Add tenant-specific required fields
     if (isRealEstate) {
-      // Real estate requires agent name (name field) and owner info
+      // Real estate: agent name and email are required
+      // ownerName is NOT required (we use the agent name)
       // Brand name is optional (defaults to "[Name] Team")
-    } else if (!isVoice) {
-      // Restaurant requires cuisine type and description
+    } else if (isVoice) {
+      // Voice: requires owner name
+      requiredFields.ownerName = formData.ownerName.trim();
+    } else {
+      // Restaurant requires owner name, cuisine type and description
+      requiredFields.ownerName = formData.ownerName.trim();
       requiredFields.cuisineType = formData.cuisineType.trim();
       requiredFields.description = formData.description.trim();
     }
@@ -139,7 +144,7 @@ const Onboarding = () => {
           },
           owner: {
             email: formData.ownerEmail,
-            displayName: formData.ownerName,
+            displayName: formData.name, // Use agent name for real estate (not ownerName)
             role: 'owner',
           },
           plan: formData.selectedPlan, // Pass selected plan to backend
@@ -151,24 +156,22 @@ const Onboarding = () => {
           throw new Error('User account was not created. Please contact support.');
         }
         
-        // Priority: Firebase Auth first, then SendGrid as backup
-        let emailSent = false;
-        let emailService = 'Firebase Auth';
+        // Priority: SendGrid (backend) first, then Firebase Auth as backup
+        // SendGrid sends branded emails that go to inbox, Firebase Auth may go to spam
+        let emailSent = result.emailSent || false;
         
-        // Try Firebase Auth first
-        try {
-          const { sendPasswordResetEmail } = await import('firebase/auth');
-          const { auth } = await import('../firebase/config');
-          await sendPasswordResetEmail(auth, formData.ownerEmail, {
-            url: `${window.location.origin}/login?mode=resetPassword&agentId=${result.agentId}`,
-            handleCodeInApp: false,
-          });
-          emailSent = true;
-        } catch (firebaseEmailError) {
-          // If Firebase Auth fails, try SendGrid as backup
-          if (result.emailSent) {
+        // If SendGrid didn't send, try Firebase Auth as backup
+        if (!emailSent) {
+          try {
+            const { sendPasswordResetEmail } = await import('firebase/auth');
+            const { auth } = await import('../firebase/config');
+            await sendPasswordResetEmail(auth, formData.ownerEmail, {
+              url: `${window.location.origin}/login?mode=resetPassword&agentId=${result.agentId}`,
+              handleCodeInApp: false,
+            });
             emailSent = true;
-            emailService = 'SendGrid';
+          } catch (firebaseEmailError) {
+            console.error('Firebase Auth email failed:', firebaseEmailError);
           }
         }
         
@@ -217,24 +220,22 @@ const Onboarding = () => {
           throw new Error('User account was not created. Please contact support.');
         }
         
-        // Priority: Firebase Auth first (built-in, reliable), then SendGrid as backup (for formatted emails)
-        let emailSent = false;
-        let emailService = 'Firebase Auth';
+        // Priority: SendGrid (backend) first, then Firebase Auth as backup
+        // SendGrid sends branded emails that go to inbox, Firebase Auth may go to spam
+        let emailSent = result.emailSent || false;
         
-        // Try Firebase Auth first
-        try {
-          const { sendPasswordResetEmail } = await import('firebase/auth');
-          const { auth } = await import('../firebase/config');
-          await sendPasswordResetEmail(auth, formData.ownerEmail, {
-            url: `${window.location.origin}/login?mode=resetPassword&officeId=${result.officeId}`,
-            handleCodeInApp: false,
-          });
-          emailSent = true;
-        } catch (firebaseEmailError) {
-          // If Firebase Auth fails, try SendGrid as backup
-          if (result.emailSent) {
+        // If SendGrid didn't send, try Firebase Auth as backup
+        if (!emailSent) {
+          try {
+            const { sendPasswordResetEmail } = await import('firebase/auth');
+            const { auth } = await import('../firebase/config');
+            await sendPasswordResetEmail(auth, formData.ownerEmail, {
+              url: `${window.location.origin}/login?mode=resetPassword&officeId=${result.officeId}`,
+              handleCodeInApp: false,
+            });
             emailSent = true;
-            emailService = 'SendGrid';
+          } catch (firebaseEmailError) {
+            console.error('Firebase Auth email failed:', firebaseEmailError);
           }
         }
         
@@ -282,24 +283,22 @@ const Onboarding = () => {
           throw new Error('User account was not created. Please contact support.');
         }
         
-        // Priority: Firebase Auth first (built-in, reliable), then SendGrid as backup (for formatted emails)
-        let emailSent = false;
-        let emailService = 'Firebase Auth';
+        // Priority: SendGrid (backend) first, then Firebase Auth as backup
+        // SendGrid sends branded emails that go to inbox, Firebase Auth may go to spam
+        let emailSent = result.emailSent || false;
         
-        // Try Firebase Auth first
-        try {
-          const { sendPasswordResetEmail } = await import('firebase/auth');
-          const { auth } = await import('../firebase/config');
-          await sendPasswordResetEmail(auth, formData.ownerEmail, {
-            url: `${window.location.origin}/login?mode=resetPassword&restaurantId=${result.restaurantId}`,
-            handleCodeInApp: false,
-          });
-          emailSent = true;
-        } catch (firebaseEmailError) {
-          // If Firebase Auth fails, try SendGrid as backup
-          if (result.emailSent) {
+        // If SendGrid didn't send, try Firebase Auth as backup
+        if (!emailSent) {
+          try {
+            const { sendPasswordResetEmail } = await import('firebase/auth');
+            const { auth } = await import('../firebase/config');
+            await sendPasswordResetEmail(auth, formData.ownerEmail, {
+              url: `${window.location.origin}/login?mode=resetPassword&restaurantId=${result.restaurantId}`,
+              handleCodeInApp: false,
+            });
             emailSent = true;
-            emailService = 'SendGrid';
+          } catch (firebaseEmailError) {
+            console.error('Firebase Auth email failed:', firebaseEmailError);
           }
         }
         
@@ -424,9 +423,31 @@ const Onboarding = () => {
             )}
           </div>
 
+          {/* Email field immediately after name for Real Estate */}
+          {isRealEstate && (
+            <div>
+              <label htmlFor="ownerEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address *
+              </label>
+              <input
+                type="email"
+                id="ownerEmail"
+                name="ownerEmail"
+                required
+                value={formData.ownerEmail}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="your.email@example.com"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                We'll send a password setup link to this email
+              </p>
+            </div>
+          )}
+
           <div>
             <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-              Address *
+              {isRealEstate ? 'Office Address' : 'Address'} *
             </label>
             <input
               type="text"
@@ -436,7 +457,7 @@ const Onboarding = () => {
               value={formData.address}
               onChange={handleChange}
               className="input-field"
-              placeholder={isVoice ? 'Enter your business address' : 'Enter your restaurant address'}
+              placeholder={isRealEstate ? 'Enter your office address' : isVoice ? 'Enter your business address' : 'Enter your restaurant address'}
             />
           </div>
 
@@ -469,7 +490,7 @@ const Onboarding = () => {
               value={formData.websiteUrl}
               onChange={handleChange}
               className="input-field"
-              placeholder={isVoice ? 'https://yourbusiness.com' : 'https://yourrestaurant.com'}
+              placeholder={isRealEstate ? 'https://yourrealestate.com' : isVoice ? 'https://yourbusiness.com' : 'https://yourrestaurant.com'}
             />
           </div>
 
@@ -602,52 +623,54 @@ const Onboarding = () => {
             </>
           )}
 
-          {/* Owner/Manager Information - Required for both */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Owner/Manager Information
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              We'll send an invitation email to set up your account password.
-            </p>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="ownerName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  id="ownerName"
-                  name="ownerName"
-                  required
-                  value={formData.ownerName}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="Enter your full name"
-                />
-              </div>
+          {/* Owner/Manager Information - Required for restaurant and voice only */}
+          {!isRealEstate && (
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Owner/Manager Information
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                We'll send an invitation email to set up your account password.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="ownerName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="ownerName"
+                    name="ownerName"
+                    required
+                    value={formData.ownerName}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="Enter your full name"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="ownerEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  id="ownerEmail"
-                  name="ownerEmail"
-                  required
-                  value={formData.ownerEmail}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="your.email@example.com"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  We'll send a password setup link to this email
-                </p>
+                <div>
+                  <label htmlFor="ownerEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    id="ownerEmail"
+                    name="ownerEmail"
+                    required
+                    value={formData.ownerEmail}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="your.email@example.com"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    We'll send a password setup link to this email
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

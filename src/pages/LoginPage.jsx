@@ -122,7 +122,10 @@ export default function LoginPage() {
   };
 
   const handleResendInvitationEmail = async () => {
-    if (!prefillEmail) {
+    // Use the email that the user sees in the form (could be typed or pre-filled)
+    const emailToResend = email || prefillEmail;
+    
+    if (!emailToResend) {
       setError('Email address is required to resend invitation');
       return;
     }
@@ -132,24 +135,24 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const result = await resendInvitationEmail(prefillEmail);
+      const result = await resendInvitationEmail(emailToResend);
       setResendEmailMessage({
         type: 'success',
         text: result.message || 'Invitation email has been resent successfully',
-        link: result.invitationLink,
+        link: import.meta.env.DEV ? result.invitationLink : null, // Only show link in dev mode
       });
       
       // If SendGrid didn't work, try Firebase Auth as backup
       if (!result.emailSent) {
         try {
-          await sendPasswordResetEmail(auth, prefillEmail, {
+          await sendPasswordResetEmail(auth, emailToResend, {
             url: `${window.location.origin}/login?mode=resetPassword${agentId ? `&agentId=${agentId}` : ''}${officeId ? `&officeId=${officeId}` : ''}${restaurantId ? `&restaurantId=${restaurantId}` : ''}`,
             handleCodeInApp: false,
           });
           setResendEmailMessage({
             type: 'success',
             text: 'Invitation email has been resent via Firebase Auth',
-            link: result.invitationLink,
+            link: import.meta.env.DEV ? result.invitationLink : null, // Only show link in dev mode
           });
         } catch (firebaseError) {
           console.log('Firebase Auth backup also failed:', firebaseError);
@@ -281,9 +284,10 @@ export default function LoginPage() {
                   <p className="font-semibold text-base mb-2">Account Created Successfully!</p>
                   <p className="mb-2">{successMessage}</p>
                   
-                  {invitationLink ? (
+                  {/* DEV ONLY: Uncomment to show direct invitation link for debugging
+                  {invitationLink && import.meta.env.DEV ? (
                     <div className="mt-3 p-3 bg-white rounded border border-green-200">
-                      <p className="font-semibold text-sm mb-2">🔗 Password Setup Link:</p>
+                      <p className="font-semibold text-sm mb-2">🔗 Password Setup Link (Dev Only):</p>
                       <p className="text-xs text-gray-600 mb-2">Click the link below to set your password:</p>
                       <a 
                         href={invitationLink}
@@ -301,6 +305,7 @@ export default function LoginPage() {
                       </button>
                     </div>
                   ) : (
+                  */}
                     <div className="mt-3 p-3 bg-white rounded border border-green-200">
                       <p className="font-semibold text-sm mb-1">📧 Next Steps:</p>
                       <ol className="list-decimal list-inside space-y-1 text-xs">
@@ -310,7 +315,6 @@ export default function LoginPage() {
                         <li>Once your password is set, you'll be automatically signed in</li>
                       </ol>
                     </div>
-                  )}
                   
                   {prefillEmail && (
                     <div className="mt-3">
@@ -527,7 +531,7 @@ export default function LoginPage() {
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
+                    autoComplete="new-password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
