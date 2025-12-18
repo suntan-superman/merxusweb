@@ -140,7 +140,7 @@ export default function VoiceCompanyProfile({ settings, onSave, saving }) {
           </p>
           <p className="text-sm text-red-600 font-bold mb-4">
             If you do not have this information (the number and SID), please email{' '}
-            <a href="mailto:sales@merxus.ai" className="underline hover:text-red-700">sales@merxus.ai</a>{' '}
+            <a href="mailto:sales@merxusllc.com" className="underline hover:text-red-700">sales@merxusllc.com</a>{' '}
             and they will provide them to you.
           </p>
 

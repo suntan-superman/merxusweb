@@ -21,6 +21,9 @@ export default {
           950: '#052e16',
         },
       },
+      accentColor: {
+        primary: '#22c55e',
+      },
     },
   },
   plugins: [],

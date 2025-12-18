@@ -1,13 +1,29 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
 import FlyerMetricsDashboard from '../../components/estate/FlyerMetricsDashboard';
+import FlyoverBanner, { markFlyoverComplete } from '../../components/estate/FlyoverBanner';
+import EstateFlyover from '../../components/estate/EstateFlyover';
+import { fetchEstateSettings } from '../../api/estate';
 
 export default function EstateDashboardPage() {
   const { user, userClaims, agentId } = useAuth();
   
+  // Flyover state
+  const [flyoverOpen, setFlyoverOpen] = useState(false);
+  const [estateSettings, setEstateSettings] = useState(null);
+
+  // Load estate settings for banner
+  useEffect(() => {
+    if (agentId) {
+      fetchEstateSettings()
+        .then(setEstateSettings)
+        .catch((err) => console.error('Failed to load settings for flyover:', err));
+    }
+  }, [agentId]);
+
   // Calculate start of today for filtering
   const startOfToday = useMemo(() => {
     const now = new Date();
@@ -147,8 +163,30 @@ export default function EstateDashboardPage() {
 
   const recentCalls = calls.slice(0, 5);
 
+  // Handle flyover completion
+  const handleFlyoverComplete = () => {
+    markFlyoverComplete();
+    // Refresh settings
+    fetchEstateSettings()
+      .then(setEstateSettings)
+      .catch((err) => console.error('Failed to refresh settings:', err));
+  };
+
   return (
     <div className="flex flex-col gap-6">
+      {/* Flyover Banner */}
+      <FlyoverBanner 
+        onStartFlyover={() => setFlyoverOpen(true)} 
+        settings={estateSettings}
+      />
+
+      {/* Flyover Modal */}
+      <EstateFlyover
+        isOpen={flyoverOpen}
+        onClose={() => setFlyoverOpen(false)}
+        onComplete={handleFlyoverComplete}
+      />
+
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">Overview of your real estate business</p>
@@ -217,7 +255,14 @@ export default function EstateDashboardPage() {
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <button
+            onClick={() => setFlyoverOpen(true)}
+            className="flex flex-col items-center p-4 border-2 border-dashed border-primary-300 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+          >
+            <span className="text-3xl mb-2">✨</span>
+            <span className="text-sm font-medium text-primary-700">Setup Guide</span>
+          </button>
           <Link
             to="/estate/listings"
             className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

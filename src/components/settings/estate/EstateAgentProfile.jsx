@@ -41,11 +41,11 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
 
   return (
     <section className="card">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Agent Profile</h3>
+      <h3 className="mb-4 text-lg font-semibold text-gray-900">Agent Profile</h3>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-700">
             Agent Name *
           </label>
           <input
@@ -58,13 +58,13 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
             className="input-field"
             placeholder="e.g., Jake Smith"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="mt-1 text-xs text-gray-500">
             Your professional name as a real estate agent
           </p>
         </div>
 
         <div>
-          <label htmlFor="brandName" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="brandName" className="block mb-2 text-sm font-medium text-gray-700">
             Brand Name
           </label>
           <input
@@ -76,13 +76,13 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
             className="input-field"
             placeholder="e.g., The Jake Smith Team"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="mt-1 text-xs text-gray-500">
             If left blank, will default to "[Agent Name] Team"
           </p>
         </div>
 
         <div>
-          <label htmlFor="brokerage" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="brokerage" className="block mb-2 text-sm font-medium text-gray-700">
             Brokerage
           </label>
           <input
@@ -97,7 +97,7 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
         </div>
 
         <div>
-          <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="licenseNumber" className="block mb-2 text-sm font-medium text-gray-700">
             License Number
           </label>
           <input
@@ -112,7 +112,7 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
         </div>
 
         <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="address" className="block mb-2 text-sm font-medium text-gray-700">
             Address
           </label>
           <input
@@ -127,7 +127,7 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
         </div>
 
         <div>
-          <label htmlFor="phonePrimary" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="phonePrimary" className="block mb-2 text-sm font-medium text-gray-700">
             Contact Phone Number
           </label>
           <input
@@ -139,13 +139,13 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
             className="input-field"
             placeholder="+1 (555) 123-4567"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="mt-1 text-xs text-gray-500">
             Your contact number (for internal use, not the Twilio number).
           </p>
         </div>
 
         <div>
-          <label htmlFor="websiteUrl" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="websiteUrl" className="block mb-2 text-sm font-medium text-gray-700">
             Website URL
           </label>
           <input
@@ -160,7 +160,7 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
         </div>
 
         <div>
-          <label htmlFor="markets" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="markets" className="block mb-2 text-sm font-medium text-gray-700">
             Markets Served
           </label>
           <textarea
@@ -172,26 +172,26 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
             className="input-field"
             placeholder="Enter cities, zip codes, or areas (one per line or comma-separated)&#10;e.g., Bakersfield, CA&#10;93312&#10;93314"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="mt-1 text-xs text-gray-500">
             List the areas you serve. This helps the AI answer location-specific questions.
           </p>
         </div>
 
-        <div className="border-t pt-4 mt-4">
-          <h4 className="text-md font-semibold text-gray-900 mb-3">Twilio Configuration</h4>
-          <p className="text-sm text-gray-600 mb-2">
+        <div className="pt-4 mt-4 border-t">
+          <h4 className="mb-3 font-semibold text-gray-900 text-md">Twilio Configuration</h4>
+          <p className="mb-2 text-sm text-gray-600">
             Configure your Twilio phone number for AI call routing. This is the number that will receive calls.
           </p>
-          <p className="text-sm text-red-600 font-bold mb-4">
-            If you do not have this information (the number and SID), please email{' '}
-            <a href="mailto:sales@merxus.ai" className="underline hover:text-red-700">sales@merxus.ai</a>{' '}
+          <p className="mb-4 text-sm font-bold text-red-600">
+          yarn start  If you do not have this information (the number and SID), please email{' '}
+            <a href="mailto:sales@merxusllc.com" className="underline hover:text-red-700">sales@merxusllc.com</a>{' '}
             and they will provide them to you.
           </p>
 
           
           <div className="space-y-4">
             <div>
-              <label htmlFor="twilioPhoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="twilioPhoneNumber" className="block mb-2 text-sm font-medium text-gray-700">
                 Twilio Phone Number *
               </label>
               <input
@@ -204,14 +204,14 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
                 className="input-field"
                 placeholder="+15551234567"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-gray-500">
                 The Twilio phone number assigned to your business for AI call routing. Must be in E.164 format (e.g., +15551234567).
                 This number must match the phone number configured in your Twilio account.
               </p>
             </div>
 
             <div>
-              <label htmlFor="twilioNumberSid" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="twilioNumberSid" className="block mb-2 text-sm font-medium text-gray-700">
                 Twilio Number SID (Optional)
               </label>
               <input
@@ -223,7 +223,7 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
                 className="input-field"
                 placeholder="PNf330cac1b4a122220c9c9d854a5fd83e"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-gray-500">
                 Twilio's unique identifier for the phone number (starts with "PN"). Found in your Twilio Console under Phone Numbers → Manage → Active Numbers.
                 This helps the system identify your number more reliably.
               </p>

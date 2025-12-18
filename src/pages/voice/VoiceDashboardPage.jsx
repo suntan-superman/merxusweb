@@ -1,12 +1,28 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
+import VoiceFlyoverBanner, { markVoiceFlyoverComplete } from '../../components/voice/VoiceFlyoverBanner';
+import VoiceFlyover from '../../components/voice/VoiceFlyover';
+import { fetchVoiceSettings } from '../../api/voice';
 
 export default function VoiceDashboardPage() {
   const { user, userClaims, officeId } = useAuth();
   
+  // Flyover state
+  const [flyoverOpen, setFlyoverOpen] = useState(false);
+  const [voiceSettings, setVoiceSettings] = useState(null);
+
+  // Load voice settings for banner
+  useEffect(() => {
+    if (officeId) {
+      fetchVoiceSettings()
+        .then(setVoiceSettings)
+        .catch((err) => console.error('Failed to load settings for flyover:', err));
+    }
+  }, [officeId]);
+
   // Calculate start of today for call filtering
   const startOfToday = useMemo(() => {
     const now = new Date();
@@ -139,8 +155,30 @@ export default function VoiceDashboardPage() {
 
   const isLoading = callsLoading;
 
+  // Handle flyover completion
+  const handleFlyoverComplete = () => {
+    markVoiceFlyoverComplete();
+    // Refresh settings
+    fetchVoiceSettings()
+      .then(setVoiceSettings)
+      .catch((err) => console.error('Failed to refresh settings:', err));
+  };
+
   return (
     <div className="flex flex-col gap-6">
+      {/* Flyover Banner */}
+      <VoiceFlyoverBanner 
+        onStartFlyover={() => setFlyoverOpen(true)} 
+        settings={voiceSettings}
+      />
+
+      {/* Flyover Modal */}
+      <VoiceFlyover
+        isOpen={flyoverOpen}
+        onClose={() => setFlyoverOpen(false)}
+        onComplete={handleFlyoverComplete}
+      />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -211,6 +249,13 @@ export default function VoiceDashboardPage() {
       <div className="card">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <button
+            onClick={() => setFlyoverOpen(true)}
+            className="text-left p-4 border-2 border-dashed border-primary-300 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+          >
+            <h3 className="font-semibold text-primary-700 mb-1">✨ Setup Guide</h3>
+            <p className="text-sm text-primary-600">Complete your AI assistant setup</p>
+          </button>
           <Link
             to="/voice/calls"
             className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"
