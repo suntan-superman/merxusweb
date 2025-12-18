@@ -3,6 +3,7 @@ import { fetchEstateSettings, updateEstateSettings } from '../../api/estate';
 import EstateAgentProfile from '../../components/settings/estate/EstateAgentProfile';
 import EstateAgentHighlights from '../../components/settings/estate/EstateAgentHighlights';
 import EstateBusinessHours from '../../components/settings/estate/EstateBusinessHours';
+import HolidaySchedule from '../../components/settings/HolidaySchedule';
 import EstateAISettings from '../../components/settings/estate/EstateAISettings';
 import EstateRouting from '../../components/settings/estate/EstateRouting';
 import ManagersSettings from '../../components/settings/ManagersSettings';
@@ -12,6 +13,7 @@ const TABS = [
   { id: 'profile', label: 'Profile', icon: '👤' },
   { id: 'highlights', label: 'Highlights', icon: '⭐' },
   { id: 'hours', label: 'Business Hours', icon: '🕐' },
+  { id: 'holidays', label: 'Holidays', icon: '📅' },
   { id: 'managers', label: 'Managers', icon: '👥' },
   { id: 'routing', label: 'Call Routing', icon: '📞' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
@@ -133,6 +135,9 @@ export default function EstateSettingsPage() {
         )}
         {activeTab === 'hours' && (
           <EstateBusinessHours settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'holidays' && (
+          <HolidaySchedule settings={settings} onSave={handleSave} saving={saving} tenantType="real_estate" />
         )}
         {activeTab === 'managers' && (
           <ManagersSettings settings={settings} onSave={handleSave} saving={saving} />

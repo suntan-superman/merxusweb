@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchSettings, updateSettings } from '../../api/settings';
 import RestaurantProfile from '../../components/settings/RestaurantProfile';
 import BusinessHours from '../../components/settings/BusinessHours';
+import HolidaySchedule from '../../components/settings/HolidaySchedule';
 import NotificationSettings from '../../components/settings/NotificationSettings';
 import ManagersSettings from '../../components/settings/ManagersSettings';
 import POSIntegration from '../../components/settings/POSIntegration';
@@ -10,6 +11,7 @@ import AISettings from '../../components/settings/AISettings';
 const TABS = [
   { id: 'profile', label: 'Profile', icon: '🏪' },
   { id: 'hours', label: 'Business Hours', icon: '🕐' },
+  { id: 'holidays', label: 'Holidays', icon: '📅' },
   { id: 'notifications', label: 'Notifications', icon: '🔔' },
   { id: 'managers', label: 'Managers', icon: '👥' },
   { id: 'pos', label: 'POS Integration', icon: '💳' },
@@ -136,6 +138,9 @@ export default function SettingsPage() {
         )}
         {activeTab === 'hours' && (
           <BusinessHours settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'holidays' && (
+          <HolidaySchedule settings={settings} onSave={handleSave} saving={saving} tenantType="restaurant" />
         )}
         {activeTab === 'notifications' && (
           <NotificationSettings settings={settings} onSave={handleSave} saving={saving} />

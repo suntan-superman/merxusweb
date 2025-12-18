@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchVoiceSettings, updateVoiceSettings } from '../../api/voice';
 import VoiceCompanyProfile from '../../components/settings/voice/VoiceCompanyProfile';
 import VoiceBusinessHours from '../../components/settings/voice/VoiceBusinessHours';
+import HolidaySchedule from '../../components/settings/HolidaySchedule';
 import VoiceAISettings from '../../components/settings/voice/VoiceAISettings';
 import VoiceServicesProducts from '../../components/settings/voice/VoiceServicesProducts';
 import ManagersSettings from '../../components/settings/ManagersSettings';
@@ -9,6 +10,7 @@ import ManagersSettings from '../../components/settings/ManagersSettings';
 const TABS = [
   { id: 'profile', label: 'Company Profile', icon: '🏢' },
   { id: 'hours', label: 'Business Hours', icon: '🕐' },
+  { id: 'holidays', label: 'Holidays', icon: '📅' },
   { id: 'managers', label: 'Managers', icon: '👥' },
   { id: 'services', label: 'Services & Products', icon: '📦' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
@@ -134,6 +136,9 @@ export default function VoiceSettingsPage() {
         )}
         {activeTab === 'hours' && (
           <VoiceBusinessHours settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'holidays' && (
+          <HolidaySchedule settings={settings} onSave={handleSave} saving={saving} tenantType="voice" />
         )}
         {activeTab === 'managers' && (
           <ManagersSettings settings={settings} onSave={handleSave} saving={saving} />
