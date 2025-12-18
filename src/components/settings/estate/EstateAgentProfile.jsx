@@ -179,10 +179,16 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
 
         <div className="border-t pt-4 mt-4">
           <h4 className="text-md font-semibold text-gray-900 mb-3">Twilio Configuration</h4>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 mb-2">
             Configure your Twilio phone number for AI call routing. This is the number that will receive calls.
           </p>
+          <p className="text-sm text-red-600 font-bold mb-4">
+            If you do not have this information (the number and SID), please email{' '}
+            <a href="mailto:sales@merxus.ai" className="underline hover:text-red-700">sales@merxus.ai</a>{' '}
+            and they will provide them to you.
+          </p>
 
+          
           <div className="space-y-4">
             <div>
               <label htmlFor="twilioPhoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
