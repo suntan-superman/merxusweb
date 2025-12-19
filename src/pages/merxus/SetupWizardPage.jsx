@@ -50,6 +50,7 @@ export default function SetupWizardPage() {
           payload = {
             restaurant: {
               name: wizardData.businessName,
+              email: wizardData.email, // Required by backend validation
               address: wizardData.address,
               city: wizardData.city,
               state: wizardData.state,
@@ -65,7 +66,7 @@ export default function SetupWizardPage() {
               dineIn: wizardData.industryData?.dineIn === 'yes',
               delivery: wizardData.industryData?.delivery === 'yes',
             },
-            owner: {
+            manager: {
               displayName: wizardData.ownerName,
               email: wizardData.email,
               password: wizardData.tempPassword,
@@ -78,6 +79,7 @@ export default function SetupWizardPage() {
           payload = {
             office: {
               name: wizardData.businessName,
+              email: wizardData.email, // Required by backend validation
               address: wizardData.address,
               city: wizardData.city,
               state: wizardData.state,

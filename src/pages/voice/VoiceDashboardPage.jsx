@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import VoiceFlyoverBanner, { markVoiceFlyoverComplete } from '../../components/voice/VoiceFlyoverBanner';
 import VoiceFlyover from '../../components/voice/VoiceFlyover';
 import { useVoiceSettings } from '../../hooks/useVoiceQueries';
+import { CallVolumeChart, PeakHoursChart, ConversionChart } from '../../components/analytics';
 
 export default function VoiceDashboardPage() {
   const { user, userClaims, officeId } = useAuth();
@@ -290,6 +291,25 @@ export default function VoiceDashboardPage() {
               <p className="text-sm text-gray-600">Manage team members and permissions</p>
             </Link>
           )}
+        </div>
+      </div>
+
+      {/* Analytics Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-gray-900">📊 Analytics</h2>
+          <span className="text-sm text-gray-500">
+            Based on {calls.length} calls
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CallVolumeChart calls={calls} title="Call Volume Trend" />
+          <PeakHoursChart calls={calls} title="Peak Call Times" />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+          <ConversionChart calls={calls} title="Call Outcomes" context="voice" />
         </div>
       </div>
 
