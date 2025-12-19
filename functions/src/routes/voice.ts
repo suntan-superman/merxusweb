@@ -100,8 +100,8 @@ export async function getVoiceUsers(req: AuthenticatedRequest, res: Response): P
       return;
     }
 
-    // Only admin can view users
-    if (userRole !== 'admin') {
+    // Only owner or manager can view users
+    if (userRole !== 'owner' && userRole !== 'manager') {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;
     }
@@ -136,9 +136,9 @@ export async function inviteVoiceUser(req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    // Only admin can invite users
-    if (userRole !== 'admin') {
-      res.status(403).json({ error: 'Only admins can invite users' });
+    // Only owner or manager can invite users
+    if (userRole !== 'owner' && userRole !== 'manager') {
+      res.status(403).json({ error: 'Only owners and managers can invite users' });
       return;
     }
 
@@ -149,8 +149,8 @@ export async function inviteVoiceUser(req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    if (!['admin', 'user', 'viewer'].includes(role)) {
-      res.status(400).json({ error: 'Invalid role' });
+    if (!['manager', 'staff'].includes(role)) {
+      res.status(400).json({ error: 'Invalid role. Must be manager or staff' });
       return;
     }
 
@@ -222,6 +222,17 @@ export async function inviteVoiceUser(req: AuthenticatedRequest, res: Response):
       console.warn('Email invitation not sent. Invitation link:', passwordResetLink);
     }
 
+    // Log activity
+    await logActivity(officeId, {
+      type: 'user',
+      action: 'invite',
+      actorUid: req.user?.uid || '',
+      actorEmail: req.user?.email || '',
+      targetUid: userRecord.uid,
+      targetEmail: email,
+      details: { role, displayName },
+    });
+
     res.status(201).json({
       uid: userRecord.uid,
       email: userRecord.email,
@@ -246,9 +257,9 @@ export async function updateVoiceUser(req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    // Only admin can update users
-    if (userRole !== 'admin') {
-      res.status(403).json({ error: 'Only admins can update users' });
+    // Only owner or manager can update users
+    if (userRole !== 'owner' && userRole !== 'manager') {
+      res.status(403).json({ error: 'Only owners and managers can update users' });
       return;
     }
 
@@ -278,6 +289,17 @@ export async function updateVoiceUser(req: AuthenticatedRequest, res: Response):
     await ref.set(updates, { merge: true });
     const doc = await ref.get();
 
+    // Log activity
+    await logActivity(officeId, {
+      type: 'user',
+      action: role ? 'role_change' : 'update',
+      actorUid: req.user?.uid || '',
+      actorEmail: req.user?.email || '',
+      targetUid: uid,
+      targetEmail: doc.data()?.email,
+      details: { role, disabled },
+    });
+
     res.json({ id: doc.id, ...doc.data() });
   } catch (err: any) {
     console.error('Error updating voice user:', err);
@@ -297,14 +319,23 @@ export async function deleteVoiceUser(req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    // Only admin can disable users
-    if (userRole !== 'admin') {
-      res.status(403).json({ error: 'Only admins can disable users' });
+    // Only owner or manager can disable users
+    if (userRole !== 'owner' && userRole !== 'manager') {
+      res.status(403).json({ error: 'Only owners and managers can disable users' });
       return;
     }
 
     // Soft delete: mark disabled in Auth + Firestore
     await admin.auth().updateUser(uid, { disabled: true });
+
+    // Get user info before disabling
+    const userDoc = await db
+      .collection('offices')
+      .doc(officeId)
+      .collection('users')
+      .doc(uid)
+      .get();
+    const userData = userDoc.data();
 
     await db
       .collection('offices')
@@ -312,6 +343,17 @@ export async function deleteVoiceUser(req: AuthenticatedRequest, res: Response):
       .collection('users')
       .doc(uid)
       .set({ disabled: true }, { merge: true });
+
+    // Log activity
+    await logActivity(officeId, {
+      type: 'user',
+      action: 'disable',
+      actorUid: req.user?.uid || '',
+      actorEmail: req.user?.email || '',
+      targetUid: uid,
+      targetEmail: userData?.email,
+      details: { previousRole: userData?.role },
+    });
 
     res.json({ success: true });
   } catch (err: any) {
@@ -364,9 +406,9 @@ export async function createRoutingRule(req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Only owner/admin can create rules
-    if (userRole !== 'admin' && userRole !== 'owner') {
-      res.status(403).json({ error: 'Only admins and owners can create routing rules' });
+    // Only owner or manager can create rules
+    if (userRole !== 'owner' && userRole !== 'manager') {
+      res.status(403).json({ error: 'Only owners and managers can create routing rules' });
       return;
     }
 
@@ -425,9 +467,9 @@ export async function updateRoutingRule(req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Only owner/admin can update rules
-    if (userRole !== 'admin' && userRole !== 'owner') {
-      res.status(403).json({ error: 'Only admins and owners can update routing rules' });
+    // Only owner or manager can update rules
+    if (userRole !== 'owner' && userRole !== 'manager') {
+      res.status(403).json({ error: 'Only owners and managers can update routing rules' });
       return;
     }
 
@@ -473,9 +515,9 @@ export async function deleteRoutingRule(req: AuthenticatedRequest, res: Response
       return;
     }
 
-    // Only owner/admin can delete rules
-    if (userRole !== 'admin' && userRole !== 'owner') {
-      res.status(403).json({ error: 'Only admins and owners can delete routing rules' });
+    // Only owner or manager can delete rules
+    if (userRole !== 'owner' && userRole !== 'manager') {
+      res.status(403).json({ error: 'Only owners and managers can delete routing rules' });
       return;
     }
 
@@ -490,6 +532,84 @@ export async function deleteRoutingRule(req: AuthenticatedRequest, res: Response
   } catch (err: any) {
     console.error('Error deleting routing rule:', err);
     res.status(500).json({ error: 'Failed to delete routing rule' });
+  }
+}
+
+// ============================================================
+// Activity Audit Log
+// ============================================================
+
+/**
+ * Log an activity event
+ */
+async function logActivity(officeId: string, activity: {
+  type: string;
+  action: string;
+  actorUid: string;
+  actorEmail?: string;
+  targetUid?: string;
+  targetEmail?: string;
+  details?: any;
+}): Promise<void> {
+  try {
+    await db
+      .collection('offices')
+      .doc(officeId)
+      .collection('activityLog')
+      .add({
+        ...activity,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+  } catch (err) {
+    console.error('Failed to log activity:', err);
+    // Don't throw - logging should not break the main operation
+  }
+}
+
+/**
+ * Get activity log for an office
+ */
+export async function getActivityLog(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const officeId = req.user?.officeId;
+    const userRole = req.user?.role;
+
+    if (!officeId) {
+      res.status(403).json({ error: 'Office ID required' });
+      return;
+    }
+
+    // Only owner or manager can view activity log
+    if (userRole !== 'owner' && userRole !== 'manager') {
+      res.status(403).json({ error: 'Only owners and managers can view activity log' });
+      return;
+    }
+
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const type = req.query.type as string | undefined;
+
+    let query = db
+      .collection('offices')
+      .doc(officeId)
+      .collection('activityLog')
+      .orderBy('timestamp', 'desc')
+      .limit(limit);
+
+    if (type) {
+      query = query.where('type', '==', type);
+    }
+
+    const snapshot = await query.get();
+    const activities = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      timestamp: doc.data().timestamp?.toDate?.()?.toISOString() || null,
+    }));
+
+    res.json(activities);
+  } catch (err: any) {
+    console.error('Error fetching activity log:', err);
+    res.status(500).json({ error: 'Failed to fetch activity log' });
   }
 }
 

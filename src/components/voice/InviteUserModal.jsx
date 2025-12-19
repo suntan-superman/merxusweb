@@ -9,7 +9,7 @@ export default function InviteUserModal({ isOpen, onClose, onInvite }) {
   const [formData, setFormData] = useState({
     email: '',
     displayName: '',
-    role: 'user',
+    role: 'staff',
   });
 
   function handleChange(e) {
@@ -31,7 +31,7 @@ export default function InviteUserModal({ isOpen, onClose, onInvite }) {
       toast.success('Invitation sent successfully!');
       onClose();
       // Reset form
-      setFormData({ email: '', displayName: '', role: 'user' });
+      setFormData({ email: '', displayName: '', role: 'staff' });
     } catch (error) {
       console.error('Failed to invite user:', error);
       toast.error(error.response?.data?.error || 'Failed to send invitation');
@@ -41,7 +41,7 @@ export default function InviteUserModal({ isOpen, onClose, onInvite }) {
   }
 
   function handleClose() {
-    setFormData({ email: '', displayName: '', role: 'user' });
+    setFormData({ email: '', displayName: '', role: 'staff' });
     onClose();
   }
 
@@ -123,14 +123,12 @@ export default function InviteUserModal({ isOpen, onClose, onInvite }) {
             className="input-field"
             required
           >
-            <option value="admin">Admin</option>
-            <option value="user">User</option>
-            <option value="viewer">Viewer</option>
+            <option value="manager">Manager</option>
+            <option value="staff">Staff</option>
           </select>
           <div className="mt-2 space-y-1 text-xs text-gray-600">
-            <p><strong>Admin:</strong> Full access to manage settings, users, and calls</p>
-            <p><strong>User:</strong> Can view and respond to calls, manage voicemail</p>
-            <p><strong>Viewer:</strong> Read-only access to call logs and analytics</p>
+            <p><strong>Manager:</strong> Full access to manage settings, users, and calls</p>
+            <p><strong>Staff:</strong> Can view calls, manage voicemail, limited settings access</p>
           </div>
         </div>
 

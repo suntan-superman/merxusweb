@@ -21,6 +21,7 @@ import {
   inviteVoiceUser,
   updateVoiceUser,
   deleteVoiceUser,
+  getActivityLog,
 } from '../api/voiceUsers';
 import { fetchCalls, fetchCallTranscript, translateCallTranscript } from '../api/calls';
 import toast from 'react-hot-toast';
@@ -37,6 +38,7 @@ export const voiceKeys = {
   routingRules: () => [...voiceKeys.all, 'routingRules'],
   calls: (filters) => [...voiceKeys.all, 'calls', filters],
   callTranscript: (callId) => [...voiceKeys.all, 'transcript', callId],
+  activityLog: (filters) => [...voiceKeys.all, 'activityLog', filters],
 };
 
 // ============================================================
@@ -113,6 +115,7 @@ export function useInviteVoiceUser() {
     mutationFn: inviteVoiceUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: voiceKeys.users() });
+      queryClient.invalidateQueries({ queryKey: voiceKeys.activityLog({}) });
       toast.success('Invitation sent successfully');
     },
     onError: (err) => {
@@ -131,6 +134,7 @@ export function useUpdateVoiceUser() {
     mutationFn: ({ uid, updates }) => updateVoiceUser(uid, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: voiceKeys.users() });
+      queryClient.invalidateQueries({ queryKey: voiceKeys.activityLog({}) });
       toast.success('User updated successfully');
     },
     onError: (err) => {
@@ -168,7 +172,25 @@ export function useDeleteVoiceUser() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: voiceKeys.users() });
+      queryClient.invalidateQueries({ queryKey: voiceKeys.activityLog({}) });
     },
+  });
+}
+
+// ============================================================
+// Activity Log Hooks
+// ============================================================
+
+/**
+ * Fetch activity log for the office
+ * @param {Object} options - Query options (limit, type)
+ */
+export function useActivityLog(options = {}) {
+  return useQuery({
+    queryKey: voiceKeys.activityLog(options),
+    queryFn: () => getActivityLog(options),
+    staleTime: 30000, // 30 seconds
+    ...options.queryOptions,
   });
 }
 

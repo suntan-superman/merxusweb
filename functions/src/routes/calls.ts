@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import * as admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
+import * as functionsV1 from 'firebase-functions/v1';
 import { AuthenticatedRequest } from '../middleware/auth';
 import OpenAI from 'openai';
 
@@ -9,7 +9,7 @@ const db = admin.firestore();
 // Initialize OpenAI for translation
 // Firebase Functions stores config in functions.config(), not process.env
 const openai = new OpenAI({
-  apiKey: functions.config().openai?.api_key || process.env.OPENAI_API_KEY,
+  apiKey: (functionsV1 as any).config()?.openai?.api_key || process.env.OPENAI_API_KEY,
 });
 
 export async function getCalls(req: AuthenticatedRequest, res: Response): Promise<void> {

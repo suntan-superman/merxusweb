@@ -20,14 +20,14 @@ interface EmailOptions {
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Try Firebase Functions config first (production), then environment variables (local)
-  const functions = await import('firebase-functions');
+  const functionsV1 = await import('firebase-functions/v1');
   
   let sendGridApiKey: string | undefined;
   let fromEmail: string;
   
   try {
-    // Try to access config - handle both v1 and v2 syntax
-    const config = functions.default?.config?.() || functions.config?.();
+    // Use v1 config with type assertion
+    const config = (functionsV1 as any).config();
     sendGridApiKey = config?.sendgrid?.api_key || process.env.SENDGRID_API_KEY;
     fromEmail = config?.sendgrid?.from_email || 
                  process.env.SENDGRID_FROM_EMAIL || 
@@ -106,8 +106,8 @@ export async function sendRestaurantInvitation(
   // Get template ID safely
   let templateId: string;
   try {
-    const functions = await import('firebase-functions');
-    const config = functions.default?.config?.() || functions.config?.();
+    const functionsV1 = await import('firebase-functions/v1');
+    const config = (functionsV1 as any).config();
     templateId = config?.sendgrid?.template_restaurant_invitation ||
                  process.env.SENDGRID_TEMPLATE_RESTAURANT_INVITATION ||
                  SENDGRID_TEMPLATES.RESTAURANT_INVITATION;
@@ -194,8 +194,8 @@ export async function sendOfficeInvitation(
   // Get template ID safely
   let templateId: string;
   try {
-    const functions = await import('firebase-functions');
-    const config = functions.default?.config?.() || functions.config?.();
+    const functionsV1 = await import('firebase-functions/v1');
+    const config = (functionsV1 as any).config();
     templateId = config?.sendgrid?.template_office_invitation ||
                  process.env.SENDGRID_TEMPLATE_OFFICE_INVITATION ||
                  SENDGRID_TEMPLATES.OFFICE_INVITATION;
@@ -283,8 +283,8 @@ export async function sendTeamInvitation(
   // Get template ID safely
   let templateId: string;
   try {
-    const functions = await import('firebase-functions');
-    const config = functions.default?.config?.() || functions.config?.();
+    const functionsV1 = await import('firebase-functions/v1');
+    const config = (functionsV1 as any).config();
     templateId = config?.sendgrid?.template_team_invitation ||
                  process.env.SENDGRID_TEMPLATE_TEAM_INVITATION ||
                  SENDGRID_TEMPLATES.TEAM_INVITATION;

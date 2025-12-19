@@ -46,3 +46,18 @@ export async function deleteVoiceUser(uid) {
   const response = await apiClient.delete(`/voice/users/${uid}`);
   return response.data;
 }
+
+/**
+ * Get activity log for the office
+ * @param {Object} options - Query options
+ * @param {number} options.limit - Maximum number of entries to return (default 50, max 100)
+ * @param {string} options.type - Filter by activity type (e.g., 'user')
+ */
+export async function getActivityLog({ limit = 50, type } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit);
+  if (type) params.append('type', type);
+  
+  const response = await apiClient.get(`/voice/activity-log?${params.toString()}`);
+  return response.data;
+}

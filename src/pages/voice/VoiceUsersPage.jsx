@@ -4,6 +4,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import VoiceUsersTable from '../../components/voice/VoiceUsersTable';
 import InviteUserModal from '../../components/voice/InviteUserModal';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
+import ActivityLog from '../../components/voice/ActivityLog';
 import { 
   useVoiceUsers, 
   useInviteVoiceUser, 
@@ -122,6 +123,11 @@ export default function VoiceUsersPage() {
         variant="warning"
         isLoading={deleteMutation.isPending}
       />
+
+      {/* Activity Audit Log */}
+      <div className="mt-6">
+        <ActivityLog limit={20} />
+      </div>
     </div>
   );
 }

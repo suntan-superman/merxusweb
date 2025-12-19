@@ -179,10 +179,10 @@ export async function createOffice(req: Request, res: Response): Promise<void> {
     let sendGridApiKey: string | undefined;
     
     try {
-      const functions = await import('firebase-functions');
-      // Try to access config - handle both v1 and v2 syntax
+      const functionsV1 = await import('firebase-functions/v1');
+      // Use v1 config
       try {
-        const config = functions.default?.config?.() || functions.config?.();
+        const config = (functionsV1 as any).config();
         sendGridApiKey = config?.sendgrid?.api_key || process.env.SENDGRID_API_KEY;
       } catch (configError: any) {
         // Config might not be available in this context, fall back to env var
@@ -719,10 +719,10 @@ export async function createAgent(req: Request, res: Response): Promise<void> {
     let sendGridApiKey: string | undefined;
     
     try {
-      const functions = await import('firebase-functions');
-      // Try to access config - handle both v1 and v2 syntax
+      const functionsV1 = await import('firebase-functions/v1');
+      // Use v1 config
       try {
-        const config = functions.default?.config?.() || functions.config?.();
+        const config = (functionsV1 as any).config();
         sendGridApiKey = config?.sendgrid?.api_key || process.env.SENDGRID_API_KEY;
       } catch (configError: any) {
         // Config might not be available in this context, fall back to env var

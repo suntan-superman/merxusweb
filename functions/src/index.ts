@@ -1,4 +1,4 @@
-import * as functions from 'firebase-functions';
+import * as functionsV1 from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import express from 'express';
 import cors from 'cors';
@@ -116,6 +116,9 @@ app.post('/voice/users/invite', voiceRoutes.inviteVoiceUser);
 app.patch('/voice/users/:uid', voiceRoutes.updateVoiceUser);
 app.delete('/voice/users/:uid', voiceRoutes.deleteVoiceUser);
 
+// Voice activity log
+app.get('/voice/activity-log', voiceRoutes.getActivityLog);
+
 // Voice routing rules
 app.get('/voice/routing-rules', voiceRoutes.getRoutingRules);
 app.post('/voice/routing-rules', voiceRoutes.createRoutingRule);
@@ -209,7 +212,7 @@ app.post('/twilio-provisioning/validate', twilioProvisioningRoutes.validateTwili
 
 // Export the Express app as a Cloud Function
 // Use App Engine default service account instead of Compute Engine default
-export const api = functions
+export const api = functionsV1
   .region('us-central1')
   .runWith({
     serviceAccount: 'merxus-f0872@appspot.gserviceaccount.com',
@@ -225,13 +228,18 @@ import { autoPushOrderToToast, scheduleMenuSync } from './integrations/toast';
 /**
  * Firestore Trigger: Auto-push orders to Toast when created
  */
-export const onOrderCreated = functions
+export const onOrderCreated = functionsV1
   .region('us-central1')
   .firestore
   .document('restaurants/{restaurantId}/orders/{orderId}')
-  .onCreate(async (snap, context) => {
+  .onCreate(async (snap: FirebaseFirestore.DocumentSnapshot, context: functionsV1.EventContext) => {
     const { restaurantId, orderId } = context.params;
     const orderData = snap.data();
+
+    if (!orderData) {
+      console.warn('📦 Order created but no data found:', { restaurantId, orderId });
+      return;
+    }
 
     console.log('📦 New order created, checking Toast auto-push:', {
       restaurantId,
@@ -253,7 +261,7 @@ export const onOrderCreated = functions
 /**
  * Scheduled Function: Sync menus from Toast hourly
  */
-export const scheduledToastMenuSync = functions
+export const scheduledToastMenuSync = functionsV1
   .region('us-central1')
   .pubsub
   .schedule('0 * * * *') // Every hour at :00

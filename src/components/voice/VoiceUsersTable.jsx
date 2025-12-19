@@ -31,15 +31,20 @@ export default function VoiceUsersTable({ users, onChangeRole, onDisable }) {
                 <div className="text-xs text-gray-500">{u.email}</div>
               </td>
               <td className="px-4 py-3 align-top">
-                <select
-                  className="border border-gray-300 rounded-md px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  value={u.role}
-                  onChange={(e) => onChangeRole(u.uid || u.id, e.target.value)}
-                >
-                  <option value="admin">Admin</option>
-                  <option value="user">User</option>
-                  <option value="viewer">Viewer</option>
-                </select>
+                {u.role === 'owner' ? (
+                  <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                    Owner
+                  </span>
+                ) : (
+                  <select
+                    className="border border-gray-300 rounded-md px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={u.role}
+                    onChange={(e) => onChangeRole(u.uid || u.id, e.target.value)}
+                  >
+                    <option value="manager">Manager</option>
+                    <option value="staff">Staff</option>
+                  </select>
+                )}
               </td>
               <td className="px-4 py-3 align-top">
                 {u.disabled ? (
