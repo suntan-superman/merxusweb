@@ -5,6 +5,7 @@ import { formatPhoneInput } from '../../utils/phoneFormatter';
 import { updateVoiceSettings, fetchVoiceSettings } from '../../api/voice';
 import { getCategories, getIndustriesForCategory } from '../../../data/voicePromptLibraryWithRouting';
 import { useAuth } from '../../context/AuthContext';
+import { validateForm, voiceBusinessSchema, voiceContactSchema, voiceIndustrySchema } from '../../utils/validation';
 
 // Storage key for flyover progress
 const FLYOVER_STORAGE_KEY = 'merxus_voice_flyover_state';
@@ -109,6 +110,7 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [playingVoice, setPlayingVoice] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
   
   // Category/Industry dropdowns
   const [categories] = useState(() => {
@@ -294,13 +296,64 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
     }
   };
 
+  // Validate current step before moving to next
+  const validateStep = (step) => {
+    setValidationErrors({});
+    
+    switch (step) {
+      case 1: // Business step
+        const businessResult = validateForm(voiceBusinessSchema, {
+          name: formData.name,
+          businessType: formData.businessType?.industry,
+        });
+        if (!businessResult.success) {
+          setValidationErrors(businessResult.errors || {});
+          return false;
+        }
+        return true;
+        
+      case 2: // Contact step
+        const contactResult = validateForm(voiceContactSchema, {
+          email: formData.email || settings?.email || '',
+          phoneNumber: formData.phoneNumber,
+          websiteUrl: formData.websiteUrl,
+        });
+        if (!contactResult.success) {
+          setValidationErrors(contactResult.errors || {});
+          return false;
+        }
+        return true;
+        
+      case 3: // Industry step
+        const industryResult = validateForm(voiceIndustrySchema, {
+          category: formData.businessType?.category || '',
+          industry: formData.businessType?.industry || '',
+        });
+        if (!industryResult.success) {
+          setValidationErrors(industryResult.errors || {});
+          return false;
+        }
+        return true;
+        
+      default:
+        return true;
+    }
+  };
+
   // Navigation
   const goToStep = (step) => {
     setCurrentStep(step);
+    setValidationErrors({});
     saveProgress(step, formData);
   };
 
   const nextStep = async () => {
+    // Validate current step
+    if (!validateStep(currentStep)) {
+      toast.error('Please fix the errors before continuing');
+      return;
+    }
+    
     // Save to backend at certain checkpoints
     if ([1, 2, 3, 4, 5, 6, 7].includes(currentStep)) {
       const saved = await saveStepData();

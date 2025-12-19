@@ -489,16 +489,96 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       .get();
 
     if (!subscriptionQuery.empty) {
-      await subscriptionQuery.docs[0].ref.update({
+      const subscriptionDoc = subscriptionQuery.docs[0];
+      const subscriptionData = subscriptionDoc.data();
+      
+      await subscriptionDoc.ref.update({
         status: 'active',
         lastPaymentDate: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       console.log('Subscription marked as active after successful payment');
+      
+      // Send receipt email
+      await sendPaymentReceiptEmail(subscriptionData, invoice);
     }
   }
+}
 
-  // TODO: Send receipt email via SendGrid
+/**
+ * Send payment receipt email to tenant owner
+ */
+async function sendPaymentReceiptEmail(subscriptionData: any, invoice: Stripe.Invoice) {
+  try {
+    const { sendPaymentReceipt } = await import('../utils/email');
+    
+    // Get tenant info to find owner email
+    const tenantId = subscriptionData.tenantId;
+    const tenantType = subscriptionData.tenantType;
+    
+    let ownerEmail: string | null = null;
+    let displayName = 'Customer';
+    let businessName = 'Your Business';
+    
+    // Look up tenant details based on type
+    if (tenantType === 'restaurant') {
+      const settingsDoc = await db.collection('restaurants').doc(tenantId).collection('meta').doc('settings').get();
+      if (settingsDoc.exists) {
+        const settings = settingsDoc.data();
+        businessName = settings?.name || businessName;
+        ownerEmail = settings?.ownerEmail || settings?.contactEmail;
+      }
+    } else if (tenantType === 'voice') {
+      const settingsDoc = await db.collection('offices').doc(tenantId).collection('meta').doc('settings').get();
+      if (settingsDoc.exists) {
+        const settings = settingsDoc.data();
+        businessName = settings?.name || businessName;
+        ownerEmail = settings?.ownerEmail || settings?.email;
+      }
+    } else if (tenantType === 'real_estate') {
+      const settingsDoc = await db.collection('agents').doc(tenantId).collection('meta').doc('settings').get();
+      if (settingsDoc.exists) {
+        const settings = settingsDoc.data();
+        businessName = settings?.agentName || settings?.name || businessName;
+        displayName = settings?.agentName || displayName;
+        ownerEmail = settings?.ownerEmail || settings?.email;
+      }
+    }
+    
+    // Also try to get email from Stripe customer
+    if (!ownerEmail && invoice.customer_email) {
+      ownerEmail = invoice.customer_email;
+    }
+    
+    if (!ownerEmail) {
+      console.log('Could not find owner email for receipt');
+      return;
+    }
+    
+    // Format invoice details
+    const periodStart = invoice.period_start 
+      ? new Date(invoice.period_start * 1000).toLocaleDateString() 
+      : undefined;
+    const periodEnd = invoice.period_end 
+      ? new Date(invoice.period_end * 1000).toLocaleDateString() 
+      : undefined;
+    
+    await sendPaymentReceipt(ownerEmail, displayName, businessName, {
+      invoiceNumber: invoice.number || invoice.id,
+      amount: invoice.amount_paid,
+      date: new Date(invoice.created * 1000).toLocaleDateString(),
+      description: invoice.description || `${subscriptionData.plan || 'Basic'} Plan - Monthly Subscription`,
+      planName: subscriptionData.plan ? `${subscriptionData.plan.charAt(0).toUpperCase()}${subscriptionData.plan.slice(1)} Plan` : 'Merxus AI',
+      periodStart,
+      periodEnd,
+      invoiceUrl: invoice.hosted_invoice_url || undefined,
+    });
+    
+    console.log('Payment receipt email sent to:', ownerEmail);
+  } catch (error) {
+    console.error('Error sending payment receipt email:', error);
+    // Don't throw - email failure shouldn't break the webhook
+  }
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
@@ -513,16 +593,88 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       .get();
 
     if (!subscriptionQuery.empty) {
-      await subscriptionQuery.docs[0].ref.update({
+      const subscriptionDoc = subscriptionQuery.docs[0];
+      const subscriptionData = subscriptionDoc.data();
+      
+      await subscriptionDoc.ref.update({
         status: 'past_due',
         lastFailedPaymentDate: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       console.log('Subscription marked as past_due after failed payment');
+      
+      // Send payment failed email
+      await sendPaymentFailedEmail(subscriptionData, invoice);
     }
   }
+}
 
-  // TODO: Send payment failed email via SendGrid
+/**
+ * Send payment failed notification email to tenant owner
+ */
+async function sendPaymentFailedEmail(subscriptionData: any, invoice: Stripe.Invoice) {
+  try {
+    const { sendPaymentFailedNotification } = await import('../utils/email');
+    
+    // Get tenant info (same logic as receipt)
+    const tenantId = subscriptionData.tenantId;
+    const tenantType = subscriptionData.tenantType;
+    
+    let ownerEmail: string | null = null;
+    let displayName = 'Customer';
+    let businessName = 'Your Business';
+    
+    if (tenantType === 'restaurant') {
+      const settingsDoc = await db.collection('restaurants').doc(tenantId).collection('meta').doc('settings').get();
+      if (settingsDoc.exists) {
+        const settings = settingsDoc.data();
+        businessName = settings?.name || businessName;
+        ownerEmail = settings?.ownerEmail || settings?.contactEmail;
+      }
+    } else if (tenantType === 'voice') {
+      const settingsDoc = await db.collection('offices').doc(tenantId).collection('meta').doc('settings').get();
+      if (settingsDoc.exists) {
+        const settings = settingsDoc.data();
+        businessName = settings?.name || businessName;
+        ownerEmail = settings?.ownerEmail || settings?.email;
+      }
+    } else if (tenantType === 'real_estate') {
+      const settingsDoc = await db.collection('agents').doc(tenantId).collection('meta').doc('settings').get();
+      if (settingsDoc.exists) {
+        const settings = settingsDoc.data();
+        businessName = settings?.agentName || settings?.name || businessName;
+        displayName = settings?.agentName || displayName;
+        ownerEmail = settings?.ownerEmail || settings?.email;
+      }
+    }
+    
+    if (!ownerEmail && invoice.customer_email) {
+      ownerEmail = invoice.customer_email;
+    }
+    
+    if (!ownerEmail) {
+      console.log('Could not find owner email for payment failed notification');
+      return;
+    }
+    
+    // Calculate next retry date (Stripe typically retries in 3-7 days)
+    const nextRetryDate = invoice.next_payment_attempt 
+      ? new Date(invoice.next_payment_attempt * 1000).toLocaleDateString()
+      : undefined;
+    
+    await sendPaymentFailedNotification(ownerEmail, displayName, businessName, {
+      amount: invoice.amount_due,
+      date: new Date(invoice.created * 1000).toLocaleDateString(),
+      reason: invoice.last_finalization_error?.message || 'Payment method declined',
+      nextRetryDate,
+      updatePaymentUrl: `https://app.merxus.com/settings/billing`, // Link to billing settings
+    });
+    
+    console.log('Payment failed notification email sent to:', ownerEmail);
+  } catch (error) {
+    console.error('Error sending payment failed email:', error);
+    // Don't throw - email failure shouldn't break the webhook
+  }
 }
 
 export default router;

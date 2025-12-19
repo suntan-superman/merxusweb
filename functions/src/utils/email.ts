@@ -708,3 +708,237 @@ Merxus Platform - Super Admin Notification
   }
 }
 
+// ============================================================
+// BILLING EMAIL FUNCTIONS
+// ============================================================
+
+/**
+ * Send payment receipt email
+ * Called after successful payment via Stripe webhook
+ */
+export async function sendPaymentReceipt(
+  email: string,
+  displayName: string,
+  businessName: string,
+  invoiceDetails: {
+    invoiceNumber: string;
+    amount: number;
+    date: string;
+    description: string;
+    planName?: string;
+    periodStart?: string;
+    periodEnd?: string;
+    invoiceUrl?: string;
+  }
+): Promise<boolean> {
+  const { SENDGRID_TEMPLATES } = await import('./emailTemplates');
+  
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(invoiceDetails.amount / 100); // Stripe amounts are in cents
+  
+  // Use Dynamic Template if configured
+  if (SENDGRID_TEMPLATES.PAYMENT_RECEIPT) {
+    return sendEmail({
+      to: email,
+      subject: `Payment Receipt - ${businessName}`,
+      templateId: SENDGRID_TEMPLATES.PAYMENT_RECEIPT,
+      dynamicTemplateData: {
+        displayName,
+        businessName,
+        invoiceNumber: invoiceDetails.invoiceNumber,
+        amount: formattedAmount,
+        date: invoiceDetails.date,
+        description: invoiceDetails.description,
+        planName: invoiceDetails.planName || 'Merxus AI',
+        periodStart: invoiceDetails.periodStart,
+        periodEnd: invoiceDetails.periodEnd,
+        invoiceUrl: invoiceDetails.invoiceUrl,
+        supportEmail: 'support@merxusllc.com',
+      },
+    });
+  }
+
+  // Fallback to inline HTML
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Payment Receipt</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #10b981; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: white; margin: 0;">Payment Receipt</h1>
+      </div>
+      <div style="background-color: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+        <p>Hi ${displayName},</p>
+        <p>Thank you for your payment! Here are the details:</p>
+        
+        <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Invoice Number:</td>
+              <td style="padding: 8px 0; text-align: right; font-weight: bold;">${invoiceDetails.invoiceNumber}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Business:</td>
+              <td style="padding: 8px 0; text-align: right;">${businessName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Description:</td>
+              <td style="padding: 8px 0; text-align: right;">${invoiceDetails.description}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Date:</td>
+              <td style="padding: 8px 0; text-align: right;">${invoiceDetails.date}</td>
+            </tr>
+            ${invoiceDetails.periodStart && invoiceDetails.periodEnd ? `
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Period:</td>
+              <td style="padding: 8px 0; text-align: right;">${invoiceDetails.periodStart} - ${invoiceDetails.periodEnd}</td>
+            </tr>
+            ` : ''}
+            <tr style="border-top: 2px solid #e5e7eb;">
+              <td style="padding: 12px 0; font-weight: bold;">Amount Paid:</td>
+              <td style="padding: 12px 0; text-align: right; font-weight: bold; color: #10b981; font-size: 1.2em;">${formattedAmount}</td>
+            </tr>
+          </table>
+        </div>
+        
+        ${invoiceDetails.invoiceUrl ? `
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="${invoiceDetails.invoiceUrl}" style="display: inline-block; background-color: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Invoice</a>
+        </div>
+        ` : ''}
+        
+        <p style="color: #666; font-size: 14px;">If you have any questions about this payment, please contact us at <a href="mailto:support@merxusllc.com" style="color: #10b981;">support@merxusllc.com</a>.</p>
+        
+        <p>Thank you for choosing Merxus!</p>
+      </div>
+      <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+        <p>&copy; ${new Date().getFullYear()} Merxus LLC. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `Payment Receipt - ${businessName}`,
+    html,
+  });
+}
+
+/**
+ * Send payment failed notification email
+ * Called after failed payment via Stripe webhook
+ */
+export async function sendPaymentFailedNotification(
+  email: string,
+  displayName: string,
+  businessName: string,
+  failureDetails: {
+    amount: number;
+    date: string;
+    reason?: string;
+    nextRetryDate?: string;
+    updatePaymentUrl?: string;
+  }
+): Promise<boolean> {
+  const { SENDGRID_TEMPLATES } = await import('./emailTemplates');
+  
+  const formattedAmount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(failureDetails.amount / 100); // Stripe amounts are in cents
+  
+  // Use Dynamic Template if configured
+  if (SENDGRID_TEMPLATES.PAYMENT_FAILED) {
+    return sendEmail({
+      to: email,
+      subject: `Action Required: Payment Failed - ${businessName}`,
+      templateId: SENDGRID_TEMPLATES.PAYMENT_FAILED,
+      dynamicTemplateData: {
+        displayName,
+        businessName,
+        amount: formattedAmount,
+        date: failureDetails.date,
+        reason: failureDetails.reason || 'Your payment method was declined',
+        nextRetryDate: failureDetails.nextRetryDate,
+        updatePaymentUrl: failureDetails.updatePaymentUrl,
+        supportEmail: 'support@merxusllc.com',
+      },
+    });
+  }
+
+  // Fallback to inline HTML
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Payment Failed</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #ef4444; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: white; margin: 0;">⚠️ Payment Failed</h1>
+      </div>
+      <div style="background-color: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+        <p>Hi ${displayName},</p>
+        <p>We were unable to process your payment for <strong>${businessName}</strong>.</p>
+        
+        <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Amount Due:</td>
+              <td style="padding: 8px 0; text-align: right; font-weight: bold;">${formattedAmount}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Date:</td>
+              <td style="padding: 8px 0; text-align: right;">${failureDetails.date}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Reason:</td>
+              <td style="padding: 8px 0; text-align: right;">${failureDetails.reason || 'Payment method declined'}</td>
+            </tr>
+          </table>
+        </div>
+        
+        <p><strong>What to do next:</strong></p>
+        <ul style="color: #666;">
+          <li>Check that your payment method is up to date</li>
+          <li>Ensure sufficient funds are available</li>
+          <li>Update your payment information if needed</li>
+        </ul>
+        
+        ${failureDetails.updatePaymentUrl ? `
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="${failureDetails.updatePaymentUrl}" style="display: inline-block; background-color: #10b981; color: white; padding: 14px 35px; text-decoration: none; border-radius: 6px; font-weight: bold;">Update Payment Method</a>
+        </div>
+        ` : ''}
+        
+        ${failureDetails.nextRetryDate ? `
+        <p style="color: #666; font-size: 14px;">We will automatically retry your payment on <strong>${failureDetails.nextRetryDate}</strong>.</p>
+        ` : ''}
+        
+        <p style="color: #666; font-size: 14px;">If you believe this is an error or need assistance, please contact us at <a href="mailto:support@merxusllc.com" style="color: #10b981;">support@merxusllc.com</a>.</p>
+        
+        <p>Best regards,<br>The Merxus Team</p>
+      </div>
+      <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+        <p>&copy; ${new Date().getFullYear()} Merxus LLC. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `Action Required: Payment Failed - ${businessName}`,
+    html,
+  });
+}

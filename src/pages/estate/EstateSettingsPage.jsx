@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { fetchEstateSettings, updateEstateSettings } from '../../api/estate';
+import { useState } from 'react';
+import { useEstateSettings, useUpdateEstateSettings } from '../../hooks/useEstateQueries';
 import EstateAgentProfile from '../../components/settings/estate/EstateAgentProfile';
 import EstateAgentHighlights from '../../components/settings/estate/EstateAgentHighlights';
 import EstateBusinessHours from '../../components/settings/estate/EstateBusinessHours';
@@ -18,59 +18,25 @@ const TABS = [
 ];
 
 export default function EstateSettingsPage() {
-  const [settings, setSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
+  
+  // React Query hooks
+  const { data: settings, isLoading, error: loadError, refetch } = useEstateSettings();
+  const updateSettings = useUpdateEstateSettings();
 
-  async function load() {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await fetchEstateSettings();
-      setSettings(data);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load settings.');
-    } finally {
-      setLoading(false);
-    }
-  }
+  const handleSave = async (updated) => {
+    updateSettings.mutate(updated);
+  };
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function handleSave(updated) {
-    try {
-      setSaving(true);
-      setError(null);
-      setSuccess(null);
-
-      await updateEstateSettings(updated);
-      setSettings((prev) => ({ ...prev, ...updated }));
-      setSuccess('Settings saved successfully!');
-      
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to save settings.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) {
+  if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  if (!settings) {
+  if (loadError || !settings) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600">Failed to load settings.</p>
-        <button onClick={load} className="btn-primary mt-4">
+        <button onClick={() => refetch()} className="btn-primary mt-4">
           Retry
         </button>
       </div>
@@ -86,18 +52,6 @@ export default function EstateSettingsPage() {
           Configure your agent profile, business hours, and AI assistant settings
         </p>
       </div>
-
-      {/* Status Messages */}
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="mb-4 rounded-md bg-primary-50 border border-primary-200 px-4 py-3 text-sm text-primary-700">
-          {success}
-        </div>
-      )}
 
       {/* Tab Navigation */}
       <div className="border-b border-gray-200 mb-6">
@@ -126,22 +80,22 @@ export default function EstateSettingsPage() {
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'profile' && (
-          <EstateAgentProfile settings={settings} onSave={handleSave} saving={saving} />
+          <EstateAgentProfile settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
         )}
         {activeTab === 'highlights' && (
-          <EstateAgentHighlights settings={settings} onSave={handleSave} saving={saving} />
+          <EstateAgentHighlights settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
         )}
         {activeTab === 'hours' && (
-          <EstateBusinessHours settings={settings} onSave={handleSave} saving={saving} />
+          <EstateBusinessHours settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
         )}
         {activeTab === 'holidays' && (
-          <HolidaySchedule settings={settings} onSave={handleSave} saving={saving} tenantType="real_estate" />
+          <HolidaySchedule settings={settings} onSave={handleSave} saving={updateSettings.isPending} tenantType="real_estate" />
         )}
         {activeTab === 'routing' && (
-          <EstateRouting settings={settings} onSave={handleSave} saving={saving} />
+          <EstateRouting settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
         )}
         {activeTab === 'ai' && (
-          <EstateAISettings settings={settings} onSave={handleSave} saving={saving} />
+          <EstateAISettings settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
         )}
       </div>
     </div>

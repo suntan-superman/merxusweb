@@ -1,27 +1,26 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
 import VoiceFlyoverBanner, { markVoiceFlyoverComplete } from '../../components/voice/VoiceFlyoverBanner';
 import VoiceFlyover from '../../components/voice/VoiceFlyover';
-import { fetchVoiceSettings } from '../../api/voice';
+import { useVoiceSettings } from '../../hooks/useVoiceQueries';
 
 export default function VoiceDashboardPage() {
   const { user, userClaims, officeId } = useAuth();
   
   // Flyover state
   const [flyoverOpen, setFlyoverOpen] = useState(false);
-  const [voiceSettings, setVoiceSettings] = useState(null);
 
-  // Load voice settings for banner
-  useEffect(() => {
-    if (officeId) {
-      fetchVoiceSettings()
-        .then(setVoiceSettings)
-        .catch((err) => console.error('Failed to load settings for flyover:', err));
-    }
-  }, [officeId]);
+  // Use React Query for voice settings (API call with caching)
+  const { 
+    data: voiceSettings, 
+    isLoading: settingsLoading,
+    refetch: refetchSettings 
+  } = useVoiceSettings({
+    enabled: !!officeId, // Only fetch when we have an officeId
+  });
 
   // Calculate start of today for call filtering
   const startOfToday = useMemo(() => {
@@ -158,10 +157,8 @@ export default function VoiceDashboardPage() {
   // Handle flyover completion
   const handleFlyoverComplete = () => {
     markVoiceFlyoverComplete();
-    // Refresh settings
-    fetchVoiceSettings()
-      .then(setVoiceSettings)
-      .catch((err) => console.error('Failed to refresh settings:', err));
+    // Refetch settings using React Query (automatic cache invalidation)
+    refetchSettings();
   };
 
   return (

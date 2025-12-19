@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -6,23 +6,22 @@ import { Link } from 'react-router-dom';
 import FlyerMetricsDashboard from '../../components/estate/FlyerMetricsDashboard';
 import FlyoverBanner, { markFlyoverComplete } from '../../components/estate/FlyoverBanner';
 import EstateFlyover from '../../components/estate/EstateFlyover';
-import { fetchEstateSettings } from '../../api/estate';
+import { useEstateSettings } from '../../hooks/useEstateQueries';
 
 export default function EstateDashboardPage() {
   const { user, userClaims, agentId } = useAuth();
   
   // Flyover state
   const [flyoverOpen, setFlyoverOpen] = useState(false);
-  const [estateSettings, setEstateSettings] = useState(null);
 
-  // Load estate settings for banner
-  useEffect(() => {
-    if (agentId) {
-      fetchEstateSettings()
-        .then(setEstateSettings)
-        .catch((err) => console.error('Failed to load settings for flyover:', err));
-    }
-  }, [agentId]);
+  // Use React Query for estate settings (API call with caching)
+  const { 
+    data: estateSettings, 
+    isLoading: settingsLoading,
+    refetch: refetchSettings 
+  } = useEstateSettings({
+    enabled: !!agentId, // Only fetch when we have an agentId
+  });
 
   // Calculate start of today for filtering
   const startOfToday = useMemo(() => {
@@ -166,10 +165,8 @@ export default function EstateDashboardPage() {
   // Handle flyover completion
   const handleFlyoverComplete = () => {
     markFlyoverComplete();
-    // Refresh settings
-    fetchEstateSettings()
-      .then(setEstateSettings)
-      .catch((err) => console.error('Failed to refresh settings:', err));
+    // Refetch settings using React Query (automatic cache invalidation)
+    refetchSettings();
   };
 
   return (

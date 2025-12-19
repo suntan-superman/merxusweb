@@ -3,6 +3,8 @@ import * as admin from 'firebase-admin';
 import express from 'express';
 import cors from 'cors';
 import { authenticate } from './middleware/auth';
+import { createRateLimiter, RATE_LIMIT_CONFIGS } from './middleware/rateLimit';
+import { requestLogger } from './middleware/requestLogger';
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -14,6 +16,9 @@ app.use(cors({ origin: true }));
 
 // Parse JSON bodies
 app.use(express.json());
+
+// Request logging middleware (logs all requests for debugging/audit)
+app.use(requestLogger);
 
 // Health check endpoint (no auth required)
 app.get('/health', (_req, res) => {
@@ -39,10 +44,11 @@ app.use((req, res, next) => {
 });
 
 // Public onboarding routes (no auth required - registered AFTER middleware)
-app.post('/onboarding/office', onboardingRoutes.createOffice);
-app.post('/onboarding/restaurant', onboardingRoutes.createRestaurantPublic);
-app.post('/onboarding/agent', onboardingRoutes.createAgent);
-app.post('/onboarding/resend-email', onboardingRoutes.resendInvitationEmail);
+// Rate limited to prevent abuse
+app.post('/onboarding/office', createRateLimiter(RATE_LIMIT_CONFIGS.onboarding), onboardingRoutes.createOffice);
+app.post('/onboarding/restaurant', createRateLimiter(RATE_LIMIT_CONFIGS.onboarding), onboardingRoutes.createRestaurantPublic);
+app.post('/onboarding/agent', createRateLimiter(RATE_LIMIT_CONFIGS.onboarding), onboardingRoutes.createAgent);
+app.post('/onboarding/resend-email', createRateLimiter(RATE_LIMIT_CONFIGS.emailResend), onboardingRoutes.resendInvitationEmail);
 
 // Import routes
 import * as ordersRoutes from './routes/orders';

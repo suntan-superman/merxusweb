@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { fetchVoiceSettings, updateVoiceSettings } from '../../api/voice';
+import { useState } from 'react';
+import { useVoiceSettings, useUpdateVoiceSettings } from '../../hooks/useVoiceQueries';
 import VoiceCompanyProfile from '../../components/settings/voice/VoiceCompanyProfile';
 import VoiceBusinessHours from '../../components/settings/voice/VoiceBusinessHours';
 import HolidaySchedule from '../../components/settings/HolidaySchedule';
@@ -17,51 +17,17 @@ const TABS = [
 ];
 
 export default function VoiceSettingsPage() {
-  const [settings, setSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
+  
+  // React Query hooks
+  const { data: settings, isLoading, error: loadError, refetch } = useVoiceSettings();
+  const updateSettings = useUpdateVoiceSettings();
 
-  async function load() {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await fetchVoiceSettings();
-      setSettings(data);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load settings.');
-    } finally {
-      setLoading(false);
-    }
-  }
+  const handleSave = async (updated) => {
+    updateSettings.mutate(updated);
+  };
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function handleSave(updated) {
-    try {
-      setSaving(true);
-      setError(null);
-      setSuccess(null);
-
-      const newSettings = await updateVoiceSettings(updated);
-      setSettings((prev) => ({ ...prev, ...newSettings }));
-      setSuccess('Settings saved successfully!');
-      
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to save settings.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
@@ -72,11 +38,11 @@ export default function VoiceSettingsPage() {
     );
   }
 
-  if (!settings) {
+  if (loadError || !settings) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600">Failed to load settings.</p>
-        <button onClick={load} className="btn-primary mt-4">
+        <button onClick={() => refetch()} className="btn-primary mt-4">
           Retry
         </button>
       </div>
@@ -92,18 +58,6 @@ export default function VoiceSettingsPage() {
           Configure your business information, hours, and AI assistant settings
         </p>
       </div>
-
-      {/* Status Messages */}
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="mb-4 rounded-md bg-primary-50 border border-primary-200 px-4 py-3 text-sm text-primary-700">
-          {success}
-        </div>
-      )}
 
       {/* Tab Navigation */}
       <div className="border-b border-gray-200 mb-6">
@@ -132,22 +86,22 @@ export default function VoiceSettingsPage() {
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'profile' && (
-          <VoiceCompanyProfile settings={settings} onSave={handleSave} saving={saving} />
+          <VoiceCompanyProfile settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
         )}
         {activeTab === 'hours' && (
-          <VoiceBusinessHours settings={settings} onSave={handleSave} saving={saving} />
+          <VoiceBusinessHours settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
         )}
         {activeTab === 'holidays' && (
-          <HolidaySchedule settings={settings} onSave={handleSave} saving={saving} tenantType="voice" />
+          <HolidaySchedule settings={settings} onSave={handleSave} saving={updateSettings.isPending} tenantType="voice" />
         )}
         {activeTab === 'managers' && (
-          <ManagersSettings settings={settings} onSave={handleSave} saving={saving} />
+          <ManagersSettings settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
         )}
         {activeTab === 'services' && (
           <VoiceServicesProducts 
             settings={settings} 
             onSave={handleSave} 
-            saving={saving}
+            saving={updateSettings.isPending}
             businessType={settings.businessType}
           />
         )}
@@ -155,7 +109,7 @@ export default function VoiceSettingsPage() {
           <VoiceAISettings 
             settings={settings} 
             onSave={handleSave} 
-            saving={saving}
+            saving={updateSettings.isPending}
             businessType={settings.businessType}
           />
         )}

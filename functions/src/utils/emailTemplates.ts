@@ -19,6 +19,10 @@ export const SENDGRID_TEMPLATES = {
   // Auth templates
   PASSWORD_RESET_MERXUS: 'd-634ccb3b1ac24c7a89f073bfafba192f',
   
+  // Billing templates (inline fallback - create SendGrid templates for production)
+  PAYMENT_RECEIPT: '', // Create SendGrid template: d-xxxxx
+  PAYMENT_FAILED: '', // Create SendGrid template: d-xxxxx
+  
   // Other templates
   RESERVATION_SUMMARY: 'd-0879e7e7222748e79f624f2844596a07',
   AI_TRANSCRIPT_SUMMARY: 'd-1112e02ff8294cc780be50ac8235d261',

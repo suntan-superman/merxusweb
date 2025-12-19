@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, limit, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { collection, query, where, orderBy, limit, startAfter, onSnapshot, doc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 /**
@@ -86,6 +86,169 @@ export function useFirestoreCollection(collectionPath, options = {}) {
   }, [collectionPath, JSON.stringify(options)]);
 
   return { data, loading, error };
+}
+
+/**
+ * Hook for paginated Firestore collection with cursor-based pagination
+ * Supports "load more" functionality for large datasets
+ * 
+ * @param {string} collectionPath - Path to collection
+ * @param {object} options - Query options including pageSize
+ * @returns {object} { data, loading, error, hasMore, loadMore, refresh }
+ */
+export function usePaginatedFirestoreCollection(collectionPath, options = {}) {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const lastDocRef = useRef(null);
+  const pageSize = options.pageSize || 25;
+
+  // Build the base query
+  const buildQuery = useCallback((startAfterDoc = null) => {
+    if (!collectionPath) return null;
+
+    const pathParts = collectionPath.split('/').filter(Boolean);
+    
+    let ref;
+    if (pathParts.length === 1) {
+      ref = collection(db, pathParts[0]);
+    } else if (pathParts.length === 3) {
+      ref = collection(db, pathParts[0], pathParts[1], pathParts[2]);
+    } else {
+      ref = collection(db, ...pathParts);
+    }
+
+    let q = query(ref);
+
+    // Apply filters
+    if (options.where) {
+      options.where.forEach(({ field, operator, value }) => {
+        q = query(q, where(field, operator, value));
+      });
+    }
+
+    // Apply ordering
+    if (options.orderBy) {
+      options.orderBy.forEach(({ field, direction = 'asc' }) => {
+        q = query(q, orderBy(field, direction));
+      });
+    }
+
+    // Apply cursor for pagination
+    if (startAfterDoc) {
+      q = query(q, startAfter(startAfterDoc));
+    }
+
+    // Apply limit (fetch one extra to check if there are more)
+    q = query(q, limit(pageSize + 1));
+
+    return q;
+  }, [collectionPath, JSON.stringify(options.where), JSON.stringify(options.orderBy), pageSize]);
+
+  // Load initial data
+  useEffect(() => {
+    if (!collectionPath) {
+      setLoading(false);
+      return;
+    }
+
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        const q = buildQuery();
+        if (!q) return;
+
+        const snapshot = await getDocs(q);
+        const items = snapshot.docs.slice(0, pageSize).map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setData(items);
+        setHasMore(snapshot.docs.length > pageSize);
+        lastDocRef.current = snapshot.docs.length > 0 
+          ? snapshot.docs[Math.min(snapshot.docs.length - 1, pageSize - 1)]
+          : null;
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading paginated data:', err);
+        setError(err);
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [collectionPath, buildQuery, pageSize]);
+
+  // Load more data
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore || !lastDocRef.current) return;
+
+    try {
+      setLoadingMore(true);
+      const q = buildQuery(lastDocRef.current);
+      if (!q) return;
+
+      const snapshot = await getDocs(q);
+      const newItems = snapshot.docs.slice(0, pageSize).map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setData(prev => [...prev, ...newItems]);
+      setHasMore(snapshot.docs.length > pageSize);
+      lastDocRef.current = snapshot.docs.length > 0 
+        ? snapshot.docs[Math.min(snapshot.docs.length - 1, pageSize - 1)]
+        : null;
+    } catch (err) {
+      console.error('Error loading more data:', err);
+      setError(err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [buildQuery, hasMore, loadingMore, pageSize]);
+
+  // Refresh data (reset to first page)
+  const refresh = useCallback(async () => {
+    lastDocRef.current = null;
+    setHasMore(true);
+    
+    try {
+      setLoading(true);
+      const q = buildQuery();
+      if (!q) return;
+
+      const snapshot = await getDocs(q);
+      const items = snapshot.docs.slice(0, pageSize).map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setData(items);
+      setHasMore(snapshot.docs.length > pageSize);
+      lastDocRef.current = snapshot.docs.length > 0 
+        ? snapshot.docs[Math.min(snapshot.docs.length - 1, pageSize - 1)]
+        : null;
+    } catch (err) {
+      console.error('Error refreshing data:', err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [buildQuery, pageSize]);
+
+  return { 
+    data, 
+    loading, 
+    loadingMore, 
+    error, 
+    hasMore, 
+    loadMore, 
+    refresh,
+    totalLoaded: data.length 
+  };
 }
 
 /**

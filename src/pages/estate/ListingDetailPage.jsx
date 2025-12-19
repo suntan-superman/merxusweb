@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { fetchListings, updateListing, sendTestFlyer, fetchFlyerLogs } from '../../api/estate';
+import { useListing, useUpdateListing, useFlyerLogs, useSendTestFlyer } from '../../hooks/useEstateQueries';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ListingForm from '../../components/listings/ListingForm';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import {
   ArrowLeft,
   Edit,
@@ -28,81 +28,53 @@ import {
 export default function ListingDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [listing, setListing] = useState(null);
-  const [flyerLogs, setFlyerLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
   const [showEditModal, setShowEditModal] = useState(false);
 
-  useEffect(() => {
-    loadListing();
-    loadFlyerLogs();
-  }, [id]);
+  // React Query hooks
+  const { 
+    data: listing, 
+    isLoading, 
+    isError,
+    error 
+  } = useListing(id);
+  
+  const { 
+    data: allFlyerLogs = [] 
+  } = useFlyerLogs({ limit: 200 });
+  
+  const updateListingMutation = useUpdateListing();
+  const sendTestFlyerMutation = useSendTestFlyer();
 
-  async function loadListing() {
-    try {
-      setLoading(true);
-      const data = await fetchListings();
-      const found = data.find((l) => l.id === id);
-      if (found) {
-        setListing(found);
-      } else {
-        toast.error('Listing not found');
-        navigate('/estate/listings');
+  // Filter flyer logs for this listing
+  const flyerLogs = allFlyerLogs.filter?.((log) => log.listingId === id) || [];
+
+  function handleSave(listingData) {
+    updateListingMutation.mutate(
+      { listingId: id, listing: listingData },
+      {
+        onSuccess: () => {
+          setShowEditModal(false);
+        },
       }
-    } catch (error) {
-      console.error('Error loading listing:', error);
-      toast.error('Failed to load listing');
-    } finally {
-      setLoading(false);
-    }
+    );
   }
 
-  async function loadFlyerLogs() {
-    try {
-      const logs = await fetchFlyerLogs({ limit: 200 });
-      const thisListingLogs = logs.filter((log) => log.listingId === id);
-      setFlyerLogs(thisListingLogs);
-    } catch (error) {
-      console.error('Error loading flyer logs:', error);
-    }
-  }
-
-  async function handleSave(listingData) {
-    try {
-      const updated = await updateListing(id, listingData);
-      setListing({ ...listing, ...updated });
-      setShowEditModal(false);
-      toast.success('Listing updated successfully');
-    } catch (error) {
-      console.error('Error updating listing:', error);
-      toast.error('Failed to update listing');
-    }
-  }
-
-  async function handleTestSend(listing) {
+  function handleTestSend(listingToSend) {
     const email = window.prompt('Enter a test email to send the flyer to:');
     if (!email) return;
 
-    try {
-      await sendTestFlyer(listing.id, email);
-      toast.success(`Test flyer sent to ${email}`);
-      await loadFlyerLogs();
-    } catch (error) {
-      console.error('Error sending test flyer:', error);
-      toast.error('Failed to send test flyer');
-    }
+    sendTestFlyerMutation.mutate({
+      listingId: listingToSend.id,
+      testEmail: email,
+    });
   }
 
-  async function handleStatusChange(newStatus) {
-    try {
-      await updateListing(id, { status: newStatus });
-      setListing({ ...listing, status: newStatus });
-      toast.success(`Status updated to ${newStatus}`);
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Failed to update status');
-    }
+  function handleStatusChange(newStatus) {
+    updateListingMutation.mutate({
+      listingId: id,
+      listing: { status: newStatus },
+    });
   }
 
   function handleShare() {
@@ -127,15 +99,17 @@ export default function ListingDetailPage() {
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  if (!listing) {
+  if (isError || !listing) {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Listing Not Found</h2>
-        <p className="text-gray-600 mb-6">The listing you're looking for doesn't exist</p>
+        <p className="text-gray-600 mb-6">
+          {error?.message || "The listing you're looking for doesn't exist"}
+        </p>
         <Link to="/estate/listings" className="btn-primary">
           Back to Listings
         </Link>

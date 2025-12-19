@@ -1,74 +1,60 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getVoiceUsers, inviteVoiceUser, updateVoiceUser, deleteVoiceUser } from '../../api/voiceUsers';
-import { toast } from 'react-hot-toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import VoiceUsersTable from '../../components/voice/VoiceUsersTable';
 import InviteUserModal from '../../components/voice/InviteUserModal';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { 
+  useVoiceUsers, 
+  useInviteVoiceUser, 
+  useUpdateVoiceUser, 
+  useDeleteVoiceUser 
+} from '../../hooks/useVoiceQueries';
 
 export default function VoiceUsersPage() {
   const { officeId } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  async function loadUsers() {
-    try {
-      setLoading(true);
-      const data = await getVoiceUsers();
-      setUsers(data);
-    } catch (error) {
-      console.error('Failed to load users:', error);
-      toast.error('Failed to load team members');
-    } finally {
-      setLoading(false);
-    }
-  }
+  // React Query hooks
+  const { data: users = [], isLoading, error } = useVoiceUsers();
+  const inviteMutation = useInviteVoiceUser();
+  const updateMutation = useUpdateVoiceUser();
+  const deleteMutation = useDeleteVoiceUser();
 
   async function handleInvite(userData) {
-    await inviteVoiceUser(userData);
-    await loadUsers();
+    await inviteMutation.mutateAsync(userData);
+    setShowInviteModal(false);
   }
 
   async function handleChangeRole(uid, newRole) {
-    try {
-      await updateVoiceUser(uid, { role: newRole });
-      toast.success('Role updated successfully');
-      await loadUsers();
-    } catch (error) {
-      console.error('Failed to update role:', error);
-      toast.error('Failed to update role');
-    }
+    await updateMutation.mutateAsync({ uid, updates: { role: newRole } });
   }
 
-  async function handleDisable(uid) {
+  function handleDisable(uid) {
     setSelectedUser(users.find((u) => u.uid === uid || u.id === uid));
     setShowDisableModal(true);
   }
 
   async function confirmDisable() {
-    try {
-      await deleteVoiceUser(selectedUser.uid || selectedUser.id);
-      toast.success('User disabled successfully');
-      await loadUsers();
-    } catch (error) {
-      console.error('Failed to disable user:', error);
-      toast.error('Failed to disable user');
-    } finally {
-      setShowDisableModal(false);
-      setSelectedUser(null);
-    }
+    await deleteMutation.mutateAsync(selectedUser.uid || selectedUser.id);
+    setShowDisableModal(false);
+    setSelectedUser(null);
   }
 
-  if (loading) {
+  if (isLoading) {
     return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12">
+        <div className="text-red-500 text-5xl mb-4">⚠️</div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Team Members</h3>
+        <p className="text-gray-600 mb-4">Please try refreshing the page.</p>
+      </div>
+    );
   }
 
   return (
@@ -80,7 +66,11 @@ export default function VoiceUsersPage() {
             Manage team members and their access to your office portal
           </p>
         </div>
-        <button onClick={() => setShowInviteModal(true)} className="btn-primary">
+        <button 
+          onClick={() => setShowInviteModal(true)} 
+          className="btn-primary"
+          disabled={inviteMutation.isPending}
+        >
           + Invite User
         </button>
       </div>
@@ -104,6 +94,7 @@ export default function VoiceUsersPage() {
             users={users}
             onChangeRole={handleChangeRole}
             onDisable={handleDisable}
+            isUpdating={updateMutation.isPending}
           />
         )}
       </div>
@@ -113,6 +104,7 @@ export default function VoiceUsersPage() {
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
         onInvite={handleInvite}
+        isLoading={inviteMutation.isPending}
       />
 
       {/* Disable Confirmation Modal */}
@@ -128,6 +120,7 @@ export default function VoiceUsersPage() {
         confirmText="Disable User"
         cancelText="Cancel"
         variant="warning"
+        isLoading={deleteMutation.isPending}
       />
     </div>
   );
