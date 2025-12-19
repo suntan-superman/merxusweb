@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useListing, useUpdateListing, useFlyerLogs, useSendTestFlyer } from '../../hooks/useEstateQueries';
+import { 
+  useListing, 
+  useUpdateListing, 
+  useFlyerLogs, 
+  useSendTestFlyer,
+  useLeads,
+  useShowings,
+} from '../../hooks/useEstateQueries';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ListingForm from '../../components/listings/ListingForm';
 import toast from 'react-hot-toast';
@@ -23,6 +30,11 @@ import {
   Clock,
   FileText,
   Home,
+  Users,
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function ListingDetailPage() {
@@ -42,12 +54,34 @@ export default function ListingDetailPage() {
   const { 
     data: allFlyerLogs = [] 
   } = useFlyerLogs({ limit: 200 });
+
+  const {
+    data: allLeads = [],
+  } = useLeads();
+
+  const {
+    data: allShowings = [],
+  } = useShowings();
   
   const updateListingMutation = useUpdateListing();
   const sendTestFlyerMutation = useSendTestFlyer();
 
-  // Filter flyer logs for this listing
+  // Filter data for this listing
   const flyerLogs = allFlyerLogs.filter?.((log) => log.listingId === id) || [];
+  const listingLeads = allLeads.filter?.((lead) => lead.listingId === id) || [];
+  const listingShowings = allShowings.filter?.((showing) => showing.listingId === id) || [];
+
+  // Calculate metrics
+  const metrics = {
+    totalLeads: listingLeads.length,
+    newLeads: listingLeads.filter(l => l.status === 'new').length,
+    contactedLeads: listingLeads.filter(l => l.status === 'contacted').length,
+    qualifiedLeads: listingLeads.filter(l => l.status === 'qualified').length,
+    totalShowings: listingShowings.length,
+    upcomingShowings: listingShowings.filter(s => new Date(s.date) >= new Date()).length,
+    completedShowings: listingShowings.filter(s => s.status === 'completed').length,
+    flyersSent: flyerLogs.length,
+  };
 
   function handleSave(listingData) {
     updateListingMutation.mutate(
@@ -258,21 +292,84 @@ export default function ListingDetailPage() {
         </div>
       </div>
 
+      {/* Performance Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Users size={20} className="text-blue-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{metrics.totalLeads}</div>
+              <div className="text-sm text-gray-600">Total Leads</div>
+            </div>
+          </div>
+          {metrics.newLeads > 0 && (
+            <div className="mt-2 text-xs text-blue-600 font-medium">
+              {metrics.newLeads} new
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Calendar size={20} className="text-green-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{metrics.totalShowings}</div>
+              <div className="text-sm text-gray-600">Showings</div>
+            </div>
+          </div>
+          {metrics.upcomingShowings > 0 && (
+            <div className="mt-2 text-xs text-green-600 font-medium">
+              {metrics.upcomingShowings} upcoming
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Mail size={20} className="text-purple-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{metrics.flyersSent}</div>
+              <div className="text-sm text-gray-600">Flyers Sent</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <TrendingUp size={20} className="text-yellow-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{metrics.qualifiedLeads}</div>
+              <div className="text-sm text-gray-600">Qualified</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          <nav className="flex space-x-4 md:space-x-8 px-6 overflow-x-auto" aria-label="Tabs">
             {[
               { id: 'details', label: 'Details', icon: FileText },
+              { id: 'leads', label: 'Leads', icon: Users, count: metrics.totalLeads },
+              { id: 'showings', label: 'Showings', icon: Calendar, count: metrics.totalShowings },
               { id: 'photos', label: 'Photos', icon: Eye },
               { id: 'openhouse', label: 'Open House', icon: Calendar },
-              { id: 'activity', label: 'Activity', icon: Clock },
+              { id: 'activity', label: 'Activity', icon: Clock, count: metrics.flyersSent },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm
+                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                   ${
                     activeTab === tab.id
                       ? 'border-primary-500 text-primary-600'
@@ -282,6 +379,11 @@ export default function ListingDetailPage() {
               >
                 <tab.icon size={18} />
                 {tab.label}
+                {tab.count > 0 && (
+                  <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
+                    {tab.count}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -358,6 +460,171 @@ export default function ListingDetailPage() {
                       Download
                     </button>
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'leads' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Lead Inquiries</h3>
+                <Link 
+                  to="/estate/leads" 
+                  className="text-sm text-primary-600 hover:text-primary-700"
+                >
+                  View All Leads →
+                </Link>
+              </div>
+              {listingLeads.length > 0 ? (
+                <div className="space-y-4">
+                  {listingLeads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100"
+                    >
+                      <div className={`p-2 rounded-full ${
+                        lead.status === 'new' ? 'bg-blue-100' :
+                        lead.status === 'contacted' ? 'bg-yellow-100' :
+                        lead.status === 'qualified' ? 'bg-green-100' :
+                        'bg-gray-100'
+                      }`}>
+                        {lead.status === 'new' ? (
+                          <AlertCircle size={20} className="text-blue-600" />
+                        ) : lead.status === 'qualified' ? (
+                          <CheckCircle size={20} className="text-green-600" />
+                        ) : (
+                          <Users size={20} className="text-gray-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-gray-900">
+                            {lead.name || lead.callerName || 'Unknown'}
+                          </span>
+                          <span className={`px-2 py-0.5 text-xs rounded-full ${
+                            lead.status === 'new' ? 'bg-blue-100 text-blue-800' :
+                            lead.status === 'contacted' ? 'bg-yellow-100 text-yellow-800' :
+                            lead.status === 'qualified' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {lead.status || 'new'}
+                          </span>
+                        </div>
+                        {(lead.phone || lead.callerNumber) && (
+                          <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                            <Phone size={14} />
+                            {lead.phone || lead.callerNumber}
+                          </div>
+                        )}
+                        {lead.email && (
+                          <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                            <Mail size={14} />
+                            {lead.email}
+                          </div>
+                        )}
+                        {lead.notes && (
+                          <p className="text-sm text-gray-700 mt-2">{lead.notes}</p>
+                        )}
+                        <div className="text-xs text-gray-500 mt-2">
+                          {lead.createdAt?.toDate?.().toLocaleDateString() || 
+                           (lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : 'Unknown date')}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                  <Users size={48} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No leads for this listing yet</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Leads will appear here when potential buyers inquire about this property
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'showings' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Scheduled Showings</h3>
+                <Link 
+                  to="/estate/showings" 
+                  className="text-sm text-primary-600 hover:text-primary-700"
+                >
+                  View All Showings →
+                </Link>
+              </div>
+              {listingShowings.length > 0 ? (
+                <div className="space-y-4">
+                  {listingShowings.map((showing) => {
+                    const showingDate = showing.date ? new Date(showing.date) : null;
+                    const isPast = showingDate && showingDate < new Date();
+                    
+                    return (
+                      <div
+                        key={showing.id}
+                        className={`flex items-start gap-4 p-4 rounded-lg border ${
+                          isPast ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'
+                        }`}
+                      >
+                        <div className={`p-2 rounded-full ${
+                          showing.status === 'completed' ? 'bg-green-100' :
+                          showing.status === 'cancelled' ? 'bg-red-100' :
+                          isPast ? 'bg-gray-100' : 'bg-blue-100'
+                        }`}>
+                          {showing.status === 'completed' ? (
+                            <CheckCircle size={20} className="text-green-600" />
+                          ) : showing.status === 'cancelled' ? (
+                            <XCircle size={20} className="text-red-600" />
+                          ) : (
+                            <Calendar size={20} className={isPast ? 'text-gray-600' : 'text-blue-600'} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-gray-900">
+                              {showingDate?.toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </span>
+                            {showing.time && (
+                              <span className="text-gray-600">at {showing.time}</span>
+                            )}
+                            <span className={`px-2 py-0.5 text-xs rounded-full ${
+                              showing.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              showing.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              isPast ? 'bg-gray-100 text-gray-800' : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {showing.status || (isPast ? 'past' : 'scheduled')}
+                            </span>
+                          </div>
+                          {(showing.clientName || showing.agentName) && (
+                            <div className="text-sm text-gray-600">
+                              {showing.clientName && <span>Client: {showing.clientName}</span>}
+                              {showing.clientName && showing.agentName && <span> • </span>}
+                              {showing.agentName && <span>Agent: {showing.agentName}</span>}
+                            </div>
+                          )}
+                          {showing.notes && (
+                            <p className="text-sm text-gray-700 mt-2">{showing.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                  <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No showings scheduled</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Showings for this property will appear here
+                  </p>
                 </div>
               )}
             </div>
