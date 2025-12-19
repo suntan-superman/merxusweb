@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchCallTranscript, translateCallTranscript } from '../../api/calls';
+import AddToCalendarButton from '../common/AddToCalendarButton';
 
 export default function CallDetailDrawer({ open, onClose, call }) {
   const [loading, setLoading] = useState(false);
@@ -184,7 +185,23 @@ export default function CallDetailDrawer({ open, onClose, call }) {
           </section>
         </div>
 
-        <footer className="border-t px-4 py-3 flex items-center justify-end">
+        <footer className="border-t px-4 py-3 flex items-center justify-between">
+          {/* Show Add to Calendar button for messages/callbacks */}
+          {(call.parsedMessage || call.messageSummary?.callbackRequested || call.type === 'message') && (
+            <AddToCalendarButton 
+              data={{
+                callerName: getCustomerName(call),
+                callerPhone: getCustomerPhone(call),
+                message: call.transcriptSummary || call.parsedMessage?.message,
+                createdAt: call.startedAt || call.createdAt,
+              }}
+              size="sm"
+              variant="secondary"
+            />
+          )}
+          {!(call.parsedMessage || call.messageSummary?.callbackRequested || call.type === 'message') && (
+            <div /> // Spacer
+          )}
           <button
             onClick={onClose}
             className="rounded-md bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700 transition-colors"
