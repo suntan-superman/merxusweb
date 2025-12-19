@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { CallVolumeChart, PeakHoursChart, ConversionChart, PopularItemsChart, RevenueChart } from '../../components/analytics';
 
 const RESERVATIONS_VIEW_KEY = 'merxus_dashboard_reservations_view';
 
@@ -328,6 +329,32 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-600 mt-2">Currently listed</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Analytics Section - Restaurant */}
+      {tenantType === 'restaurant' && (
+        <div className="space-y-4 mb-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900">📊 Analytics</h2>
+            <span className="text-sm text-gray-500">
+              {calls.length} calls • {orders.length} orders
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <CallVolumeChart calls={calls} title="Call Volume Trend" />
+            <RevenueChart orders={orders} title="Revenue Trend" />
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PeakHoursChart calls={calls} title="Peak Call Times" />
+            <PopularItemsChart orders={orders} title="Popular Items" />
+          </div>
+          
+          <div className="grid grid-cols-1 gap-6">
+            <ConversionChart calls={calls} orders={orders} title="Call Outcomes" context="restaurant" />
+          </div>
         </div>
       )}
 

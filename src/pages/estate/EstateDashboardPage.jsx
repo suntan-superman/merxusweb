@@ -7,6 +7,7 @@ import FlyerMetricsDashboard from '../../components/estate/FlyerMetricsDashboard
 import FlyoverBanner, { markFlyoverComplete } from '../../components/estate/FlyoverBanner';
 import EstateFlyover from '../../components/estate/EstateFlyover';
 import { useEstateSettings } from '../../hooks/useEstateQueries';
+import { CallVolumeChart, PeakHoursChart, LeadSourceChart, ShowingConversionChart } from '../../components/analytics';
 
 export default function EstateDashboardPage() {
   const { user, userClaims, agentId } = useAuth();
@@ -248,6 +249,26 @@ export default function EstateDashboardPage() {
 
       {/* Flyer Metrics Dashboard */}
       <FlyerMetricsDashboard />
+
+      {/* Analytics Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-gray-900">📊 Analytics</h2>
+          <span className="text-sm text-gray-500">
+            {calls.length} calls • {leads.length} leads • {showings.length} showings
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CallVolumeChart calls={calls} title="Call Volume Trend" />
+          <LeadSourceChart leads={leads} showings={showings} title="Lead Sources & Priority" />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <PeakHoursChart calls={calls} title="Peak Call Times" />
+          <ShowingConversionChart leads={leads} showings={showings} title="Conversion Funnel" />
+        </div>
+      </div>
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
