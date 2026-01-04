@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { registerLicense } from '@syncfusion/ej2-base';
 import { AuthProvider } from './context/AuthContext';
+import { APP_INFO } from './constants/appInfo';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import AutoRedirect from './components/AutoRedirect';
@@ -230,7 +231,7 @@ function App() {
                       </div>
                     </div>
                     <div className="pt-8 mt-8 text-center text-gray-400 border-t border-gray-800">
-                      <p>&copy; 2025 Workside Software LLC. All rights reserved.</p>
+                      <p>{APP_INFO.fullCopyright}</p>
                     </div>
                   </div>
                 </footer>
