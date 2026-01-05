@@ -72,7 +72,6 @@ else {
   console.error('For example: VITE_SYNCFUSION_KEY=YOUR_LICENSE_KEY');
 }
 
-
 function App() {
   return (
     <ErrorBoundary>
