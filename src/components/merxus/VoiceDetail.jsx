@@ -43,12 +43,13 @@ const defaultForm = {
   notifyEmailAddresses: [],
 };
 
-export default function VoiceDetail({ voice = {}, onUpdate, loading }) {
+export default function VoiceDetail({ voice = {}, onUpdate, onClose, loading }) {
   const [activeTab, setActiveTab] = useState('basic');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -92,6 +93,17 @@ export default function VoiceDetail({ voice = {}, onUpdate, loading }) {
       notifyEmailAddresses: voice?.notifyEmailAddresses || [],
     });
   }, [voice?.id, voice?.officeId]);
+
+  // Handle ESC key to close edit mode
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && editing) {
+        setEditing(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editing]);
 
   async function handleSave() {
     setSaving(true);
@@ -170,14 +182,25 @@ export default function VoiceDetail({ voice = {}, onUpdate, loading }) {
       <div className="border-b border-gray-200 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900">{voice.name || 'Voice Service'}</h2>
-          {!editing && (
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setEditing(true)}
-              className="btn-secondary text-sm"
+              onClick={() => editing ? setEditing(false) : onClose?.()}
+              className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-colors"
+              title={editing ? "Close edit (ESC)" : "Close panel"}
             >
-              Edit
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-          )}
+            {!editing && (
+              <button
+                onClick={() => setEditing(true)}
+                className="btn-secondary text-sm"
+              >
+                Edit
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-2 border-b border-gray-200 -mb-6">
@@ -378,14 +401,17 @@ export default function VoiceDetail({ voice = {}, onUpdate, loading }) {
               >
                 {resending ? 'Sending...' : 'Resend Invitation'}
               </button>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="btn-danger"
-              >
-                Delete
-              </button>
             </div>
           )}
+
+          <div className="pt-4 border-t border-gray-200">
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="btn-danger"
+            >
+              Delete Service
+            </button>
+          </div>
         </div>
       )}
 
@@ -525,15 +551,69 @@ export default function VoiceDetail({ voice = {}, onUpdate, loading }) {
       )}
 
       {showDeleteModal && (
-        <ConfirmationModal
-          title="Delete Voice Service"
-          message={`Are you sure you want to delete "${voice.name || 'this voice service'}"? This action cannot be undone.`}
-          confirmText="Delete"
-          cancelText="Cancel"
-          isDangerous
-          onConfirm={handleDelete}
-          onCancel={() => setShowDeleteModal(false)}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">Delete Voice Service</h3>
+            </div>
+
+            <div className="px-6 py-4 space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800 font-medium mb-2">⚠️ Warning</p>
+                <p className="text-sm text-red-700">
+                  This action cannot be undone. All data associated with <strong>{voice.name}</strong> will be permanently deleted.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  To confirm, type the service name exactly as shown:
+                </label>
+                <div className="bg-gray-50 px-3 py-2 rounded border border-gray-200 mb-3 text-sm font-mono text-gray-600">
+                  {voice.name}
+                </div>
+                <input
+                  type="text"
+                  value={deleteConfirmationText}
+                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                  placeholder="Enter service name"
+                  className="input-field"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 px-6 py-4 flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmationText('');
+                }}
+                className="btn-secondary"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting || deleteConfirmationText !== voice.name}
+                className={`btn-danger ${
+                  deleteConfirmationText !== voice.name
+                    ? 'opacity-50 cursor-not-allowed'
+                    : ''
+                }`}
+              >
+                {deleting ? 'Deleting...' : 'Delete Permanently'}
+              </button>
+            </div>
+
+            {deleteError && (
+              <div className="px-6 py-3 bg-red-50 border-t border-red-200">
+                <p className="text-sm text-red-700">{deleteError}</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {deleteError && (

@@ -211,6 +211,7 @@ export default function VoicesPage() {
             <VoiceDetail
               voice={selectedVoice}
               onUpdate={handleUpdate}
+              onClose={() => setSelectedVoice(null)}
               loading={loadingVoice}
             />
           </div>

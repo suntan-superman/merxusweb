@@ -416,7 +416,21 @@ export default function TenantsManagementPage() {
       {editingTenant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-2xl p-6 mx-4 bg-white rounded-lg">
-            <h2 className="mb-4 text-2xl font-bold">Edit Tenant: {editingTenant.name}</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold">Edit Tenant: {editingTenant.name}</h2>
+              <button
+                onClick={() => {
+                  setEditingTenant(null);
+                  setEditFormData({});
+                }}
+                className="text-gray-400 hover:text-gray-600 p-1"
+                title="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
             <p className="mb-6 text-gray-600">
               Tenant ID: <code className="px-2 py-1 bg-gray-100 rounded">{editingTenant.id}</code>
             </p>

@@ -200,6 +200,7 @@ export default function RealEstateCompaniesPage() {
             <RealEstateCompanyDetail
               company={selectedCompany}
               onUpdate={handleUpdate}
+              onClose={() => setSelectedCompany(null)}
               loading={loadingCompany}
             />
           </div>
