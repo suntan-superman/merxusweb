@@ -33,6 +33,8 @@ import MerxusLayout from './components/layout/MerxusLayout';
 import MerxusDashboardPage from './pages/merxus/MerxusDashboardPage';
 import RestaurantsPage from './pages/merxus/RestaurantsPage';
 import CreateRestaurantPage from './pages/merxus/CreateRestaurantPage';
+import VoicesPage from './pages/merxus/VoicesPage';
+import RealEstateCompaniesPage from './pages/merxus/RealEstateCompaniesPage';
 import AnalyticsPage from './pages/merxus/AnalyticsPage';
 import SystemSettingsPage from './pages/merxus/SystemSettingsPage';
 import TenantSelectorPage from './pages/merxus/TenantSelectorPage';
@@ -183,8 +185,10 @@ function App() {
                     <Route index element={<MerxusDashboardPage />} />
                     <Route path="tenants" element={<TenantsManagementPage />} />
                     <Route path="voice-admin" element={<VoiceAdminPage />} />
+                    <Route path="voices" element={<VoicesPage />} />
                     <Route path="restaurants" element={<RestaurantsPage />} />
                     <Route path="restaurants/new" element={<CreateRestaurantPage />} />
+                    <Route path="real-estate" element={<RealEstateCompaniesPage />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
                     <Route path="settings" element={<SystemSettingsPage />} />
                     <Route path="users" element={<SuperAdminUsersPage />} />

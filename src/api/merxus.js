@@ -57,6 +57,37 @@ export async function toggleRestaurantMenuItemAvailability(restaurantId, itemId,
   return res.data;
 }
 
+// Voice Services / Offices
+export async function fetchAllVoices() {
+  const res = await apiClient.get('/merxus/voices');
+  return res.data;
+}
+
+export async function createVoice(payload) {
+  const res = await apiClient.post('/merxus/voices', payload);
+  return res.data;
+}
+
+export async function getVoice(voiceId) {
+  const res = await apiClient.get(`/merxus/voices/${voiceId}`);
+  return res.data;
+}
+
+export async function updateVoice(voiceId, payload) {
+  const res = await apiClient.patch(`/merxus/voices/${voiceId}`, payload);
+  return res.data;
+}
+
+export async function deleteVoice(voiceId) {
+  const res = await apiClient.delete(`/merxus/voices/${voiceId}`);
+  return res.data;
+}
+
+export async function resendVoiceInvitation(voiceId) {
+  const res = await apiClient.post(`/merxus/voices/${voiceId}/resend-invitation`);
+  return res.data;
+}
+
 // Analytics
 export async function fetchSystemAnalytics() {
   const res = await apiClient.get('/merxus/analytics');

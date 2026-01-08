@@ -172,6 +172,24 @@ app.post('/merxus/restaurants/:restaurantId/menu', merxusRoutes.createRestaurant
 app.put('/merxus/restaurants/:restaurantId/menu/:itemId', merxusRoutes.updateRestaurantMenuItem);
 app.delete('/merxus/restaurants/:restaurantId/menu/:itemId', merxusRoutes.deleteRestaurantMenuItem);
 app.patch('/merxus/restaurants/:restaurantId/menu/:itemId', merxusRoutes.toggleRestaurantMenuItemAvailability);
+
+// Merxus Voice Services routes
+app.get('/merxus/voices', merxusRoutes.getAllVoices);
+app.get('/merxus/voices/:voiceId', merxusRoutes.getVoice);
+app.post('/merxus/voices', merxusRoutes.createVoice);
+app.patch('/merxus/voices/:voiceId', merxusRoutes.updateVoice);
+app.delete('/merxus/voices/:voiceId', merxusRoutes.deleteVoice);
+app.post('/merxus/voices/:voiceId/resend-invitation', merxusRoutes.resendVoiceInvitation);
+
+// Merxus Real Estate Companies routes
+app.get('/merxus/real-estate', merxusRoutes.getAllRealEstateCompanies);
+app.get('/merxus/real-estate/:companyId', merxusRoutes.getRealEstateCompany);
+app.post('/merxus/real-estate', merxusRoutes.createRealEstateCompany);
+app.patch('/merxus/real-estate/:companyId', merxusRoutes.updateRealEstateCompany);
+app.delete('/merxus/real-estate/:companyId', merxusRoutes.deleteRealEstateCompany);
+app.post('/merxus/real-estate/:companyId/resend-invitation', merxusRoutes.resendRealEstateInvitation);
+
+// Merxus Analytics and Settings routes
 app.get('/merxus/analytics/tenant', merxusRoutes.getTenantAnalytics);
 app.get('/merxus/analytics', merxusRoutes.getSystemAnalytics);
 app.get('/merxus/settings', merxusRoutes.getSystemSettings);

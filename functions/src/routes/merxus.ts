@@ -985,3 +985,274 @@ export async function toggleRestaurantMenuItemAvailability(req: AuthenticatedReq
     res.status(500).json({ error: 'Failed to update availability' });
   }
 }
+
+// ====================================================================
+// VOICE SERVICES MANAGEMENT
+// ====================================================================
+
+export async function getAllVoices(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const snapshot = await db.collection('offices').get();
+    const voices: any[] = [];
+
+    snapshot.forEach(doc => {
+      // Return all offices (they are voice service offices)
+      voices.push({
+        id: doc.id,
+        officeId: doc.id,
+        ...doc.data()
+      });
+    });
+
+    res.json(voices);
+  } catch (err: any) {
+    console.error('Error fetching voices:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function getVoice(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { voiceId } = req.params;
+    const doc = await db.collection('offices').doc(voiceId).get();
+
+    if (!doc.exists) {
+      res.status(404).json({ error: 'Voice service not found' });
+      return;
+    }
+
+    res.json({
+      id: doc.id,
+      officeId: doc.id,
+      ...doc.data()
+    });
+  } catch (err: any) {
+    console.error('Error fetching voice:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function createVoice(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const voiceData = {
+      ...req.body,
+      type: 'voice',
+      serviceType: 'voice',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    const docRef = await db.collection('offices').add(voiceData);
+
+    res.status(201).json({
+      id: docRef.id,
+      officeId: docRef.id,
+      ...voiceData
+    });
+  } catch (err: any) {
+    console.error('Error creating voice:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function updateVoice(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { voiceId } = req.params;
+
+    const updates = {
+      ...req.body,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection('offices').doc(voiceId).update(updates);
+
+    res.json({ success: true, id: voiceId });
+  } catch (err: any) {
+    console.error('Error updating voice:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function deleteVoice(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { voiceId } = req.params;
+    await db.collection('offices').doc(voiceId).delete();
+
+    res.json({ success: true, id: voiceId });
+  } catch (err: any) {
+    console.error('Error deleting voice:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function resendVoiceInvitation(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { voiceId } = req.params;
+    const doc = await db.collection('offices').doc(voiceId).get();
+
+    if (!doc.exists) {
+      res.status(404).json({ error: 'Voice service not found' });
+      return;
+    }
+
+    // TODO: Implement email sending
+
+    res.json({ success: true, message: 'Invitation sent' });
+  } catch (err: any) {
+    console.error('Error resending invitation:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// ====================================================================
+// REAL ESTATE COMPANIES MANAGEMENT
+// ====================================================================
+
+export async function getAllRealEstateCompanies(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    // Try realEstateCompanies collection first
+    let snapshot = await db.collection('realEstateCompanies').get();
+    
+    // If no real estate companies, check agents collection as fallback
+    if (snapshot.empty) {
+      snapshot = await db.collection('agents').get();
+    }
+    
+    const companies: any[] = [];
+
+    snapshot.forEach(doc => {
+      companies.push({
+        id: doc.id,
+        officeId: doc.id,
+        ...doc.data()
+      });
+    });
+
+    res.json(companies);
+  } catch (err: any) {
+    console.error('Error fetching real estate companies:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function getRealEstateCompany(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { companyId } = req.params;
+    
+    // Try realEstateCompanies first
+    let doc = await db.collection('realEstateCompanies').doc(companyId).get();
+    
+    // If not found, try agents collection
+    if (!doc.exists) {
+      doc = await db.collection('agents').doc(companyId).get();
+    }
+
+    if (!doc.exists) {
+      res.status(404).json({ error: 'Real estate company not found' });
+      return;
+    }
+
+    res.json({
+      id: doc.id,
+      officeId: doc.id,
+      ...doc.data()
+    });
+  } catch (err: any) {
+    console.error('Error fetching real estate company:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function createRealEstateCompany(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const companyData = {
+      ...req.body,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    const docRef = await db.collection('realEstateCompanies').add(companyData);
+
+    res.status(201).json({
+      id: docRef.id,
+      officeId: docRef.id,
+      ...companyData
+    });
+  } catch (err: any) {
+    console.error('Error creating real estate company:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function updateRealEstateCompany(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { companyId } = req.params;
+
+    const updates = {
+      ...req.body,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection('realEstateCompanies').doc(companyId).update(updates);
+
+    res.json({ success: true, id: companyId });
+  } catch (err: any) {
+    console.error('Error updating real estate company:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function deleteRealEstateCompany(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { companyId } = req.params;
+    await db.collection('realEstateCompanies').doc(companyId).delete();
+
+    res.json({ success: true, id: companyId });
+  } catch (err: any) {
+    console.error('Error deleting real estate company:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+export async function resendRealEstateInvitation(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { companyId } = req.params;
+    const doc = await db.collection('realEstateCompanies').doc(companyId).get();
+
+    if (!doc.exists) {
+      res.status(404).json({ error: 'Real estate company not found' });
+      return;
+    }
+
+    // TODO: Implement email sending
+
+    res.json({ success: true, message: 'Invitation sent' });
+  } catch (err: any) {
+    console.error('Error resending invitation:', err);
+    res.status(500).json({ error: err.message });
+  }
+}

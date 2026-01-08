@@ -12,8 +12,8 @@ const getApiBaseUrl = () => {
     return import.meta.env.VITE_API_BASE_URL;
   }
   
-  // Always use deployed Cloud Run backend (never local emulator in development)
-  return `https://us-central1-${projectId}.cloudfunctions.net/api`;
+  // Use Cloud Run backend (primary backend service)
+  return `https://merxus-ai-backend-215800813926.us-central1.run.app/api`;
 };
 
 const baseURL = getApiBaseUrl();
