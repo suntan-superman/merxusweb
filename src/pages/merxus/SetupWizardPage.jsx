@@ -75,6 +75,7 @@ export default function SetupWizardPage() {
           break;
           
         case 'voice':
+        case 'general':
           endpoint = '/onboarding/office';
           payload = {
             office: {

@@ -11,7 +11,7 @@ export default function Completion({ tenantType, businessName, ownerEmail, owner
 
   const handleSwitchToOwner = async () => {
     setSwitchingUser(true);
-    await onSwitchToOwner();
+    await onSwitchToOwner(ownerEmail, ownerPassword);
     // onSwitchToOwner will handle the actual login and redirect
   };
   // Get dashboard path based on tenant type
