@@ -6,6 +6,7 @@ import OnboardingWizard from '../../components/onboarding/OnboardingWizard';
 import { useAuth } from '../../context/AuthContext';
 import apiClient from '../../api/client';
 import { auth } from '../../firebase/config';
+import { getEmailSignInMethods, getSignInMethodInfo } from '../../utils/authProviders';
 
 export default function SetupWizardPage() {
   const navigate = useNavigate();
@@ -39,6 +40,21 @@ export default function SetupWizardPage() {
     
     try {
       setIsSubmitting(true);
+
+      if (wizardData?.email) {
+        const methods = await getEmailSignInMethods(wizardData.email);
+        const methodInfo = getSignInMethodInfo(methods);
+        if (methodInfo.hasProvider) {
+          const message = methodInfo.hasPassword
+            ? 'This email already has an account. Use a different email for setup.'
+            : methodInfo.isAppleOnly
+              ? 'This email is linked to Apple Sign-In. Use a different email for admin setup.'
+              : `This email is linked to ${methodInfo.providerLabel}. Use a different email for admin setup.`;
+          toast.error(message);
+          setIsSubmitting(false);
+          return;
+        }
+      }
       
       // Determine which API endpoint to call based on tenant type
       let endpoint = '';

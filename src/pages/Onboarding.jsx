@@ -22,6 +22,7 @@ import {
   getTenantLabels,
 } from '../components/onboarding';
 import { submitOnboarding } from '../components/onboarding/onboardingApi';
+import { getEmailSignInMethods, getSignInMethodInfo } from '../utils/authProviders';
 import {
   FormInput,
   FormTextarea,
@@ -52,6 +53,7 @@ const Onboarding = () => {
   const [formData, setFormData] = useState(() => getInitialFormData(selectedPlan));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [providerHint, setProviderHint] = useState(null);
   
   // Invitation modal state
   const [showInvitationModal, setShowInvitationModal] = useState(false);
@@ -73,9 +75,25 @@ const Onboarding = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setProviderHint(null);
     setLoading(true);
 
     try {
+      const methods = await getEmailSignInMethods(formData.ownerEmail);
+      const methodInfo = getSignInMethodInfo(methods);
+      if (methodInfo.hasProvider) {
+        const message = methodInfo.hasPassword
+          ? 'An account with this email already exists. Please sign in instead.'
+          : methodInfo.isAppleOnly
+            ? 'This email is linked to Apple Sign-In. Please sign in with Apple.'
+            : `This email is linked to ${methodInfo.providerLabel}. Please sign in using that provider.`;
+        setProviderHint(methodInfo);
+        setError(message);
+        toast.error(message);
+        setLoading(false);
+        return;
+      }
+
       const result = await submitOnboarding(tenantType, formData);
 
       if (result.emailSent) {
@@ -219,6 +237,20 @@ const Onboarding = () => {
 
           {/* Error display */}
           <FormError error={error} />
+
+          {providerHint?.isAppleOnly && (
+            <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              <p className="font-semibold">This email uses Apple Sign-In</p>
+              <p className="mt-1">Please sign in with Apple to continue.</p>
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="mt-3 inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Go to Sign In
+              </button>
+            </div>
+          )}
 
           {/* Submit button */}
           <SubmitButton

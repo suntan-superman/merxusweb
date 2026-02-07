@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
-import { signInWithEmailAndPassword, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode, OAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { resendInvitationEmail } from '../api/voice';
+import { getEmailSignInMethods, getSignInMethodInfo } from '../utils/authProviders';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,6 +20,10 @@ export default function LoginPage() {
   const [passwordSetupEmail, setPasswordSetupEmail] = useState('');
   const [resendingEmail, setResendingEmail] = useState(false);
   const [resendEmailMessage, setResendEmailMessage] = useState(null);
+  const [providerHint, setProviderHint] = useState('');
+  const [resetProviderHint, setResetProviderHint] = useState('');
+  const [isAppleOnly, setIsAppleOnly] = useState(false);
+  const lastProviderCheckRef = useRef('');
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -30,6 +35,61 @@ export default function LoginPage() {
   const officeId = searchParams.get('officeId');
   const restaurantId = searchParams.get('restaurantId');
   const agentId = searchParams.get('agentId');
+
+  const updateProviderHint = async (nextEmail, { force = false } = {}) => {
+    const trimmed = (nextEmail || '').trim().toLowerCase();
+
+    if (!trimmed) {
+      lastProviderCheckRef.current = '';
+      setProviderHint('');
+      setIsAppleOnly(false);
+      return;
+    }
+
+    if (!force && lastProviderCheckRef.current === trimmed) {
+      return;
+    }
+
+    lastProviderCheckRef.current = trimmed;
+
+    const methods = await getEmailSignInMethods(trimmed);
+    const methodInfo = getSignInMethodInfo(methods);
+
+    if (methodInfo.hasProvider && !methodInfo.hasPassword) {
+      const message = methodInfo.isAppleOnly
+        ? 'This email uses Apple Sign-In. Use the Apple button below to continue.'
+        : `This email uses ${methodInfo.providerLabel}. Please sign in using that provider.`;
+      setProviderHint(message);
+      setIsAppleOnly(methodInfo.isAppleOnly);
+      return;
+    }
+
+    setProviderHint('');
+    setIsAppleOnly(false);
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          await result.user.getIdToken(true);
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('Apple redirect error:', err);
+        setError('Apple Sign-In failed. Please try again.');
+      }
+    };
+
+    handleRedirectResult();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   
   // Check if this is a password reset link from invitation
   useEffect(() => {
@@ -94,6 +154,19 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      const methods = await getEmailSignInMethods(email);
+      const methodInfo = getSignInMethodInfo(methods);
+      if (methodInfo.hasProvider && !methodInfo.hasPassword) {
+        const message = methodInfo.isAppleOnly
+          ? 'This email is linked to Apple Sign-In. Please use Apple to sign in.'
+          : `This email is linked to ${methodInfo.providerLabel}. Please sign in using that provider.`;
+        setProviderHint(message);
+        setIsAppleOnly(methodInfo.isAppleOnly);
+        setError(message);
+        setLoading(false);
+        return;
+      }
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       // Force token refresh to get latest claims
       await userCredential.user.getIdToken(true);
@@ -105,12 +178,42 @@ export default function LoginPage() {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      await signInWithRedirect(auth, provider);
+    } catch (err) {
+      console.error('Apple Sign-In error:', err);
+      setError(getErrorMessage(err.code) || 'Apple Sign-In failed');
+      setLoading(false);
+    }
+  };
+
   const handlePasswordReset = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
+      const methods = await getEmailSignInMethods(email);
+      const methodInfo = getSignInMethodInfo(methods);
+      if (methodInfo.hasProvider && !methodInfo.hasPassword) {
+        const message = methodInfo.isAppleOnly
+          ? 'This email is linked to Apple Sign-In. Password reset isn’t available.'
+          : `This email is linked to ${methodInfo.providerLabel}. Password reset isn’t available.`;
+        setProviderHint(message);
+        setResetProviderHint(message);
+        setIsAppleOnly(methodInfo.isAppleOnly);
+        setError(message);
+        setLoading(false);
+        return;
+      }
+
       await sendPasswordResetEmail(auth, email);
       setResetEmailSent(true);
       setLoading(false);
@@ -240,6 +343,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (prefillEmail && !email && !showPasswordSetup) {
       setEmail(prefillEmail);
+      updateProviderHint(prefillEmail, { force: true });
     }
   }, [prefillEmail, email, showPasswordSetup]);
 
@@ -470,10 +574,18 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setResetProviderHint('');
+                  }}
                   className="input-field"
                   placeholder="Enter your email"
                 />
+                {resetProviderHint ? (
+                  <p className="mt-2 text-xs text-amber-700">
+                    {resetProviderHint}
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex items-center justify-between">
@@ -516,10 +628,20 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setProviderHint('');
+                    setIsAppleOnly(false);
+                  }}
+                  onBlur={(e) => updateProviderHint(e.target.value)}
                   className="input-field"
                   placeholder="Enter your email"
                 />
+                {providerHint ? (
+                  <p className="mt-2 text-xs text-amber-700">
+                    {providerHint}
+                  </p>
+                ) : null}
               </div>
 
               <div>
@@ -535,7 +657,8 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="input-field pr-10"
+                    disabled={isAppleOnly}
+                    className={`input-field pr-10${isAppleOnly ? ' bg-gray-50 text-gray-400' : ''}`}
                     placeholder="Enter your password"
                   />
                   <button
@@ -543,6 +666,7 @@ export default function LoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
                     tabIndex={-1}
+                    disabled={isAppleOnly}
                   >
                     {showPassword ? (
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -559,16 +683,22 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowResetForm(true);
-                    setError('');
-                  }}
-                  className="text-sm text-primary-600 hover:text-primary-500"
-                >
-                  Forgot password?
-                </button>
+                {isAppleOnly ? (
+                  <span className="text-xs text-gray-500">
+                    Password reset isn’t available for Apple Sign-In.
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowResetForm(true);
+                      setError('');
+                    }}
+                    className="text-sm text-primary-600 hover:text-primary-500"
+                  >
+                    Forgot password?
+                  </button>
+                )}
               </div>
 
               <button
@@ -578,6 +708,30 @@ export default function LoginPage() {
               >
                 {loading ? 'Signing in...' : 'Sign in'}
               </button>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-500">or</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAppleSignIn}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-md py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span className="text-lg leading-none"></span>
+                <span>Sign in with Apple</span>
+              </button>
+              <div className="flex items-center justify-end">
+                <Link
+                  to="/support"
+                  className="text-xs text-gray-500 hover:text-primary-600"
+                >
+                  Need help?
+                </Link>
+              </div>
             </form>
           )}
         </div>

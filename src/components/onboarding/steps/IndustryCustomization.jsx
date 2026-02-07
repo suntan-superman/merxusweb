@@ -1,5 +1,26 @@
 import { Building2, Utensils, Phone, Briefcase, AlertCircle } from 'lucide-react';
 
+const BUSINESS_TYPES = [
+  { value: 'law_firm', label: 'Law Firm' },
+  { value: 'medical_office', label: 'Medical Office' },
+  { value: 'dental_office', label: 'Dental Office' },
+  { value: 'consulting', label: 'Consulting' },
+  { value: 'accounting', label: 'Accounting / Tax' },
+  { value: 'real_estate_brokerage', label: 'Real Estate Brokerage' },
+  { value: 'insurance', label: 'Insurance' },
+  { value: 'financial_services', label: 'Financial Services' },
+  { value: 'automotive', label: 'Automotive' },
+  { value: 'retail', label: 'Retail' },
+  { value: 'e_commerce', label: 'E-Commerce' },
+  { value: 'manufacturing', label: 'Manufacturing' },
+  { value: 'logistics', label: 'Logistics' },
+  { value: 'hospitality', label: 'Hospitality' },
+  { value: 'education', label: 'Education' },
+  { value: 'nonprofits', label: 'Nonprofits' },
+  { value: 'government', label: 'Government' },
+  { value: 'other', label: 'Other' },
+];
+
 export default function IndustryCustomization({ tenantType, data, onChange }) {
   const handleChange = (field, value) => {
     const industryData = { ...data.industryData, [field]: value };
@@ -173,15 +194,20 @@ export default function IndustryCustomization({ tenantType, data, onChange }) {
         <div className="max-w-2xl mx-auto space-y-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-              Business Type <span className="text-xs text-gray-500 font-normal">(Optional)</span>
+              Business Type <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
+            <select
               value={data.industryData?.businessType || ''}
               onChange={(e) => handleChange('businessType', e.target.value)}
-              placeholder="Law Firm, Medical Office, Consulting, etc."
-              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none"
-            />
+              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
+            >
+              <option value="">Select a business type...</option>
+              {BUSINESS_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
