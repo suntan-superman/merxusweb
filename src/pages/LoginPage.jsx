@@ -715,15 +715,25 @@ export default function LoginPage() {
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
 
-              <button
-                type="button"
-                onClick={handleAppleSignIn}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-md py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <span className="text-lg leading-none"></span>
-                <span>Sign in with Apple</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={handleAppleSignIn}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 rounded-md py-2.5 text-sm font-semibold border border-black bg-black text-white hover:bg-neutral-900 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M16.365 12.11c-.02-2.026 1.65-2.997 1.725-3.046-0.94-1.37-2.4-1.559-2.916-1.58-1.24-.126-2.42.73-3.05.73-.63 0-1.61-.712-2.645-.693-1.36.02-2.615.792-3.312 2.012-1.41 2.443-.36 6.058 1.015 8.04.67.97 1.47 2.06 2.52 2.02 1.01-.04 1.39-.653 2.61-.653 1.22 0 1.57.653 2.645.634 1.095-.02 1.79-1.01 2.46-1.98.77-1.12 1.09-2.21 1.11-2.27-.02-.01-2.12-.81-2.14-3.214ZM14.93 4.77c.56-.68.94-1.63.83-2.57-.81.03-1.79.54-2.37 1.22-.52.6-.98 1.56-.86 2.48.9.07 1.84-.46 2.4-1.13Z"
+                    />
+                  </svg>
+                  <span>Sign in with Apple</span>
+                </button>
               <div className="flex items-center justify-end">
                 <Link
                   to="/support"
