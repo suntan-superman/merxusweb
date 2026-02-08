@@ -7,13 +7,18 @@ import { useAuth } from '../context/AuthContext';
  * when they're on public routes (home, features, pricing, etc.)
  */
 export default function AutoRedirect() {
-  const { user, loading, userClaims } = useAuth();
+  const { user, loading, userClaims, needsOnboarding } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     // Don't redirect if still loading or no user
-    if (loading || !user || !userClaims) {
+    if (loading || !user) {
+      return;
+    }
+
+    if (needsOnboarding) {
+      navigate('/onboarding-wizard', { replace: true });
       return;
     }
 

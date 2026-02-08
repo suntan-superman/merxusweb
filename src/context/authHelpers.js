@@ -15,13 +15,19 @@ export function buildAuthContextValue({
   userClaims,
   refreshToken,
   signOut,
+  needsOnboarding,
 }) {
+  const providerIds = user?.providerData?.map((p) => p.providerId) || [];
+  const isAppleUser = providerIds.includes('apple.com');
+
   return {
     // Core state
     user,
     token,
     loading,
     userClaims,
+    needsOnboarding,
+    isAppleUser,
 
     // Tenant IDs (convenience accessors)
     restaurantId: userClaims?.restaurantId,

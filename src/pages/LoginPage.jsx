@@ -27,7 +27,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { user, userClaims, loading: authLoading } = useAuth();
+  const { user, userClaims, needsOnboarding, loading: authLoading } = useAuth();
   
   const invited = searchParams.get('fromInvite') === 'true';
   const oobCode = searchParams.get('oobCode');
@@ -112,6 +112,10 @@ export default function LoginPage() {
   useEffect(() => {
     // Wait for auth to finish loading and user to be available
     if (!authLoading && user) {
+      if (needsOnboarding) {
+        navigate('/onboarding-wizard', { replace: true });
+        return;
+      }
       // Wait a moment for userClaims to load after login
       const timer = setTimeout(() => {
         if (userClaims) {
@@ -364,7 +368,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary-50 via-white to-emerald-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-300/40 blur-3xl" />
+        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-primary-300/35 blur-3xl" />
+        <div className="absolute left-1/2 top-1/3 h-56 w-56 -translate-x-1/2 rounded-full bg-sky-300/30 blur-[90px]" />
+      </div>
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-4xl font-bold text-gray-900">

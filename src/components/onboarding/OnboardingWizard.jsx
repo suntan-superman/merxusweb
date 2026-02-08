@@ -11,19 +11,30 @@ import ConfirmationModal from '../common/ConfirmationModal';
 
 const TOTAL_STEPS = 7;
 
-export default function OnboardingWizard({ onClose, onComplete, onSwitchToOwner, userEmail, tenantType: initialTenantType }) {
+export default function OnboardingWizard({
+  onClose,
+  onComplete,
+  onSwitchToOwner,
+  userEmail,
+  tenantType: initialTenantType,
+  authMethod = 'password',
+  prefillEmail,
+  prefillName,
+}) {
+  const isAppleAuth = authMethod === 'apple';
   const [currentStep, setCurrentStep] = useState(1);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [dataSaved, setDataSaved] = useState(false);
   const [wizardData, setWizardData] = useState({
     // Step 1: Industry
     tenantType: initialTenantType || null,
+    authMethod,
     
-    // Step 2: Business Basics (NEVER pre-populate email/password for security)
+    // Step 2: Business Basics (avoid pre-populating unless Apple sign-in)
     businessName: '',
-    ownerName: '',
-    email: '', // Always start blank
-    tempPassword: '', // Always start blank
+    ownerName: prefillName || '',
+    email: prefillEmail || '', // Apple sign-in can prefill
+    tempPassword: '', // Optional for Apple sign-in
     phone: '',
     address: '',
     city: '',
@@ -66,7 +77,7 @@ export default function OnboardingWizard({ onClose, onComplete, onSwitchToOwner,
         wizardData.businessName?.trim() &&
         wizardData.ownerName?.trim() &&
         wizardData.email?.trim() &&
-        wizardData.tempPassword?.trim() && wizardData.tempPassword.length >= 6 &&
+        (isAppleAuth || (wizardData.tempPassword?.trim() && wizardData.tempPassword.length >= 6)) &&
         wizardData.phone?.trim() &&
         wizardData.address?.trim() &&
         wizardData.city?.trim() &&
@@ -258,6 +269,8 @@ export default function OnboardingWizard({ onClose, onComplete, onSwitchToOwner,
               <BusinessDetails
                 data={wizardData}
                 onChange={updateWizardData}
+                hidePassword={isAppleAuth}
+                emailReadOnly={isAppleAuth && !!prefillEmail}
               />
             )}
             {currentStep === 3 && (

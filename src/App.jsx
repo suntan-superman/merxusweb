@@ -12,6 +12,7 @@ import Features from './pages/Features';
 import Pricing from './pages/Pricing';
 import Onboarding from './pages/Onboarding';
 import OnboardingWizardDemo from './pages/OnboardingWizardDemo';
+import OnboardingWizardPage from './pages/OnboardingWizardPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/restaurant/DashboardPage';
 import RestaurantDashboard from './components/restaurant/RestaurantDashboard';
@@ -82,6 +83,7 @@ function App() {
         <Routes>
           {/* Public routes - no NavBar */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/onboarding-wizard" element={<OnboardingWizardPage />} />
           <Route path="/support" element={<SupportPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />

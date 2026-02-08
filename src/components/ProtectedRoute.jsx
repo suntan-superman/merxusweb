@@ -13,7 +13,7 @@ export default function ProtectedRoute({
   requireManager = false,
   requireAdmin = false,
 }) {
-  const { user, loading, userClaims, isRestaurantUser, isVoiceUser, isRealEstateUser, isMerxusAdmin, isOwner, isManager, isMerxusAdminRole } = useAuth();
+  const { user, loading, userClaims, needsOnboarding, isRestaurantUser, isVoiceUser, isRealEstateUser, isMerxusAdmin, isOwner, isManager, isMerxusAdminRole } = useAuth();
   const location = useLocation();
 
   // Debug logging - use useEffect to avoid logging on every render
@@ -23,6 +23,7 @@ export default function ProtectedRoute({
         loading,
         hasUser: !!user,
         hasClaims: !!userClaims,
+        needsOnboarding,
         userClaims: userClaims ? JSON.parse(JSON.stringify(userClaims)) : null,
         requireAuth,
         requireRestaurant,
@@ -96,6 +97,12 @@ export default function ProtectedRoute({
         </div>
       </div>
     );
+  }
+
+  // If user is signed in but needs onboarding, send to onboarding wizard
+  if (requireAuth && user && needsOnboarding) {
+    console.warn('User needs onboarding. Redirecting to onboarding wizard.');
+    return <Navigate to="/onboarding-wizard" state={{ from: location }} replace />;
   }
 
   // If user is logged in but claims are missing after loading completes,

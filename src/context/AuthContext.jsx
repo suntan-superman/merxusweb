@@ -31,6 +31,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userClaims, setUserClaims] = useState(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   
   // Refs
   const userRef = useRef(null);
@@ -42,7 +43,11 @@ export function AuthProvider({ children }) {
     
     const result = await refreshTokenAndClaims(user, { setToken, setUserClaims });
     if (result.success) {
+      setNeedsOnboarding(false);
       return result.token;
+    }
+    if (result.needsOnboarding) {
+      setNeedsOnboarding(true);
     }
     return null;
   }, [user]);
@@ -129,8 +134,14 @@ export function AuthProvider({ children }) {
               setupInactivityTimer();
             }
             setupTokenRefresh();
+            setNeedsOnboarding(false);
             setLoading(false);
             console.log('Auth setup complete');
+          } else if (result.needsOnboarding) {
+            console.warn('Apple user missing claims. Redirecting to onboarding wizard.');
+            setNeedsOnboarding(true);
+            setupTokenRefresh();
+            setLoading(false);
           } else if (!result.critical) {
             // Non-critical failure - keep user logged in
             console.warn('Token refresh failed non-critically. User may experience issues.');
@@ -181,6 +192,7 @@ export function AuthProvider({ children }) {
       userRef.current = null;
       setToken(null);
       setUserClaims(null);
+      setNeedsOnboarding(false);
       clearInactivityTimer();
       clearTokenRefresh();
       setLoading(false);
@@ -206,6 +218,7 @@ export function AuthProvider({ children }) {
     userClaims,
     refreshToken: handleRefreshToken,
     signOut: handleSignOut,
+    needsOnboarding,
   });
 
   // Debug object (dev only)
