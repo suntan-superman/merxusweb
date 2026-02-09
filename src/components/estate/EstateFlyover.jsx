@@ -27,6 +27,29 @@ const SAMPLE_CSV_CONTENT = `Address,Price,Beds,Baths,Sqft,Description
 "456 Oak Ave, Bakersfield, CA 93314",525000,4,3,2200,"Stunning two-story home in gated community with pool and spa."
 "789 Elm Dr, Bakersfield, CA 93311",375000,2,2,1400,"Charming starter home with new flooring and fresh paint throughout."`;
 
+const DEFAULT_BUSINESS_HOURS = {
+  monday: { open: '09:00', close: '17:00', closed: false },
+  tuesday: { open: '09:00', close: '17:00', closed: false },
+  wednesday: { open: '09:00', close: '17:00', closed: false },
+  thursday: { open: '09:00', close: '17:00', closed: false },
+  friday: { open: '09:00', close: '17:00', closed: false },
+  saturday: { open: '10:00', close: '14:00', closed: false },
+  sunday: { open: '00:00', close: '00:00', closed: true },
+};
+
+const normalizeBusinessHours = (input) => {
+  const hours = input && typeof input === 'object' ? input : {};
+  return Object.keys(DEFAULT_BUSINESS_HOURS).reduce((acc, day) => {
+    const dayHours = hours[day] || {};
+    acc[day] = {
+      open: dayHours.open ?? DEFAULT_BUSINESS_HOURS[day].open,
+      close: dayHours.close ?? DEFAULT_BUSINESS_HOURS[day].close,
+      closed: typeof dayHours.closed === 'boolean' ? dayHours.closed : DEFAULT_BUSINESS_HOURS[day].closed,
+    };
+    return acc;
+  }, {});
+};
+
 const STEPS = [
   { id: 'welcome', title: 'Welcome' },
   { id: 'brand', title: 'Your Brand' },
@@ -68,15 +91,7 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
     promptTemplate: 'standard_agent',
     customInstructions: PROMPT_TEMPLATES[0].prompt,
     // Hours
-    businessHours: {
-      monday: { open: '09:00', close: '17:00', closed: false },
-      tuesday: { open: '09:00', close: '17:00', closed: false },
-      wednesday: { open: '09:00', close: '17:00', closed: false },
-      thursday: { open: '09:00', close: '17:00', closed: false },
-      friday: { open: '09:00', close: '17:00', closed: false },
-      saturday: { open: '10:00', close: '14:00', closed: false },
-      sunday: { open: '00:00', close: '00:00', closed: true },
-    },
+    businessHours: DEFAULT_BUSINESS_HOURS,
   });
 
   // Load saved progress and settings
@@ -118,6 +133,10 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
         if (found) matchedTemplate = found.id;
       }
 
+      const normalizedHours = normalizeBusinessHours(
+        savedFormData.businessHours ?? data.businessHours ?? formData.businessHours
+      );
+
       setFormData({
         name: savedFormData.name ?? data.name ?? '',
         brandName: savedFormData.brandName ?? data.brandName ?? '',
@@ -132,7 +151,7 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
         aiVoice: savedFormData.aiVoice ?? data.aiConfig?.voiceName ?? 'alloy',
         promptTemplate: savedFormData.promptTemplate ?? matchedTemplate,
         customInstructions: hasExistingInstructions ? existingInstructions : PROMPT_TEMPLATES[0].prompt,
-        businessHours: savedFormData.businessHours ?? data.businessHours ?? formData.businessHours,
+        businessHours: normalizedHours,
       });
 
       setCurrentStep(savedStep);

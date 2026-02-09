@@ -1,5 +1,15 @@
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
+const DEFAULT_BUSINESS_HOURS = {
+  monday: { open: '09:00', close: '17:00', closed: false },
+  tuesday: { open: '09:00', close: '17:00', closed: false },
+  wednesday: { open: '09:00', close: '17:00', closed: false },
+  thursday: { open: '09:00', close: '17:00', closed: false },
+  friday: { open: '09:00', close: '17:00', closed: false },
+  saturday: { open: '10:00', close: '14:00', closed: false },
+  sunday: { open: '00:00', close: '00:00', closed: true },
+};
+
 export default function FlyoverHoursStep({ formData, onHoursChange }) {
   return (
     <div className="space-y-4">
@@ -10,7 +20,7 @@ export default function FlyoverHoursStep({ formData, onHoursChange }) {
 
       <div className="space-y-3">
         {DAYS.map((day) => {
-          const hours = formData.businessHours[day];
+          const hours = formData.businessHours?.[day] || DEFAULT_BUSINESS_HOURS[day];
           return (
             <div key={day} className="flex items-center gap-3">
               <div className="w-24">

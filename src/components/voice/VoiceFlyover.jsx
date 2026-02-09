@@ -91,6 +91,29 @@ Contact us to discuss how we can help with your needs.`,
 Please call for more information about our services.`,
 };
 
+const DEFAULT_BUSINESS_HOURS = {
+  monday: { open: '09:00', close: '17:00', closed: false },
+  tuesday: { open: '09:00', close: '17:00', closed: false },
+  wednesday: { open: '09:00', close: '17:00', closed: false },
+  thursday: { open: '09:00', close: '17:00', closed: false },
+  friday: { open: '09:00', close: '17:00', closed: false },
+  saturday: { open: '10:00', close: '14:00', closed: false },
+  sunday: { open: '00:00', close: '00:00', closed: true },
+};
+
+const normalizeBusinessHours = (input) => {
+  const hours = input && typeof input === 'object' ? input : {};
+  return Object.keys(DEFAULT_BUSINESS_HOURS).reduce((acc, day) => {
+    const dayHours = hours[day] || {};
+    acc[day] = {
+      open: dayHours.open ?? DEFAULT_BUSINESS_HOURS[day].open,
+      close: dayHours.close ?? DEFAULT_BUSINESS_HOURS[day].close,
+      closed: typeof dayHours.closed === 'boolean' ? dayHours.closed : DEFAULT_BUSINESS_HOURS[day].closed,
+    };
+    return acc;
+  }, {});
+};
+
 const STEPS = [
   { id: 'welcome', title: 'Welcome' },
   { id: 'business', title: 'Your Business' },
@@ -141,15 +164,7 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
     aiVoice: 'alloy',
     customInstructions: '',
     // Hours
-    businessHours: {
-      monday: { open: '09:00', close: '17:00', closed: false },
-      tuesday: { open: '09:00', close: '17:00', closed: false },
-      wednesday: { open: '09:00', close: '17:00', closed: false },
-      thursday: { open: '09:00', close: '17:00', closed: false },
-      friday: { open: '09:00', close: '17:00', closed: false },
-      saturday: { open: '10:00', close: '14:00', closed: false },
-      sunday: { open: '00:00', close: '00:00', closed: true },
-    },
+    businessHours: DEFAULT_BUSINESS_HOURS,
   });
 
   // Update industries when category changes
@@ -190,6 +205,10 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
       }
 
       // Merge settings with saved form data
+      const normalizedHours = normalizeBusinessHours(
+        savedFormData.businessHours ?? data.businessHours ?? formData.businessHours
+      );
+
       setFormData({
         name: savedFormData.name ?? data.name ?? '',
         address: savedFormData.address ?? data.address ?? '',
@@ -201,7 +220,7 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
         twilioNumberSid: savedFormData.twilioNumberSid ?? data.twilioNumberSid ?? '',
         aiVoice: savedFormData.aiVoice ?? data.aiConfig?.voiceName ?? 'alloy',
         customInstructions: savedFormData.customInstructions ?? data.aiConfig?.customInstructions ?? '',
-        businessHours: savedFormData.businessHours ?? data.businessHours ?? formData.businessHours,
+        businessHours: normalizedHours,
       });
 
       setCurrentStep(savedStep);
@@ -797,7 +816,7 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
 
               <div className="space-y-3">
                 {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
-                  const hours = formData.businessHours[day];
+                  const hours = formData.businessHours?.[day] || DEFAULT_BUSINESS_HOURS[day];
                   return (
                     <div key={day} className="flex items-center gap-3">
                       <div className="w-24">
