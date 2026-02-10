@@ -16,6 +16,7 @@ export default function VoiceCompanyProfile({ settings, onSave, saving }) {
       industry: '',
     },
   });
+  const isTwilioLocked = !!form.twilioPhoneNumber;
 
   const [categories] = useState(() => {
     const base = getCategories();
@@ -138,6 +139,11 @@ export default function VoiceCompanyProfile({ settings, onSave, saving }) {
           <p className="text-sm text-gray-600 mb-2">
             Configure your Twilio phone number for AI call routing. This is the number that will receive calls.
           </p>
+          {isTwilioLocked && (
+            <p className="text-sm text-amber-700 font-semibold mb-3">
+              Your Twilio number is already assigned. Contact support to request a change.
+            </p>
+          )}
           <p className="text-sm text-red-600 font-bold mb-4">
             If you do not have this information (the number and SID), please email{' '}
             <a href="mailto:sales@merxusllc.com" className="underline hover:text-red-700">sales@merxusllc.com</a>{' '}
@@ -157,8 +163,9 @@ export default function VoiceCompanyProfile({ settings, onSave, saving }) {
                 required
                 value={form.twilioPhoneNumber}
                 onChange={handleChange}
-                className="input-field"
+                className={`input-field ${isTwilioLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 placeholder="+15551234567"
+                readOnly={isTwilioLocked}
               />
               <p className="text-xs text-gray-500 mt-1">
                 The Twilio phone number assigned to your business for AI call routing. Must be in E.164 format (e.g., +15551234567).

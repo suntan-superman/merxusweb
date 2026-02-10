@@ -461,6 +461,7 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
               formData={formData}
               onChange={handleChange}
               onRequestTwilioInfo={handleRequestTwilioInfo}
+              isLocked={!!formData.twilioPhoneNumber}
             />
           )}
           {currentStep === 4 && (

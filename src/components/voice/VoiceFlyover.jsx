@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, ChevronRight, ChevronLeft, Check, Play, Pause, Mail } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, Play, Pause, Mail, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatPhoneInput } from '../../utils/phoneFormatter';
 import { updateVoiceSettings, fetchVoiceSettings } from '../../api/voice';
@@ -166,6 +166,7 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
     // Hours
     businessHours: DEFAULT_BUSINESS_HOURS,
   });
+  const isTwilioLocked = !!formData.twilioPhoneNumber;
 
   // Update industries when category changes
   useEffect(() => {
@@ -679,6 +680,20 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
                 <p className="text-sm text-gray-600">Configure your AI phone number</p>
               </div>
 
+              {isTwilioLocked && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="text-amber-600" size={20} />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900 mb-1">Number changes require support</p>
+                      <p className="text-sm text-amber-800">
+                        Your Merxus Twilio number is already assigned. Contact support to request a change.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="p-4 mb-4 border bg-amber-50 border-amber-200 rounded-xl">
                 <p className="mb-2 text-sm font-medium text-amber-800">
                   📞 Don't have your Twilio info yet?
@@ -688,7 +703,10 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
                 </p>
                 <button
                   onClick={handleRequestTwilioInfo}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors rounded-lg bg-amber-600 hover:bg-amber-700"
+                  disabled={isTwilioLocked}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors rounded-lg ${
+                    isTwilioLocked ? 'bg-gray-300 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-700'
+                  }`}
                 >
                   <Mail size={16} />
                   Request from Merxus
@@ -703,8 +721,9 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
                   type="tel"
                   value={formData.twilioPhoneNumber}
                   onChange={(e) => handleChange('twilioPhoneNumber', e.target.value)}
-                  className="input-field"
+                  className={`input-field ${isTwilioLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   placeholder="+15551234567"
+                  readOnly={isTwilioLocked}
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Must be in E.164 format (e.g., +15551234567)
@@ -837,14 +856,14 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
                             type="time"
                             value={hours.open}
                             onChange={(e) => handleHoursChange(day, 'open', e.target.value)}
-                            className="input-field !py-1.5 !px-2 w-28 text-sm"
+                            className="input-field !py-1.5 !px-2 w-32 text-sm"
                           />
                           <span className="text-gray-500">to</span>
                           <input
                             type="time"
                             value={hours.close}
                             onChange={(e) => handleHoursChange(day, 'close', e.target.value)}
-                            className="input-field !py-1.5 !px-2 w-28 text-sm"
+                            className="input-field !py-1.5 !px-2 w-32 text-sm"
                           />
                         </>
                       )}
@@ -929,3 +948,4 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
     </div>
   );
 }
+

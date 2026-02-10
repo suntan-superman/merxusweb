@@ -13,6 +13,7 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
     twilioPhoneNumber: settings.twilioPhoneNumber || '',
     twilioNumberSid: settings.twilioNumberSid || '',
   });
+  const isTwilioLocked = !!form.twilioPhoneNumber;
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -182,6 +183,11 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
           <p className="mb-2 text-sm text-gray-600">
             Configure your Twilio phone number for AI call routing. This is the number that will receive calls.
           </p>
+          {isTwilioLocked && (
+            <p className="text-sm text-amber-700 font-semibold mb-3">
+              Your Twilio number is already assigned. Contact support to request a change.
+            </p>
+          )}
           <p className="mb-4 text-sm font-bold text-red-600">
           yarn start  If you do not have this information (the number and SID), please email{' '}
             <a href="mailto:sales@merxusllc.com" className="underline hover:text-red-700">sales@merxusllc.com</a>{' '}
@@ -201,8 +207,9 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
                 required
                 value={form.twilioPhoneNumber}
                 onChange={handleChange}
-                className="input-field"
+                className={`input-field ${isTwilioLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 placeholder="+15551234567"
+                readOnly={isTwilioLocked}
               />
               <p className="mt-1 text-xs text-gray-500">
                 The Twilio phone number assigned to your business for AI call routing. Must be in E.164 format (e.g., +15551234567).

@@ -437,7 +437,7 @@ export default function VoiceDetail({ voice = {}, onUpdate, onClose, loading }) 
                       value={form.businessHours[day.key]?.open || '09:00'}
                       onChange={(e) => handleBusinessHourChange(day.key, 'open', e.target.value)}
                       disabled={!editing}
-                      className="input-field text-sm w-28"
+                      className="input-field text-sm w-32"
                     />
                     <span className="text-gray-600">to</span>
                     <input
@@ -445,7 +445,7 @@ export default function VoiceDetail({ voice = {}, onUpdate, onClose, loading }) 
                       value={form.businessHours[day.key]?.close || '17:00'}
                       onChange={(e) => handleBusinessHourChange(day.key, 'close', e.target.value)}
                       disabled={!editing}
-                      className="input-field text-sm w-28"
+                      className="input-field text-sm w-32"
                     />
                   </div>
                 )}
@@ -624,3 +624,4 @@ export default function VoiceDetail({ voice = {}, onUpdate, onClose, loading }) 
     </div>
   );
 }
+

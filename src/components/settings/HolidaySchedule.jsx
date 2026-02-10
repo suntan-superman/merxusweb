@@ -281,14 +281,14 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
                     type="time"
                     value={newHolidayOpenTime}
                     onChange={(e) => setNewHolidayOpenTime(e.target.value)}
-                    className="input-field w-28"
+                    className="input-field w-32"
                   />
                   <span className="text-gray-500">to</span>
                   <input
                     type="time"
                     value={newHolidayCloseTime}
                     onChange={(e) => setNewHolidayCloseTime(e.target.value)}
-                    className="input-field w-28"
+                    className="input-field w-32"
                   />
                 </div>
               )}
@@ -495,3 +495,4 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
     </section>
   );
 }
+

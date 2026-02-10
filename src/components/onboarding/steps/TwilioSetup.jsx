@@ -15,6 +15,9 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
   const [recentlyPurchased, setRecentlyPurchased] = useState(null); // Store just-purchased number
   const [unassignedNumbers, setUnassignedNumbers] = useState([]); // Numbers from Twilio not yet assigned
   const [loadingUnassigned, setLoadingUnassigned] = useState(true);
+  const isAutoProvisioned =
+    data.twilioAccountSid === 'auto_provisioned' || data.twilioAuthToken === 'auto_provisioned';
+  const isLocked = !!data.twilioPhoneNumber && isAutoProvisioned;
 
   // Fetch unassigned numbers on mount
   React.useEffect(() => {
@@ -157,6 +160,34 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
       setPurchasingNumber(null);
     }
   };
+
+  if (isLocked) {
+    return (
+      <div className="py-4">
+        <div className="text-center mb-6">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Get Your AI Phone Number</h3>
+          <p className="text-gray-600">Your Merxus number is already assigned.</p>
+        </div>
+        <div className="max-w-2xl mx-auto space-y-4">
+          <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="text-amber-600" size={22} />
+              <div>
+                <p className="font-semibold text-amber-900 mb-1">Number changes require support</p>
+                <p className="text-sm text-amber-800">
+                  Your Merxus Twilio number is already assigned and cannot be changed in self‑service.
+                  Please contact support if you need to change it.
+                </p>
+                <p className="mt-3 font-mono text-lg text-amber-900">
+                  {formatPhoneDisplay(data.twilioPhoneNumber)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-4">
