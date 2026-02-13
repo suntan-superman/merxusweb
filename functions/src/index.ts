@@ -14,8 +14,17 @@ const app = express();
 // CORS configuration
 app.use(cors({ origin: true }));
 
-// Parse JSON bodies
-app.use(express.json());
+// Stripe webhook requires raw body
+app.use('/billing/webhook', express.raw({ type: 'application/json' }));
+
+// Parse JSON bodies (skip Stripe webhook which requires raw body)
+const jsonParser = express.json();
+app.use((req, res, next) => {
+  if (req.path === '/billing/webhook') {
+    return next();
+  }
+  return jsonParser(req, res, next);
+});
 
 // Request logging middleware (logs all requests for debugging/audit)
 app.use(requestLogger);
@@ -31,7 +40,7 @@ import * as onboardingRoutes from './routes/onboarding';
 // Apply auth middleware to all routes EXCEPT public ones
 app.use((req, res, next) => {
   // Skip auth for health check, public onboarding routes, and Stripe webhook
-  const publicPaths = ['/health', '/onboarding/office', '/onboarding/restaurant', '/onboarding/agent', '/onboarding/resend-email', '/billing/webhook'];
+  const publicPaths = ['/health', '/onboarding/office', '/onboarding/restaurant', '/onboarding/agent', '/onboarding/resend-email', '/billing/webhook', '/billing/pricing'];
   const isPublicPath = publicPaths.includes(req.path);
   
   if (isPublicPath) {

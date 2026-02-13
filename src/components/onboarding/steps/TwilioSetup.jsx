@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Phone, Key, ExternalLink, CheckCircle2, AlertCircle, Video, Search, ShoppingCart, Sparkles, Loader } from 'lucide-react';
-import { searchAvailableNumbers, purchasePhoneNumber, listUnassignedNumbers } from '../../../api/twilioProvisioning';
+import { searchAvailableNumbers, listUnassignedNumbers } from '../../../api/twilioProvisioning';
 import { toast } from 'react-toastify';
 import { formatPhoneDisplay, formatPhoneInput } from '../../../utils/phoneFormatter';
 
@@ -117,45 +117,29 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     }
   };
 
-  // Handle number purchase
-  const handlePurchase = async (phoneNumber) => {
-    if (!tenantType || !tenantId) {
-      toast.error('Missing tenant information. Please restart the wizard.');
-      return;
-    }
-
+  // Handle number selection (reservation happens in payment step)
+  const handleSelectNumber = async (phoneNumber) => {
     setPurchasingNumber(phoneNumber);
     try {
-      const result = await purchasePhoneNumber(
-        phoneNumber,
-        tenantType,
-        tenantId,
-        `Merxus ${tenantType} - ${data.businessName || tenantId}`,
-        true // skipDbSave - we'll save when creating the tenant
-      );
-
-      // Update wizard data with purchased number info (batch all updates together)
       onChange({
         ...data,
-        twilioPhoneNumber: result.number.phoneNumber,
-        twilioPhoneSid: result.number.sid,
+        twilioPhoneNumber: phoneNumber,
+        twilioPhoneSid: '',
         twilioAccountSid: 'auto_provisioned',
         twilioAuthToken: 'auto_provisioned',
-        twilioWebhookUrls: result.webhookUrls,
       });
 
-      // Store purchased number info for display
       setRecentlyPurchased({
-        phoneNumber: result.number.phoneNumber,
-        sid: result.number.sid,
-        friendlyName: result.number.friendlyName,
+        phoneNumber,
+        sid: 'pending',
+        friendlyName: `Merxus ${tenantType}`,
       });
 
       setPurchasedSuccess(true);
-      toast.success('🎉 Phone number purchased and configured!');
+      toast.success('✅ Phone number selected. Continue to payment.');
     } catch (error) {
-      console.error('Purchase error:', error);
-      toast.error('Failed to purchase number. Please try again or use manual entry.');
+      console.error('Selection error:', error);
+      toast.error('Failed to select number. Please try again.');
     } finally {
       setPurchasingNumber(null);
     }
@@ -193,17 +177,17 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     <div className="py-4">
       <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-gray-900 mb-2">Get Your AI Phone Number</h3>
-        <p className="text-gray-600">Search and purchase a phone number instantly - no Twilio account needed!</p>
+                <p className="text-gray-600">Search and select a phone number instantly - no Twilio account needed!</p>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Highlight Automatic Mode */}
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 text-center">
           <Sparkles className="w-12 h-12 text-green-600 mx-auto mb-3" />
-          <h4 className="text-lg font-bold text-gray-900 mb-2">✨ Instant Setup - Takes 30 Seconds</h4>
-          <p className="text-gray-700">
-            We'll purchase and configure a phone number for you. Everything is included in your plan!
-          </p>
+                  <h4 className="text-lg font-bold text-gray-900 mb-2">✨ Instant Setup - Takes 30 Seconds</h4>
+                  <p className="text-gray-700">
+                    We'll reserve and configure a phone number for you after payment. Everything is included in your plan!
+                  </p>
         </div>
 
         {/* Unassigned Numbers from Twilio - Show if found and no number selected yet */}
@@ -356,20 +340,20 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                               </p>
                             </div>
                           </div>
-                          <button
-                            onClick={() => handlePurchase(number.phoneNumber)}
+                      <button
+                            onClick={() => handleSelectNumber(number.phoneNumber)}
                             disabled={purchasingNumber !== null}
                             className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 shadow-md hover:shadow-lg"
                           >
                             {purchasingNumber === number.phoneNumber ? (
                               <>
                                 <Loader className="animate-spin" size={18} />
-                                Purchasing...
+                                Selecting...
                               </>
                             ) : (
                               <>
                                 <ShoppingCart size={18} />
-                                Select & Buy
+                                Select
                               </>
                             )}
                           </button>
@@ -382,10 +366,10 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
             ) : (
               <div className="bg-green-50 border-2 border-green-500 rounded-xl p-6 text-center">
                 <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                <h4 className="text-xl font-bold text-gray-900 mb-2">Phone Number Purchased!</h4>
+                <h4 className="text-xl font-bold text-gray-900 mb-2">Phone Number Selected!</h4>
                 <p className="text-lg font-semibold text-green-700 mb-2">{data.twilioPhoneNumber}</p>
                 <p className="text-sm text-gray-600">
-                  Your number is configured and ready to receive calls. Click Continue to proceed.
+                  Your number will be reserved after payment. Click Continue to proceed.
                 </p>
               </div>
             )}

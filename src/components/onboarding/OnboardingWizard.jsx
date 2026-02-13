@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import IndustrySelection from './steps/IndustrySelection';
 import BusinessDetails from './steps/BusinessDetails';
 import TwilioSetup from './steps/TwilioSetup';
+import PaymentCheckout from './steps/PaymentCheckout';
 import VoiceSelection from './steps/VoiceSelection';
 import IndustryCustomization from './steps/IndustryCustomization';
 import TestAI from './steps/TestAI';
 import Completion from './steps/Completion';
 import ConfirmationModal from '../common/ConfirmationModal';
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
+const STORAGE_KEY = 'merxus_onboarding_wizard';
 
 export default function OnboardingWizard({
   onClose,
@@ -20,6 +22,7 @@ export default function OnboardingWizard({
   authMethod = 'password',
   prefillEmail,
   prefillName,
+  tenantCreated,
 }) {
   const isAppleAuth = authMethod === 'apple';
   const [currentStep, setCurrentStep] = useState(1);
@@ -52,7 +55,46 @@ export default function OnboardingWizard({
     
     // Step 5: Industry-specific
     industryData: {},
+
+    // Payment + reservation
+    reservationId: null,
+    reservationExpiresAt: null,
+    paymentCompleted: false,
+    paymentSessionId: null,
+    promoCode: '',
   });
+
+  const resolvedTenantId = tenantCreated?.officeId || tenantCreated?.restaurantId || tenantCreated?.agentId || tenantCreated?.tenantId || null;
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+      if (parsed?.wizardData) {
+        setWizardData((prev) => ({ ...prev, ...parsed.wizardData }));
+      }
+      if (parsed?.currentStep) {
+        setCurrentStep(parsed.currentStep);
+      }
+      if (parsed?.dataSaved) {
+        setDataSaved(parsed.dataSaved);
+      }
+    } catch (error) {
+      console.error('Failed to restore wizard state:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ wizardData, currentStep, dataSaved })
+      );
+    } catch (error) {
+      console.error('Failed to persist wizard state:', error);
+    }
+  }, [wizardData, currentStep, dataSaved]);
 
   const updateWizardData = (updates) => {
     // Log voice updates specifically
@@ -104,18 +146,21 @@ export default function OnboardingWizard({
       
       return phoneValid && hasAccountSid && hasAuthToken;
     }
+    if (currentStep === 4) {
+      return !!wizardData.paymentCompleted;
+    }
     return true; // Other steps can proceed
   };
 
   const goToNextStep = async () => {
     if (currentStep < TOTAL_STEPS && canProceed()) {
-      // Special handling: Save data at Step 5 (before test step)
-      if (currentStep === 5 && !dataSaved && onComplete) {
-        console.log('💾 Saving tenant data before test step...');
+      // Special handling: Save data after Twilio selection (before payment)
+      if (currentStep === 3 && !dataSaved && onComplete) {
+        console.log('💾 Saving tenant data before payment step...');
         try {
           await onComplete(wizardData, true); // Pass 'isPreSave' flag
           setDataSaved(true);
-          console.log('✅ Data saved! User can now test at Step 6.');
+          console.log('✅ Data saved! User can now proceed to payment.');
         } catch (error) {
           console.error('❌ Failed to save data:', error);
           // Don't block progression - user can still continue
@@ -138,6 +183,11 @@ export default function OnboardingWizard({
     } else if (onComplete) {
       // Data already saved, just trigger completion callback for redirect
       await onComplete(wizardData, false);
+    }
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.error('Failed to clear wizard storage:', error);
     }
   };
 
@@ -165,6 +215,7 @@ export default function OnboardingWizard({
     'Choose Your Industry',
     'Business Details',
     'Twilio Phone Setup',
+    'Payment',
     'AI Voice Selection',
     getStep5Title(),
     'Test Your AI',
@@ -183,6 +234,11 @@ export default function OnboardingWizard({
 
   const handleConfirmExit = () => {
     setShowExitConfirm(false);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.error('Failed to clear wizard storage:', error);
+    }
     onClose();
   };
 
@@ -278,27 +334,35 @@ export default function OnboardingWizard({
                 data={wizardData}
                 onChange={updateWizardData}
                 tenantType={wizardData.tenantType}
-                tenantId="wizard-temp" // Temporary ID for wizard flow
+                tenantId={resolvedTenantId}
               />
             )}
             {currentStep === 4 && (
+              <PaymentCheckout
+                data={wizardData}
+                onChange={updateWizardData}
+                tenantType={wizardData.tenantType}
+                tenantId={resolvedTenantId}
+              />
+            )}
+            {currentStep === 5 && (
               <VoiceSelection
                 selectedVoice={wizardData.aiVoice}
                 onSelect={(voice) => updateWizardData({ aiVoice: voice })}
                 tenantType={wizardData.tenantType}
               />
             )}
-            {currentStep === 5 && (
+            {currentStep === 6 && (
               <IndustryCustomization
                 tenantType={wizardData.tenantType}
                 data={wizardData}
                 onChange={updateWizardData}
               />
             )}
-            {currentStep === 6 && (
+            {currentStep === 7 && (
               <TestAI phoneNumber={wizardData.twilioPhoneNumber} />
             )}
-            {currentStep === 7 && (
+            {currentStep === 8 && (
               <Completion
                 tenantType={wizardData.tenantType}
                 businessName={wizardData.businessName}
@@ -325,7 +389,7 @@ export default function OnboardingWizard({
           </button>
 
           <div className="flex items-center gap-3">
-            {currentStep < TOTAL_STEPS && currentStep !== 3 && currentStep !== 6 && (
+            {currentStep < TOTAL_STEPS && currentStep !== 3 && currentStep !== 4 && currentStep !== 7 && (
               <button
                 onClick={goToNextStep}
                 className="px-4 py-2.5 rounded-lg font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all"

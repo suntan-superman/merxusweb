@@ -270,6 +270,7 @@ export default function SetupWizardPage() {
           onComplete={handleComplete}
           onSwitchToOwner={handleSwitchToOwner}
           tenantType={null}
+          tenantCreated={tenantCreated}
         />
       )}
     </div>

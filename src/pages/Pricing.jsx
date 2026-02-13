@@ -1,11 +1,58 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getBillingPricing } from '../api/billing';
 
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [selectedTenantType, setSelectedTenantType] = useState('restaurant');
+  const [pricingData, setPricingData] = useState(null);
+  const [pricingLoading, setPricingLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPricing = async () => {
+      try {
+        setPricingLoading(true);
+        const data = await getBillingPricing();
+        setPricingData(data);
+      } catch (error) {
+        console.error('Failed to load pricing:', error);
+      } finally {
+        setPricingLoading(false);
+      }
+    };
+
+    loadPricing();
+  }, []);
+
+  const formatMoney = (amount, currency = 'usd') => {
+    if (amount === null || amount === undefined) return null;
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency.toUpperCase(),
+      }).format(amount / 100);
+    } catch {
+      return `$${(amount / 100).toFixed(2)}`;
+    }
+  };
+
+  const getDynamicPrice = (plan) => {
+    const pricingKey = plan.tenantType === 'voice' ? 'office' : plan.tenantType;
+    const pricing = pricingData?.tenants?.[pricingKey];
+    const amount = pricing?.subscription?.unitAmount;
+    const currency = pricing?.subscription?.currency;
+    return formatMoney(amount, currency) || plan.price;
+  };
+
+  const getDynamicSetupFee = (plan) => {
+    const pricingKey = plan.tenantType === 'voice' ? 'office' : plan.tenantType;
+    const pricing = pricingData?.tenants?.[pricingKey];
+    const amount = pricing?.onboarding?.unitAmount;
+    const currency = pricing?.onboarding?.currency;
+    return formatMoney(amount, currency) || plan.setupFee;
+  };
 
   // Real Estate Pricing Plans
   const realEstatePlans = [
@@ -247,14 +294,14 @@ export default function Pricing() {
                 <h3 className="mb-2 text-2xl font-bold text-gray-900">{plan.name}</h3>
                 <div className="flex flex-col items-center justify-center mb-2">
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
+                    <span className="text-4xl font-bold text-gray-900">{getDynamicPrice(plan)}</span>
                     {plan.period && (
                       <span className="ml-2 text-gray-600">{plan.period}</span>
                     )}
                   </div>
                   <div className="mt-2 text-sm text-gray-600">
                     <span className="font-semibold">Setup Fee: </span>
-                    <span>{plan.setupFee} one-time</span>
+                    <span>{getDynamicSetupFee(plan)} one-time</span>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">{plan.description}</p>

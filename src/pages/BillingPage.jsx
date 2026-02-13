@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getSubscription, createCheckoutSession, cancelSubscription } from '../api/billing';
+import { getSubscription, cancelSubscription, getBillingPricing, createPortalSession } from '../api/billing';
 import { refreshClaims } from '../api/auth';
 import { Check, X, CreditCard, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -15,102 +15,69 @@ const BillingPage = () => {
   const [canceling, setCanceling] = useState(false);
   const [showClaimsError, setShowClaimsError] = useState(false);
   const [refreshingClaims, setRefreshingClaims] = useState(false);
+  const [pricingData, setPricingData] = useState(null);
 
   // Get tenant type from user claims
   const tenantType = userTenantType || 'restaurant';
 
-  // Plan configurations for each tenant type
+  const getPricingForTenant = () => {
+    const pricingKey = tenantType === 'voice' ? 'office' : tenantType;
+    return pricingData?.tenants?.[pricingKey] || null;
+  };
+
+  const pricing = getPricingForTenant();
+
+  const formatMoney = (amount, currency = 'usd') => {
+    if (amount === null || amount === undefined) return null;
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency.toUpperCase(),
+      }).format(amount / 100);
+    } catch {
+      return `$${(amount / 100).toFixed(2)}`;
+    }
+  };
+
   const PLANS = {
     restaurant: {
-      basic: {
-        name: 'Basic',
-        price: 199,
-        setup: 299,
+      standard: {
+        name: 'Standard',
+        price: pricing?.subscription?.unitAmount ? pricing.subscription.unitAmount / 100 : 299,
+        setup: pricing?.onboarding?.unitAmount ? pricing.onboarding.unitAmount / 100 : 499,
         features: [
           'AI Phone Assistant',
           'Order & Reservation Taking',
-          'Up to 3 phone numbers',
           'Priority Support',
           'Analytics Dashboard',
           'Call Transcripts',
-        ],
-      },
-      enterprise: {
-        name: 'Enterprise',
-        price: 499,
-        setup: 999,
-        features: [
-          'Everything in Basic',
-          'POS Integration (Toast/Square)',
-          'Up to 5 phone numbers',
-          'Advanced Analytics',
-          'Custom AI Training',
-          'Dedicated Account Manager',
-          'API Access',
         ],
         popular: true,
       },
     },
     voice: {
-      basic: {
-        name: 'Basic',
-        price: 49,
-        setup: 49,
+      standard: {
+        name: 'Standard',
+        price: pricing?.subscription?.unitAmount ? pricing.subscription.unitAmount / 100 : 99,
+        setup: pricing?.onboarding?.unitAmount ? pricing.onboarding.unitAmount / 100 : 149,
         features: [
           'AI Phone Assistant',
-          '1 phone number',
-          'Standard Support',
-          'Call Transcripts',
-        ],
-      },
-      professional: {
-        name: 'Professional',
-        price: 99,
-        setup: 149,
-        features: [
-          'Everything in Basic',
           'Call Routing',
-          'Up to 3 phone numbers',
           'Priority Support',
           'Analytics Dashboard',
         ],
         popular: true,
       },
-      enterprise: {
-        name: 'Enterprise',
-        price: 199,
-        setup: 249,
-        features: [
-          'Everything in Professional',
-          'Up to 5 phone numbers',
-          'Advanced Analytics',
-          'API Access',
-          'Dedicated Support',
-        ],
-      },
     },
     real_estate: {
-      basic: {
-        name: 'Basic',
-        price: 49,
-        setup: 49,
+      standard: {
+        name: 'Standard',
+        price: pricing?.subscription?.unitAmount ? pricing.subscription.unitAmount / 100 : 99,
+        setup: pricing?.onboarding?.unitAmount ? pricing.onboarding.unitAmount / 100 : 199,
         features: [
           'AI Phone Assistant',
-          '1 phone number',
-          'Standard Support',
           'Lead Management',
-          'Call Transcripts',
-        ],
-      },
-      professional: {
-        name: 'Professional',
-        price: 79,
-        setup: 99,
-        features: [
-          'Everything in Basic',
           'Call Routing',
-          'Showing Scheduler',
-          'Listing Search',
           'Priority Support',
           'Analytics Dashboard',
         ],
@@ -123,7 +90,41 @@ const BillingPage = () => {
 
   useEffect(() => {
     fetchSubscription();
+    fetchPricing();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success') === 'true';
+    const canceled = params.get('canceled') === 'true';
+    const deeplink = params.get('deeplink');
+
+    if (success) {
+      if (deeplink) {
+        window.location.href = deeplink;
+        setTimeout(() => {
+          toast.success('Payment successful! You can return to the app.');
+        }, 1000);
+      } else {
+        toast.success('Payment successful!');
+      }
+    } else if (canceled) {
+      toast('Checkout canceled.');
+    }
+
+    if (success || canceled) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  const fetchPricing = async () => {
+    try {
+      const data = await getBillingPricing();
+      setPricingData(data);
+    } catch (error) {
+      console.error('Error fetching pricing:', error);
+    }
+  };
 
   const fetchSubscription = async () => {
     try {
@@ -176,9 +177,13 @@ const BillingPage = () => {
   const handleUpgrade = async (planKey) => {
     try {
       setProcessingCheckout(true);
-      const { url } = await createCheckoutSession(planKey);
-      
-      // Redirect to Stripe Checkout
+      if (!subscription?.status) {
+        toast.error('Please complete onboarding to start billing.');
+        setProcessingCheckout(false);
+        return;
+      }
+
+      const { url } = await createPortalSession({ returnUrl: window.location.href });
       window.location.href = url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
@@ -369,10 +374,12 @@ const BillingPage = () => {
                   
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                   <div className="mb-4">
-                    <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
+                    <span className="text-4xl font-bold text-gray-900">
+                      {formatMoney(pricing?.subscription?.unitAmount, pricing?.subscription?.currency) || `$${plan.price}`}
+                    </span>
                     <span className="text-gray-600">/month</span>
                     <p className="text-sm text-gray-500 mt-1">
-                      ${plan.setup} one-time setup fee
+                      {formatMoney(pricing?.onboarding?.unitAmount, pricing?.onboarding?.currency) || `$${plan.setup}`} one-time setup fee
                     </p>
                   </div>
                   

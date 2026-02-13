@@ -216,6 +216,7 @@ export default function OnboardingWizardPage() {
         authMethod="apple"
         prefillEmail={user?.email}
         prefillName={user?.displayName}
+        tenantCreated={tenantCreated}
       />
     </div>
   );
