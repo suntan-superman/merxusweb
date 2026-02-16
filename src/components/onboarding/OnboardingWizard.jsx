@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import IndustrySelection from './steps/IndustrySelection';
 import BusinessDetails from './steps/BusinessDetails';
-import TwilioSetup from './steps/TwilioSetup';
-import PaymentCheckout from './steps/PaymentCheckout';
 import VoiceSelection from './steps/VoiceSelection';
 import IndustryCustomization from './steps/IndustryCustomization';
+import PaymentCheckout from './steps/PaymentCheckout';
+import TwilioSetup from './steps/TwilioSetup';
 import TestAI from './steps/TestAI';
 import Completion from './steps/Completion';
 import ConfirmationModal from '../common/ConfirmationModal';
@@ -128,34 +128,36 @@ export default function OnboardingWizard({
       );
     }
     if (currentStep === 3) {
-      // Validate Twilio credentials
+      return !!wizardData.aiVoice;
+    }
+    if (currentStep === 5) {
+      return !!wizardData.paymentCompleted;
+    }
+    if (currentStep === 6) {
+      if (!wizardData.paymentCompleted) {
+        return false;
+      }
       const cleanedPhone = wizardData.twilioPhoneNumber?.replace(/[\s\-\(\)]/g, '') || '';
       const phoneValid = /^\+?1?\d{10,15}$/.test(cleanedPhone);
       const hasAccountSid = !!wizardData.twilioAccountSid?.trim();
       const hasAuthToken = !!wizardData.twilioAuthToken?.trim();
-      
-      // Debug logging
-      console.log('[Wizard] Step 3 validation:', {
-        twilioPhoneNumber: wizardData.twilioPhoneNumber,
-        cleanedPhone,
-        phoneValid,
-        hasAccountSid,
-        hasAuthToken,
-        canProceed: phoneValid && hasAccountSid && hasAuthToken,
-      });
-      
+      const isAutoProvisioned =
+        wizardData.twilioAccountSid === 'auto_provisioned' ||
+        wizardData.twilioAuthToken === 'auto_provisioned';
+
+      if (isAutoProvisioned) {
+        return phoneValid;
+      }
+
       return phoneValid && hasAccountSid && hasAuthToken;
-    }
-    if (currentStep === 4) {
-      return !!wizardData.paymentCompleted;
     }
     return true; // Other steps can proceed
   };
 
   const goToNextStep = async () => {
     if (currentStep < TOTAL_STEPS && canProceed()) {
-      // Special handling: Save data after Twilio selection (before payment)
-      if (currentStep === 3 && !dataSaved && onComplete) {
+      // Special handling: Save data before payment step
+      if (currentStep === 4 && !dataSaved && onComplete) {
         console.log('💾 Saving tenant data before payment step...');
         try {
           await onComplete(wizardData, true); // Pass 'isPreSave' flag
@@ -214,16 +216,16 @@ export default function OnboardingWizard({
   const stepTitles = [
     'Choose Your Industry',
     'Business Details',
-    'Twilio Phone Setup',
-    'Payment',
     'AI Voice Selection',
     getStep5Title(),
+    'Payment',
+    'Twilio Phone Setup',
     'Test Your AI',
     'All Set!',
   ];
 
   const handleCloseAttempt = () => {
-    if (currentStep === 7) {
+    if (currentStep === TOTAL_STEPS) {
       // If on completion step, allow closing without confirmation
       onClose();
     } else {
@@ -330,14 +332,20 @@ export default function OnboardingWizard({
               />
             )}
             {currentStep === 3 && (
-              <TwilioSetup
-                data={wizardData}
-                onChange={updateWizardData}
+              <VoiceSelection
+                selectedVoice={wizardData.aiVoice}
+                onSelect={(voice) => updateWizardData({ aiVoice: voice })}
                 tenantType={wizardData.tenantType}
-                tenantId={resolvedTenantId}
               />
             )}
             {currentStep === 4 && (
+              <IndustryCustomization
+                tenantType={wizardData.tenantType}
+                data={wizardData}
+                onChange={updateWizardData}
+              />
+            )}
+            {currentStep === 5 && (
               <PaymentCheckout
                 data={wizardData}
                 onChange={updateWizardData}
@@ -345,18 +353,12 @@ export default function OnboardingWizard({
                 tenantId={resolvedTenantId}
               />
             )}
-            {currentStep === 5 && (
-              <VoiceSelection
-                selectedVoice={wizardData.aiVoice}
-                onSelect={(voice) => updateWizardData({ aiVoice: voice })}
-                tenantType={wizardData.tenantType}
-              />
-            )}
             {currentStep === 6 && (
-              <IndustryCustomization
-                tenantType={wizardData.tenantType}
+              <TwilioSetup
                 data={wizardData}
                 onChange={updateWizardData}
+                tenantType={wizardData.tenantType}
+                tenantId={resolvedTenantId}
               />
             )}
             {currentStep === 7 && (
@@ -389,7 +391,7 @@ export default function OnboardingWizard({
           </button>
 
           <div className="flex items-center gap-3">
-            {currentStep < TOTAL_STEPS && currentStep !== 3 && currentStep !== 4 && currentStep !== 7 && (
+            {currentStep < TOTAL_STEPS && currentStep !== 5 && currentStep !== 6 && currentStep !== 7 && (
               <button
                 onClick={goToNextStep}
                 className="px-4 py-2.5 rounded-lg font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all"

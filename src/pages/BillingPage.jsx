@@ -16,6 +16,7 @@ const BillingPage = () => {
   const [showClaimsError, setShowClaimsError] = useState(false);
   const [refreshingClaims, setRefreshingClaims] = useState(false);
   const [pricingData, setPricingData] = useState(null);
+  const [deeplinkUrl, setDeeplinkUrl] = useState('');
 
   // Get tenant type from user claims
   const tenantType = userTenantType || 'restaurant';
@@ -101,6 +102,7 @@ const BillingPage = () => {
 
     if (success) {
       if (deeplink) {
+        setDeeplinkUrl(deeplink);
         window.location.href = deeplink;
         setTimeout(() => {
           toast.success('Payment successful! You can return to the app.');
@@ -239,6 +241,27 @@ const BillingPage = () => {
           <h1 className="text-3xl font-bold text-gray-900">Billing & Subscription</h1>
           <p className="mt-2 text-gray-600">Manage your subscription and billing information</p>
         </div>
+
+        {deeplinkUrl && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-green-900">Return to the Merxus app</h3>
+                <p className="text-sm text-green-700">
+                  If the app didn’t reopen automatically, tap the button below.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  window.location.href = deeplinkUrl;
+                }}
+                className="px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-md"
+              >
+                Open App
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Current Status */}
         {subscription && (

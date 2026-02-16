@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, CreditCard, Clock } from 'lucide-react';
+import { AlertCircle, CreditCard } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { reserveNumber, createCheckoutSession, getBillingPricing } from '../../../api/billing';
+import { createCheckoutSession, getBillingPricing } from '../../../api/billing';
 import TurnstileWidget from '../../common/TurnstileWidget';
-import { formatPhoneDisplay } from '../../../utils/phoneFormatter';
 
 export default function PaymentCheckout({ data, onChange, tenantType, tenantId }) {
   const [captchaToken, setCaptchaToken] = useState('');
@@ -55,16 +54,7 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
     }
   };
 
-  const reservationExpired = data.reservationExpiresAt
-    ? new Date(data.reservationExpiresAt).getTime() < Date.now()
-    : false;
-
   const handleCheckout = async () => {
-    if (!data.twilioPhoneNumber) {
-      toast.error('Please select a phone number first.');
-      return;
-    }
-
     if (!tenantType || !tenantId) {
       toast.error('Tenant setup not complete yet. Please continue setup.');
       return;
@@ -77,34 +67,12 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
 
     setLoading(true);
     try {
-      let reservationId = data.reservationId;
-      let reservationExpiresAt = data.reservationExpiresAt;
-
-      if (!reservationId || reservationExpired) {
-        const reserveResult = await reserveNumber({
-          tenantType,
-          tenantId,
-          selectedNumber: data.twilioPhoneNumber,
-          captchaToken,
-        });
-
-        reservationId = reserveResult.reservationId;
-        reservationExpiresAt = reserveResult.expiresAt;
-
-        onChange({
-          ...data,
-          reservationId,
-          reservationExpiresAt,
-        });
-      }
-
       const successUrl = `${window.location.origin}${window.location.pathname}`;
       const cancelUrl = `${window.location.origin}${window.location.pathname}`;
 
       const checkoutResult = await createCheckoutSession({
         tenantType,
         tenantId,
-        reservationId,
         promoCode: promoCode || undefined,
         successUrl,
         cancelUrl,
@@ -135,8 +103,8 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
           </div>
           <div className="space-y-2 text-sm text-gray-700">
             <p>
-              <span className="font-semibold">Selected Number:</span>{' '}
-              <span className="font-mono">{data.twilioPhoneNumber ? formatPhoneDisplay(data.twilioPhoneNumber) : 'Not selected'}</span>
+              <span className="font-semibold">Phone Number:</span>{' '}
+              <span className="font-mono">Selected after payment</span>
             </p>
             <p>
               <span className="font-semibold">Onboarding Fee:</span>{' '}
@@ -177,16 +145,9 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
           />
         </div>
 
-        {data.reservationExpiresAt && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700 flex items-center gap-2">
-            <Clock size={18} />
-            Reservation expires at {new Date(data.reservationExpiresAt).toLocaleTimeString()}.
-          </div>
-        )}
-
         <button
           onClick={handleCheckout}
-          disabled={loading || !data.twilioPhoneNumber}
+          disabled={loading}
           className="w-full py-3 px-4 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           {loading ? 'Redirecting to Checkout...' : 'Proceed to Secure Checkout'}

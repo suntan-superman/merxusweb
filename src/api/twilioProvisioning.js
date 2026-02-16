@@ -21,9 +21,10 @@ export async function listUnassignedNumbers() {
 /**
  * Purchase a Twilio phone number
  */
-export async function purchasePhoneNumber(phoneNumber, tenantType, tenantId, friendlyName, skipDbSave = false) {
+export async function purchasePhoneNumber(phoneNumber, tenantType, tenantId, friendlyName, skipDbSave = false, phoneSid) {
   const response = await apiClient.post('/twilio-provisioning/purchase', {
     phoneNumber,
+    phoneSid,
     tenantType,
     tenantId,
     friendlyName,

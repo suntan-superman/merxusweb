@@ -20,7 +20,8 @@ if (!stripeSecretKey) {
 }
 
 const stripe = new Stripe(stripeSecretKey || 'sk_test_placeholder', {
-  apiVersion: '2023-10-16',
+  // Stripe types in this project only allow the latest API version; keep runtime on 2023-10-16.
+  apiVersion: '2023-10-16' as any,
 });
 
 const TURNSTILE_SECRET =
@@ -29,6 +30,31 @@ const TURNSTILE_SECRET =
   process.env.CLOUDFARE_TURNSTILE_SECRET_KEY;
 
 const RESERVATION_TTL_MS = 15 * 60 * 1000;
+
+const getOrigin = (rawUrl?: string | null) => {
+  if (!rawUrl) return null;
+  try {
+    return new URL(rawUrl).origin;
+  } catch {
+    return null;
+  }
+};
+
+const appendParams = (rawUrl: string, params: Record<string, string | undefined | null>) => {
+  try {
+    const url = new URL(rawUrl);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        if (!url.searchParams.has(key)) {
+          url.searchParams.set(key, String(value));
+        }
+      }
+    });
+    return url.toString();
+  } catch {
+    return rawUrl;
+  }
+};
 
 function normalizeTenantType(input?: string | null) {
   if (!input) return null;
@@ -121,10 +147,10 @@ async function markStripeEventProcessed(eventId: string, eventType: string) {
 router.get('/pricing', async (_req: Request, res: Response) => {
   try {
     const pricing = await getBillingPricing(stripe, { includeRestaurant: true });
-    res.json(pricing);
+    return res.json(pricing);
   } catch (error: any) {
     console.error('Error fetching pricing:', error);
-    res.status(500).json({ error: 'Failed to fetch pricing' });
+    return res.status(500).json({ error: 'Failed to fetch pricing' });
   }
 });
 
@@ -204,13 +230,13 @@ router.post(
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      res.json({
+      return res.json({
         reservationId: reservationRef.id,
         expiresAt: reservationExpiresAt.toDate(),
       });
     } catch (error: any) {
       console.error('Error reserving number:', error);
-      res.status(500).json({ error: error.message || 'Failed to reserve number' });
+      return res.status(500).json({ error: error.message || 'Failed to reserve number' });
     }
   }
 );
@@ -237,29 +263,32 @@ router.post('/create-checkout-session', authenticate, async (req: AuthenticatedR
       return res.status(400).json({ error: 'Missing tenantId' });
     }
 
-    if (!reservationId) {
-      return res.status(400).json({ error: 'Missing reservationId' });
-    }
+    let reservation: any | null = null;
+    if (reservationId) {
+      const reservationRef = db.collection('numberReservations').doc(reservationId);
+      const reservationSnap = await reservationRef.get();
 
-    const reservationRef = db.collection('numberReservations').doc(reservationId);
-    const reservationSnap = await reservationRef.get();
+      if (!reservationSnap.exists) {
+        return res.status(404).json({ error: 'Reservation not found' });
+      }
 
-    if (!reservationSnap.exists) {
-      return res.status(404).json({ error: 'Reservation not found' });
-    }
+      reservation = reservationSnap.data() || {};
+      if (reservation.userId !== userId) {
+        return res.status(403).json({ error: 'Reservation does not belong to user' });
+      }
 
-    const reservation = reservationSnap.data() || {};
-    if (reservation.userId !== userId) {
-      return res.status(403).json({ error: 'Reservation does not belong to user' });
-    }
+      const expiresAt = reservation.reservationExpiresAt?.toDate?.();
+      if (!expiresAt || expiresAt.getTime() < Date.now()) {
+        return res.status(410).json({ error: 'Reservation expired' });
+      }
 
-    const expiresAt = reservation.reservationExpiresAt?.toDate?.();
-    if (!expiresAt || expiresAt.getTime() < Date.now()) {
-      return res.status(410).json({ error: 'Reservation expired' });
-    }
+      if (reservation.status !== 'awaiting_payment') {
+        return res.status(400).json({ error: 'Reservation is not active' });
+      }
 
-    if (reservation.status !== 'awaiting_payment') {
-      return res.status(400).json({ error: 'Reservation is not active' });
+      if (!reservation.selectedNumber) {
+        return res.status(400).json({ error: 'Reservation missing selected number' });
+      }
     }
 
     const config = await getBillingConfig();
@@ -320,7 +349,8 @@ router.post('/create-checkout-session', authenticate, async (req: AuthenticatedR
         return res.status(400).json({ error: 'Promo code not allowed' });
       }
 
-      const appliesTo = promotion.coupon.applies_to?.products || [];
+      const promoCoupon = (promotion as Stripe.PromotionCode & { coupon?: Stripe.Coupon }).coupon;
+      const appliesTo = promoCoupon?.applies_to?.products || [];
       if (!appliesTo.includes(onboardingProduct) || appliesTo.includes(subscriptionProduct)) {
         return res.status(400).json({ error: 'Promo code not valid for onboarding-only' });
       }
@@ -328,13 +358,19 @@ router.post('/create-checkout-session', authenticate, async (req: AuthenticatedR
       discounts = [{ promotion_code: promotion.id }];
     }
 
-    const baseUrl = successUrl || req.headers.origin || process.env.FRONTEND_URL || 'https://merxusllc.com';
-    const safeCancelUrl = cancelUrl || `${baseUrl}/billing?canceled=true`;
+    const baseOrigin =
+      getOrigin(successUrl) ||
+      getOrigin(cancelUrl) ||
+      req.headers.origin ||
+      process.env.FRONTEND_URL ||
+      'https://merxusllc.com';
 
-    let successRedirect = `${baseUrl}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`;
-    if (deeplink) {
-      successRedirect += `&deeplink=${encodeURIComponent(deeplink)}`;
-    }
+    const safeCancelUrl = cancelUrl || `${baseOrigin}/billing?canceled=true`;
+    const baseSuccessUrl = successUrl || `${baseOrigin}/billing?success=true`;
+    const successRedirect = appendParams(baseSuccessUrl, {
+      session_id: '{CHECKOUT_SESSION_ID}',
+      deeplink,
+    });
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -356,8 +392,9 @@ router.post('/create-checkout-session', authenticate, async (req: AuthenticatedR
         tenantId: effectiveTenantId,
         tenantType: normalizedType,
         userId,
-        reservationId,
-        selectedNumber: reservation.selectedNumber,
+        ...(reservationId && reservation?.selectedNumber
+          ? { reservationId, selectedNumber: reservation.selectedNumber }
+          : {}),
       },
       discounts,
       allow_promotion_codes: !!config.promo?.allowPromotionCodes,
@@ -365,10 +402,10 @@ router.post('/create-checkout-session', authenticate, async (req: AuthenticatedR
       cancel_url: safeCancelUrl,
     });
 
-    res.json({ url: session.url });
+    return res.json({ url: session.url });
   } catch (error: any) {
     console.error('Error creating checkout session:', error);
-    res.status(500).json({ error: error.message || 'Failed to create checkout session' });
+    return res.status(500).json({ error: error.message || 'Failed to create checkout session' });
   }
 });
 
@@ -453,10 +490,10 @@ router.post('/portal-session', authenticate, async (req: AuthenticatedRequest, r
       return_url: returnUrl,
     });
 
-    res.json({ url: session.url });
+    return res.json({ url: session.url });
   } catch (error: any) {
     console.error('Error creating portal session:', error);
-    res.status(500).json({ error: error.message || 'Failed to create portal session' });
+    return res.status(500).json({ error: error.message || 'Failed to create portal session' });
   }
 });
 
@@ -537,8 +574,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   const reservationId = metadata.reservationId;
   const selectedNumber = metadata.selectedNumber;
 
-  if (!tenantId || !tenantType || !reservationId || !selectedNumber) {
+  if (!tenantId || !tenantType) {
     console.error('Missing metadata in checkout session:', session.id, metadata);
+    return;
+  }
+
+  if (!reservationId || !selectedNumber) {
+    console.log('Checkout completed without reservation metadata. Skipping Twilio purchase.', session.id);
     return;
   }
 
@@ -627,7 +669,8 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
   }
 
   const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
-  const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : new Date();
+  const stripeSub = subscription as Stripe.Subscription & { current_period_end?: number };
+  const currentPeriodEnd = stripeSub.current_period_end ? new Date(stripeSub.current_period_end * 1000) : new Date();
 
   const subscriptionQuery = await db.collection('subscriptions')
     .where('stripeSubscriptionId', '==', subscription.id)
@@ -673,7 +716,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-  const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
+  const invoiceWithSub = invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription };
+  const subscriptionId = typeof invoiceWithSub.subscription === 'string'
+    ? invoiceWithSub.subscription
+    : invoiceWithSub.subscription?.id;
   if (!subscriptionId) return;
 
   const subscriptionQuery = await db.collection('subscriptions')
@@ -696,7 +742,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
+  const invoiceWithSub = invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription };
+  const subscriptionId = typeof invoiceWithSub.subscription === 'string'
+    ? invoiceWithSub.subscription
+    : invoiceWithSub.subscription?.id;
   if (!subscriptionId) return;
 
   const subscriptionQuery = await db.collection('subscriptions')

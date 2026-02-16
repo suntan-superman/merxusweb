@@ -1,50 +1,56 @@
 import React, { useState } from 'react';
-import { Phone, Key, ExternalLink, CheckCircle2, AlertCircle, Video, Search, ShoppingCart, Sparkles, Loader } from 'lucide-react';
-import { searchAvailableNumbers, listUnassignedNumbers } from '../../../api/twilioProvisioning';
+import { Phone, Key, ExternalLink, CheckCircle2, AlertCircle, Search, ShoppingCart, Sparkles, Loader } from 'lucide-react';
+import { searchAvailableNumbers, listUnassignedNumbers, purchasePhoneNumber } from '../../../api/twilioProvisioning';
 import { toast } from 'react-toastify';
-import { formatPhoneDisplay, formatPhoneInput } from '../../../utils/phoneFormatter';
+import { formatPhoneDisplay } from '../../../utils/phoneFormatter';
 
 export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
-  const [showHelp, setShowHelp] = useState(false);
   const [mode, setMode] = useState('auto'); // 'auto' or 'manual'
   const [areaCode, setAreaCode] = useState('');
   const [searchingNumbers, setSearchingNumbers] = useState(false);
   const [availableNumbers, setAvailableNumbers] = useState([]);
   const [purchasingNumber, setPurchasingNumber] = useState(null);
   const [purchasedSuccess, setPurchasedSuccess] = useState(false);
-  const [recentlyPurchased, setRecentlyPurchased] = useState(null); // Store just-purchased number
   const [unassignedNumbers, setUnassignedNumbers] = useState([]); // Numbers from Twilio not yet assigned
   const [loadingUnassigned, setLoadingUnassigned] = useState(true);
+  const paymentCompleted = !!data.paymentCompleted;
+  const provisioningReady = paymentCompleted && tenantType && tenantId;
+  const provisioningBlocked = !provisioningReady;
   const isAutoProvisioned =
     data.twilioAccountSid === 'auto_provisioned' || data.twilioAuthToken === 'auto_provisioned';
   const isLocked = !!data.twilioPhoneNumber && isAutoProvisioned;
 
-  // Fetch unassigned numbers on mount
+  // Detect previously auto-provisioned number
   React.useEffect(() => {
     console.log('=== [TwilioSetup] Component Mounted ===');
     console.log('Phone Number:', data.twilioPhoneNumber);
     console.log('Account SID:', data.twilioAccountSid);
     console.log('Auth Token:', data.twilioAuthToken);
     console.log('Phone SID:', data.twilioPhoneSid);
-    
-    // Check if already have an auto-provisioned number
-    if (data.twilioPhoneNumber && 
-        data.twilioAccountSid === 'auto_provisioned' && 
-        data.twilioAuthToken === 'auto_provisioned') {
+
+    if (
+      data.twilioPhoneNumber &&
+      data.twilioAccountSid === 'auto_provisioned' &&
+      data.twilioAuthToken === 'auto_provisioned'
+    ) {
       console.log('✅ Detected auto-provisioned number, showing banner');
-      setRecentlyPurchased({
-        phoneNumber: data.twilioPhoneNumber,
-        sid: data.twilioPhoneSid || 'unknown',
-        friendlyName: `Merxus ${tenantType}`,
-      });
       setPurchasedSuccess(true);
     } else {
       console.log('❌ No auto-provisioned number detected');
     }
+  }, [data.twilioPhoneNumber, data.twilioAccountSid, data.twilioAuthToken, data.twilioPhoneSid, tenantType]);
 
-    // Fetch unassigned numbers from Twilio
+  // Fetch unassigned numbers when payment is complete
+  React.useEffect(() => {
+    if (!paymentCompleted) {
+      setLoadingUnassigned(false);
+      setUnassignedNumbers([]);
+      return;
+    }
+
     const fetchUnassigned = async () => {
       try {
+        setLoadingUnassigned(true);
         console.log('🔍 Fetching unassigned numbers from Twilio...');
         const result = await listUnassignedNumbers();
         console.log('📞 Unassigned numbers:', result);
@@ -58,23 +64,57 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     };
 
     fetchUnassigned();
-  }, []);
+  }, [paymentCompleted]);
 
   const handleChange = (field, value) => {
     onChange({ ...data, [field]: value });
   };
 
-  // Use a recently purchased number
-  const useRecentNumber = (number) => {
-    onChange({
-      ...data,
-      twilioPhoneNumber: number.phoneNumber,
-      twilioPhoneSid: number.sid,
-      twilioAccountSid: 'auto_provisioned',
-      twilioAuthToken: 'auto_provisioned',
-    });
-    setPurchasedSuccess(true);
-    toast.success('✅ Using recently purchased number!');
+  // Assign or purchase a number after payment
+  const assignNumber = async ({ phoneNumber, sid }) => {
+    if (!paymentCompleted) {
+      toast.error('Please complete payment first.');
+      return;
+    }
+    if (!tenantType || !tenantId) {
+      toast.error('Tenant setup not complete yet. Please continue setup.');
+      return;
+    }
+
+    const normalizedTenantType = tenantType === 'office' ? 'voice' : tenantType;
+
+    setPurchasingNumber(phoneNumber);
+    try {
+      const result = await purchasePhoneNumber(
+        phoneNumber,
+        normalizedTenantType,
+        tenantId,
+        `Merxus ${normalizedTenantType || 'Office'}`,
+        false,
+        sid
+      );
+
+      const assigned = result?.number || {};
+      const assignedPhone = assigned.phoneNumber || phoneNumber;
+      const assignedSid = assigned.sid || sid || '';
+
+      onChange({
+        ...data,
+        twilioPhoneNumber: assignedPhone,
+        twilioPhoneSid: assignedSid,
+        twilioAccountSid: 'auto_provisioned',
+        twilioAuthToken: 'auto_provisioned',
+      });
+
+      setPurchasedSuccess(true);
+      toast.success('✅ Phone number assigned!');
+    } catch (error) {
+      console.error('Assignment error:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to assign number';
+      toast.error(errorMessage);
+    } finally {
+      setPurchasingNumber(null);
+    }
   };
 
   // Validate phone number format
@@ -87,6 +127,10 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
 
   // Handle number search
   const handleSearch = async () => {
+    if (provisioningBlocked) {
+      toast.error('Please complete payment first.');
+      return;
+    }
     if (!areaCode || areaCode.length !== 3) {
       toast.error('Please enter a valid 3-digit area code');
       return;
@@ -117,32 +161,9 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     }
   };
 
-  // Handle number selection (reservation happens in payment step)
+  // Handle number selection (purchase/assign happens now)
   const handleSelectNumber = async (phoneNumber) => {
-    setPurchasingNumber(phoneNumber);
-    try {
-      onChange({
-        ...data,
-        twilioPhoneNumber: phoneNumber,
-        twilioPhoneSid: '',
-        twilioAccountSid: 'auto_provisioned',
-        twilioAuthToken: 'auto_provisioned',
-      });
-
-      setRecentlyPurchased({
-        phoneNumber,
-        sid: 'pending',
-        friendlyName: `Merxus ${tenantType}`,
-      });
-
-      setPurchasedSuccess(true);
-      toast.success('✅ Phone number selected. Continue to payment.');
-    } catch (error) {
-      console.error('Selection error:', error);
-      toast.error('Failed to select number. Please try again.');
-    } finally {
-      setPurchasingNumber(null);
-    }
+    await assignNumber({ phoneNumber });
   };
 
   if (isLocked) {
@@ -177,17 +198,30 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     <div className="py-4">
       <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-gray-900 mb-2">Get Your AI Phone Number</h3>
-                <p className="text-gray-600">Search and select a phone number instantly - no Twilio account needed!</p>
+        <p className="text-gray-600">Search and select a phone number instantly - no Twilio account needed!</p>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
+        {!paymentCompleted && (
+          <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="text-amber-600 mt-0.5" size={20} />
+              <div>
+                <p className="font-semibold text-amber-900">Payment required to select a number</p>
+                <p className="text-sm text-amber-800">
+                  Please go back and complete the onboarding payment to unlock phone number selection.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Highlight Automatic Mode */}
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 text-center">
           <Sparkles className="w-12 h-12 text-green-600 mx-auto mb-3" />
-                  <h4 className="text-lg font-bold text-gray-900 mb-2">✨ Instant Setup - Takes 30 Seconds</h4>
-                  <p className="text-gray-700">
-                    We'll reserve and configure a phone number for you after payment. Everything is included in your plan!
-                  </p>
+          <h4 className="text-lg font-bold text-gray-900 mb-2">✨ Instant Setup - Takes 30 Seconds</h4>
+          <p className="text-gray-700">
+            Choose a number and we'll assign it instantly. Everything is included in your plan!
+          </p>
         </div>
 
         {/* Unassigned Numbers from Twilio - Show if found and no number selected yet */}
@@ -218,10 +252,18 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                         )}
                       </div>
                       <button
-                        onClick={() => useRecentNumber(num)}
-                        className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-600 transition-all shadow-md"
+                        onClick={() => assignNumber({ phoneNumber: num.phoneNumber, sid: num.sid })}
+                        disabled={provisioningBlocked || purchasingNumber !== null}
+                        className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-600 transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                       >
-                        ✓ Use This
+                        {purchasingNumber === num.phoneNumber ? (
+                          <>
+                            <Loader className="animate-spin" size={16} />
+                            Assigning...
+                          </>
+                        ) : (
+                          <>✓ Use This</>
+                        )}
                       </button>
                     </div>
                   ))}
@@ -294,7 +336,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                     />
                     <button
                       onClick={handleSearch}
-                      disabled={searchingNumbers || areaCode.length !== 3}
+                      disabled={provisioningBlocked || searchingNumbers || areaCode.length !== 3}
                       className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 shadow-md hover:shadow-lg"
                     >
                       {searchingNumbers ? (
@@ -342,18 +384,18 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                           </div>
                       <button
                             onClick={() => handleSelectNumber(number.phoneNumber)}
-                            disabled={purchasingNumber !== null}
+                            disabled={provisioningBlocked || purchasingNumber !== null}
                             className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 shadow-md hover:shadow-lg"
                           >
                             {purchasingNumber === number.phoneNumber ? (
                               <>
                                 <Loader className="animate-spin" size={18} />
-                                Selecting...
+                                Assigning...
                               </>
                             ) : (
                               <>
                                 <ShoppingCart size={18} />
-                                Select
+                                Assign
                               </>
                             )}
                           </button>
@@ -366,10 +408,10 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
             ) : (
               <div className="bg-green-50 border-2 border-green-500 rounded-xl p-6 text-center">
                 <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                <h4 className="text-xl font-bold text-gray-900 mb-2">Phone Number Selected!</h4>
-                <p className="text-lg font-semibold text-green-700 mb-2">{data.twilioPhoneNumber}</p>
+                <h4 className="text-xl font-bold text-gray-900 mb-2">Phone Number Assigned!</h4>
+                <p className="text-lg font-semibold text-green-700 mb-2">{formatPhoneDisplay(data.twilioPhoneNumber)}</p>
                 <p className="text-sm text-gray-600">
-                  Your number will be reserved after payment. Click Continue to proceed.
+                  Your number is now assigned. Click Continue to proceed.
                 </p>
               </div>
             )}
