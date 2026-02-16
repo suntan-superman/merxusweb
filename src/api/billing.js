@@ -47,3 +47,27 @@ export const cancelSubscription = async () => {
   const response = await apiClient.post('/billing/cancel-subscription');
   return response.data;
 };
+
+/**
+ * Admin: Pause subscription billing for a tenant
+ */
+export const pauseSubscriptionForTenant = async (payload) => {
+  const response = await apiClient.post('/billing/admin/pause', payload);
+  return response.data;
+};
+
+/**
+ * Admin: Resume subscription billing for a tenant
+ */
+export const resumeSubscriptionForTenant = async (payload) => {
+  const response = await apiClient.post('/billing/admin/resume', payload);
+  return response.data;
+};
+
+/**
+ * Admin: Issue a partial refund for a tenant (amountCents required)
+ */
+export const createRefundForTenant = async (payload) => {
+  const response = await apiClient.post('/billing/admin/refund', payload);
+  return response.data;
+};

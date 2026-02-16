@@ -73,6 +73,15 @@ function getTenantCollection(tenantType: string) {
   return 'restaurants';
 }
 
+function requireMerxusAdmin(req: AuthenticatedRequest, res: Response): boolean {
+  const userRole = req.user?.role;
+  if (userRole !== 'merxus_admin' && userRole !== 'merxus_support' && userRole !== 'super_admin') {
+    res.status(403).json({ error: 'Merxus admin access required' });
+    return false;
+  }
+  return true;
+}
+
 function getClientIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (forwarded) {
@@ -498,6 +507,224 @@ router.post('/portal-session', authenticate, async (req: AuthenticatedRequest, r
 });
 
 // ----------------------------------------------------------------------------
+// Admin: Pause subscription (stop billing)
+// ----------------------------------------------------------------------------
+router.post('/admin/pause', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { tenantId, tenantType, reason } = req.body || {};
+    const normalizedType = normalizeTenantType(tenantType);
+
+    if (!tenantId || !normalizedType) {
+      return res.status(400).json({ error: 'Missing tenantId or tenantType' });
+    }
+
+    const subscriptionSnap = await db.collection('subscriptions')
+      .where('tenantId', '==', tenantId)
+      .where('tenantType', '==', normalizedType)
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+
+    if (subscriptionSnap.empty) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+
+    const subDoc = subscriptionSnap.docs[0];
+    const subscription = subDoc.data();
+    const stripeSubscriptionId = subscription.stripeSubscriptionId;
+
+    if (!stripeSubscriptionId) {
+      return res.status(400).json({ error: 'Stripe subscription ID missing' });
+    }
+
+    const updated = await stripe.subscriptions.update(stripeSubscriptionId, {
+      pause_collection: { behavior: 'void' },
+    });
+
+    await subDoc.ref.update({
+      status: updated.status,
+      billingPaused: !!updated.pause_collection,
+      pauseCollectionBehavior: updated.pause_collection?.behavior || null,
+      pausedAt: admin.firestore.FieldValue.serverTimestamp(),
+      pausedBy: req.user?.uid || null,
+      pauseReason: reason || null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return res.json({
+      status: updated.status,
+      billingPaused: !!updated.pause_collection,
+    });
+  } catch (error: any) {
+    console.error('Error pausing subscription:', error);
+    return res.status(500).json({ error: error.message || 'Failed to pause subscription' });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// Admin: Resume subscription billing
+// ----------------------------------------------------------------------------
+router.post('/admin/resume', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { tenantId, tenantType } = req.body || {};
+    const normalizedType = normalizeTenantType(tenantType);
+
+    if (!tenantId || !normalizedType) {
+      return res.status(400).json({ error: 'Missing tenantId or tenantType' });
+    }
+
+    const subscriptionSnap = await db.collection('subscriptions')
+      .where('tenantId', '==', tenantId)
+      .where('tenantType', '==', normalizedType)
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+
+    if (subscriptionSnap.empty) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+
+    const subDoc = subscriptionSnap.docs[0];
+    const subscription = subDoc.data();
+    const stripeSubscriptionId = subscription.stripeSubscriptionId;
+
+    if (!stripeSubscriptionId) {
+      return res.status(400).json({ error: 'Stripe subscription ID missing' });
+    }
+
+    const updated = await stripe.subscriptions.update(stripeSubscriptionId, {
+      pause_collection: null,
+    });
+
+    await subDoc.ref.update({
+      status: updated.status,
+      billingPaused: false,
+      pauseCollectionBehavior: admin.firestore.FieldValue.delete(),
+      pausedAt: null,
+      pausedBy: req.user?.uid || null,
+      pauseReason: admin.firestore.FieldValue.delete(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return res.json({
+      status: updated.status,
+      billingPaused: false,
+    });
+  } catch (error: any) {
+    console.error('Error resuming subscription:', error);
+    return res.status(500).json({ error: error.message || 'Failed to resume subscription' });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// Admin: Partial refund
+// ----------------------------------------------------------------------------
+router.post('/admin/refund', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!requireMerxusAdmin(req, res)) return;
+
+    const { tenantId, tenantType, amountCents, reason } = req.body || {};
+    const normalizedType = normalizeTenantType(tenantType);
+
+    if (!tenantId || !normalizedType) {
+      return res.status(400).json({ error: 'Missing tenantId or tenantType' });
+    }
+
+    if (!Number.isInteger(amountCents) || amountCents <= 0) {
+      return res.status(400).json({ error: 'amountCents must be a positive integer' });
+    }
+
+    const subscriptionSnap = await db.collection('subscriptions')
+      .where('tenantId', '==', tenantId)
+      .where('tenantType', '==', normalizedType)
+      .orderBy('createdAt', 'desc')
+      .limit(1)
+      .get();
+
+    if (subscriptionSnap.empty) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+
+    const subDoc = subscriptionSnap.docs[0];
+    const subscription = subDoc.data();
+    const stripeSubscriptionId = subscription.stripeSubscriptionId;
+    const stripeCustomerId = subscription.stripeCustomerId;
+
+    let invoice: Stripe.Invoice | null = null;
+
+    if (stripeSubscriptionId) {
+      const invoices = await stripe.invoices.list({ subscription: stripeSubscriptionId, limit: 5 });
+      invoice = invoices.data.find((inv) => inv.paid && inv.payment_intent) || null;
+    }
+
+    if (!invoice && stripeCustomerId) {
+      const invoices = await stripe.invoices.list({ customer: stripeCustomerId, limit: 10 });
+      invoice = invoices.data.find((inv) => inv.paid && inv.payment_intent) || null;
+    }
+
+    if (!invoice) {
+      return res.status(404).json({ error: 'No paid invoice found for refund' });
+    }
+
+    const paymentIntentId = typeof invoice.payment_intent === 'string'
+      ? invoice.payment_intent
+      : invoice.payment_intent?.id;
+
+    if (!paymentIntentId) {
+      return res.status(400).json({ error: 'Invoice missing payment intent' });
+    }
+
+    const maxRefundable = (invoice.amount_paid || 0) - (invoice.amount_refunded || 0);
+    if (amountCents > maxRefundable) {
+      return res.status(400).json({ error: `Refund exceeds max refundable amount (${maxRefundable})` });
+    }
+
+    const normalizedReason =
+      reason === 'duplicate' || reason === 'fraudulent' || reason === 'requested_by_customer'
+        ? reason
+        : 'requested_by_customer';
+
+    const refund = await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+      amount: amountCents,
+      reason: normalizedReason,
+      metadata: {
+        tenantId,
+        tenantType: normalizedType,
+        invoiceId: invoice.id,
+        subscriptionId: stripeSubscriptionId || '',
+      },
+    });
+
+    await db.collection('billingRefunds').add({
+      tenantId,
+      tenantType: normalizedType,
+      amountCents,
+      reason: normalizedReason,
+      stripeRefundId: refund.id,
+      stripeInvoiceId: invoice.id,
+      stripePaymentIntentId: paymentIntentId,
+      stripeSubscriptionId: stripeSubscriptionId || null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdBy: req.user?.uid || null,
+    });
+
+    return res.json({
+      refundId: refund.id,
+      status: refund.status,
+      amountCents,
+    });
+  } catch (error: any) {
+    console.error('Error issuing refund:', error);
+    return res.status(500).json({ error: error.message || 'Failed to issue refund' });
+  }
+});
+
+// ----------------------------------------------------------------------------
 // Stripe Webhook
 // ----------------------------------------------------------------------------
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
@@ -687,6 +914,8 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     trialEndsAt: trialEnd ? admin.firestore.Timestamp.fromDate(trialEnd) : null,
     currentPeriodEnd: admin.firestore.Timestamp.fromDate(currentPeriodEnd),
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    billingPaused: !!subscription.pause_collection,
+    pauseCollectionBehavior: subscription.pause_collection?.behavior || null,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 

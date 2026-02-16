@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Building, Home, Phone, Mail, Calendar, AlertCircle, CheckCircle, XCircle, Edit2, Trash2 } from 'lucide-react';
-import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { Users, Building, Home, Phone, Mail, Calendar, AlertCircle, CheckCircle, XCircle, Edit2, PauseCircle, PlayCircle, DollarSign, History } from 'lucide-react';
+import { collection, query, where, getDocs, doc, updateDoc, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { toast } from 'react-toastify';
 import { GridComponent, ColumnsDirective, ColumnDirective, Page, Sort, Filter, Toolbar, ExcelExport, Inject } from '@syncfusion/ej2-react-grids';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { pauseSubscriptionForTenant, resumeSubscriptionForTenant, createRefundForTenant } from '../../api/billing';
 
 export default function TenantsManagementPage() {
   const [activeTab, setActiveTab] = useState('restaurants');
@@ -15,6 +16,14 @@ export default function TenantsManagementPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tenantToToggle, setTenantToToggle] = useState(null);
+  const [processingActionId, setProcessingActionId] = useState(null);
+  const [refundTenant, setRefundTenant] = useState(null);
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('requested_by_customer');
+  const [processingRefund, setProcessingRefund] = useState(false);
+  const [refundHistoryTenant, setRefundHistoryTenant] = useState(null);
+  const [refundHistory, setRefundHistory] = useState([]);
+  const [loadingRefundHistory, setLoadingRefundHistory] = useState(false);
 
   const tabs = [
     { id: 'restaurants', label: 'Restaurants', icon: Building, collection: 'restaurants', type: 'Restaurant' },
@@ -56,14 +65,16 @@ export default function TenantsManagementPage() {
         // Check subscription status
         let subscriptionStatus = 'Unknown';
         let trialEndsAt = null;
+        let billingPaused = false;
         try {
           const subsSnapshot = await getDocs(
             query(collection(db, 'subscriptions'), where('tenantId', '==', tenantDoc.id))
           );
           if (subsSnapshot.docs.length > 0) {
             const sub = subsSnapshot.docs[0].data();
-            subscriptionStatus = sub.status || 'unknown';
-            trialEndsAt = sub.trial_end;
+            billingPaused = !!sub.billingPaused;
+            subscriptionStatus = billingPaused ? 'paused' : (sub.status || 'unknown');
+            trialEndsAt = sub.trialEndsAt?.toDate?.() || null;
             console.log(`[TenantsManagement] ${tenantDoc.id} - Found subscription with status: "${subscriptionStatus}"`);
           } else {
             subscriptionStatus = 'No Subscription';
@@ -85,8 +96,10 @@ export default function TenantsManagementPage() {
           disabled: tenantData.disabled || false,
           createdAt: tenantData.createdAt?.toDate() || new Date(),
           subscriptionStatus,
-          trialEndsAt: trialEndsAt ? new Date(trialEndsAt * 1000) : null,
+          trialEndsAt,
+          billingPaused,
           type: currentTab.type,
+          tenantType: currentTab.id === 'offices' ? 'voice' : currentTab.id === 'agents' ? 'real_estate' : 'restaurant',
         });
       }
 
@@ -196,6 +209,7 @@ export default function TenantsManagementPage() {
       active: { color: 'bg-green-100 text-green-800 border-green-300', icon: CheckCircle, label: 'Active' },
       trialing: { color: 'bg-blue-100 text-blue-800 border-blue-300', icon: AlertCircle, label: 'Trial' },
       past_due: { color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: AlertCircle, label: 'Past Due' },
+      paused: { color: 'bg-orange-100 text-orange-800 border-orange-300', icon: PauseCircle, label: 'Paused' },
       canceled: { color: 'bg-red-100 text-red-800 border-red-300', icon: XCircle, label: 'Canceled' },
       'No Subscription': { color: 'bg-gray-100 text-gray-800 border-gray-300', icon: AlertCircle, label: 'No Sub' },
       Unknown: { color: 'bg-gray-100 text-gray-600 border-gray-300', icon: AlertCircle, label: 'Unknown' },
@@ -226,6 +240,8 @@ export default function TenantsManagementPage() {
   };
 
   const actionsTemplate = (props) => {
+    const isPaused = props.billingPaused || props.subscriptionStatus === 'paused';
+    const hasSubscription = props.subscriptionStatus && props.subscriptionStatus !== 'No Subscription';
     return (
       <div className="flex items-center gap-2">
         <button
@@ -235,6 +251,42 @@ export default function TenantsManagementPage() {
         >
           <Edit2 size={16} />
         </button>
+        {hasSubscription && (
+          <button
+            onClick={() => (isPaused ? handleResumeBilling(props) : handlePauseBilling(props))}
+            disabled={processingActionId === props.id}
+            className={`p-2 rounded-lg transition-colors ${
+              isPaused
+                ? 'text-green-600 hover:bg-green-50'
+                : 'text-orange-600 hover:bg-orange-50'
+            } ${processingActionId === props.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={isPaused ? 'Resume Billing' : 'Pause Billing'}
+          >
+            {isPaused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
+          </button>
+        )}
+        {hasSubscription && (
+          <button
+            onClick={() => {
+              setRefundTenant(props);
+              setRefundAmount('');
+              setRefundReason('requested_by_customer');
+            }}
+            className="p-2 text-purple-600 transition-colors rounded-lg hover:bg-purple-50"
+            title="Issue Refund"
+          >
+            <DollarSign size={16} />
+          </button>
+        )}
+        {hasSubscription && (
+          <button
+            onClick={() => handleViewRefundHistory(props)}
+            className="p-2 text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+            title="View Refund History"
+          >
+            <History size={16} />
+          </button>
+        )}
         <button
           onClick={() => handleDisableTenant(props)}
           className={`p-2 rounded-lg transition-colors ${
@@ -259,6 +311,109 @@ export default function TenantsManagementPage() {
     const daysLeft = Math.ceil((props.trialEndsAt - new Date()) / (1000 * 60 * 60 * 24));
     if (daysLeft < 0) return 'Expired';
     return `${daysLeft} days`;
+  };
+
+  const handlePauseBilling = async (tenant) => {
+    if (!tenant?.id || !tenant?.tenantType) return;
+    setProcessingActionId(tenant.id);
+    try {
+      await pauseSubscriptionForTenant({
+        tenantId: tenant.id,
+        tenantType: tenant.tenantType,
+        reason: 'non_payment',
+      });
+      toast.success('Billing paused');
+      loadTenants();
+    } catch (error) {
+      console.error('Error pausing billing:', error);
+      toast.error('Failed to pause billing');
+    } finally {
+      setProcessingActionId(null);
+    }
+  };
+
+  const handleResumeBilling = async (tenant) => {
+    if (!tenant?.id || !tenant?.tenantType) return;
+    setProcessingActionId(tenant.id);
+    try {
+      await resumeSubscriptionForTenant({
+        tenantId: tenant.id,
+        tenantType: tenant.tenantType,
+      });
+      toast.success('Billing resumed');
+      loadTenants();
+    } catch (error) {
+      console.error('Error resuming billing:', error);
+      toast.error('Failed to resume billing');
+    } finally {
+      setProcessingActionId(null);
+    }
+  };
+
+  const handleSubmitRefund = async () => {
+    if (!refundTenant) return;
+    const parsed = Number.parseFloat(refundAmount);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      toast.error('Enter a valid refund amount');
+      return;
+    }
+    const amountCents = Math.round(parsed * 100);
+    setProcessingRefund(true);
+    try {
+      await createRefundForTenant({
+        tenantId: refundTenant.id,
+        tenantType: refundTenant.tenantType,
+        amountCents,
+        reason: refundReason,
+      });
+      toast.success('Refund issued');
+      setRefundTenant(null);
+      setRefundAmount('');
+      setRefundReason('requested_by_customer');
+      loadTenants();
+    } catch (error) {
+      console.error('Error issuing refund:', error);
+      toast.error('Failed to issue refund');
+    } finally {
+      setProcessingRefund(false);
+    }
+  };
+
+  const handleViewRefundHistory = async (tenant) => {
+    setRefundHistoryTenant(tenant);
+    setLoadingRefundHistory(true);
+    setRefundHistory([]);
+    try {
+      let refundsSnapshot;
+      try {
+        refundsSnapshot = await getDocs(
+          query(
+            collection(db, 'billingRefunds'),
+            where('tenantId', '==', tenant.id),
+            orderBy('createdAt', 'desc'),
+            limit(25)
+          )
+        );
+      } catch (indexError) {
+        refundsSnapshot = await getDocs(
+          query(
+            collection(db, 'billingRefunds'),
+            where('tenantId', '==', tenant.id)
+          )
+        );
+      }
+
+      const refunds = refundsSnapshot.docs
+        .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+        .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
+
+      setRefundHistory(refunds);
+    } catch (error) {
+      console.error('Error loading refund history:', error);
+      toast.error('Failed to load refund history');
+    } finally {
+      setLoadingRefundHistory(false);
+    }
   };
 
   const headerTemplate = (props) => (
@@ -298,7 +453,7 @@ export default function TenantsManagementPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2 lg:grid-cols-5">
         <div className="p-4 bg-white border border-gray-200 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -334,6 +489,20 @@ export default function TenantsManagementPage() {
               <p className="text-sm text-gray-600">Trial</p>
               <p className="text-2xl font-bold text-gray-900">
                 {tenants.filter(t => t.subscriptionStatus === 'trialing').length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 bg-white border border-gray-200 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-orange-100 rounded-lg">
+              <PauseCircle className="text-orange-600" size={24} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Paused</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {tenants.filter(t => t.subscriptionStatus === 'paused' || t.billingPaused).length}
               </p>
             </div>
           </div>
@@ -509,6 +678,139 @@ export default function TenantsManagementPage() {
                 {savingEdit ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund Modal */}
+      {refundTenant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-xl p-6 mx-4 bg-white rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold">Issue Refund</h2>
+              <button
+                onClick={() => {
+                  setRefundTenant(null);
+                  setRefundAmount('');
+                  setRefundReason('requested_by_customer');
+                }}
+                className="text-gray-400 hover:text-gray-600 p-1"
+                title="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="mb-6 text-gray-600">
+              Tenant: <span className="font-semibold">{refundTenant.name}</span>
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700">Amount (USD)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700">Reason</label>
+                <select
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="requested_by_customer">Requested by customer</option>
+                  <option value="duplicate">Duplicate</option>
+                  <option value="fraudulent">Fraudulent</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setRefundTenant(null);
+                  setRefundAmount('');
+                  setRefundReason('requested_by_customer');
+                }}
+                className="flex-1 px-4 py-2 text-gray-800 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitRefund}
+                disabled={processingRefund}
+                className="flex-1 px-4 py-2 text-white transition-colors bg-purple-600 rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {processingRefund ? 'Processing...' : 'Issue Refund'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund History Modal */}
+      {refundHistoryTenant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-3xl p-6 mx-4 bg-white rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold">Refund History</h2>
+              <button
+                onClick={() => {
+                  setRefundHistoryTenant(null);
+                  setRefundHistory([]);
+                }}
+                className="text-gray-400 hover:text-gray-600 p-1"
+                title="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="mb-4 text-gray-600">
+              Tenant: <span className="font-semibold">{refundHistoryTenant.name}</span>
+            </p>
+
+            {loadingRefundHistory ? (
+              <div className="py-8 text-center text-gray-500">Loading refunds...</div>
+            ) : refundHistory.length === 0 ? (
+              <div className="py-8 text-center text-gray-500">No refunds found.</div>
+            ) : (
+              <div className="space-y-3 max-h-[420px] overflow-y-auto">
+                {refundHistory.map((refund) => {
+                  const createdAt = refund.createdAt?.toDate?.() || null;
+                  const amount = (refund.amountCents || 0) / 100;
+                  return (
+                    <div key={refund.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900">${amount.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500">
+                            {createdAt ? createdAt.toLocaleString() : 'Unknown date'}
+                          </p>
+                        </div>
+                        <span className="text-xs font-semibold px-2 py-1 rounded bg-purple-100 text-purple-700">
+                          {refund.reason || 'requested_by_customer'}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500 space-y-1">
+                        <div>Refund ID: {refund.stripeRefundId || '—'}</div>
+                        <div>Invoice ID: {refund.stripeInvoiceId || '—'}</div>
+                        <div>Payment Intent: {refund.stripePaymentIntentId || '—'}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
