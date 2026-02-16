@@ -58,6 +58,7 @@ import SupportPage from './pages/SupportPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import BillingPage from './pages/BillingPage';
+import CheckoutReturnPage from './pages/CheckoutReturnPage';
 
 // Register Syncfusion license from environment variable
 const syncfusionKey = import.meta.env.VITE_SYNCFUSION_KEY;
@@ -98,6 +99,7 @@ function App() {
                   <Route path="/features" element={<Features />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/checkout/return" element={<CheckoutReturnPage />} />
                   <Route path="/onboarding-wizard-demo" element={<OnboardingWizardDemo />} />
                   
                   {/* Restaurant portal routes */}
