@@ -30,6 +30,11 @@ const TURNSTILE_SECRET =
   process.env.CLOUDFARE_TURNSTILE_SECRET_KEY;
 
 const RESERVATION_TTL_MS = 15 * 60 * 1000;
+type InvoiceWithPaymentIntent = Stripe.Invoice & {
+  payment_intent?: string | Stripe.PaymentIntent;
+  amount_refunded?: number;
+  paid?: boolean;
+};
 
 const getOrigin = (rawUrl?: string | null) => {
   if (!rawUrl) return null;
@@ -89,6 +94,15 @@ function getClientIp(req: Request): string {
     return ips.trim();
   }
   return req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
+function pickRefundableInvoice(invoices: Stripe.Invoice[]): InvoiceWithPaymentIntent | null {
+  const match = invoices.find((inv) => {
+    const candidate = inv as InvoiceWithPaymentIntent;
+    const isPaid = candidate.paid ?? candidate.status === 'paid';
+    return isPaid && !!candidate.payment_intent;
+  });
+  return (match as InvoiceWithPaymentIntent) || null;
 }
 
 async function verifyTurnstile(token?: string, ip?: string) {
@@ -654,16 +668,16 @@ router.post('/admin/refund', authenticate, async (req: AuthenticatedRequest, res
     const stripeSubscriptionId = subscription.stripeSubscriptionId;
     const stripeCustomerId = subscription.stripeCustomerId;
 
-    let invoice: Stripe.Invoice | null = null;
+    let invoice: InvoiceWithPaymentIntent | null = null;
 
     if (stripeSubscriptionId) {
       const invoices = await stripe.invoices.list({ subscription: stripeSubscriptionId, limit: 5 });
-      invoice = invoices.data.find((inv) => inv.paid && inv.payment_intent) || null;
+      invoice = pickRefundableInvoice(invoices.data);
     }
 
     if (!invoice && stripeCustomerId) {
       const invoices = await stripe.invoices.list({ customer: stripeCustomerId, limit: 10 });
-      invoice = invoices.data.find((inv) => inv.paid && inv.payment_intent) || null;
+      invoice = pickRefundableInvoice(invoices.data);
     }
 
     if (!invoice) {
