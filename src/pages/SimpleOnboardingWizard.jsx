@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
-import TurnstileWidget from "../components/common/TurnstileWidget";
 import { createCheckoutSession, getBillingPricing, reserveNumber } from "../api/billing";
 import { searchAvailableNumbers } from "../api/twilioProvisioning";
 import {
@@ -53,8 +52,6 @@ export default function SimpleOnboardingWizard() {
   const [searching, setSearching] = useState(false);
   const [numbers, setNumbers] = useState([]);
   const [pricing, setPricing] = useState(null);
-  const [captchaToken, setCaptchaToken] = useState("");
-  const [turnstileError, setTurnstileError] = useState("");
   const [form, setForm] = useState({
     tenantType: initialType,
     businessName: "",
@@ -272,21 +269,12 @@ export default function SimpleOnboardingWizard() {
       toast.error("Email verification step must be completed first.");
       return;
     }
-    if (!captchaToken && !turnstileError) {
-      toast.error("Complete CAPTCHA before reserving a number.");
-      return;
-    }
-    if (!captchaToken && turnstileError) {
-      toast.warn("Proceeding without CAPTCHA due to Cloudflare challenge error.");
-    }
-
     setSubmitting(true);
     try {
       const result = await reserveNumber({
         tenantType: form.tenantType,
         tenantId,
         selectedNumber: phoneNumber,
-        captchaToken,
       });
       setReservationId(result.reservationId);
       setForm((prev) => ({ ...prev, selectedNumber: phoneNumber }));
@@ -459,24 +447,6 @@ export default function SimpleOnboardingWizard() {
             >
               {searching ? "Searching..." : "Search"}
             </button>
-          </div>
-
-          <div className="mt-4 rounded-lg border border-gray-200 p-3">
-            <TurnstileWidget
-              onVerify={(token) => {
-                setCaptchaToken(token);
-                setTurnstileError("");
-              }}
-              onExpire={() => setCaptchaToken("")}
-              onError={(errorCode) => {
-                setCaptchaToken("");
-                const code = errorCode || "unknown_error";
-                setTurnstileError(`CAPTCHA failed to load (${code}). Refresh the page or disable strict privacy blocking for challenges.cloudflare.com.`);
-              }}
-            />
-            {turnstileError && (
-              <p className="mt-2 text-xs text-red-600">{turnstileError}</p>
-            )}
           </div>
 
           <div className="mt-4 space-y-2">
