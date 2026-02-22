@@ -33,6 +33,33 @@ function buildSetupReturnPath(basePath, tenantType, tenantId) {
   }
 }
 
+function ensurePasswordSetupDelivery(emailSent, invitationLink) {
+  if (emailSent || invitationLink) {
+    return;
+  }
+
+  throw new Error(
+    'Account created, but password setup email could not be sent. Use "Forgot password" on the login page for this email.'
+  );
+}
+
+function getPasswordSetupOrigin() {
+  const configuredOrigin =
+    import.meta.env.VITE_FRONTEND_URL ||
+    import.meta.env.VITE_PUBLIC_FRONTEND_URL ||
+    null;
+
+  if (configuredOrigin) {
+    return configuredOrigin.replace(/\/$/, '');
+  }
+
+  if (window.location.hostname.endsWith('netlify.app')) {
+    return 'https://merxusllc.com';
+  }
+
+  return window.location.origin;
+}
+
 /**
  * Submit restaurant onboarding
  * @param {Object} formData - Form data
@@ -60,20 +87,22 @@ export async function submitRestaurantOnboarding(formData, options = {}) {
 
   const result = res.data;
 
-  if (!result.userCreated) {
-    throw new Error('User account was not created. Please contact support.');
+  if (!result?.restaurantId) {
+    throw new Error('Restaurant account was not created. Please contact support.');
   }
 
   // Try Firebase email as backup if SendGrid didn't work
   let emailSent = result.emailSent || false;
   const returnToPath = buildSetupReturnPath(options.returnToPath, 'restaurant', result.restaurantId);
-  const resetUrl = `${window.location.origin}/login?mode=resetPassword&restaurantId=${result.restaurantId}&type=restaurant&returnTo=${encodeURIComponent(returnToPath)}`;
+  const resetOrigin = getPasswordSetupOrigin();
+  const resetUrl = `${resetOrigin}/login?mode=resetPassword&restaurantId=${result.restaurantId}&type=restaurant&returnTo=${encodeURIComponent(returnToPath)}`;
   if (!emailSent) {
     emailSent = await sendFirebasePasswordReset(
       formData.ownerEmail,
       resetUrl
     );
   }
+  ensurePasswordSetupDelivery(emailSent, result.invitationLink);
 
   return {
     success: true,
@@ -108,20 +137,22 @@ export async function submitVoiceOnboarding(formData, options = {}) {
     plan: formData.selectedPlan,
   });
 
-  if (!result || !result.userCreated) {
-    throw new Error('User account was not created. Please contact support.');
+  if (!result?.officeId) {
+    throw new Error('Office account was not created. Please contact support.');
   }
 
   // Try Firebase email as backup if SendGrid didn't work
   let emailSent = result.emailSent || false;
   const returnToPath = buildSetupReturnPath(options.returnToPath, 'voice', result.officeId);
-  const resetUrl = `${window.location.origin}/login?mode=resetPassword&officeId=${result.officeId}&type=voice&returnTo=${encodeURIComponent(returnToPath)}`;
+  const resetOrigin = getPasswordSetupOrigin();
+  const resetUrl = `${resetOrigin}/login?mode=resetPassword&officeId=${result.officeId}&type=voice&returnTo=${encodeURIComponent(returnToPath)}`;
   if (!emailSent) {
     emailSent = await sendFirebasePasswordReset(
       formData.ownerEmail,
       resetUrl
     );
   }
+  ensurePasswordSetupDelivery(emailSent, result.invitationLink);
 
   return {
     success: true,
@@ -164,20 +195,22 @@ export async function submitRealEstateOnboarding(formData, options = {}) {
 
   const result = res.data;
 
-  if (!result.userCreated) {
-    throw new Error('User account was not created. Please contact support.');
+  if (!result?.agentId) {
+    throw new Error('Agent account was not created. Please contact support.');
   }
 
   // Try Firebase email as backup if SendGrid didn't work
   let emailSent = result.emailSent || false;
   const returnToPath = buildSetupReturnPath(options.returnToPath, 'real_estate', result.agentId);
-  const resetUrl = `${window.location.origin}/login?mode=resetPassword&agentId=${result.agentId}&type=real_estate&returnTo=${encodeURIComponent(returnToPath)}`;
+  const resetOrigin = getPasswordSetupOrigin();
+  const resetUrl = `${resetOrigin}/login?mode=resetPassword&agentId=${result.agentId}&type=real_estate&returnTo=${encodeURIComponent(returnToPath)}`;
   if (!emailSent) {
     emailSent = await sendFirebasePasswordReset(
       formData.ownerEmail,
       resetUrl
     );
   }
+  ensurePasswordSetupDelivery(emailSent, result.invitationLink);
 
   return {
     success: true,
