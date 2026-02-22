@@ -272,9 +272,12 @@ export default function SimpleOnboardingWizard() {
       toast.error("Email verification step must be completed first.");
       return;
     }
-    if (!captchaToken) {
-      toast.error(turnstileError || "Complete CAPTCHA before reserving a number.");
+    if (!captchaToken && !turnstileError) {
+      toast.error("Complete CAPTCHA before reserving a number.");
       return;
+    }
+    if (!captchaToken && turnstileError) {
+      toast.warn("Proceeding without CAPTCHA due to Cloudflare challenge error.");
     }
 
     setSubmitting(true);
