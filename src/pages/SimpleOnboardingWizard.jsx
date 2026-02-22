@@ -54,6 +54,7 @@ export default function SimpleOnboardingWizard() {
   const [numbers, setNumbers] = useState([]);
   const [pricing, setPricing] = useState(null);
   const [captchaToken, setCaptchaToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState("");
   const [form, setForm] = useState({
     tenantType: initialType,
     businessName: "",
@@ -66,6 +67,17 @@ export default function SimpleOnboardingWizard() {
 
   const pricingKey = form.tenantType === "voice" ? "office" : form.tenantType;
   const tenantPricing = pricing?.tenants?.[pricingKey] || null;
+  const tenantIdCandidates = useMemo(() => {
+    const candidates = [
+      tenantId,
+      userClaims?.tenantId,
+      userClaims?.officeId,
+      userClaims?.agentId,
+      userClaims?.restaurantId,
+      user?.uid,
+    ].filter(Boolean);
+    return [...new Set(candidates)];
+  }, [tenantId, userClaims?.tenantId, userClaims?.officeId, userClaims?.agentId, userClaims?.restaurantId, user?.uid]);
 
   useEffect(() => {
     if (verifiedFromRedirect) {
@@ -210,9 +222,38 @@ export default function SimpleOnboardingWizard() {
       toast.error("Enter a valid 3-digit area code.");
       return;
     }
+    if (!tenantIdCandidates.length) {
+      toast.error("Tenant setup is still loading. Please wait a few seconds and retry.");
+      return;
+    }
     setSearching(true);
     try {
-      const result = await searchAvailableNumbers(form.areaCode, tenantId);
+      let result = null;
+      let usedTenantId = null;
+      let lastError = null;
+
+      for (const candidate of tenantIdCandidates) {
+        try {
+          result = await searchAvailableNumbers(form.areaCode, candidate);
+          usedTenantId = candidate;
+          break;
+        } catch (error) {
+          lastError = error;
+          const status = error?.response?.status;
+          if (![400, 403, 404].includes(status)) {
+            throw error;
+          }
+        }
+      }
+
+      if (!result) {
+        throw lastError || new Error("Failed to search numbers.");
+      }
+
+      if (usedTenantId && usedTenantId !== tenantId) {
+        setTenantId(usedTenantId);
+      }
+
       const found = result.numbers || [];
       setNumbers(found);
       if (!found.length) {
@@ -232,7 +273,7 @@ export default function SimpleOnboardingWizard() {
       return;
     }
     if (!captchaToken) {
-      toast.error("Complete CAPTCHA before reserving a number.");
+      toast.error(turnstileError || "Complete CAPTCHA before reserving a number.");
       return;
     }
 
@@ -418,7 +459,21 @@ export default function SimpleOnboardingWizard() {
           </div>
 
           <div className="mt-4 rounded-lg border border-gray-200 p-3">
-            <TurnstileWidget onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
+            <TurnstileWidget
+              onVerify={(token) => {
+                setCaptchaToken(token);
+                setTurnstileError("");
+              }}
+              onExpire={() => setCaptchaToken("")}
+              onError={(errorCode) => {
+                setCaptchaToken("");
+                const code = errorCode || "unknown_error";
+                setTurnstileError(`CAPTCHA failed to load (${code}). Refresh the page or disable strict privacy blocking for challenges.cloudflare.com.`);
+              }}
+            />
+            {turnstileError && (
+              <p className="mt-2 text-xs text-red-600">{turnstileError}</p>
+            )}
           </div>
 
           <div className="mt-4 space-y-2">
