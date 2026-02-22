@@ -59,6 +59,9 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import BillingPage from './pages/BillingPage';
 import CheckoutReturnPage from './pages/CheckoutReturnPage';
+import InstagramLandingPage from './pages/InstagramLandingPage';
+import SimpleOnboardingWizard from './pages/SimpleOnboardingWizard';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
 // Register Syncfusion license from environment variable
 const syncfusionKey = import.meta.env.VITE_SYNCFUSION_KEY;
@@ -99,6 +102,9 @@ function App() {
                   <Route path="/features" element={<Features />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/never-miss-calls" element={<InstagramLandingPage />} />
+                  <Route path="/setup" element={<SimpleOnboardingWizard />} />
+                  <Route path="/payment-success" element={<PaymentSuccessPage />} />
                   <Route path="/checkout/return" element={<CheckoutReturnPage />} />
                   <Route path="/onboarding-wizard-demo" element={<OnboardingWizardDemo />} />
                   

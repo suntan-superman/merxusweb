@@ -33,6 +33,16 @@ export const createCheckoutSession = async (payload) => {
 };
 
 /**
+ * Verify Stripe checkout session after redirect
+ */
+export const verifyCheckoutSession = async (sessionId) => {
+  const response = await apiClient.get('/billing/verify-session', {
+    params: { session_id: sessionId },
+  });
+  return response.data;
+};
+
+/**
  * Create Stripe customer portal session
  */
 export const createPortalSession = async (payload = {}) => {

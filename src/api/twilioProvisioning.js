@@ -3,9 +3,9 @@ import apiClient from './client';
 /**
  * Search for available Twilio phone numbers by area code
  */
-export async function searchAvailableNumbers(areaCode) {
+export async function searchAvailableNumbers(areaCode, tenantId) {
   const response = await apiClient.get('/twilio-provisioning/search', {
-    params: { areaCode },
+    params: { areaCode, tenantId },
   });
   return response.data;
 }

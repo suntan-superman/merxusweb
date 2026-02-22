@@ -138,7 +138,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
 
     setSearchingNumbers(true);
     try {
-      const result = await searchAvailableNumbers(areaCode);
+      const result = await searchAvailableNumbers(areaCode, tenantId);
       setAvailableNumbers(result.numbers || []);
       if (result.numbers.length === 0) {
         toast.info(`No available numbers found in area code ${areaCode}. Try a different area code.`);
