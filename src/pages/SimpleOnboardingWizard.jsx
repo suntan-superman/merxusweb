@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import { createCheckoutSession, getBillingPricing, reserveNumber } from "../api/billing";
-import { searchAvailableNumbers } from "../api/twilioProvisioning";
+import { listUnassignedNumbers, searchAvailableNumbers } from "../api/twilioProvisioning";
 import {
   createProvisionalTenant,
   getVerificationStatus,
@@ -50,6 +50,8 @@ export default function SimpleOnboardingWizard() {
   const [reservationId, setReservationId] = useState("");
   const [emailVerified, setEmailVerified] = useState(verifiedFromRedirect);
   const [searching, setSearching] = useState(false);
+  const [loadingUnassigned, setLoadingUnassigned] = useState(false);
+  const [unassignedNumbers, setUnassignedNumbers] = useState([]);
   const [numbers, setNumbers] = useState([]);
   const [pricing, setPricing] = useState(null);
   const [form, setForm] = useState({
@@ -129,6 +131,27 @@ export default function SimpleOnboardingWizard() {
     };
     loadPricing();
   }, [loading, user]);
+
+  useEffect(() => {
+    if (step !== 2 || loading || !user) {
+      return;
+    }
+
+    const loadUnassigned = async () => {
+      setLoadingUnassigned(true);
+      try {
+        const result = await listUnassignedNumbers();
+        setUnassignedNumbers(result?.numbers || []);
+      } catch (error) {
+        console.error("Failed to load unassigned numbers:", error);
+        setUnassignedNumbers([]);
+      } finally {
+        setLoadingUnassigned(false);
+      }
+    };
+
+    loadUnassigned();
+  }, [loading, step, user]);
 
   const steps = useMemo(
     () => [
@@ -430,6 +453,46 @@ export default function SimpleOnboardingWizard() {
       {step === 2 && (
         <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
           <h2 className="text-lg font-semibold text-gray-900">Number Search + Reservation</h2>
+
+          <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <p className="text-sm font-semibold text-gray-900">Previously Purchased Numbers</p>
+            <p className="mt-1 text-xs text-gray-600">
+              Use an existing unassigned Twilio number first (if available).
+            </p>
+            <div className="mt-3 space-y-2">
+              {loadingUnassigned && (
+                <p className="text-sm text-gray-500">Loading existing numbers...</p>
+              )}
+              {!loadingUnassigned &&
+                unassignedNumbers.map((item) => (
+                  <div
+                    key={item.phoneNumber}
+                    className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2"
+                  >
+                    <div className="text-sm text-gray-900">
+                      {item.phoneNumber}
+                      {item.friendlyName ? ` • ${item.friendlyName}` : ""}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleReserveNumber(item.phoneNumber)}
+                      disabled={submitting}
+                      className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white"
+                    >
+                      Reserve
+                    </button>
+                  </div>
+                ))}
+              {!loadingUnassigned && !unassignedNumbers.length && (
+                <p className="text-sm text-gray-500">No unassigned Twilio numbers found.</p>
+              )}
+            </div>
+          </div>
+
+          <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Or search for new numbers
+          </p>
+
           <div className="mt-4 flex gap-2">
             <input
               value={form.areaCode}
