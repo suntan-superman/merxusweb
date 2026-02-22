@@ -43,6 +43,27 @@ export const verifyCheckoutSession = async (sessionId) => {
 };
 
 /**
+ * Finalize Twilio provisioning after successful checkout
+ */
+export const finalizeProvisioning = async (sessionId) => {
+  const response = await apiClient.post('/billing/finalize-provisioning', {
+    sessionId,
+  });
+  return response.data;
+};
+
+/**
+ * Confirm test-call readiness for a provisioned number
+ */
+export const verifyTestCallReadiness = async ({ phoneNumber, tenantType }) => {
+  const response = await apiClient.post('/onboarding/test-ai-call', {
+    twilioPhoneNumber: phoneNumber,
+    tenantType,
+  });
+  return response.data;
+};
+
+/**
  * Create Stripe customer portal session
  */
 export const createPortalSession = async (payload = {}) => {

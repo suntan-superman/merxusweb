@@ -29,10 +29,17 @@ function formatMoney(amount, currency = "usd") {
   }
 }
 
+function formatPhoneNumber(value) {
+  const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export default function SimpleOnboardingWizard() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { user, loading } = useAuth();
+  const { user, loading, userClaims } = useAuth();
 
   const initialType = params.get("type") || "voice";
   const verifiedFromRedirect = params.get("verified") === "1";
@@ -67,6 +74,33 @@ export default function SimpleOnboardingWizard() {
   }, [verifiedFromRedirect]);
 
   useEffect(() => {
+    if (tenantId || tenantFromRedirect || !userClaims) {
+      return;
+    }
+
+    const normalizedType = form.tenantType === "office" ? "voice" : form.tenantType;
+    const claimsType = userClaims?.type === "office" ? "voice" : userClaims?.type;
+    if (!claimsType || claimsType !== normalizedType) {
+      return;
+    }
+
+    const claimTenantId =
+      userClaims?.tenantId ||
+      userClaims?.officeId ||
+      userClaims?.agentId ||
+      userClaims?.restaurantId ||
+      "";
+
+    if (!claimTenantId) {
+      return;
+    }
+
+    setTenantId(claimTenantId);
+    setEmailVerified(true);
+    setStep((prev) => Math.max(prev, 2));
+  }, [form.tenantType, tenantFromRedirect, tenantId, userClaims]);
+
+  useEffect(() => {
     if (!user?.email) return;
     setForm((prev) => ({ ...prev, email: prev.email || user.email }));
   }, [user?.email]);
@@ -98,7 +132,7 @@ export default function SimpleOnboardingWizard() {
   );
 
   const setupReturnPath = `/setup?type=${encodeURIComponent(form.tenantType)}`;
-  const onboardingSignupPath = `/onboarding?type=${encodeURIComponent(form.tenantType)}&plan=basic&source=ig`;
+  const onboardingSignupPath = `/onboarding?type=${encodeURIComponent(form.tenantType)}&plan=basic&source=ig&returnTo=${encodeURIComponent(setupReturnPath)}`;
 
   const handleAlreadyUser = () => {
     const loginPath = `/login?type=${encodeURIComponent(form.tenantType)}&returnTo=${encodeURIComponent(setupReturnPath)}`;
@@ -231,8 +265,8 @@ export default function SimpleOnboardingWizard() {
     setSubmitting(true);
     try {
       const origin = window.location.origin;
-      const successUrl = `${origin}/payment-success`;
-      const cancelUrl = `${origin}/setup?tenantId=${encodeURIComponent(tenantId)}`;
+      const successUrl = `${origin}/payment-success?type=${encodeURIComponent(form.tenantType)}&tenantId=${encodeURIComponent(tenantId)}`;
+      const cancelUrl = `${origin}/setup?type=${encodeURIComponent(form.tenantType)}&tenantId=${encodeURIComponent(tenantId)}&verified=1`;
       const result = await createCheckoutSession({
         tenantType: form.tenantType,
         tenantId,
@@ -330,7 +364,9 @@ export default function SimpleOnboardingWizard() {
             />
             <input
               value={form.mobilePhone}
-              onChange={(e) => setForm((prev) => ({ ...prev, mobilePhone: e.target.value }))}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, mobilePhone: formatPhoneNumber(e.target.value) }))
+              }
               placeholder="Mobile Phone"
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:col-span-2"
             />

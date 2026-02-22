@@ -42,6 +42,7 @@ const Onboarding = () => {
   // URL parameters
   const tenantType = searchParams.get('type') || 'restaurant';
   const selectedPlan = searchParams.get('plan') || null;
+  const returnTo = searchParams.get('returnTo') || null;
   
   // Derived state
   const isVoice = tenantType === 'voice';
@@ -65,10 +66,19 @@ const Onboarding = () => {
   }, [tenantType]);
 
   // Form handlers
+  const formatPhoneNumber = (value) => {
+    const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    const nextValue = name === 'phoneNumber' ? formatPhoneNumber(value) : value;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: nextValue,
     }));
   };
 
@@ -94,13 +104,20 @@ const Onboarding = () => {
         return;
       }
 
-      const result = await submitOnboarding(tenantType, formData);
+      const result = await submitOnboarding(tenantType, formData, {
+        returnToPath: returnTo,
+      });
 
       if (result.emailSent) {
-        navigate('/login', {
+        const loginPath = returnTo
+          ? `/login?type=${encodeURIComponent(tenantType)}&returnTo=${encodeURIComponent(returnTo)}`
+          : '/login';
+        navigate(loginPath, {
           state: {
             message: labels.successMessage,
             email: formData.ownerEmail,
+            returnTo,
+            tenantType,
           },
         });
       } else {
@@ -123,10 +140,15 @@ const Onboarding = () => {
 
   const handleInvitationModalClose = () => {
     setShowInvitationModal(false);
-    navigate('/login', {
+    const loginPath = returnTo
+      ? `/login?type=${encodeURIComponent(tenantType)}&returnTo=${encodeURIComponent(returnTo)}`
+      : '/login';
+    navigate(loginPath, {
       state: {
         message: 'Account created successfully! Please use the password setup link to complete your registration.',
         email: invitationData?.email,
+        returnTo,
+        tenantType,
       },
     });
   };
@@ -190,6 +212,7 @@ const Onboarding = () => {
             value={formData.address}
             onChange={handleChange}
             placeholder={labels.addressPlaceholder}
+            helpText="Enter full address: street, city, state, and ZIP."
           />
 
           {/* Phone */}

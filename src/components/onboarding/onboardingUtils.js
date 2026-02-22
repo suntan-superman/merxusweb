@@ -90,7 +90,10 @@ export function isFormValid(formData, tenantType) {
       // Email is checked in base, no additional required fields
       return true;
     case 'voice':
-      return formData.ownerName.trim().length > 0;
+      return (
+        formData.ownerName.trim().length > 0 &&
+        formData.businessType.trim().length > 0
+      );
     case 'restaurant':
     default:
       return (

@@ -39,7 +39,18 @@ export default function LoginPage() {
   const locationState = location.state;
   const returnToPath = locationState?.returnTo || returnToFromQuery || null;
   const onboardingType = locationState?.tenantType || searchParams.get('type') || 'restaurant';
-  const signupPath = `/onboarding?type=${encodeURIComponent(onboardingType)}&plan=basic`;
+  const onboardingSource = locationState?.source || searchParams.get('source') || null;
+  const signupParams = new URLSearchParams({
+    type: onboardingType,
+    plan: 'basic',
+  });
+  if (returnToPath) {
+    signupParams.set('returnTo', returnToPath);
+  }
+  if (onboardingSource) {
+    signupParams.set('source', onboardingSource);
+  }
+  const signupPath = `/onboarding?${signupParams.toString()}`;
   const successMessage = locationState?.message;
   const prefillEmail = locationState?.email || passwordSetupEmail;
   const invitationLink = locationState?.invitationLink;

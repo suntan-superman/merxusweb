@@ -3,6 +3,27 @@
  */
 import { Link } from 'react-router-dom';
 
+const BUSINESS_TYPE_OPTIONS = [
+  'Law Firm',
+  'Medical Office',
+  'Dental Office',
+  'Consulting',
+  'Accounting / Tax',
+  'Real Estate Brokerage',
+  'Insurance',
+  'Financial Services',
+  'Automotive',
+  'Retail',
+  'E-Commerce',
+  'Manufacturing',
+  'Logistics',
+  'Hospitality',
+  'Education',
+  'Nonprofits',
+  'Government',
+  'Other',
+];
+
 /**
  * Common text input field
  */
@@ -192,15 +213,27 @@ export function RestaurantFields({ formData, onChange }) {
  */
 export function VoiceFields({ formData, onChange }) {
   return (
-    <FormInput
-      id="businessType"
-      name="businessType"
-      label="Business Type"
-      value={formData.businessType}
-      onChange={onChange}
-      placeholder="e.g., Law Firm, Medical Practice, Real Estate"
-      helpText="This helps the AI understand your business context"
-    />
+    <div>
+      <label htmlFor="businessType" className="block text-sm font-medium text-gray-700 mb-2">
+        Business Type *
+      </label>
+      <select
+        id="businessType"
+        name="businessType"
+        required
+        value={formData.businessType}
+        onChange={onChange}
+        className="input-field"
+      >
+        <option value="">Select business type...</option>
+        {BUSINESS_TYPE_OPTIONS.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      <p className="mt-1 text-xs text-gray-500">This helps the AI match your business context.</p>
+    </div>
   );
 }
 
