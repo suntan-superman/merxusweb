@@ -23,7 +23,7 @@ export default function AutoRedirect() {
     }
 
     // Only redirect from public routes
-    const publicRoutes = ['/', '/features', '/pricing', '/onboarding'];
+    const publicRoutes = ['/', '/features', '/onboarding'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
     if (isPublicRoute) {
@@ -43,7 +43,7 @@ export default function AutoRedirect() {
         navigate('/estate', { replace: true });
       }
     }
-  }, [user, loading, userClaims, location.pathname, navigate]);
+  }, [user, loading, userClaims, needsOnboarding, location.pathname, navigate]);
 
   return null; // This component doesn't render anything
 }

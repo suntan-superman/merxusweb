@@ -35,6 +35,14 @@ export default function LoginPage() {
   const officeId = searchParams.get('officeId');
   const restaurantId = searchParams.get('restaurantId');
   const agentId = searchParams.get('agentId');
+  const returnToFromQuery = searchParams.get('returnTo');
+  const locationState = location.state;
+  const returnToPath = locationState?.returnTo || returnToFromQuery || null;
+  const onboardingType = locationState?.tenantType || searchParams.get('type') || 'restaurant';
+  const signupPath = `/onboarding?type=${encodeURIComponent(onboardingType)}&plan=basic`;
+  const successMessage = locationState?.message;
+  const prefillEmail = locationState?.email || passwordSetupEmail;
+  const invitationLink = locationState?.invitationLink;
 
   const updateProviderHint = async (nextEmail, { force = false } = {}) => {
     const trimmed = (nextEmail || '').trim().toLowerCase();
@@ -112,6 +120,11 @@ export default function LoginPage() {
   useEffect(() => {
     // Wait for auth to finish loading and user to be available
     if (!authLoading && user) {
+      if (returnToPath) {
+        navigate(returnToPath, { replace: true });
+        return;
+      }
+
       if (needsOnboarding) {
         navigate('/onboarding-wizard', { replace: true });
         return;
@@ -150,7 +163,7 @@ export default function LoginPage() {
 
       return () => clearTimeout(timer);
     }
-  }, [user, userClaims, authLoading, navigate]);
+  }, [user, userClaims, authLoading, navigate, needsOnboarding, returnToPath, agentId, officeId, restaurantId]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -336,12 +349,6 @@ export default function LoginPage() {
         return 'An error occurred. Please try again.';
     }
   };
-
-  // Get success message from navigation state
-  const locationState = location.state;
-  const successMessage = locationState?.message;
-  const prefillEmail = locationState?.email || passwordSetupEmail;
-  const invitationLink = locationState?.invitationLink;
 
   // Pre-fill email if provided (must be before early returns per Rules of Hooks)
   useEffect(() => {
@@ -758,7 +765,7 @@ export default function LoginPage() {
         <div className="text-center">
           <p className="text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link to="/onboarding" className="text-primary-600 hover:text-primary-500 font-medium">
+            <Link to={signupPath} className="text-primary-600 hover:text-primary-500 font-medium">
               Get started
             </Link>
           </p>

@@ -93,8 +93,19 @@ export default function SimpleOnboardingWizard() {
     []
   );
 
-  const handleAuthRedirect = () => {
-    navigate("/login", { replace: false });
+  const setupReturnPath = `/setup?type=${encodeURIComponent(form.tenantType)}`;
+  const onboardingSignupPath = `/onboarding?type=${encodeURIComponent(form.tenantType)}&plan=basic&source=ig`;
+
+  const handleAlreadyUser = () => {
+    const loginPath = `/login?type=${encodeURIComponent(form.tenantType)}&returnTo=${encodeURIComponent(setupReturnPath)}`;
+    navigate(loginPath, {
+      replace: false,
+      state: { returnTo: setupReturnPath, tenantType: form.tenantType, source: "ig" },
+    });
+  };
+
+  const handleGetStarted = () => {
+    navigate(onboardingSignupPath, { replace: false });
   };
 
   const handleSendVerification = async () => {
@@ -237,17 +248,27 @@ export default function SimpleOnboardingWizard() {
   if (!loading && !user) {
     return (
       <div className="mx-auto mt-12 max-w-xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900">Sign in required</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Get Started with Setup</h1>
         <p className="mt-2 text-sm text-gray-600">
-          This onboarding flow requires Firebase authentication before creating a provisional tenant.
+          Continue as a new customer or sign in if you already have an account.
         </p>
-        <button
-          type="button"
-          onClick={handleAuthRedirect}
-          className="mt-6 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
-        >
-          Go to Login
-        </button>
+        <p className="mt-2 text-xs text-gray-500">Selected tenant: {form.tenantType}</p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={handleGetStarted}
+            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Get Started
+          </button>
+          <button
+            type="button"
+            onClick={handleAlreadyUser}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900"
+          >
+            Already a User?
+          </button>
+        </div>
       </div>
     );
   }

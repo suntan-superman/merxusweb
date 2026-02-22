@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import TenantSelector from '../components/TenantSelector';
 
 const Home = () => {
+  const [showDemoVideo, setShowDemoVideo] = useState(false);
+
   return (
     <div className="w-full">
       {/* Hero Section */}
@@ -31,16 +34,43 @@ const Home = () => {
             What Is Merxus AI?
           </h2>
           <div className="relative overflow-hidden rounded-lg shadow-xl">
-            <video 
-              controls 
-              className="w-full"
-              poster="/videos/poster.png"
-              crossOrigin="anonymous"
-            >
-              <source src="/videos/Merxus_AI_Demo.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            {showDemoVideo ? (
+              <video
+                controls
+                autoPlay
+                preload="metadata"
+                className="w-full"
+                poster="/videos/poster.png"
+                crossOrigin="anonymous"
+              >
+                <source src="/videos/Merxus_AI_Demo.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDemoVideo(true)}
+                className="group relative block w-full"
+                aria-label="Load demo video"
+              >
+                <img
+                  src="/videos/poster.png"
+                  alt="Merxus AI demo preview"
+                  className="w-full"
+                  loading="lazy"
+                />
+                <span className="absolute inset-0 bg-black/30 transition group-hover:bg-black/40" />
+                <span className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full bg-white/95 px-5 py-3 text-sm font-semibold text-gray-900">
+                  Load Demo Video
+                </span>
+              </button>
+            )}
           </div>
+          {!showDemoVideo && (
+            <p className="mt-2 text-center text-xs text-gray-500">
+              Video loads on demand to keep page load fast.
+            </p>
+          )}
         </div>
       </section>
 
