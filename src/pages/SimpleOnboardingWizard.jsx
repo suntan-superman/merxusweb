@@ -72,6 +72,10 @@ export default function SimpleOnboardingWizard() {
   }, [user?.email]);
 
   useEffect(() => {
+    if (loading || !user) {
+      return;
+    }
+
     const loadPricing = async () => {
       try {
         const data = await getBillingPricing();
@@ -81,7 +85,7 @@ export default function SimpleOnboardingWizard() {
       }
     };
     loadPricing();
-  }, []);
+  }, [loading, user]);
 
   const steps = useMemo(
     () => [
