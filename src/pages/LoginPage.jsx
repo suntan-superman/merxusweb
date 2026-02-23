@@ -270,7 +270,7 @@ export default function LoginPage() {
       setResendEmailMessage({
         type: 'success',
         text: result.message || 'Invitation email has been resent successfully',
-        link: result.invitationLink || null,
+        link: null,
       });
       
       // If SendGrid didn't work, try Firebase Auth as backup
@@ -283,7 +283,7 @@ export default function LoginPage() {
           setResendEmailMessage({
             type: 'success',
             text: 'Invitation email has been resent via Firebase Auth',
-            link: result.invitationLink || null,
+            link: null,
           });
         } catch (firebaseError) {
           console.log('Firebase Auth backup also failed:', firebaseError);

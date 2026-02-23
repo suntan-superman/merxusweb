@@ -96,12 +96,11 @@ export async function submitRestaurantOnboarding(formData, options = {}) {
   const returnToPath = buildSetupReturnPath(options.returnToPath, 'restaurant', result.restaurantId);
   const resetOrigin = getPasswordSetupOrigin();
   const resetUrl = `${resetOrigin}/login?mode=resetPassword&restaurantId=${result.restaurantId}&type=restaurant&returnTo=${encodeURIComponent(returnToPath)}`;
-  if (!emailSent) {
-    emailSent = await sendFirebasePasswordReset(
-      formData.ownerEmail,
-      resetUrl
-    );
-  }
+  const firebaseFallbackSent = await sendFirebasePasswordReset(
+    formData.ownerEmail,
+    resetUrl
+  );
+  emailSent = emailSent || firebaseFallbackSent;
   ensurePasswordSetupDelivery(emailSent, result.invitationLink);
 
   return {
@@ -146,12 +145,11 @@ export async function submitVoiceOnboarding(formData, options = {}) {
   const returnToPath = buildSetupReturnPath(options.returnToPath, 'voice', result.officeId);
   const resetOrigin = getPasswordSetupOrigin();
   const resetUrl = `${resetOrigin}/login?mode=resetPassword&officeId=${result.officeId}&type=voice&returnTo=${encodeURIComponent(returnToPath)}`;
-  if (!emailSent) {
-    emailSent = await sendFirebasePasswordReset(
-      formData.ownerEmail,
-      resetUrl
-    );
-  }
+  const firebaseFallbackSent = await sendFirebasePasswordReset(
+    formData.ownerEmail,
+    resetUrl
+  );
+  emailSent = emailSent || firebaseFallbackSent;
   ensurePasswordSetupDelivery(emailSent, result.invitationLink);
 
   return {
@@ -204,12 +202,11 @@ export async function submitRealEstateOnboarding(formData, options = {}) {
   const returnToPath = buildSetupReturnPath(options.returnToPath, 'real_estate', result.agentId);
   const resetOrigin = getPasswordSetupOrigin();
   const resetUrl = `${resetOrigin}/login?mode=resetPassword&agentId=${result.agentId}&type=real_estate&returnTo=${encodeURIComponent(returnToPath)}`;
-  if (!emailSent) {
-    emailSent = await sendFirebasePasswordReset(
-      formData.ownerEmail,
-      resetUrl
-    );
-  }
+  const firebaseFallbackSent = await sendFirebasePasswordReset(
+    formData.ownerEmail,
+    resetUrl
+  );
+  emailSent = emailSent || firebaseFallbackSent;
   ensurePasswordSetupDelivery(emailSent, result.invitationLink);
 
   return {

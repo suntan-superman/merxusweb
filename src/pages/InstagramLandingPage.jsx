@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const INDUSTRIES = [
@@ -10,11 +10,6 @@ const INDUSTRIES = [
 export default function InstagramLandingPage() {
   const navigate = useNavigate();
   const [tenantType, setTenantType] = useState("voice");
-
-  const selected = useMemo(
-    () => INDUSTRIES.find((item) => item.id === tenantType) || INDUSTRIES[0],
-    [tenantType]
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white">
@@ -46,11 +41,6 @@ export default function InstagramLandingPage() {
           })}
         </div>
 
-        <div className="mt-8 rounded-xl border border-gray-700 bg-gray-900/70 p-4">
-          <p className="text-xs uppercase tracking-[0.15em] text-gray-400">Selected</p>
-          <p className="mt-2 text-lg font-semibold">{selected.label}</p>
-          <p className="mt-1 text-sm text-gray-300">{selected.description}</p>
-        </div>
       </div>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-gray-800 bg-black/90 px-4 py-4 backdrop-blur">

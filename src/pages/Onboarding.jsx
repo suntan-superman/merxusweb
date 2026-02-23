@@ -80,7 +80,7 @@ const Onboarding = () => {
     const nextValue =
       name === 'phoneNumber'
         ? formatPhoneNumber(value)
-        : name === 'address'
+        : name === 'address' || name === 'name'
           ? capitalizeWords(value)
           : value;
     setFormData(prev => ({

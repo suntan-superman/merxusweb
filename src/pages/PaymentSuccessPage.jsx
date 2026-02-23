@@ -3,10 +3,28 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { finalizeProvisioning, verifyCheckoutSession, verifyTestCallReadiness } from "../api/billing";
 import { useAuth } from "../context/AuthContext";
 
+function isMobileDevice() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(ua);
+}
+
+function toTelNumber(phoneNumber) {
+  const raw = String(phoneNumber || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("+")) {
+    return `+${raw.slice(1).replace(/\D/g, "")}`;
+  }
+  return raw.replace(/\D/g, "");
+}
+
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { user, loading } = useAuth();
+  const mobileDevice = isMobileDevice();
+  const iosAppStoreUrl =
+    import.meta.env.VITE_IOS_APP_STORE_URL || "https://apps.apple.com/us/search?term=Merxus";
   const sessionId = params.get("session_id");
   const tenantTypeFromParams = params.get("type") || "voice";
   const tenantIdFromParams = params.get("tenantId") || "";
@@ -70,6 +88,13 @@ export default function PaymentSuccessPage() {
     try {
       const result = await verifyTestCallReadiness({ phoneNumber, tenantType });
       setTestCall({ loading: false, error: "", result });
+
+      if (mobileDevice) {
+        const telNumber = toTelNumber(result?.phoneNumber || phoneNumber);
+        if (telNumber) {
+          window.location.href = `tel:${telNumber}`;
+        }
+      }
     } catch (error) {
       setTestCall({
         loading: false,
@@ -77,7 +102,7 @@ export default function PaymentSuccessPage() {
         result: null,
       });
     }
-  }, [provisioning.result, state.result, tenantTypeFromParams]);
+  }, [mobileDevice, provisioning.result, state.result, tenantTypeFromParams]);
 
   useEffect(() => {
     const run = async () => {
@@ -176,7 +201,7 @@ export default function PaymentSuccessPage() {
                     disabled={testCall.loading}
                     className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-semibold text-white disabled:bg-gray-300"
                   >
-                    {testCall.loading ? "Checking..." : "Test My Number"}
+                    {testCall.loading ? "Checking..." : mobileDevice ? "Test My Number (Call Now)" : "Test My Number"}
                   </button>
                   {testCall.error && <p className="text-sm text-red-600">{testCall.error}</p>}
                   {testCall.result?.message && <p className="text-sm text-green-700">{testCall.result.message}</p>}
@@ -185,13 +210,36 @@ export default function PaymentSuccessPage() {
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={() => navigate(getPostPaymentRoute())}
-            className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white"
-          >
-            Continue to Dashboard
-          </button>
+          {!mobileDevice && (
+            <button
+              type="button"
+              onClick={() => navigate(getPostPaymentRoute())}
+              className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white"
+            >
+              Continue to Dashboard
+            </button>
+          )}
+
+          {mobileDevice && (
+            <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm font-semibold text-gray-900">You're all set. Choose your next step:</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(getPostPaymentRoute())}
+                  className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Continue on Web
+                </button>
+                <a
+                  href={iosAppStoreUrl}
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-900"
+                >
+                  Download iOS App
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

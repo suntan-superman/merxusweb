@@ -35,6 +35,10 @@ function formatPhoneNumber(value) {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
+function capitalizeWords(value) {
+  return String(value || "").replace(/\b([a-z])/g, (match, letter) => letter.toUpperCase());
+}
+
 export default function SimpleOnboardingWizard() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -345,7 +349,6 @@ export default function SimpleOnboardingWizard() {
         <p className="mt-2 text-sm text-gray-600">
           Continue as a new customer or sign in if you already have an account.
         </p>
-        <p className="mt-2 text-xs text-gray-500">Selected tenant: {form.tenantType}</p>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <button
             type="button"
@@ -412,7 +415,12 @@ export default function SimpleOnboardingWizard() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <input
               value={form.businessName}
-              onChange={(e) => setForm((prev) => ({ ...prev, businessName: e.target.value }))}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  businessName: capitalizeWords(e.target.value),
+                }))
+              }
               placeholder="Business Name"
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:col-span-2"
             />
