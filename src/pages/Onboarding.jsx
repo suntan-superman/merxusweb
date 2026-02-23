@@ -115,7 +115,7 @@ const Onboarding = () => {
         returnToPath: returnTo,
       });
 
-      if (result.emailSent && !result.invitationLink) {
+      if (result.emailSent) {
         const loginPath = returnTo
           ? `/login?type=${encodeURIComponent(tenantType)}&returnTo=${encodeURIComponent(returnTo)}`
           : '/login';
