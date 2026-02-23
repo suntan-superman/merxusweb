@@ -13,9 +13,14 @@ const TIMEZONES = [
 
 export default function BusinessDetails({ data, onChange, hidePassword = false, emailReadOnly = false }) {
   const [showPassword, setShowPassword] = useState(false);
+  const capitalizeWords = (value) => String(value || '').replace(/\b([a-z])/g, (match) => match.toUpperCase());
 
   const handleChange = (field, value) => {
-    onChange({ ...data, [field]: value });
+    const normalizedValue =
+      field === 'address' || field === 'city'
+        ? capitalizeWords(value)
+        : value;
+    onChange({ ...data, [field]: normalizedValue });
   };
 
   return (

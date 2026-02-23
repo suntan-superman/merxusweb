@@ -387,23 +387,34 @@ export default function SimpleOnboardingWizard() {
       {step === 1 && (
         <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
           <h2 className="text-lg font-semibold text-gray-900">Business Info + Email Verification</h2>
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-semibold text-gray-700">Business Type</p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {INDUSTRY_OPTIONS.map((option) => {
+                const selected = form.tenantType === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, tenantType: option.value }))}
+                    className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                      selected
+                        ? "border-green-600 bg-green-100 text-green-900"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-green-400"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <select
-              value={form.tenantType}
-              onChange={(e) => setForm((prev) => ({ ...prev, tenantType: e.target.value }))}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            >
-              {INDUSTRY_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
             <input
               value={form.businessName}
               onChange={(e) => setForm((prev) => ({ ...prev, businessName: e.target.value }))}
               placeholder="Business Name"
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm sm:col-span-2"
             />
             <input
               value={form.contactName}

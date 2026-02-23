@@ -26,6 +26,13 @@ export default function PaymentSuccessPage() {
     result: null,
   });
 
+  const getPostPaymentRoute = () => {
+    const tenantType = state.result?.tenantType || tenantTypeFromParams;
+    if (tenantType === "restaurant") return "/restaurant";
+    if (tenantType === "real_estate") return "/estate";
+    return "/voice";
+  };
+
   const handleFinalizeProvisioning = useCallback(async () => {
     if (!sessionId) return;
 
@@ -180,14 +187,10 @@ export default function PaymentSuccessPage() {
 
           <button
             type="button"
-            onClick={() =>
-              navigate(
-                `/setup?type=${encodeURIComponent(state.result.tenantType || tenantTypeFromParams)}&tenantId=${encodeURIComponent(state.result.tenantId || tenantIdFromParams)}&verified=1`
-              )
-            }
+            onClick={() => navigate(getPostPaymentRoute())}
             className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white"
           >
-            Return to Setup
+            Continue to Dashboard
           </button>
         </div>
       )}

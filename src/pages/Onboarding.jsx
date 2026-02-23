@@ -66,6 +66,8 @@ const Onboarding = () => {
   }, [tenantType]);
 
   // Form handlers
+  const capitalizeWords = (value) => String(value || '').replace(/\b([a-z])/g, (match) => match.toUpperCase());
+
   const formatPhoneNumber = (value) => {
     const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
     if (digits.length <= 3) return digits;
@@ -75,7 +77,12 @@ const Onboarding = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const nextValue = name === 'phoneNumber' ? formatPhoneNumber(value) : value;
+    const nextValue =
+      name === 'phoneNumber'
+        ? formatPhoneNumber(value)
+        : name === 'address'
+          ? capitalizeWords(value)
+          : value;
     setFormData(prev => ({
       ...prev,
       [name]: nextValue,
@@ -108,7 +115,7 @@ const Onboarding = () => {
         returnToPath: returnTo,
       });
 
-      if (result.emailSent) {
+      if (result.emailSent && !result.invitationLink) {
         const loginPath = returnTo
           ? `/login?type=${encodeURIComponent(tenantType)}&returnTo=${encodeURIComponent(returnTo)}`
           : '/login';

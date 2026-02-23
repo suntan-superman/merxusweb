@@ -67,12 +67,13 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
 
     setLoading(true);
     try {
-      const successUrl = `${window.location.origin}${window.location.pathname}`;
-      const cancelUrl = `${window.location.origin}${window.location.pathname}`;
+      const successUrl = `${window.location.origin}/payment-success?type=${encodeURIComponent(tenantType)}&tenantId=${encodeURIComponent(tenantId)}`;
+      const cancelUrl = `${window.location.origin}${window.location.pathname}?canceled=true`;
 
       const checkoutResult = await createCheckoutSession({
         tenantType,
         tenantId,
+        reservationId: data.reservationId || undefined,
         promoCode: promoCode || undefined,
         successUrl,
         cancelUrl,
