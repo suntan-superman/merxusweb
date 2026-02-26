@@ -19,6 +19,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
   const isAutoProvisioned =
     data.twilioAccountSid === 'auto_provisioned' || data.twilioAuthToken === 'auto_provisioned';
   const isLocked = !!data.twilioPhoneNumber && isAutoProvisioned;
+  const assigneeName = (data.businessName || data.ownerName || 'this business').trim();
 
   // Detect previously auto-provisioned number
   React.useEffect(() => {
@@ -170,8 +171,10 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     return (
       <div className="py-4">
         <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Get Your AI Phone Number</h3>
-          <p className="text-gray-600">Your Merxus number is already assigned.</p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            Your AI Phone Number Is Now Assigned To {assigneeName}
+          </h3>
+          <p className="text-gray-600">This number is now assigned and ready to use.</p>
         </div>
         <div className="max-w-2xl mx-auto space-y-4">
           <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5">
@@ -180,7 +183,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
               <div>
                 <p className="font-semibold text-amber-900 mb-1">Number changes require support</p>
                 <p className="text-sm text-amber-800">
-                  Your Merxus Twilio number is already assigned and cannot be changed in self‑service.
+                  This number is now assigned to {assigneeName} and cannot be changed in self-service.
                   Please contact support if you need to change it.
                 </p>
                 <p className="mt-3 font-mono text-lg text-amber-900">
@@ -254,7 +257,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                       <button
                         onClick={() => assignNumber({ phoneNumber: num.phoneNumber, sid: num.sid })}
                         disabled={provisioningBlocked || purchasingNumber !== null}
-                        className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-600 transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-green-700 hover:to-green-600 transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                       >
                         {purchasingNumber === num.phoneNumber ? (
                           <>
@@ -408,10 +411,12 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
             ) : (
               <div className="bg-green-50 border-2 border-green-500 rounded-xl p-6 text-center">
                 <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                <h4 className="text-xl font-bold text-gray-900 mb-2">Phone Number Assigned!</h4>
+                <h4 className="text-xl font-bold text-gray-900 mb-2">
+                  Your AI Phone Number Is Now Assigned To {assigneeName}
+                </h4>
                 <p className="text-lg font-semibold text-green-700 mb-2">{formatPhoneDisplay(data.twilioPhoneNumber)}</p>
                 <p className="text-sm text-gray-600">
-                  Your number is now assigned. Click Continue to proceed.
+                  This number is now assigned and ready to use. Click Continue to proceed.
                 </p>
               </div>
             )}

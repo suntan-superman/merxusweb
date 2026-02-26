@@ -50,7 +50,7 @@ export default function BusinessHours({ settings, onSave, saving }) {
                 value={hours[day.key]?.open || '11:00'}
                 onChange={(e) => updateDay(day.key, 'open', e.target.value)}
                 disabled={hours[day.key]?.closed}
-                className="input-field w-32"
+                className="input-field w-40"
               />
               <span className="text-gray-500">to</span>
               <input
@@ -58,7 +58,7 @@ export default function BusinessHours({ settings, onSave, saving }) {
                 value={hours[day.key]?.close || '21:00'}
                 onChange={(e) => updateDay(day.key, 'close', e.target.value)}
                 disabled={hours[day.key]?.closed}
-                className="input-field w-32"
+                className="input-field w-40"
               />
             </div>
 
