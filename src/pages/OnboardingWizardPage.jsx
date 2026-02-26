@@ -48,10 +48,14 @@ export default function OnboardingWizardPage() {
         real_estate: '/estate/dashboard',
       };
       navigate(dashboardPaths[wizardData.tenantType] || '/', { replace: true });
-      return;
+      return tenantCreated;
     }
 
-    if (isSubmitting) return;
+    if (tenantCreated && isPreSave) {
+      return tenantCreated;
+    }
+
+    if (isSubmitting) return tenantCreated || null;
     setIsSubmitting(true);
 
     try {
@@ -153,12 +157,13 @@ export default function OnboardingWizardPage() {
       }
 
       const response = await apiClient.post(endpoint, payload);
-      setTenantCreated({ ...response.data, tenantType: wizardData.tenantType });
+      const createdTenant = { ...response.data, tenantType: wizardData.tenantType };
+      setTenantCreated(createdTenant);
 
       if (isPreSave) {
         toast.success('✅ Setup saved! You can now test your AI at the next step.', { autoClose: 3000 });
         setIsSubmitting(false);
-        return;
+        return createdTenant;
       }
 
       toast.success('🎉 Setup completed! Refreshing your access...');
@@ -184,6 +189,7 @@ export default function OnboardingWizardPage() {
         setShowWizard(false);
         navigate(dashboardPaths[wizardData.tenantType] || '/', { replace: true });
       }, 500);
+      return createdTenant;
     } catch (error) {
       console.error('Error completing setup:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Failed to complete setup';

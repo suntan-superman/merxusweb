@@ -58,6 +58,10 @@ export default function OnboardingWizard({
     industryData: {},
 
     // Payment + reservation
+    tenantId: null,
+    officeId: null,
+    restaurantId: null,
+    agentId: null,
     reservationId: null,
     reservationExpiresAt: null,
     paymentCompleted: skipPayment ? true : false,
@@ -65,7 +69,16 @@ export default function OnboardingWizard({
     promoCode: '',
   });
 
-  const resolvedTenantId = tenantCreated?.officeId || tenantCreated?.restaurantId || tenantCreated?.agentId || tenantCreated?.tenantId || null;
+  const resolvedTenantId =
+    tenantCreated?.officeId ||
+    tenantCreated?.restaurantId ||
+    tenantCreated?.agentId ||
+    tenantCreated?.tenantId ||
+    wizardData.officeId ||
+    wizardData.restaurantId ||
+    wizardData.agentId ||
+    wizardData.tenantId ||
+    null;
 
   useEffect(() => {
     try {
@@ -102,6 +115,14 @@ export default function OnboardingWizard({
       setWizardData((prev) => ({ ...prev, paymentCompleted: true }));
     }
   }, [skipPayment, wizardData.paymentCompleted]);
+
+  useEffect(() => {
+    // Recovery for stale localStorage sessions that reached Twilio setup without a saved tenant id.
+    if (skipPayment && currentStep >= 6 && !resolvedTenantId) {
+      setDataSaved(false);
+      setCurrentStep(4);
+    }
+  }, [skipPayment, currentStep, resolvedTenantId]);
 
   const updateWizardData = (updates) => {
     // Log voice updates specifically
@@ -168,12 +189,27 @@ export default function OnboardingWizard({
       if (currentStep === 4 && !dataSaved && onComplete) {
         console.log('💾 Saving tenant data before payment step...');
         try {
-          await onComplete(wizardData, true); // Pass 'isPreSave' flag
+          const saveResult = await onComplete(wizardData, true); // Pass 'isPreSave' flag
+          if (saveResult && typeof saveResult === 'object') {
+            const createdTenantId =
+              saveResult.officeId ||
+              saveResult.restaurantId ||
+              saveResult.agentId ||
+              saveResult.tenantId ||
+              null;
+            setWizardData((prev) => ({
+              ...prev,
+              tenantId: createdTenantId || prev.tenantId,
+              officeId: saveResult.officeId || prev.officeId || null,
+              restaurantId: saveResult.restaurantId || prev.restaurantId || null,
+              agentId: saveResult.agentId || prev.agentId || null,
+            }));
+          }
           setDataSaved(true);
           console.log('✅ Data saved! User can now proceed to payment.');
         } catch (error) {
           console.error('❌ Failed to save data:', error);
-          // Don't block progression - user can still continue
+          return;
         }
       }
       setCurrentStep(currentStep + 1);

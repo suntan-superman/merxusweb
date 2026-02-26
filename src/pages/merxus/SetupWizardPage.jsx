@@ -33,14 +33,18 @@ export default function SetupWizardPage() {
         navigate(dashboardPaths[wizardData.tenantType] || '/merxus');
       }, 1500);
       
-      return;
+      return tenantCreated;
     }
-    
-    if (isSubmitting) return; // Prevent double submission
+
+    // If this is a pre-save and tenant was already created, return existing info.
+    if (tenantCreated && isPreSave) {
+      return tenantCreated;
+    }
+
+    if (isSubmitting) return tenantCreated || null; // Prevent double submission
     
     try {
       setIsSubmitting(true);
-
       if (wizardData?.email) {
         const methods = await getEmailSignInMethods(wizardData.email);
         const methodInfo = getSignInMethodInfo(methods);
@@ -52,7 +56,7 @@ export default function SetupWizardPage() {
               : `This email is linked to ${methodInfo.providerLabel}. Use a different email for admin setup.`;
           toast.error(message);
           setIsSubmitting(false);
-          return;
+          throw new Error(message);
         }
       }
       
@@ -166,12 +170,14 @@ export default function SetupWizardPage() {
       console.log('Tenant created successfully:', response.data);
       
       // Store tenant info to prevent duplicate creation
-      setTenantCreated({ ...response.data, tenantType: wizardData.tenantType });
+      const createdTenant = { ...response.data, tenantType: wizardData.tenantType };
+      setTenantCreated(createdTenant);
       
       if (isPreSave) {
         // Pre-save at Step 5 (before test) - don't redirect yet
         toast.success('✅ Setup saved! You can now test your AI at the next step.', { autoClose: 3000 });
         setIsSubmitting(false);
+        return createdTenant;
       } else {
         // Final completion at Step 7 - refresh auth claims then redirect
         toast.success('🎉 Setup completed! Refreshing your access...');
@@ -204,6 +210,7 @@ export default function SetupWizardPage() {
         }, 500);
       }
       
+      return createdTenant;
     } catch (error) {
       console.error('Error completing setup:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Failed to complete setup';
