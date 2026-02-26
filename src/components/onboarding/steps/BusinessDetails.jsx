@@ -11,7 +11,15 @@ const TIMEZONES = [
   { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
 ];
 
-export default function BusinessDetails({ data, onChange, hidePassword = false, emailReadOnly = false }) {
+export default function BusinessDetails({
+  data,
+  onChange,
+  hidePassword = false,
+  emailReadOnly = false,
+  onEmailBlur,
+  emailValidationStatus = 'idle',
+  emailValidationMessage = '',
+}) {
   const [showPassword, setShowPassword] = useState(false);
   const capitalizeWords = (value) => String(value || '').replace(/\b([a-z])/g, (match) => match.toUpperCase());
 
@@ -69,6 +77,7 @@ export default function BusinessDetails({ data, onChange, hidePassword = false, 
               type="email"
               value={data.email || ''}
               onChange={(e) => handleChange('email', e.target.value)}
+              onBlur={() => onEmailBlur?.()}
               placeholder="john@acme.com"
               autoComplete="off"
               readOnly={emailReadOnly}
@@ -76,6 +85,19 @@ export default function BusinessDetails({ data, onChange, hidePassword = false, 
                 emailReadOnly ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''
               }`}
             />
+            {!!emailValidationMessage && !emailReadOnly && (
+              <p
+                className={`mt-1.5 text-xs ${
+                  emailValidationStatus === 'exists' || emailValidationStatus === 'error'
+                    ? 'text-red-600'
+                    : emailValidationStatus === 'available'
+                    ? 'text-green-600'
+                    : 'text-gray-500'
+                }`}
+              >
+                {emailValidationMessage}
+              </p>
+            )}
           </div>
         </div>
 

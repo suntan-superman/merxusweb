@@ -90,6 +90,7 @@ export default function SetupWizardPage() {
               displayName: wizardData.ownerName,
               email: wizardData.email,
               password: wizardData.tempPassword,
+              allowExistingUser: true,
             },
           };
           break;
@@ -118,6 +119,7 @@ export default function SetupWizardPage() {
               displayName: wizardData.ownerName,
               email: wizardData.email,
               password: wizardData.tempPassword,
+              allowExistingUser: true,
             },
           };
           break;
@@ -151,6 +153,7 @@ export default function SetupWizardPage() {
               displayName: wizardData.ownerName,
               email: wizardData.email,
               password: wizardData.tempPassword,
+              allowExistingUser: true,
             },
           };
           
@@ -213,7 +216,11 @@ export default function SetupWizardPage() {
       return createdTenant;
     } catch (error) {
       console.error('Error completing setup:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to complete setup';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to complete setup';
       toast.error(`Setup failed: ${errorMessage}`);
       setIsSubmitting(false);
       throw error;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import apiClient from '../../api/client';
 import IndustrySelection from './steps/IndustrySelection';
 import BusinessDetails from './steps/BusinessDetails';
 import VoiceSelection from './steps/VoiceSelection';
@@ -29,6 +30,9 @@ export default function OnboardingWizard({
   const [currentStep, setCurrentStep] = useState(1);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [dataSaved, setDataSaved] = useState(false);
+  const [emailValidation, setEmailValidation] = useState({ status: 'idle', message: '' });
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [lastCheckedEmail, setLastCheckedEmail] = useState('');
   const [wizardData, setWizardData] = useState({
     // Step 1: Industry
     tenantType: initialTenantType || null,
@@ -138,6 +142,90 @@ export default function OnboardingWizard({
     });
   };
 
+  useEffect(() => {
+    const normalizedEmail = (wizardData.email || '').trim().toLowerCase();
+    if (!normalizedEmail) {
+      if (emailValidation.status !== 'idle' || lastCheckedEmail) {
+        setEmailValidation({ status: 'idle', message: '' });
+        setLastCheckedEmail('');
+      }
+      return;
+    }
+
+    if (
+      lastCheckedEmail &&
+      normalizedEmail !== lastCheckedEmail &&
+      emailValidation.status !== 'idle'
+    ) {
+      setEmailValidation({ status: 'idle', message: '' });
+    }
+  }, [wizardData.email, emailValidation.status, lastCheckedEmail]);
+
+  const formatProviderLabel = (provider) => {
+    switch (provider) {
+      case 'apple':
+        return 'Apple Sign-In';
+      case 'google':
+        return 'Google Sign-In';
+      case 'email':
+        return 'Email & Password';
+      default:
+        return null;
+    }
+  };
+
+  const validateEmailAvailability = async ({ force = false } = {}) => {
+    if (isAppleAuth) return true;
+
+    const email = (wizardData.email || '').trim().toLowerCase();
+    if (!email) return false;
+
+    if (!force && email === lastCheckedEmail) {
+      if (emailValidation.status === 'available') return true;
+      if (emailValidation.status === 'exists') return false;
+    }
+
+    try {
+      setIsCheckingEmail(true);
+      setEmailValidation({ status: 'checking', message: 'Checking email availability...' });
+
+      const response = await apiClient.post('/auth/check-email', { email });
+      const exists = !!response?.data?.exists;
+      const provider = response?.data?.provider;
+      setLastCheckedEmail(email);
+
+      if (exists) {
+        const providerLabel = formatProviderLabel(provider);
+        setEmailValidation({
+          status: 'exists',
+          message: providerLabel
+            ? `This email is already registered via ${providerLabel}. Use a different email.`
+            : 'This email is already registered. Use a different email.',
+        });
+        return false;
+      }
+
+      setEmailValidation({
+        status: 'available',
+        message: 'Email is available.',
+      });
+      return true;
+    } catch (error) {
+      const backendMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Unable to validate email right now. Please try again.';
+
+      setEmailValidation({
+        status: 'error',
+        message: backendMessage,
+      });
+      return false;
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
   const canProceed = () => {
     if (currentStep === 1) {
       return !!wizardData.tenantType;
@@ -152,7 +240,9 @@ export default function OnboardingWizard({
         wizardData.address?.trim() &&
         wizardData.city?.trim() &&
         wizardData.state?.trim() &&
-        wizardData.zip?.trim()
+        wizardData.zip?.trim() &&
+        !isCheckingEmail &&
+        emailValidation.status !== 'exists'
       );
     }
     if (currentStep === 3) {
@@ -185,6 +275,11 @@ export default function OnboardingWizard({
 
   const goToNextStep = async () => {
     if (currentStep < TOTAL_STEPS && canProceed()) {
+      if (currentStep === 2 && !isAppleAuth) {
+        const emailIsAvailable = await validateEmailAvailability();
+        if (!emailIsAvailable) return;
+      }
+
       // Special handling: Save data before payment step
       if (currentStep === 4 && !dataSaved && onComplete) {
         console.log('💾 Saving tenant data before payment step...');
@@ -373,6 +468,9 @@ export default function OnboardingWizard({
                 onChange={updateWizardData}
                 hidePassword={isAppleAuth}
                 emailReadOnly={isAppleAuth && !!prefillEmail}
+                onEmailBlur={() => validateEmailAvailability({ force: true })}
+                emailValidationStatus={emailValidation.status}
+                emailValidationMessage={emailValidation.message}
               />
             )}
             {currentStep === 3 && (
