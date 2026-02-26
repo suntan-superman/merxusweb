@@ -41,14 +41,14 @@ export default function FlyoverHoursStep({ formData, onHoursChange }) {
                     type="time"
                     value={hours.open}
                     onChange={(e) => onHoursChange(day, 'open', e.target.value)}
-                    className="input-field !py-1.5 !px-2 w-40 text-sm"
+                    className="input-field time-field !py-1.5 !px-2 text-sm"
                   />
                   <span className="text-gray-500">to</span>
                   <input
                     type="time"
                     value={hours.close}
                     onChange={(e) => onHoursChange(day, 'close', e.target.value)}
-                    className="input-field !py-1.5 !px-2 w-40 text-sm"
+                    className="input-field time-field !py-1.5 !px-2 text-sm"
                   />
                 </>
               )}

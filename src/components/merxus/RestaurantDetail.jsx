@@ -553,7 +553,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                         value={form.businessHours[day.key]?.open || '11:00'}
                         onChange={(e) => handleHoursChange(day.key, 'open', e.target.value)}
                         disabled={form.businessHours[day.key]?.closed}
-                        className="input-field w-40"
+                        className="input-field time-field"
                       />
                       <span className="text-gray-500">to</span>
                       <input
@@ -561,7 +561,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                         value={form.businessHours[day.key]?.close || '21:00'}
                         onChange={(e) => handleHoursChange(day.key, 'close', e.target.value)}
                         disabled={form.businessHours[day.key]?.closed}
-                        className="input-field w-40"
+                        className="input-field time-field"
                       />
                     </div>
                     <label className="flex items-center gap-2 ml-auto text-sm text-gray-700">
