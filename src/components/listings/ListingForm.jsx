@@ -4,6 +4,7 @@ import { storage } from '../../firebase/config';
 import { useAuth } from '../../context/AuthContext';
 import FormModal from '../common/FormModal';
 import ConfirmationModal from '../common/ConfirmationModal';
+import TimePickerField from '../common/TimePickerField';
 
 const PROPERTY_TYPES = [
   { value: 'Single Family', label: 'Single Family' },
@@ -681,8 +682,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Start Time
               </label>
-              <input
-                type="time"
+              <TimePickerField
                 name="open_house.start"
                 value={form.open_house.start}
                 onChange={handleChange}
@@ -693,8 +693,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 End Time
               </label>
-              <input
-                type="time"
+              <TimePickerField
                 name="open_house.end"
                 value={form.open_house.end}
                 onChange={handleChange}

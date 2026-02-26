@@ -5,6 +5,7 @@ import MenuItemForm from '../menu/MenuItemForm';
 import MenuImport from '../menu/MenuImport';
 import ConfirmationModal from '../common/ConfirmationModal';
 import PromptDropdown from '../settings/PromptDropdown';
+import TimePickerField from '../common/TimePickerField';
 
 const DAYS = [
   { key: 'monday', label: 'Monday' },
@@ -548,16 +549,14 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                   <div key={day.key} className="flex items-center gap-3 py-2 border-b last:border-b-0">
                     <div className="w-24 font-medium text-gray-700">{day.label}</div>
                     <div className="flex items-center gap-2">
-                      <input
-                        type="time"
+                      <TimePickerField
                         value={form.businessHours[day.key]?.open || '11:00'}
                         onChange={(e) => handleHoursChange(day.key, 'open', e.target.value)}
                         disabled={form.businessHours[day.key]?.closed}
                         className="input-field time-field"
                       />
                       <span className="text-gray-500">to</span>
-                      <input
-                        type="time"
+                      <TimePickerField
                         value={form.businessHours[day.key]?.close || '21:00'}
                         onChange={(e) => handleHoursChange(day.key, 'close', e.target.value)}
                         disabled={form.businessHours[day.key]?.closed}

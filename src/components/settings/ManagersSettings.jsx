@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TimePickerField from '../common/TimePickerField';
 
 export default function ManagersSettings({ settings, onSave, saving }) {
   const [managers, setManagers] = useState(settings.managers || []);
@@ -301,8 +302,7 @@ export default function ManagersSettings({ settings, onSave, saving }) {
 
                         {avail.available && (
                           <div className="flex items-center gap-1 ml-auto">
-                            <input
-                              type="time"
+                            <TimePickerField
                               value={avail.startTime}
                               onChange={(e) =>
                                 handleAvailabilityChange(day, 'startTime', e.target.value)
@@ -310,8 +310,7 @@ export default function ManagersSettings({ settings, onSave, saving }) {
                               className="w-36 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                             />
                             <span className="text-sm text-gray-500">to</span>
-                            <input
-                              type="time"
+                            <TimePickerField
                               value={avail.endTime}
                               onChange={(e) =>
                                 handleAvailabilityChange(day, 'endTime', e.target.value)

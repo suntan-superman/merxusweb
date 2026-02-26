@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 export default function RestaurantProfile({ settings, onSave, saving }) {
+  const merxusAiNumber = settings.twilioPhoneNumber || settings.phoneNumber || '';
   const [form, setForm] = useState({
     name: settings.name || '',
     address: settings.address || '',
@@ -82,8 +83,25 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
         </div>
 
         <div>
+          <label htmlFor="merxusAiNumber" className="block text-sm font-medium text-gray-700 mb-2">
+            Merxus AI Number
+          </label>
+          <input
+            id="merxusAiNumber"
+            type="tel"
+            value={merxusAiNumber}
+            readOnly
+            className="input-field bg-gray-50 cursor-not-allowed font-mono"
+            placeholder="Not assigned yet"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            This number is assigned by Merxus and cannot be changed in self-service.
+          </p>
+        </div>
+
+        <div>
           <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
-            Phone Number *
+            Contact Phone Number *
           </label>
           <input
             id="phoneNumber"
@@ -95,6 +113,9 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
             className="input-field"
             placeholder="+15551234567"
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Business contact number for internal notifications and profile details.
+          </p>
         </div>
 
         <div>

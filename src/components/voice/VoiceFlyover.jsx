@@ -6,6 +6,7 @@ import { updateVoiceSettings, fetchVoiceSettings } from '../../api/voice';
 import { getCategories, getIndustriesForCategory } from '../../../data/voicePromptLibraryWithRouting';
 import { useAuth } from '../../context/AuthContext';
 import { validateForm, voiceBusinessSchema, voiceContactSchema, voiceIndustrySchema } from '../../utils/validation';
+import TimePickerField from '../common/TimePickerField';
 
 // Storage key for flyover progress
 const FLYOVER_STORAGE_KEY = 'merxus_voice_flyover_state';
@@ -852,15 +853,13 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
                       </label>
                       {!hours.closed && (
                         <>
-                          <input
-                            type="time"
+                          <TimePickerField
                             value={hours.open}
                             onChange={(e) => handleHoursChange(day, 'open', e.target.value)}
                             className="input-field time-field !py-1.5 !px-2 text-sm"
                           />
                           <span className="text-gray-500">to</span>
-                          <input
-                            type="time"
+                          <TimePickerField
                             value={hours.close}
                             onChange={(e) => handleHoursChange(day, 'close', e.target.value)}
                             className="input-field time-field !py-1.5 !px-2 text-sm"

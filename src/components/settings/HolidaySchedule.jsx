@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TimePickerField from '../common/TimePickerField';
 
 // Common US holidays with typical dates
 const COMMON_HOLIDAYS = [
@@ -277,15 +278,13 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
               {!newHolidayClosed && (
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-sm text-gray-600">Modified hours:</span>
-                  <input
-                    type="time"
+                  <TimePickerField
                     value={newHolidayOpenTime}
                     onChange={(e) => setNewHolidayOpenTime(e.target.value)}
                     className="input-field w-32"
                   />
                   <span className="text-gray-500">to</span>
-                  <input
-                    type="time"
+                  <TimePickerField
                     value={newHolidayCloseTime}
                     onChange={(e) => setNewHolidayCloseTime(e.target.value)}
                     className="input-field w-32"

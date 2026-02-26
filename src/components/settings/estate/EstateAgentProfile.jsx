@@ -13,7 +13,7 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
     twilioPhoneNumber: settings.twilioPhoneNumber || '',
     twilioNumberSid: settings.twilioNumberSid || '',
   });
-  const isTwilioLocked = !!form.twilioPhoneNumber;
+  const hasTwilioAssigned = !!form.twilioPhoneNumber;
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -179,41 +179,39 @@ export default function EstateAgentProfile({ settings, onSave, saving }) {
         </div>
 
         <div className="pt-4 mt-4 border-t">
-          <h4 className="mb-3 font-semibold text-gray-900 text-md">Twilio Configuration</h4>
+          <h4 className="mb-3 font-semibold text-gray-900 text-md">Merxus AI Number</h4>
           <p className="mb-2 text-sm text-gray-600">
-            Configure your Twilio phone number for AI call routing. This is the number that will receive calls.
+            This is the number assigned by Merxus for AI call routing.
           </p>
-          {isTwilioLocked && (
+          {hasTwilioAssigned && (
             <p className="text-sm text-amber-700 font-semibold mb-3">
-              Your Twilio number is already assigned. Contact support to request a change.
+              This number is already assigned. Contact support to request a change.
             </p>
           )}
-          <p className="mb-4 text-sm font-bold text-red-600">
-          yarn start  If you do not have this information (the number and SID), please email{' '}
-            <a href="mailto:sales@merxusllc.com" className="underline hover:text-red-700">sales@merxusllc.com</a>{' '}
-            and they will provide them to you.
-          </p>
+          {!hasTwilioAssigned && (
+            <p className="text-sm text-amber-700 font-semibold mb-4">
+              No Merxus AI number is currently assigned to this tenant.
+            </p>
+          )}
 
           
           <div className="space-y-4">
             <div>
               <label htmlFor="twilioPhoneNumber" className="block mb-2 text-sm font-medium text-gray-700">
-                Twilio Phone Number *
+                Merxus AI Number
               </label>
               <input
                 id="twilioPhoneNumber"
                 name="twilioPhoneNumber"
                 type="tel"
-                required
                 value={form.twilioPhoneNumber}
                 onChange={handleChange}
-                className={`input-field ${isTwilioLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                className="input-field bg-gray-50 cursor-not-allowed font-mono"
                 placeholder="+15551234567"
-                readOnly={isTwilioLocked}
+                readOnly
               />
               <p className="mt-1 text-xs text-gray-500">
-                The Twilio phone number assigned to your business for AI call routing. Must be in E.164 format (e.g., +15551234567).
-                This number must match the phone number configured in your Twilio account.
+                Assigned and managed by Merxus. This number cannot be edited in self-service.
               </p>
             </div>
 

@@ -1,3 +1,5 @@
+import TimePickerField from '../../common/TimePickerField';
+
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 const DEFAULT_BUSINESS_HOURS = {
@@ -37,15 +39,13 @@ export default function FlyoverHoursStep({ formData, onHoursChange }) {
               </label>
               {!hours.closed && (
                 <>
-                  <input
-                    type="time"
+                  <TimePickerField
                     value={hours.open}
                     onChange={(e) => onHoursChange(day, 'open', e.target.value)}
                     className="input-field time-field !py-1.5 !px-2 text-sm"
                   />
                   <span className="text-gray-500">to</span>
-                  <input
-                    type="time"
+                  <TimePickerField
                     value={hours.close}
                     onChange={(e) => onHoursChange(day, 'close', e.target.value)}
                     className="input-field time-field !py-1.5 !px-2 text-sm"

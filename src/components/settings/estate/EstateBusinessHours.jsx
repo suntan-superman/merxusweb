@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TimePickerField from '../../common/TimePickerField';
 
 const DAYS = [
   { key: 'monday', label: 'Monday' },
@@ -69,16 +70,14 @@ export default function EstateBusinessHours({ settings, onSave, saving }) {
                 <div className="w-24 font-medium text-gray-700">{day.label}</div>
 
                 <div className="flex items-center gap-2">
-                  <input
-                    type="time"
+                  <TimePickerField
                     value={hours[day.key]?.open || '09:00'}
                     onChange={(e) => updateDay(day.key, 'open', e.target.value)}
                     disabled={hours[day.key]?.closed}
                     className="input-field time-field"
                   />
                   <span className="text-gray-500">to</span>
-                  <input
-                    type="time"
+                  <TimePickerField
                     value={hours[day.key]?.close || '18:00'}
                     onChange={(e) => updateDay(day.key, 'close', e.target.value)}
                     disabled={hours[day.key]?.closed}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import FormModal from '../common/FormModal';
+import TimePickerField from '../common/TimePickerField';
 
 const STATUS_OPTIONS = [
   { value: 'scheduled', label: 'Scheduled' },
@@ -150,8 +151,7 @@ export default function ShowingForm({ open, onClose, onSave, editing = null, lis
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Start Time *
             </label>
-            <input
-              type="time"
+            <TimePickerField
               name="start_time"
               required
               value={form.start_time || form.scheduled_time}
@@ -163,8 +163,7 @@ export default function ShowingForm({ open, onClose, onSave, editing = null, lis
             <label className="block text-sm font-medium text-gray-700 mb-2">
               End Time
             </label>
-            <input
-              type="time"
+            <TimePickerField
               name="end_time"
               value={form.end_time}
               onChange={handleChange}

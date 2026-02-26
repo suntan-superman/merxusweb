@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { deleteVoice, resendVoiceInvitation } from '../../api/merxus';
 import ConfirmationModal from '../common/ConfirmationModal';
+import TimePickerField from '../common/TimePickerField';
 
 const DAYS = [
   { key: 'monday', label: 'Monday' },
@@ -432,16 +433,14 @@ export default function VoiceDetail({ voice = {}, onUpdate, onClose, loading }) 
                 </label>
                 {!form.businessHours[day.key]?.closed && (
                   <div className="flex gap-2 ml-auto">
-                    <input
-                      type="time"
+                    <TimePickerField
                       value={form.businessHours[day.key]?.open || '09:00'}
                       onChange={(e) => handleBusinessHourChange(day.key, 'open', e.target.value)}
                       disabled={!editing}
                       className="input-field text-sm time-field"
                     />
                     <span className="text-gray-600">to</span>
-                    <input
-                      type="time"
+                    <TimePickerField
                       value={form.businessHours[day.key]?.close || '17:00'}
                       onChange={(e) => handleBusinessHourChange(day.key, 'close', e.target.value)}
                       disabled={!editing}
