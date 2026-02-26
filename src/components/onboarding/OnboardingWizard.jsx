@@ -23,6 +23,7 @@ export default function OnboardingWizard({
   prefillEmail,
   prefillName,
   tenantCreated,
+  skipPayment = false,
 }) {
   const isAppleAuth = authMethod === 'apple';
   const [currentStep, setCurrentStep] = useState(1);
@@ -59,7 +60,7 @@ export default function OnboardingWizard({
     // Payment + reservation
     reservationId: null,
     reservationExpiresAt: null,
-    paymentCompleted: false,
+    paymentCompleted: skipPayment ? true : false,
     paymentSessionId: null,
     promoCode: '',
   });
@@ -96,6 +97,12 @@ export default function OnboardingWizard({
     }
   }, [wizardData, currentStep, dataSaved]);
 
+  useEffect(() => {
+    if (skipPayment && !wizardData.paymentCompleted) {
+      setWizardData((prev) => ({ ...prev, paymentCompleted: true }));
+    }
+  }, [skipPayment, wizardData.paymentCompleted]);
+
   const updateWizardData = (updates) => {
     // Log voice updates specifically
     if (updates.aiVoice) {
@@ -131,6 +138,7 @@ export default function OnboardingWizard({
       return !!wizardData.aiVoice;
     }
     if (currentStep === 5) {
+      if (skipPayment) return true;
       return !!wizardData.paymentCompleted;
     }
     if (currentStep === 6) {
@@ -218,7 +226,7 @@ export default function OnboardingWizard({
     'Business Details',
     'AI Voice Selection',
     getStep5Title(),
-    'Payment',
+    skipPayment ? 'Payment (Skipped)' : 'Payment',
     'Twilio Phone Setup',
     'Test Your AI',
     'All Set!',
@@ -346,12 +354,24 @@ export default function OnboardingWizard({
               />
             )}
             {currentStep === 5 && (
-              <PaymentCheckout
-                data={wizardData}
-                onChange={updateWizardData}
-                tenantType={wizardData.tenantType}
-                tenantId={resolvedTenantId}
-              />
+              skipPayment ? (
+                <div className="py-6">
+                  <div className="rounded-xl border border-green-200 bg-green-50 p-6">
+                    <h3 className="text-xl font-bold text-gray-900">Payment Skipped For Admin Setup</h3>
+                    <p className="mt-2 text-sm text-gray-700">
+                      This setup is being created from the Merxus admin wizard, so checkout is not required.
+                      Continue to assign a Twilio number.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <PaymentCheckout
+                  data={wizardData}
+                  onChange={updateWizardData}
+                  tenantType={wizardData.tenantType}
+                  tenantId={resolvedTenantId}
+                />
+              )
             )}
             {currentStep === 6 && (
               <TwilioSetup

@@ -189,6 +189,7 @@ export default function OnboardingWizardPage() {
       const errorMessage = error.response?.data?.error || error.message || 'Failed to complete setup';
       toast.error(`Setup failed: ${errorMessage}`);
       setIsSubmitting(false);
+      throw error;
     }
   };
 

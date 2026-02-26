@@ -209,6 +209,7 @@ export default function SetupWizardPage() {
       const errorMessage = error.response?.data?.error || error.message || 'Failed to complete setup';
       toast.error(`Setup failed: ${errorMessage}`);
       setIsSubmitting(false);
+      throw error;
     }
   };
 
@@ -271,6 +272,7 @@ export default function SetupWizardPage() {
           onSwitchToOwner={handleSwitchToOwner}
           tenantType={null}
           tenantCreated={tenantCreated}
+          skipPayment={true}
         />
       )}
     </div>
