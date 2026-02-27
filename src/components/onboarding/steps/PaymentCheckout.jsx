@@ -26,11 +26,28 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success') === 'true';
+    const canceled = params.get('canceled') === 'true';
     if (success) {
       onChange({ paymentCompleted: true, paymentSessionId: params.get('session_id') || null });
       toast.success('✅ Payment completed! You can continue setup.');
 
-      const cleanUrl = window.location.pathname;
+      const cleanedParams = new URLSearchParams(window.location.search);
+      cleanedParams.delete('success');
+      cleanedParams.delete('session_id');
+      cleanedParams.delete('canceled');
+      const cleanQuery = cleanedParams.toString();
+      const cleanUrl = cleanQuery ? `${window.location.pathname}?${cleanQuery}` : window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
+      return;
+    }
+
+    if (canceled) {
+      toast.info('Checkout was canceled. You can continue when ready.');
+
+      const cleanedParams = new URLSearchParams(window.location.search);
+      cleanedParams.delete('canceled');
+      const cleanQuery = cleanedParams.toString();
+      const cleanUrl = cleanQuery ? `${window.location.pathname}?${cleanQuery}` : window.location.pathname;
       window.history.replaceState({}, '', cleanUrl);
     }
   }, []);
@@ -67,8 +84,16 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
 
     setLoading(true);
     try {
-      const successUrl = `${window.location.origin}/payment-success?type=${encodeURIComponent(tenantType)}&tenantId=${encodeURIComponent(tenantId)}`;
-      const cancelUrl = `${window.location.origin}${window.location.pathname}?canceled=true`;
+      const successReturnUrl = new URL(window.location.href);
+      successReturnUrl.searchParams.set('success', 'true');
+
+      const cancelReturnUrl = new URL(window.location.href);
+      cancelReturnUrl.searchParams.delete('success');
+      cancelReturnUrl.searchParams.delete('session_id');
+      cancelReturnUrl.searchParams.set('canceled', 'true');
+
+      const successUrl = successReturnUrl.toString();
+      const cancelUrl = cancelReturnUrl.toString();
 
       const checkoutResult = await createCheckoutSession({
         tenantType,

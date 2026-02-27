@@ -7,6 +7,21 @@ import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 
 const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
+const WIZARD_STORAGE_KEY = 'merxus_onboarding_wizard';
+const WIZARD_TOTAL_STEPS = 8;
+
+function hasActiveWizardSession() {
+  try {
+    const raw = localStorage.getItem(WIZARD_STORAGE_KEY);
+    if (!raw) return false;
+
+    const parsed = JSON.parse(raw);
+    const currentStep = Number(parsed?.currentStep || 0);
+    return currentStep > 0 && currentStep < WIZARD_TOTAL_STEPS;
+  } catch {
+    return false;
+  }
+}
 
 export default function OnboardingWizardPage() {
   const navigate = useNavigate();
@@ -20,6 +35,9 @@ export default function OnboardingWizardPage() {
     searchParams.get('type') ||
     sessionStorage.getItem(ONBOARDING_TENANT_TYPE_KEY) ||
     null;
+  const isPaymentReturn = searchParams.get('success') === 'true';
+  const isCanceledReturn = searchParams.get('canceled') === 'true';
+  const hasWizardProgress = hasActiveWizardSession();
 
   useEffect(() => {
     if (loading) return;
@@ -34,7 +52,9 @@ export default function OnboardingWizardPage() {
       return;
     }
 
-    if (userClaims && !needsOnboarding) {
+    // Allow users to continue wizard after payment return or while an in-progress wizard exists,
+    // even if claims are already present from pre-save onboarding.
+    if (userClaims && !needsOnboarding && !isPaymentReturn && !isCanceledReturn && !hasWizardProgress) {
       const dashboardPaths = {
         restaurant: '/restaurant',
         voice: '/voice',
@@ -43,7 +63,7 @@ export default function OnboardingWizardPage() {
       };
       navigate(dashboardPaths[userClaims.type] || '/', { replace: true });
     }
-  }, [loading, user, userClaims, needsOnboarding, isAppleUser, navigate]);
+  }, [loading, user, userClaims, needsOnboarding, isAppleUser, isPaymentReturn, isCanceledReturn, hasWizardProgress, navigate]);
 
   const handleComplete = async (wizardData, isPreSave = false) => {
     if (tenantCreated && !isPreSave) {
