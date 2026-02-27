@@ -140,9 +140,82 @@ export function PlanDisplay({ pricingInfo, selectedPlan }) {
 }
 
 /**
+ * Account method selector (email/password setup or Apple Sign-In)
+ */
+export function AccountMethodSelector({
+  authMethod = 'password',
+  onChange,
+  isAppleConnected = false,
+  appleEmail = '',
+  onAppleConnect,
+  loading = false,
+}) {
+  const isAppleAuth = authMethod === 'apple';
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <p className="text-sm font-semibold text-gray-900 mb-3">Account Sign-In Method</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => onChange?.('password')}
+          className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
+            !isAppleAuth
+              ? 'border-primary-600 bg-primary-600 text-white'
+              : 'border-gray-300 bg-white text-gray-700 hover:border-primary-300'
+          }`}
+        >
+          Email
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange?.('apple')}
+          className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
+            isAppleAuth
+              ? 'border-primary-600 bg-primary-600 text-white'
+              : 'border-gray-300 bg-white text-gray-700 hover:border-primary-300'
+          }`}
+        >
+          Apple
+        </button>
+      </div>
+
+      {isAppleAuth && (
+        <div className="mt-3 rounded-md border border-primary-100 bg-primary-50 px-3 py-3 text-sm">
+          {isAppleConnected ? (
+            <p className="text-primary-800">
+              Apple connected as <span className="font-semibold">{appleEmail}</span>
+            </p>
+          ) : (
+            <>
+              <p className="text-primary-800 mb-2">Connect Apple Sign-In before creating your account.</p>
+              <button
+                type="button"
+                onClick={onAppleConnect}
+                disabled={loading}
+                className="inline-flex items-center justify-center rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? 'Connecting Apple...' : 'Continue with Apple'}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * Owner/Manager information section
  */
-export function OwnerInfoSection({ formData, onChange, showSection = true }) {
+export function OwnerInfoSection({
+  formData,
+  onChange,
+  showSection = true,
+  emailReadOnly = false,
+  introText = "We'll send an invitation email to set up your account password.",
+  emailHelpText = "We'll send a password setup link to this email",
+}) {
   if (!showSection) return null;
 
   return (
@@ -151,7 +224,7 @@ export function OwnerInfoSection({ formData, onChange, showSection = true }) {
         Owner/Manager Information
       </h3>
       <p className="text-sm text-gray-600 mb-4">
-        We'll send an invitation email to set up your account password.
+        {introText}
       </p>
       
       <div className="space-y-4">
@@ -173,7 +246,8 @@ export function OwnerInfoSection({ formData, onChange, showSection = true }) {
           value={formData.ownerEmail}
           onChange={onChange}
           placeholder="your.email@example.com"
-          helpText="We'll send a password setup link to this email"
+          helpText={emailHelpText}
+          readOnly={emailReadOnly}
         />
       </div>
     </div>

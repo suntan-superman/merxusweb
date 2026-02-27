@@ -14,8 +14,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { OAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import InvitationLinkModal from '../components/common/InvitationLinkModal';
 import TenantSelector from '../components/TenantSelector';
+import { auth } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
 import {
   getPricingInfo,
   getInitialFormData,
@@ -24,7 +27,9 @@ import {
 } from '../components/onboarding';
 import { submitOnboarding } from '../components/onboarding/onboardingApi';
 import { getEmailSignInMethods, getSignInMethodInfo } from '../utils/authProviders';
+import { capitalizeWordsPreservingApostrophes } from '../utils/textFormatters';
 import {
+  AccountMethodSelector,
   FormInput,
   FormTextarea,
   PlanDisplay,
@@ -36,16 +41,20 @@ import {
   SubmitButton,
 } from '../components/onboarding/OnboardingFormFields';
 
+const APPLE_ONBOARDING_FLOW_KEY = 'merxus_onboarding_auth_flow';
+const APPLE_ONBOARDING_DRAFT_KEY = 'merxus_onboarding_apple_draft';
+
 const Onboarding = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user, isAppleUser, refreshToken } = useAuth();
   
   // URL parameters
   const tenantTypeParam = searchParams.get('type');
   const allowedTenantTypes = new Set(['restaurant', 'voice', 'real_estate']);
   const hasExplicitTenantType = allowedTenantTypes.has(tenantTypeParam);
   const tenantType = hasExplicitTenantType ? tenantTypeParam : 'restaurant';
-  const selectedPlan = searchParams.get('plan') || null;
+  const selectedPlan = searchParams.get('plan') || (tenantType === 'voice' ? 'basic' : null);
   const returnTo = searchParams.get('returnTo') || null;
   const source = searchParams.get('source') || null;
   const prefillEmailFromQuery = (searchParams.get('email') || '').trim();
@@ -65,11 +74,41 @@ const Onboarding = () => {
   // Invitation modal state
   const [showInvitationModal, setShowInvitationModal] = useState(false);
   const [invitationData, setInvitationData] = useState(null);
+  const isAppleAuth = formData.authMethod === 'apple';
+  const isAppleConnected = Boolean(isAppleAuth && user?.uid && isAppleUser && user?.email);
 
   // Scroll to top on mount or tenant type change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [tenantType]);
+
+  useEffect(() => {
+    if (formData.selectedPlan === selectedPlan) return;
+    setFormData((prev) => ({
+      ...prev,
+      selectedPlan,
+    }));
+  }, [formData.selectedPlan, selectedPlan]);
+
+  useEffect(() => {
+    const savedDraft = sessionStorage.getItem(APPLE_ONBOARDING_DRAFT_KEY);
+    if (!savedDraft) return;
+
+    try {
+      const parsed = JSON.parse(savedDraft);
+      if (parsed?.tenantType !== tenantType) return;
+      const draftData = parsed?.formData || {};
+      setFormData((prev) => ({
+        ...prev,
+        ...draftData,
+        selectedPlan,
+      }));
+    } catch (error) {
+      console.warn('Failed to restore onboarding draft:', error);
+    } finally {
+      sessionStorage.removeItem(APPLE_ONBOARDING_DRAFT_KEY);
+    }
+  }, [selectedPlan, tenantType]);
 
   useEffect(() => {
     if (!prefillEmailFromQuery) return;
@@ -82,9 +121,39 @@ const Onboarding = () => {
     });
   }, [prefillEmailFromQuery]);
 
-  // Form handlers
-  const capitalizeWords = (value) => String(value || '').replace(/\b([a-z])/g, (match) => match.toUpperCase());
+  useEffect(() => {
+    if (!isAppleAuth || !isAppleConnected) return;
+    setFormData((prev) => {
+      if (prev.ownerEmail === user.email) return prev;
+      return {
+        ...prev,
+        ownerEmail: user.email,
+      };
+    });
+  }, [isAppleAuth, isAppleConnected, user?.email]);
 
+  useEffect(() => {
+    if (!isAppleAuth) return;
+
+    let isMounted = true;
+    const checkAppleRedirectResult = async () => {
+      try {
+        await getRedirectResult(auth);
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('Apple redirect error:', error);
+        setError('Apple Sign-In failed. Please try again.');
+        toast.error('Apple Sign-In failed. Please try again.');
+      }
+    };
+
+    checkAppleRedirectResult();
+    return () => {
+      isMounted = false;
+    };
+  }, [isAppleAuth]);
+
+  // Form handlers
   const formatPhoneNumber = (value) => {
     const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
     if (digits.length <= 3) return digits;
@@ -98,12 +167,58 @@ const Onboarding = () => {
       name === 'phoneNumber'
         ? formatPhoneNumber(value)
         : name === 'address' || name === 'name'
-          ? capitalizeWords(value)
+          ? capitalizeWordsPreservingApostrophes(value)
           : value;
     setFormData(prev => ({
       ...prev,
       [name]: nextValue,
     }));
+  };
+
+  const handleAuthMethodChange = (nextMethod) => {
+    if (nextMethod !== 'apple' && nextMethod !== 'password') return;
+
+    if (nextMethod === 'password') {
+      sessionStorage.removeItem(APPLE_ONBOARDING_FLOW_KEY);
+    } else {
+      sessionStorage.setItem(APPLE_ONBOARDING_FLOW_KEY, 'apple');
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      authMethod: nextMethod,
+      ownerEmail:
+        nextMethod === 'apple' && user?.email
+          ? user.email
+          : prev.ownerEmail,
+    }));
+  };
+
+  const handleAppleSignIn = async () => {
+    setError(null);
+    setProviderHint(null);
+    setLoading(true);
+
+    try {
+      sessionStorage.setItem(APPLE_ONBOARDING_FLOW_KEY, 'apple');
+      sessionStorage.setItem(
+        APPLE_ONBOARDING_DRAFT_KEY,
+        JSON.stringify({
+          tenantType,
+          formData,
+        })
+      );
+
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      await signInWithRedirect(auth, provider);
+    } catch (err) {
+      console.error('Apple Sign-In error:', err);
+      setError('Apple Sign-In failed. Please try again.');
+      toast.error('Apple Sign-In failed. Please try again.');
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -113,26 +228,60 @@ const Onboarding = () => {
     setLoading(true);
 
     try {
-      const methods = await getEmailSignInMethods(formData.ownerEmail);
-      const methodInfo = getSignInMethodInfo(methods);
-      if (methodInfo.hasProvider) {
-        const message = methodInfo.hasPassword
-          ? 'An account with this email already exists. Please sign in instead.'
-          : methodInfo.isAppleOnly
-            ? 'This email is linked to Apple Sign-In. Please sign in with Apple.'
-            : `This email is linked to ${methodInfo.providerLabel}. Please sign in using that provider.`;
-        setProviderHint(methodInfo);
+      if (isAppleAuth && !isAppleConnected) {
+        const message = 'Please connect Apple Sign-In before creating your account.';
         setError(message);
         toast.error(message);
         setLoading(false);
         return;
       }
 
-      const result = await submitOnboarding(tenantType, formData, {
+      if (!isAppleAuth) {
+        const methods = await getEmailSignInMethods(formData.ownerEmail);
+        const methodInfo = getSignInMethodInfo(methods);
+        if (methodInfo.hasProvider) {
+          const message = methodInfo.hasPassword
+            ? 'An account with this email already exists. Please sign in instead.'
+            : methodInfo.isAppleOnly
+              ? 'This email is linked to Apple Sign-In. Please sign in with Apple.'
+              : `This email is linked to ${methodInfo.providerLabel}. Please sign in using that provider.`;
+          setProviderHint(methodInfo);
+          setError(message);
+          toast.error(message);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const submitData = {
+        ...formData,
+        ownerEmail: isAppleConnected ? user.email : formData.ownerEmail,
+      };
+
+      const result = await submitOnboarding(tenantType, submitData, {
         returnToPath: returnTo,
+        authMethod: submitData.authMethod,
+        firebaseUid: isAppleConnected ? user.uid : null,
       });
 
-      if (result.emailSent) {
+      if (submitData.authMethod === 'apple') {
+        try {
+          if (auth.currentUser) {
+            await auth.currentUser.getIdToken(true);
+          }
+          await refreshToken();
+        } catch (refreshError) {
+          console.warn('Token refresh after Apple onboarding failed:', refreshError);
+        }
+
+        sessionStorage.removeItem(APPLE_ONBOARDING_FLOW_KEY);
+        const dashboardPaths = {
+          restaurant: '/restaurant',
+          voice: '/voice',
+          real_estate: '/estate',
+        };
+        navigate(returnTo || dashboardPaths[tenantType] || '/', { replace: true });
+      } else if (result.emailSent) {
         const loginPath = returnTo
           ? `/login?type=${encodeURIComponent(tenantType)}&returnTo=${encodeURIComponent(returnTo)}`
           : '/login';
@@ -228,6 +377,15 @@ const Onboarding = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="card space-y-6">
+          <AccountMethodSelector
+            authMethod={formData.authMethod}
+            onChange={handleAuthMethodChange}
+            isAppleConnected={isAppleConnected}
+            appleEmail={user?.email || ''}
+            onAppleConnect={handleAppleSignIn}
+            loading={loading}
+          />
+
           {/* Name field */}
           <FormInput
             id="name"
@@ -251,7 +409,14 @@ const Onboarding = () => {
               value={formData.ownerEmail}
               onChange={handleChange}
               placeholder="your.email@example.com"
-              helpText="We'll send a password setup link to this email"
+              helpText={
+                isAppleAuth
+                  ? (isAppleConnected
+                    ? 'Using your Apple Sign-In email for this account.'
+                    : 'Connect Apple Sign-In above to continue.')
+                  : "We'll send a password setup link to this email"
+              }
+              readOnly={isAppleAuth && isAppleConnected}
             />
           )}
 
@@ -308,6 +473,21 @@ const Onboarding = () => {
             formData={formData}
             onChange={handleChange}
             showSection={!isRealEstate}
+            emailReadOnly={isAppleAuth && isAppleConnected}
+            introText={
+              isAppleAuth
+                ? (isAppleConnected
+                  ? 'Your Apple Sign-In account will be used for this owner profile.'
+                  : 'Connect Apple Sign-In above before you create this account.')
+                : "We'll send an invitation email to set up your account password."
+            }
+            emailHelpText={
+              isAppleAuth
+                ? (isAppleConnected
+                  ? 'Using your Apple Sign-In email for account access.'
+                  : 'Connect Apple Sign-In above to continue.')
+                : "We'll send a password setup link to this email"
+            }
           />
 
           {/* Error display */}
@@ -330,7 +510,7 @@ const Onboarding = () => {
           {/* Submit button */}
           <SubmitButton
             loading={loading}
-            disabled={!isFormValid(formData, tenantType)}
+            disabled={!isFormValid(formData, tenantType) || (isAppleAuth && !isAppleConnected)}
             pricingInfo={pricingInfo}
             selectedPlan={selectedPlan}
           />

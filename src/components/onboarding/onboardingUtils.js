@@ -66,6 +66,8 @@ export function getInitialFormData(selectedPlan = null) {
     markets: '',
     // Plan
     selectedPlan,
+    // Account auth mode
+    authMethod: 'password',
   };
 }
 

@@ -9,6 +9,7 @@ import {
   getVerificationStatus,
   sendVerificationLink,
 } from "../api/instagramOnboarding";
+import { capitalizeWordsPreservingApostrophes } from "../utils/textFormatters";
 
 const INDUSTRY_OPTIONS = [
   { value: "voice", label: "Office" },
@@ -33,10 +34,6 @@ function formatPhoneNumber(value) {
   if (digits.length <= 3) return digits;
   if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
-
-function capitalizeWords(value) {
-  return String(value || "").replace(/\b([a-z])/g, (match, letter) => letter.toUpperCase());
 }
 
 export default function SimpleOnboardingWizard() {
@@ -418,7 +415,7 @@ export default function SimpleOnboardingWizard() {
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  businessName: capitalizeWords(e.target.value),
+                  businessName: capitalizeWordsPreservingApostrophes(e.target.value),
                 }))
               }
               placeholder="Business Name"

@@ -8,6 +8,10 @@ export default function TenantSelector({ queryParams = {} }) {
   const buildOnboardingLink = (type) => {
     const params = new URLSearchParams();
     params.set('type', type);
+    const hasProvidedPlan = Boolean(queryParams?.plan && String(queryParams.plan).trim().length > 0);
+    if (type === 'voice' && !hasProvidedPlan) {
+      params.set('plan', 'basic');
+    }
 
     Object.entries(queryParams).forEach(([key, value]) => {
       if (value === undefined || value === null) return;

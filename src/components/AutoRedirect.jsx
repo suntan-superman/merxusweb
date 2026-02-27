@@ -17,7 +17,11 @@ export default function AutoRedirect() {
       return;
     }
 
-    if (needsOnboarding) {
+    const allowOnboardingAppleFlow =
+      location.pathname === '/onboarding' &&
+      sessionStorage.getItem('merxus_onboarding_auth_flow') === 'apple';
+
+    if (needsOnboarding && !allowOnboardingAppleFlow) {
       navigate('/onboarding-wizard', { replace: true });
       return;
     }

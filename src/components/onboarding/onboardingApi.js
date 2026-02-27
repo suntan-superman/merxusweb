@@ -60,12 +60,28 @@ function getPasswordSetupOrigin() {
   return window.location.origin;
 }
 
+function buildAuthPayload(formData, options = {}) {
+  const authMethod = options.authMethod || formData.authMethod || 'password';
+  const payload = {
+    authMethod,
+  };
+
+  if (authMethod === 'apple' && options.firebaseUid) {
+    payload.firebaseUid = options.firebaseUid;
+  }
+
+  return payload;
+}
+
 /**
  * Submit restaurant onboarding
  * @param {Object} formData - Form data
  * @returns {Promise<Object>} Result with success, emailSent, invitationLink, etc.
  */
 export async function submitRestaurantOnboarding(formData, options = {}) {
+  const authPayload = buildAuthPayload(formData, options);
+  const isAppleAuth = authPayload.authMethod === 'apple';
+
   const res = await apiClient.post('/onboarding/restaurant', {
     restaurant: {
       name: formData.name,
@@ -81,6 +97,7 @@ export async function submitRestaurantOnboarding(formData, options = {}) {
       email: formData.ownerEmail,
       displayName: formData.ownerName,
       role: 'owner',
+      ...authPayload,
     },
     plan: formData.selectedPlan,
   });
@@ -91,17 +108,20 @@ export async function submitRestaurantOnboarding(formData, options = {}) {
     throw new Error('Restaurant account was not created. Please contact support.');
   }
 
-  // Try Firebase email as backup if SendGrid didn't work
-  let emailSent = result.emailSent || false;
-  const returnToPath = buildSetupReturnPath(options.returnToPath, 'restaurant', result.restaurantId);
-  const resetOrigin = getPasswordSetupOrigin();
-  const resetUrl = `${resetOrigin}/login?mode=resetPassword&restaurantId=${result.restaurantId}&type=restaurant&returnTo=${encodeURIComponent(returnToPath)}`;
-  const firebaseFallbackSent = await sendFirebasePasswordReset(
-    formData.ownerEmail,
-    resetUrl
-  );
-  emailSent = emailSent || firebaseFallbackSent;
-  ensurePasswordSetupDelivery(emailSent, result.invitationLink);
+  let emailSent = false;
+  if (!isAppleAuth) {
+    // Try Firebase email as backup if SendGrid didn't work
+    emailSent = result.emailSent || false;
+    const returnToPath = buildSetupReturnPath(options.returnToPath, 'restaurant', result.restaurantId);
+    const resetOrigin = getPasswordSetupOrigin();
+    const resetUrl = `${resetOrigin}/login?mode=resetPassword&restaurantId=${result.restaurantId}&type=restaurant&returnTo=${encodeURIComponent(returnToPath)}`;
+    const firebaseFallbackSent = await sendFirebasePasswordReset(
+      formData.ownerEmail,
+      resetUrl
+    );
+    emailSent = emailSent || firebaseFallbackSent;
+    ensurePasswordSetupDelivery(emailSent, result.invitationLink);
+  }
 
   return {
     success: true,
@@ -118,6 +138,9 @@ export async function submitRestaurantOnboarding(formData, options = {}) {
  * @returns {Promise<Object>} Result with success, emailSent, invitationLink, etc.
  */
 export async function submitVoiceOnboarding(formData, options = {}) {
+  const authPayload = buildAuthPayload(formData, options);
+  const isAppleAuth = authPayload.authMethod === 'apple';
+
   const result = await createOffice({
     office: {
       name: formData.name,
@@ -132,6 +155,7 @@ export async function submitVoiceOnboarding(formData, options = {}) {
       email: formData.ownerEmail,
       displayName: formData.ownerName,
       role: 'owner',
+      ...authPayload,
     },
     plan: formData.selectedPlan,
   });
@@ -140,17 +164,20 @@ export async function submitVoiceOnboarding(formData, options = {}) {
     throw new Error('Office account was not created. Please contact support.');
   }
 
-  // Try Firebase email as backup if SendGrid didn't work
-  let emailSent = result.emailSent || false;
-  const returnToPath = buildSetupReturnPath(options.returnToPath, 'voice', result.officeId);
-  const resetOrigin = getPasswordSetupOrigin();
-  const resetUrl = `${resetOrigin}/login?mode=resetPassword&officeId=${result.officeId}&type=voice&returnTo=${encodeURIComponent(returnToPath)}`;
-  const firebaseFallbackSent = await sendFirebasePasswordReset(
-    formData.ownerEmail,
-    resetUrl
-  );
-  emailSent = emailSent || firebaseFallbackSent;
-  ensurePasswordSetupDelivery(emailSent, result.invitationLink);
+  let emailSent = false;
+  if (!isAppleAuth) {
+    // Try Firebase email as backup if SendGrid didn't work
+    emailSent = result.emailSent || false;
+    const returnToPath = buildSetupReturnPath(options.returnToPath, 'voice', result.officeId);
+    const resetOrigin = getPasswordSetupOrigin();
+    const resetUrl = `${resetOrigin}/login?mode=resetPassword&officeId=${result.officeId}&type=voice&returnTo=${encodeURIComponent(returnToPath)}`;
+    const firebaseFallbackSent = await sendFirebasePasswordReset(
+      formData.ownerEmail,
+      resetUrl
+    );
+    emailSent = emailSent || firebaseFallbackSent;
+    ensurePasswordSetupDelivery(emailSent, result.invitationLink);
+  }
 
   return {
     success: true,
@@ -167,6 +194,8 @@ export async function submitVoiceOnboarding(formData, options = {}) {
  * @returns {Promise<Object>} Result with success, emailSent, invitationLink, etc.
  */
 export async function submitRealEstateOnboarding(formData, options = {}) {
+  const authPayload = buildAuthPayload(formData, options);
+  const isAppleAuth = authPayload.authMethod === 'apple';
   const marketsArray = parseMarkets(formData.markets);
   const brandName = formData.brandName.trim() || `${formData.name} Team`;
 
@@ -187,6 +216,7 @@ export async function submitRealEstateOnboarding(formData, options = {}) {
       email: formData.ownerEmail,
       displayName: formData.name, // Use agent name for real estate
       role: 'owner',
+      ...authPayload,
     },
     plan: formData.selectedPlan,
   });
@@ -197,17 +227,20 @@ export async function submitRealEstateOnboarding(formData, options = {}) {
     throw new Error('Agent account was not created. Please contact support.');
   }
 
-  // Try Firebase email as backup if SendGrid didn't work
-  let emailSent = result.emailSent || false;
-  const returnToPath = buildSetupReturnPath(options.returnToPath, 'real_estate', result.agentId);
-  const resetOrigin = getPasswordSetupOrigin();
-  const resetUrl = `${resetOrigin}/login?mode=resetPassword&agentId=${result.agentId}&type=real_estate&returnTo=${encodeURIComponent(returnToPath)}`;
-  const firebaseFallbackSent = await sendFirebasePasswordReset(
-    formData.ownerEmail,
-    resetUrl
-  );
-  emailSent = emailSent || firebaseFallbackSent;
-  ensurePasswordSetupDelivery(emailSent, result.invitationLink);
+  let emailSent = false;
+  if (!isAppleAuth) {
+    // Try Firebase email as backup if SendGrid didn't work
+    emailSent = result.emailSent || false;
+    const returnToPath = buildSetupReturnPath(options.returnToPath, 'real_estate', result.agentId);
+    const resetOrigin = getPasswordSetupOrigin();
+    const resetUrl = `${resetOrigin}/login?mode=resetPassword&agentId=${result.agentId}&type=real_estate&returnTo=${encodeURIComponent(returnToPath)}`;
+    const firebaseFallbackSent = await sendFirebasePasswordReset(
+      formData.ownerEmail,
+      resetUrl
+    );
+    emailSent = emailSent || firebaseFallbackSent;
+    ensurePasswordSetupDelivery(emailSent, result.invitationLink);
+  }
 
   return {
     success: true,
