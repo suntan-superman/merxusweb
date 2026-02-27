@@ -58,7 +58,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
         setUnassignedNumbers(result.numbers || []);
       } catch (error) {
         console.error('Failed to fetch unassigned numbers:', error);
-        // Silently fail - not critical
+        toast.info('Could not load pre-purchased numbers. You can still search by area code below.');
       } finally {
         setLoadingUnassigned(false);
       }
@@ -68,7 +68,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
   }, [paymentCompleted]);
 
   const handleChange = (field, value) => {
-    onChange({ ...data, [field]: value });
+    onChange({ [field]: value });
   };
 
   // Assign or purchase a number after payment
@@ -100,7 +100,6 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
       const assignedSid = assigned.sid || sid || '';
 
       onChange({
-        ...data,
         twilioPhoneNumber: assignedPhone,
         twilioPhoneSid: assignedSid,
         twilioAccountSid: 'auto_provisioned',
@@ -281,6 +280,12 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
           <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 text-center">
             <Loader className="w-5 h-5 text-gray-400 mx-auto mb-2 animate-spin" />
             <p className="text-sm text-gray-600">Checking for previously purchased numbers...</p>
+          </div>
+        )}
+
+        {!data.twilioPhoneNumber && !loadingUnassigned && unassignedNumbers.length === 0 && (
+          <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 text-center">
+            <p className="text-sm text-gray-600">No pre-purchased numbers found. Search by area code below.</p>
           </div>
         )}
 

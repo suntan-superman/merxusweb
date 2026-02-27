@@ -27,7 +27,7 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success') === 'true';
     if (success) {
-      onChange({ ...data, paymentCompleted: true, paymentSessionId: params.get('session_id') || null });
+      onChange({ paymentCompleted: true, paymentSessionId: params.get('session_id') || null });
       toast.success('✅ Payment completed! You can continue setup.');
 
       const cleanUrl = window.location.pathname;
@@ -126,7 +126,7 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
               value={promoCode}
               onChange={(e) => {
                 setPromoCode(e.target.value);
-                onChange({ ...data, promoCode: e.target.value });
+                onChange({ promoCode: e.target.value });
               }}
               className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none"
               placeholder="Enter promo code"

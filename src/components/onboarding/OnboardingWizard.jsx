@@ -145,16 +145,20 @@ export default function OnboardingWizard({
   }, [skipPayment, currentStep, resolvedTenantId]);
 
   const updateWizardData = (updates) => {
-    // Log voice updates specifically
-    if (updates.aiVoice) {
-      console.log('🎤 [OnboardingWizard] updateWizardData called with aiVoice:', updates.aiVoice);
-    }
+    if (!updates || typeof updates !== 'object') return;
+
     setWizardData((prev) => {
-      const newData = { ...prev, ...updates };
-      if (updates.aiVoice) {
-        console.log('🎤 [OnboardingWizard] New wizardData.aiVoice:', newData.aiVoice);
-      }
-      return newData;
+      let hasChanges = false;
+      const next = { ...prev };
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (next[key] !== value) {
+          next[key] = value;
+          hasChanges = true;
+        }
+      });
+
+      return hasChanges ? next : prev;
     });
   };
 

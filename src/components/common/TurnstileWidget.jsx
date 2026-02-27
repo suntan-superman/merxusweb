@@ -36,6 +36,11 @@ function loadTurnstileScript() {
 export default function TurnstileWidget({ onVerify, onExpire, onError, theme = 'light' }) {
   const containerRef = useRef(null);
   const widgetIdRef = useRef(null);
+  const callbacksRef = useRef({ onVerify, onExpire, onError });
+
+  useEffect(() => {
+    callbacksRef.current = { onVerify, onExpire, onError };
+  }, [onVerify, onExpire, onError]);
 
   useEffect(() => {
     if (!SITE_KEY) {
@@ -49,17 +54,22 @@ export default function TurnstileWidget({ onVerify, onExpire, onError, theme = '
       if (!containerRef.current || cancelled) return;
       if (!window.turnstile) return;
 
+      if (widgetIdRef.current !== null) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
+
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: SITE_KEY,
         theme,
         callback: (token) => {
-          if (!cancelled) onVerify?.(token);
+          if (!cancelled) callbacksRef.current.onVerify?.(token);
         },
         'expired-callback': () => {
-          if (!cancelled) onExpire?.();
+          if (!cancelled) callbacksRef.current.onExpire?.();
         },
         'error-callback': (errorCode) => {
-          if (!cancelled) onError?.(errorCode);
+          if (!cancelled) callbacksRef.current.onError?.(errorCode);
         },
       });
     };
@@ -70,7 +80,7 @@ export default function TurnstileWidget({ onVerify, onExpire, onError, theme = '
       })
       .catch((error) => {
         if (!cancelled) {
-          onError?.(error?.message || 'Turnstile failed to load');
+          callbacksRef.current.onError?.(error?.message || 'Turnstile failed to load');
         }
       });
 
@@ -78,9 +88,10 @@ export default function TurnstileWidget({ onVerify, onExpire, onError, theme = '
       cancelled = true;
       if (window.turnstile && widgetIdRef.current !== null) {
         window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
       }
     };
-  }, [onVerify, onExpire, onError, theme]);
+  }, [theme]);
 
   return <div ref={containerRef} />;
 }

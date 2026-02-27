@@ -24,7 +24,7 @@ const BUSINESS_TYPES = [
 export default function IndustryCustomization({ tenantType, data, onChange }) {
   const handleChange = (field, value) => {
     const industryData = { ...data.industryData, [field]: value };
-    onChange({ ...data, industryData });
+    onChange({ industryData });
   };
 
   // Restaurant-specific fields

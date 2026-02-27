@@ -28,7 +28,7 @@ export default function BusinessDetails({
       field === 'address' || field === 'city'
         ? capitalizeWordsPreservingApostrophes(value)
         : value;
-    onChange({ ...data, [field]: normalizedValue });
+    onChange({ [field]: normalizedValue });
   };
 
   return (
