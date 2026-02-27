@@ -47,7 +47,7 @@ const APPLE_ONBOARDING_DRAFT_KEY = 'merxus_onboarding_apple_draft';
 const Onboarding = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, isAppleUser, refreshToken } = useAuth();
+  const { user, isAppleUser, needsOnboarding } = useAuth();
   
   // URL parameters
   const tenantTypeParam = searchParams.get('type');
@@ -76,6 +76,7 @@ const Onboarding = () => {
   const [invitationData, setInvitationData] = useState(null);
   const isAppleAuth = formData.authMethod === 'apple';
   const isAppleConnected = Boolean(isAppleAuth && user?.uid && isAppleUser && user?.email);
+  const forceAppleAuth = Boolean(user?.uid && isAppleUser && needsOnboarding);
 
   // Scroll to top on mount or tenant type change
   useEffect(() => {
@@ -122,15 +123,16 @@ const Onboarding = () => {
   }, [prefillEmailFromQuery]);
 
   useEffect(() => {
-    if (!isAppleAuth || !isAppleConnected) return;
+    if (!isAppleConnected) return;
     setFormData((prev) => {
-      if (prev.ownerEmail === user.email) return prev;
+      if (prev.ownerEmail === user.email && prev.authMethod === 'apple') return prev;
       return {
         ...prev,
+        authMethod: 'apple',
         ownerEmail: user.email,
       };
     });
-  }, [isAppleAuth, isAppleConnected, user?.email]);
+  }, [isAppleConnected, user?.email]);
 
   useEffect(() => {
     if (!isAppleAuth) return;
@@ -177,6 +179,7 @@ const Onboarding = () => {
 
   const handleAuthMethodChange = (nextMethod) => {
     if (nextMethod !== 'apple' && nextMethod !== 'password') return;
+    if ((forceAppleAuth || isAppleConnected) && nextMethod !== 'apple') return;
 
     if (nextMethod === 'password') {
       sessionStorage.removeItem(APPLE_ONBOARDING_FLOW_KEY);
@@ -228,10 +231,19 @@ const Onboarding = () => {
     setLoading(true);
 
     try {
-      if (isAppleAuth && !isAppleConnected) {
-        const message = 'Please connect Apple Sign-In before creating your account.';
-        setError(message);
-        toast.error(message);
+      if (isAppleAuth) {
+        if (!isAppleConnected) {
+          const message = 'Please connect Apple Sign-In before creating your account.';
+          setError(message);
+          toast.error(message);
+          setLoading(false);
+          return;
+        }
+
+        const wizardParams = new URLSearchParams();
+        if (tenantType) wizardParams.set('type', tenantType);
+        if (returnTo) wizardParams.set('returnTo', returnTo);
+        navigate(`/onboarding-wizard?${wizardParams.toString()}`, { replace: true });
         setLoading(false);
         return;
       }
@@ -264,24 +276,7 @@ const Onboarding = () => {
         firebaseUid: isAppleConnected ? user.uid : null,
       });
 
-      if (submitData.authMethod === 'apple') {
-        try {
-          if (auth.currentUser) {
-            await auth.currentUser.getIdToken(true);
-          }
-          await refreshToken();
-        } catch (refreshError) {
-          console.warn('Token refresh after Apple onboarding failed:', refreshError);
-        }
-
-        sessionStorage.removeItem(APPLE_ONBOARDING_FLOW_KEY);
-        const dashboardPaths = {
-          restaurant: '/restaurant',
-          voice: '/voice',
-          real_estate: '/estate',
-        };
-        navigate(returnTo || dashboardPaths[tenantType] || '/', { replace: true });
-      } else if (result.emailSent) {
+      if (result.emailSent) {
         const loginPath = returnTo
           ? `/login?type=${encodeURIComponent(tenantType)}&returnTo=${encodeURIComponent(returnTo)}`
           : '/login';
@@ -384,6 +379,7 @@ const Onboarding = () => {
             appleEmail={user?.email || ''}
             onAppleConnect={handleAppleSignIn}
             loading={loading}
+            disableEmailOption={forceAppleAuth || isAppleConnected}
           />
 
           {/* Name field */}

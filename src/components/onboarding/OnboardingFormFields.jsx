@@ -149,6 +149,7 @@ export function AccountMethodSelector({
   appleEmail = '',
   onAppleConnect,
   loading = false,
+  disableEmailOption = false,
 }) {
   const isAppleAuth = authMethod === 'apple';
 
@@ -159,11 +160,12 @@ export function AccountMethodSelector({
         <button
           type="button"
           onClick={() => onChange?.('password')}
+          disabled={disableEmailOption}
           className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
             !isAppleAuth
               ? 'border-primary-600 bg-primary-600 text-white'
               : 'border-gray-300 bg-white text-gray-700 hover:border-primary-300'
-          }`}
+          } ${disableEmailOption ? 'cursor-not-allowed opacity-50' : ''}`}
         >
           Email
         </button>
