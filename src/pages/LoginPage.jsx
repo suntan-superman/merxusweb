@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
-import { signInWithEmailAndPassword, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode, OAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode, OAuthProvider, signInWithRedirect, getRedirectResult, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { resendInvitationEmail } from '../api/voice';
@@ -23,6 +23,10 @@ export default function LoginPage() {
   const [providerHint, setProviderHint] = useState('');
   const [resetProviderHint, setResetProviderHint] = useState('');
   const [isAppleOnly, setIsAppleOnly] = useState(false);
+  const [showAccountNotFoundCard, setShowAccountNotFoundCard] = useState(false);
+  const [accountNotFoundEmail, setAccountNotFoundEmail] = useState('');
+  const [accountNotFoundProvider, setAccountNotFoundProvider] = useState('email');
+  const [accountNotFoundCountdown, setAccountNotFoundCountdown] = useState(3);
   const lastProviderCheckRef = useRef('');
   const navigate = useNavigate();
   const location = useLocation();
@@ -87,6 +91,36 @@ export default function LoginPage() {
     setIsAppleOnly(false);
   };
 
+  const redirectToOnboarding = (nextEmail = '') => {
+    const onboardingParams = new URLSearchParams(signupParams);
+    if (nextEmail) {
+      onboardingParams.set('email', nextEmail);
+    }
+    navigate(`/onboarding?${onboardingParams.toString()}`);
+  };
+
+  const showAccountNotFoundPrompt = (nextEmail = '', provider = 'email') => {
+    const normalized = (nextEmail || '').trim().toLowerCase();
+    setError('');
+    setProviderHint('');
+    setResetProviderHint('');
+    setIsAppleOnly(false);
+    setAccountNotFoundEmail(normalized);
+    setAccountNotFoundProvider(provider);
+    setAccountNotFoundCountdown(3);
+    setShowAccountNotFoundCard(true);
+  };
+
+  const dismissAccountNotFoundPrompt = () => {
+    setShowAccountNotFoundCard(false);
+  };
+
+  const startOnboardingFromNotFound = () => {
+    const targetEmail = (accountNotFoundEmail || email || '').trim().toLowerCase();
+    setShowAccountNotFoundCard(false);
+    redirectToOnboarding(targetEmail);
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -94,6 +128,20 @@ export default function LoginPage() {
       try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
+          const tokenResult = await result.user.getIdTokenResult(true);
+          const claims = tokenResult?.claims || {};
+          const hasTenantType = ['merxus', 'voice', 'real_estate', 'restaurant'].includes(claims?.type);
+          const hasTenantAssociation = Boolean(claims?.officeId || claims?.agentId || claims?.restaurantId || claims?.type === 'merxus');
+
+          if (!hasTenantType || !hasTenantAssociation) {
+            const unauthorizedEmail = (result.user.email || '').trim().toLowerCase();
+            await firebaseSignOut(auth);
+            if (!isMounted) return;
+            showAccountNotFoundPrompt(unauthorizedEmail, 'apple');
+            setLoading(false);
+            return;
+          }
+
           await result.user.getIdToken(true);
         }
       } catch (err) {
@@ -109,6 +157,21 @@ export default function LoginPage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!showAccountNotFoundCard) return undefined;
+
+    if (accountNotFoundCountdown <= 0) {
+      startOnboardingFromNotFound();
+      return undefined;
+    }
+
+    const timer = setTimeout(() => {
+      setAccountNotFoundCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [showAccountNotFoundCard, accountNotFoundCountdown]);
   
   // Check if this is a password reset link from invitation
   useEffect(() => {
@@ -137,7 +200,10 @@ export default function LoginPage() {
       }
 
       if (needsOnboarding) {
-        navigate('/onboarding-wizard', { replace: true });
+        showAccountNotFoundPrompt((user?.email || email || '').trim().toLowerCase(), 'apple');
+        firebaseSignOut(auth).catch((signOutError) => {
+          console.warn('Could not sign out unauthorized user:', signOutError);
+        });
         return;
       }
       // Wait a moment for userClaims to load after login
@@ -182,8 +248,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const methods = await getEmailSignInMethods(email);
+      const normalizedEmail = (email || '').trim().toLowerCase();
+      const methods = await getEmailSignInMethods(normalizedEmail);
       const methodInfo = getSignInMethodInfo(methods);
+
+      if (!methodInfo.hasProvider) {
+        setLoading(false);
+        showAccountNotFoundPrompt(normalizedEmail, 'email');
+        return;
+      }
+
       if (methodInfo.hasProvider && !methodInfo.hasPassword) {
         const message = methodInfo.isAppleOnly
           ? 'This email is linked to Apple Sign-In. Please use Apple to sign in.'
@@ -195,12 +269,17 @@ export default function LoginPage() {
         return;
       }
 
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
       // Force token refresh to get latest claims
       await userCredential.user.getIdToken(true);
       // Navigation will be handled by useEffect once userClaims are loaded
     } catch (err) {
       console.error('Login error:', err);
+      if (err.code === 'auth/user-not-found') {
+        setLoading(false);
+        showAccountNotFoundPrompt((email || '').trim().toLowerCase(), 'email');
+        return;
+      }
       setError(getErrorMessage(err.code));
       setLoading(false);
     }
@@ -403,6 +482,41 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8">
+          {showAccountNotFoundCard && (
+            <div className="relative mb-6 overflow-hidden rounded-2xl border border-white/70 bg-white/45 px-5 py-5 shadow-[0_18px_45px_-24px_rgba(16,185,129,0.7)] backdrop-blur-xl">
+              <div className="pointer-events-none absolute -right-7 -top-8 h-24 w-24 rounded-full bg-emerald-300/50 blur-2xl" />
+              <div className="pointer-events-none absolute -left-8 -bottom-8 h-28 w-28 rounded-full bg-primary-300/45 blur-2xl" />
+
+              <h3 className="relative text-lg font-semibold text-gray-900">Account Not Found</h3>
+              <p className="relative mt-2 text-sm text-gray-700">
+                We couldn&apos;t find an authorized {accountNotFoundProvider === 'apple' ? 'Apple Sign-In' : 'email'} account for:
+              </p>
+              <p className="relative mt-1 break-all text-sm font-semibold text-primary-800">
+                {accountNotFoundEmail || (email || '').trim().toLowerCase() || 'No email provided'}
+              </p>
+              <p className="relative mt-3 text-xs font-medium text-gray-600">
+                Redirecting to onboarding in {accountNotFoundCountdown}s...
+              </p>
+
+              <div className="relative mt-4 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={startOnboardingFromNotFound}
+                  className="inline-flex items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-700"
+                >
+                  Start Onboarding Now
+                </button>
+                <button
+                  type="button"
+                  onClick={dismissAccountNotFoundPrompt}
+                  className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white/70 px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-white"
+                >
+                  Stay on Login
+                </button>
+              </div>
+            </div>
+          )}
+
           {successMessage && !showPasswordSetup && (
             <div className="mb-6 rounded-md bg-green-50 border-2 border-green-300 px-6 py-4 text-sm text-green-800">
               <div className="flex items-start">
@@ -659,6 +773,7 @@ export default function LoginPage() {
                     setEmail(e.target.value);
                     setProviderHint('');
                     setIsAppleOnly(false);
+                    setShowAccountNotFoundCard(false);
                   }}
                   onBlur={(e) => updateProviderHint(e.target.value)}
                   className="input-field"

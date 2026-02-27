@@ -4,7 +4,21 @@ import { Link } from 'react-router-dom';
  * TenantSelector Component
  * Allows users to choose between Restaurant and Voice (Office) services
  */
-export default function TenantSelector() {
+export default function TenantSelector({ queryParams = {} }) {
+  const buildOnboardingLink = (type) => {
+    const params = new URLSearchParams();
+    params.set('type', type);
+
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      const normalized = String(value).trim();
+      if (!normalized) return;
+      params.set(key, normalized);
+    });
+
+    return `/onboarding?${params.toString()}`;
+  };
+
   return (
     <div className="pt-12 pb-16 px-4">
       <div className="container mx-auto max-w-6xl">
@@ -57,7 +71,7 @@ export default function TenantSelector() {
                 </li>
               </ul>
               <Link
-                to="/onboarding?type=restaurant"
+                to={buildOnboardingLink('restaurant')}
                 className="btn-primary w-full text-center"
               >
                 Get Started
@@ -104,7 +118,7 @@ export default function TenantSelector() {
                 </li>
               </ul>
               <Link
-                to="/onboarding?type=voice"
+                to={buildOnboardingLink('voice')}
                 className="btn-primary w-full text-center"
               >
                 Get Started
@@ -151,7 +165,7 @@ export default function TenantSelector() {
                 </li>
               </ul>
               <Link
-                to="/onboarding?type=real_estate"
+                to={buildOnboardingLink('real_estate')}
                 className="btn-primary w-full text-center"
               >
                 Get Started

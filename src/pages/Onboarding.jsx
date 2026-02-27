@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import InvitationLinkModal from '../components/common/InvitationLinkModal';
+import TenantSelector from '../components/TenantSelector';
 import {
   getPricingInfo,
   getInitialFormData,
@@ -40,9 +41,14 @@ const Onboarding = () => {
   const [searchParams] = useSearchParams();
   
   // URL parameters
-  const tenantType = searchParams.get('type') || 'restaurant';
+  const tenantTypeParam = searchParams.get('type');
+  const allowedTenantTypes = new Set(['restaurant', 'voice', 'real_estate']);
+  const hasExplicitTenantType = allowedTenantTypes.has(tenantTypeParam);
+  const tenantType = hasExplicitTenantType ? tenantTypeParam : 'restaurant';
   const selectedPlan = searchParams.get('plan') || null;
   const returnTo = searchParams.get('returnTo') || null;
+  const source = searchParams.get('source') || null;
+  const prefillEmailFromQuery = (searchParams.get('email') || '').trim();
   
   // Derived state
   const isVoice = tenantType === 'voice';
@@ -64,6 +70,17 @@ const Onboarding = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [tenantType]);
+
+  useEffect(() => {
+    if (!prefillEmailFromQuery) return;
+    setFormData((prev) => {
+      if (prev.ownerEmail && prev.ownerEmail.trim().length > 0) return prev;
+      return {
+        ...prev,
+        ownerEmail: prefillEmailFromQuery,
+      };
+    });
+  }, [prefillEmailFromQuery]);
 
   // Form handlers
   const capitalizeWords = (value) => String(value || '').replace(/\b([a-z])/g, (match) => match.toUpperCase());
@@ -159,6 +176,34 @@ const Onboarding = () => {
       },
     });
   };
+
+  if (!hasExplicitTenantType) {
+    return (
+      <div className="w-full py-16 px-4 bg-gradient-to-br from-primary-50 to-white min-h-screen">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Get Started with Merxus
+            </h1>
+            <p className="text-xl text-gray-700 mb-2">
+              First, choose your tenant type.
+            </p>
+            <p className="text-sm text-gray-600">
+              You&apos;ll continue with the right onboarding wizard for your business.
+            </p>
+          </div>
+        </div>
+        <TenantSelector
+          queryParams={{
+            plan: selectedPlan,
+            returnTo,
+            source,
+            email: prefillEmailFromQuery,
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full py-16 px-4 bg-gradient-to-br from-primary-50 to-white min-h-screen">
