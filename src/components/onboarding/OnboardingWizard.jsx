@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import apiClient from '../../api/client';
 import IndustrySelection from './steps/IndustrySelection';
@@ -27,7 +27,10 @@ export default function OnboardingWizard({
   skipPayment = false,
 }) {
   const isAppleAuth = authMethod === 'apple';
-  const [currentStep, setCurrentStep] = useState(1);
+  const shouldSkipIndustryStep = !!initialTenantType;
+  const minimumStep = shouldSkipIndustryStep ? 2 : 1;
+  const contentRef = useRef(null);
+  const [currentStep, setCurrentStep] = useState(minimumStep);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [dataSaved, setDataSaved] = useState(false);
   const [emailValidation, setEmailValidation] = useState({ status: 'idle', message: '' });
@@ -104,6 +107,12 @@ export default function OnboardingWizard({
   }, []);
 
   useEffect(() => {
+    if (shouldSkipIndustryStep && currentStep < 2) {
+      setCurrentStep(2);
+    }
+  }, [shouldSkipIndustryStep, currentStep]);
+
+  useEffect(() => {
     try {
       localStorage.setItem(
         STORAGE_KEY,
@@ -113,6 +122,13 @@ export default function OnboardingWizard({
       console.error('Failed to persist wizard state:', error);
     }
   }, [wizardData, currentStep, dataSaved]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep]);
 
   useEffect(() => {
     if (skipPayment && !wizardData.paymentCompleted) {
@@ -312,7 +328,7 @@ export default function OnboardingWizard({
   };
 
   const goToPreviousStep = () => {
-    if (currentStep > 1) {
+    if (currentStep > minimumStep) {
       setCurrentStep(currentStep - 1);
     }
   };
@@ -453,7 +469,7 @@ export default function OnboardingWizard({
         </div>
 
         {/* Content Area - Fixed Height with Internal Scroll */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-6">
           <div className="max-w-2xl mx-auto">
             {/* Step content will go here */}
             {currentStep === 1 && (
@@ -534,9 +550,9 @@ export default function OnboardingWizard({
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex items-center justify-between">
           <button
             onClick={goToPreviousStep}
-            disabled={currentStep === 1}
+            disabled={currentStep === minimumStep}
             className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-              currentStep === 1
+              currentStep === minimumStep
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
             }`}

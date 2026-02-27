@@ -43,6 +43,7 @@ import {
 
 const APPLE_ONBOARDING_FLOW_KEY = 'merxus_onboarding_auth_flow';
 const APPLE_ONBOARDING_DRAFT_KEY = 'merxus_onboarding_apple_draft';
+const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -81,6 +82,12 @@ const Onboarding = () => {
   // Scroll to top on mount or tenant type change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [tenantType]);
+
+  useEffect(() => {
+    if (tenantType) {
+      sessionStorage.setItem(ONBOARDING_TENANT_TYPE_KEY, tenantType);
+    }
   }, [tenantType]);
 
   useEffect(() => {

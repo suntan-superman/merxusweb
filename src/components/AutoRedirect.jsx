@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
+const VALID_TENANT_TYPES = new Set(['restaurant', 'voice', 'real_estate']);
+
 /**
  * Automatically redirects authenticated users to their appropriate portal
  * when they're on public routes (home, features, pricing, etc.)
@@ -18,7 +21,20 @@ export default function AutoRedirect() {
     }
 
     if (needsOnboarding) {
-      navigate('/onboarding-wizard', { replace: true });
+      const params = new URLSearchParams(location.search || '');
+      const queryType = params.get('type');
+      const storedType = sessionStorage.getItem(ONBOARDING_TENANT_TYPE_KEY);
+      const resolvedType = VALID_TENANT_TYPES.has(queryType)
+        ? queryType
+        : VALID_TENANT_TYPES.has(storedType)
+        ? storedType
+        : null;
+
+      if (resolvedType) {
+        navigate(`/onboarding-wizard?type=${encodeURIComponent(resolvedType)}`, { replace: true });
+      } else {
+        navigate('/onboarding-wizard', { replace: true });
+      }
       return;
     }
 

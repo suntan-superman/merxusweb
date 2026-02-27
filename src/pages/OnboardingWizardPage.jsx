@@ -6,6 +6,8 @@ import apiClient from '../api/client';
 import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 
+const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
+
 export default function OnboardingWizardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -14,7 +16,10 @@ export default function OnboardingWizardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tenantCreated, setTenantCreated] = useState(null);
 
-  const initialTenantType = searchParams.get('type') || null;
+  const initialTenantType =
+    searchParams.get('type') ||
+    sessionStorage.getItem(ONBOARDING_TENANT_TYPE_KEY) ||
+    null;
 
   useEffect(() => {
     if (loading) return;
