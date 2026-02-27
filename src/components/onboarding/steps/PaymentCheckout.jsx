@@ -35,6 +35,8 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
       cleanedParams.delete('success');
       cleanedParams.delete('session_id');
       cleanedParams.delete('canceled');
+      cleanedParams.delete('resumeStep');
+      cleanedParams.delete('tenantId');
       const cleanQuery = cleanedParams.toString();
       const cleanUrl = cleanQuery ? `${window.location.pathname}?${cleanQuery}` : window.location.pathname;
       window.history.replaceState({}, '', cleanUrl);
@@ -46,6 +48,8 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
 
       const cleanedParams = new URLSearchParams(window.location.search);
       cleanedParams.delete('canceled');
+      cleanedParams.delete('resumeStep');
+      cleanedParams.delete('tenantId');
       const cleanQuery = cleanedParams.toString();
       const cleanUrl = cleanQuery ? `${window.location.pathname}?${cleanQuery}` : window.location.pathname;
       window.history.replaceState({}, '', cleanUrl);
@@ -85,12 +89,19 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
     setLoading(true);
     try {
       const successReturnUrl = new URL(window.location.href);
+      successReturnUrl.searchParams.delete('session_id');
+      successReturnUrl.searchParams.delete('canceled');
       successReturnUrl.searchParams.set('success', 'true');
+      successReturnUrl.searchParams.set('type', tenantType);
+      successReturnUrl.searchParams.set('tenantId', tenantId);
+      successReturnUrl.searchParams.set('resumeStep', '6');
 
       const cancelReturnUrl = new URL(window.location.href);
       cancelReturnUrl.searchParams.delete('success');
       cancelReturnUrl.searchParams.delete('session_id');
       cancelReturnUrl.searchParams.set('canceled', 'true');
+      cancelReturnUrl.searchParams.set('type', tenantType);
+      cancelReturnUrl.searchParams.set('tenantId', tenantId);
 
       const successUrl = successReturnUrl.toString();
       const cancelUrl = cancelReturnUrl.toString();

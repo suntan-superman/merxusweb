@@ -23,6 +23,29 @@ function hasActiveWizardSession() {
   }
 }
 
+function buildTenantCreatedFromQuery(tenantType, tenantId) {
+  if (!tenantType || !tenantId) return null;
+
+  const base = {
+    tenantType,
+    tenantId,
+  };
+
+  if (tenantType === 'voice') {
+    return { ...base, officeId: tenantId };
+  }
+
+  if (tenantType === 'restaurant') {
+    return { ...base, restaurantId: tenantId };
+  }
+
+  if (tenantType === 'real_estate') {
+    return { ...base, agentId: tenantId };
+  }
+
+  return base;
+}
+
 export default function OnboardingWizardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -35,9 +58,37 @@ export default function OnboardingWizardPage() {
     searchParams.get('type') ||
     sessionStorage.getItem(ONBOARDING_TENANT_TYPE_KEY) ||
     null;
+  const tenantIdFromQuery = searchParams.get('tenantId') || null;
+  const sessionIdFromQuery = searchParams.get('session_id') || null;
+  const resumeStep = Number(searchParams.get('resumeStep') || 0);
   const isPaymentReturn = searchParams.get('success') === 'true';
   const isCanceledReturn = searchParams.get('canceled') === 'true';
   const hasWizardProgress = hasActiveWizardSession();
+  const effectiveResumeStep = isPaymentReturn ? Math.max(6, resumeStep || 0) : resumeStep;
+  const shouldResumeTwilio = isPaymentReturn && effectiveResumeStep >= 6;
+
+  useEffect(() => {
+    if (!isPaymentReturn && !isCanceledReturn) return;
+
+    const cleanedParams = new URLSearchParams(searchParams);
+    cleanedParams.delete('success');
+    cleanedParams.delete('canceled');
+    cleanedParams.delete('session_id');
+    cleanedParams.delete('resumeStep');
+    const cleanQuery = cleanedParams.toString();
+    const cleanUrl = cleanQuery ? `${window.location.pathname}?${cleanQuery}` : window.location.pathname;
+    window.history.replaceState({}, '', cleanUrl);
+  }, [isPaymentReturn, isCanceledReturn, searchParams]);
+
+  useEffect(() => {
+    if (!tenantIdFromQuery || !initialTenantType) return;
+    if (tenantCreated) return;
+
+    const hydratedTenant = buildTenantCreatedFromQuery(initialTenantType, tenantIdFromQuery);
+    if (hydratedTenant) {
+      setTenantCreated(hydratedTenant);
+    }
+  }, [tenantCreated, initialTenantType, tenantIdFromQuery]);
 
   useEffect(() => {
     if (loading) return;
@@ -249,6 +300,10 @@ export default function OnboardingWizardPage() {
         prefillEmail={user?.email}
         prefillName={user?.displayName}
         tenantCreated={tenantCreated}
+        resumeStep={shouldResumeTwilio ? effectiveResumeStep : null}
+        forcePaymentComplete={isPaymentReturn}
+        paymentSessionId={sessionIdFromQuery}
+        resumeTenantId={tenantIdFromQuery}
       />
     </div>
   );

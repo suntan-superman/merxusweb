@@ -25,6 +25,10 @@ export default function OnboardingWizard({
   prefillName,
   tenantCreated,
   skipPayment = false,
+  resumeStep = null,
+  forcePaymentComplete = false,
+  paymentSessionId = null,
+  resumeTenantId = null,
 }) {
   const isAppleAuth = authMethod === 'apple';
   const shouldSkipIndustryStep = !!initialTenantType;
@@ -113,6 +117,14 @@ export default function OnboardingWizard({
   }, [shouldSkipIndustryStep, currentStep]);
 
   useEffect(() => {
+    const targetStep = Number(resumeStep || 0);
+    if (!Number.isFinite(targetStep) || targetStep <= 0) return;
+    if (currentStep < targetStep) {
+      setCurrentStep(targetStep);
+    }
+  }, [resumeStep, currentStep]);
+
+  useEffect(() => {
     try {
       localStorage.setItem(
         STORAGE_KEY,
@@ -135,6 +147,34 @@ export default function OnboardingWizard({
       setWizardData((prev) => ({ ...prev, paymentCompleted: true }));
     }
   }, [skipPayment, wizardData.paymentCompleted]);
+
+  useEffect(() => {
+    if (!forcePaymentComplete) return;
+
+    setWizardData((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      if (!next.paymentCompleted) {
+        next.paymentCompleted = true;
+        changed = true;
+      }
+
+      if (paymentSessionId && next.paymentSessionId !== paymentSessionId) {
+        next.paymentSessionId = paymentSessionId;
+        changed = true;
+      }
+
+      if (resumeTenantId && !next.tenantId) {
+        next.tenantId = resumeTenantId;
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+
+    setDataSaved(true);
+  }, [forcePaymentComplete, paymentSessionId, resumeTenantId]);
 
   useEffect(() => {
     // Recovery for stale localStorage sessions that reached Twilio setup without a saved tenant id.
