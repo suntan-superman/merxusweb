@@ -26,6 +26,11 @@ export default function AutoRedirect() {
       return;
     }
 
+    // Apple users can be authenticated before claims are assigned.
+    if (!userClaims) {
+      return;
+    }
+
     // Only redirect from public routes
     const publicRoutes = ['/', '/features', '/onboarding'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
