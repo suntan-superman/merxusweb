@@ -252,12 +252,6 @@ export default function LoginPage() {
       const methods = await getEmailSignInMethods(normalizedEmail);
       const methodInfo = getSignInMethodInfo(methods);
 
-      if (!methodInfo.hasProvider) {
-        setLoading(false);
-        showAccountNotFoundPrompt(normalizedEmail, 'email');
-        return;
-      }
-
       if (methodInfo.hasProvider && !methodInfo.hasPassword) {
         const message = methodInfo.isAppleOnly
           ? 'This email is linked to Apple Sign-In. Please use Apple to sign in.'
@@ -269,6 +263,8 @@ export default function LoginPage() {
         return;
       }
 
+      // With Firebase email-enumeration protection, this check can return no methods
+      // for valid accounts. Attempt sign-in regardless.
       const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
       // Force token refresh to get latest claims
       await userCredential.user.getIdToken(true);
