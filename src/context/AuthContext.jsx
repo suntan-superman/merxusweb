@@ -48,6 +48,7 @@ export function AuthProvider({ children }) {
     }
     if (result.needsOnboarding) {
       setNeedsOnboarding(true);
+      return result.token || null;
     }
     return null;
   }, [user]);
@@ -119,7 +120,11 @@ export function AuthProvider({ children }) {
         
         try {
           const result = await refreshTokenAndClaims(currentUser, { setToken, setUserClaims });
-          console.log('Token refresh result:', result.success);
+          if (result.needsOnboarding) {
+            console.info('Token refresh result: onboarding pending (Apple user without custom claims yet).');
+          } else {
+            console.log('Token refresh result:', result.success);
+          }
           
           if (loadingTimeout) {
             clearTimeout(loadingTimeout);

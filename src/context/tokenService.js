@@ -61,7 +61,7 @@ export function isCriticalAuthError(error) {
  * @param {Object} options - Options
  * @param {Function} options.setToken - State setter for token
  * @param {Function} options.setUserClaims - State setter for claims
- * @returns {Promise<{success: boolean, token?: string, claims?: Object}>}
+ * @returns {Promise<{success: boolean, token?: string, claims?: Object, needsOnboarding?: boolean, critical?: boolean}>}
  */
 export async function refreshTokenAndClaims(currentUser, { setToken, setUserClaims }) {
   try {
@@ -98,7 +98,7 @@ export async function refreshTokenAndClaims(currentUser, { setToken, setUserClai
         console.warn('Token missing claims for Apple user. Marking as needs onboarding.');
         setToken(idToken);
         setUserClaims(null);
-        return { success: false, needsOnboarding: true, critical: false };
+        return { success: false, needsOnboarding: true, critical: false, token: idToken };
       }
 
       console.warn('Token missing required claims. Logging out...');
