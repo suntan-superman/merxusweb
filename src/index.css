@@ -92,6 +92,23 @@
     background-color: #22c55e;
     border-color: #22c55e;
   }
+
+  /* Onboarding native select menu styling (remove default blue highlight) */
+  .onboarding-select {
+    accent-color: #22c55e;
+  }
+
+  .onboarding-select option:checked {
+    background: linear-gradient(0deg, #22c55e 0%, #22c55e 100%);
+    background-color: #22c55e !important;
+    color: #ffffff !important;
+  }
+
+  .onboarding-select option:hover {
+    background: linear-gradient(0deg, #dcfce7 0%, #dcfce7 100%);
+    background-color: #dcfce7 !important;
+    color: #166534 !important;
+  }
 }
 
 /* Syncfusion Grid customizations - GREEN theme */

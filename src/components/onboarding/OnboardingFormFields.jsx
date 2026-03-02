@@ -299,7 +299,7 @@ export function VoiceFields({ formData, onChange }) {
         required
         value={formData.businessType}
         onChange={onChange}
-        className="input-field"
+        className="input-field onboarding-select"
       >
         <option value="">Select business type...</option>
         {BUSINESS_TYPE_OPTIONS.map((option) => (

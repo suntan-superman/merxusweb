@@ -224,7 +224,7 @@ export default function BusinessDetails({
           <select
             value={data.timezone || 'America/Los_Angeles'}
             onChange={(e) => handleChange('timezone', e.target.value)}
-            className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
+            className="onboarding-select w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
           >
             {TIMEZONES.map((tz) => (
               <option key={tz.value} value={tz.value}>

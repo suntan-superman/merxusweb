@@ -74,7 +74,7 @@ export default function IndustryCustomization({ tenantType, data, onChange }) {
               <select
                 value={data.industryData?.dineIn || 'yes'}
                 onChange={(e) => handleChange('dineIn', e.target.value)}
-                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
+                className="onboarding-select w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
               >
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
@@ -88,7 +88,7 @@ export default function IndustryCustomization({ tenantType, data, onChange }) {
               <select
                 value={data.industryData?.delivery || 'yes'}
                 onChange={(e) => handleChange('delivery', e.target.value)}
-                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
+                className="onboarding-select w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
               >
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
@@ -199,7 +199,7 @@ export default function IndustryCustomization({ tenantType, data, onChange }) {
             <select
               value={data.industryData?.businessType || ''}
               onChange={(e) => handleChange('businessType', e.target.value)}
-              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
+              className="onboarding-select w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
             >
               <option value="">Select a business type...</option>
               {BUSINESS_TYPES.map((type) => (
