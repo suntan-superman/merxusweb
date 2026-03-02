@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import FirstPortalChecklist from '../../components/onboarding/FirstPortalChecklist';
 import { CallVolumeChart, PeakHoursChart, ConversionChart, PopularItemsChart, RevenueChart } from '../../components/analytics';
 
 const RESERVATIONS_VIEW_KEY = 'merxus_dashboard_reservations_view';
@@ -239,6 +240,13 @@ export default function DashboardPage() {
         </p>
         <p className="text-sm text-gray-500 mt-1">{getTenantLabel()}</p>
       </div>
+
+      <FirstPortalChecklist
+        tenantType={tenantType}
+        tenantId={restaurantId}
+        userId={user?.uid}
+        className="mb-6"
+      />
 
       {/* Restaurant-specific stats */}
       {tenantType === 'restaurant' && (

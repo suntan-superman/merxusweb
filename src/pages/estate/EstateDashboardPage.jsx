@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import FlyerMetricsDashboard from '../../components/estate/FlyerMetricsDashboard';
 import FlyoverBanner, { markFlyoverComplete } from '../../components/estate/FlyoverBanner';
 import EstateFlyover from '../../components/estate/EstateFlyover';
+import FirstPortalChecklist from '../../components/onboarding/FirstPortalChecklist';
 import { useEstateSettings } from '../../hooks/useEstateQueries';
 import { CallVolumeChart, PeakHoursChart, LeadSourceChart, ShowingConversionChart } from '../../components/analytics';
 
@@ -189,6 +190,12 @@ export default function EstateDashboardPage() {
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">Overview of your real estate business</p>
       </div>
+
+      <FirstPortalChecklist
+        tenantType={userClaims?.type || 'real_estate'}
+        tenantId={agentId}
+        userId={user?.uid}
+      />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

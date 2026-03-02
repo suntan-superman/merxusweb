@@ -5,6 +5,7 @@ import OnboardingWizard from '../components/onboarding/OnboardingWizard';
 import apiClient from '../api/client';
 import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
+import { queueFirstLoginChecklist } from '../utils/firstLoginChecklist';
 
 const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
 const WIZARD_STORAGE_KEY = 'merxus_onboarding_wizard';
@@ -46,6 +47,11 @@ function buildTenantCreatedFromQuery(tenantType, tenantId) {
   return base;
 }
 
+function resolveTenantIdFromPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  return payload.officeId || payload.restaurantId || payload.agentId || payload.tenantId || null;
+}
+
 export default function OnboardingWizardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -53,6 +59,15 @@ export default function OnboardingWizardPage() {
   const [showWizard, setShowWizard] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tenantCreated, setTenantCreated] = useState(null);
+
+  const queueChecklistPrompt = (tenantType, tenantId) => {
+    if (!user?.uid || !tenantType) return;
+    queueFirstLoginChecklist({
+      userId: user.uid,
+      tenantType,
+      tenantId: tenantId || null,
+    });
+  };
 
   const initialTenantType =
     searchParams.get('type') ||
@@ -118,6 +133,9 @@ export default function OnboardingWizardPage() {
 
   const handleComplete = async (wizardData, isPreSave = false) => {
     if (tenantCreated && !isPreSave) {
+      const resolvedTenantId = resolveTenantIdFromPayload(tenantCreated) || resolveTenantIdFromPayload(wizardData);
+      queueChecklistPrompt(wizardData.tenantType, resolvedTenantId);
+
       const dashboardPaths = {
         restaurant: '/restaurant/dashboard',
         voice: '/voice/dashboard',
@@ -235,6 +253,8 @@ export default function OnboardingWizardPage() {
       const response = await apiClient.post(endpoint, payload);
       const createdTenant = { ...response.data, tenantType: wizardData.tenantType };
       setTenantCreated(createdTenant);
+      const resolvedTenantId = resolveTenantIdFromPayload(createdTenant) || resolveTenantIdFromPayload(wizardData);
+      queueChecklistPrompt(wizardData.tenantType, resolvedTenantId);
 
       if (isPreSave) {
         toast.success('✅ Setup saved! You can now test your AI at the next step.', { autoClose: 3000 });

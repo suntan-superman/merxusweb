@@ -5,6 +5,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
 import VoiceFlyoverBanner, { markVoiceFlyoverComplete } from '../../components/voice/VoiceFlyoverBanner';
 import VoiceFlyover from '../../components/voice/VoiceFlyover';
+import FirstPortalChecklist from '../../components/onboarding/FirstPortalChecklist';
 import { useVoiceSettings } from '../../hooks/useVoiceQueries';
 import { CallVolumeChart, PeakHoursChart, ConversionChart } from '../../components/analytics';
 
@@ -184,6 +185,12 @@ export default function VoiceDashboardPage() {
           Welcome back{user?.displayName ? `, ${user.displayName}` : ''}! Overview of your call activity and system status.
         </p>
       </div>
+
+      <FirstPortalChecklist
+        tenantType={userClaims?.type || 'voice'}
+        tenantId={officeId}
+        userId={user?.uid}
+      />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
