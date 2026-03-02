@@ -19,7 +19,10 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
   const isAutoProvisioned =
     data.twilioAccountSid === 'auto_provisioned' || data.twilioAuthToken === 'auto_provisioned';
   const isLocked = !!data.twilioPhoneNumber && isAutoProvisioned;
-  const assigneeName = (data.businessName || data.ownerName || 'this business').trim();
+  const assigneeName = (data.businessName || data.ownerName || 'your business').trim();
+  const assignedNumber = data.twilioPhoneNumber
+    ? formatPhoneDisplay(data.twilioPhoneNumber)
+    : 'this number';
 
   // Detect previously auto-provisioned number
   React.useEffect(() => {
@@ -107,7 +110,13 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
       });
 
       setPurchasedSuccess(true);
-      toast.success('✅ Phone number assigned!');
+      if (result?.confirmationEmailSent === true) {
+        toast.success('✅ Phone number assigned. Confirmation email sent.');
+      } else if (result?.confirmationEmailSent === false) {
+        toast.warn('Phone number assigned, but confirmation email could not be sent.');
+      } else {
+        toast.success('✅ Phone number assigned!');
+      }
     } catch (error) {
       console.error('Assignment error:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Failed to assign number';
@@ -171,7 +180,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
       <div className="py-4">
         <div className="text-center mb-6">
           <h3 className="text-2xl font-bold text-gray-900 mb-2">
-            Your AI Phone Number Is Now Assigned To {assigneeName}
+            The AI number {assignedNumber} has been assigned to {assigneeName}
           </h3>
           <p className="text-gray-600">This number is now assigned and ready to use.</p>
         </div>
@@ -186,7 +195,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                   Please contact support if you need to change it.
                 </p>
                 <p className="mt-3 font-mono text-lg text-amber-900">
-                  {formatPhoneDisplay(data.twilioPhoneNumber)}
+                  {assignedNumber}
                 </p>
               </div>
             </div>
@@ -417,9 +426,9 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
               <div className="bg-green-50 border-2 border-green-500 rounded-xl p-6 text-center">
                 <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
                 <h4 className="text-xl font-bold text-gray-900 mb-2">
-                  Your AI Phone Number Is Now Assigned To {assigneeName}
+                  The AI number {assignedNumber} has been assigned to {assigneeName}
                 </h4>
-                <p className="text-lg font-semibold text-green-700 mb-2">{formatPhoneDisplay(data.twilioPhoneNumber)}</p>
+                <p className="text-lg font-semibold text-green-700 mb-2">{assignedNumber}</p>
                 <p className="text-sm text-gray-600">
                   This number is now assigned and ready to use. Click Continue to proceed.
                 </p>
