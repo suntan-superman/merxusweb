@@ -303,7 +303,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const methods = await getEmailSignInMethods(email);
+      const normalizedEmail = (email || '').trim().toLowerCase();
+      if (!normalizedEmail) {
+        setError('Email address is required');
+        setLoading(false);
+        return;
+      }
+
+      const methods = await getEmailSignInMethods(normalizedEmail);
       const methodInfo = getSignInMethodInfo(methods);
       if (methodInfo.hasProvider && !methodInfo.hasPassword) {
         const message = methodInfo.isAppleOnly
@@ -317,7 +324,8 @@ export default function LoginPage() {
         return;
       }
 
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, normalizedEmail);
+      setEmail(normalizedEmail);
       setResetEmailSent(true);
       setLoading(false);
     } catch (err) {
@@ -329,7 +337,7 @@ export default function LoginPage() {
 
   const handleResendInvitationEmail = async () => {
     // Use the email that the user sees in the form (could be typed or pre-filled)
-    const emailToResend = email || prefillEmail;
+    const emailToResend = (email || prefillEmail || '').trim().toLowerCase();
     
     if (!emailToResend) {
       setError('Email address is required to resend invitation');
@@ -342,27 +350,36 @@ export default function LoginPage() {
 
     try {
       const result = await resendInvitationEmail(emailToResend);
-      setResendEmailMessage({
-        type: 'success',
-        text: result.message || 'Invitation email has been resent successfully',
-        link: null,
-      });
-      
-      // If SendGrid didn't work, try Firebase Auth as backup
-      if (!result.emailSent) {
-        try {
-          await sendPasswordResetEmail(auth, emailToResend, {
-            url: `${window.location.origin}/login?mode=resetPassword${agentId ? `&agentId=${agentId}` : ''}${officeId ? `&officeId=${officeId}` : ''}${restaurantId ? `&restaurantId=${restaurantId}` : ''}`,
-            handleCodeInApp: false,
-          });
-          setResendEmailMessage({
-            type: 'success',
-            text: 'Invitation email has been resent via Firebase Auth',
-            link: null,
-          });
-        } catch (firebaseError) {
-          console.log('Firebase Auth backup also failed:', firebaseError);
-        }
+      if (result.emailSent) {
+        setResendEmailMessage({
+          type: 'success',
+          text: result.message || 'Invitation email has been resent successfully.',
+          link: null,
+        });
+        return;
+      }
+
+      // SendGrid didn't work, try Firebase Auth as backup.
+      try {
+        await sendPasswordResetEmail(auth, emailToResend, {
+          url: `${window.location.origin}/login?mode=resetPassword${agentId ? `&agentId=${agentId}` : ''}${officeId ? `&officeId=${officeId}` : ''}${restaurantId ? `&restaurantId=${restaurantId}` : ''}`,
+          handleCodeInApp: false,
+        });
+        setResendEmailMessage({
+          type: 'success',
+          text: 'Invitation email has been resent via Firebase Auth.',
+          link: null,
+        });
+      } catch (firebaseError) {
+        console.error('Firebase Auth fallback failed:', firebaseError);
+        const backendLink = result?.invitationLink || null;
+        setResendEmailMessage({
+          type: 'error',
+          text: backendLink
+            ? 'Automatic email delivery failed. Use the direct setup link below.'
+            : 'Automatic email delivery failed. Please verify email settings and try again.',
+          link: backendLink,
+        });
       }
     } catch (err) {
       console.error('Error resending invitation email:', err);
