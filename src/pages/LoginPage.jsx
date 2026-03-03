@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail, confirmPasswordRese
 import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { resendInvitationEmail } from '../api/voice';
+import apiClient from '../api/client';
 import { getEmailSignInMethods, getSignInMethodInfo } from '../utils/authProviders';
 
 export default function LoginPage() {
@@ -310,8 +311,22 @@ export default function LoginPage() {
         return;
       }
 
+      const emailCheckResponse = await apiClient.post('/auth/check-email', {
+        email: normalizedEmail,
+      });
+      const emailCheck = emailCheckResponse?.data || {};
+
+      if (!emailCheck.exists) {
+        setError('No account found with this email address.');
+        setLoading(false);
+        return;
+      }
+
       const methods = await getEmailSignInMethods(normalizedEmail);
       const methodInfo = getSignInMethodInfo(methods);
+      const isAppleOnly =
+        emailCheck.provider === 'apple' ||
+        (methodInfo.hasProvider && !methodInfo.hasPassword && methodInfo.isAppleOnly);
       if (methodInfo.hasProvider && !methodInfo.hasPassword) {
         const message = methodInfo.isAppleOnly
           ? 'This email is linked to Apple Sign-In. Password reset isn’t available.'
@@ -319,6 +334,15 @@ export default function LoginPage() {
         setProviderHint(message);
         setResetProviderHint(message);
         setIsAppleOnly(methodInfo.isAppleOnly);
+        setError(message);
+        setLoading(false);
+        return;
+      }
+      if (isAppleOnly) {
+        const message = 'This email is linked to Apple Sign-In. Password reset isn’t available.';
+        setProviderHint(message);
+        setResetProviderHint(message);
+        setIsAppleOnly(true);
         setError(message);
         setLoading(false);
         return;
