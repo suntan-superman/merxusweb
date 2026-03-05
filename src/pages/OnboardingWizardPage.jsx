@@ -372,6 +372,14 @@ export default function OnboardingWizardPage() {
   const parsedAddress = parseAddress(prefillForm.address || '');
   const prefillLock = Boolean(prefillDraft);
 
+  // Normalize real-estate names so Business Name and Your Name populate correctly
+  const agentName = (prefillForm.name || '').trim();
+  const brandName = (prefillForm.brandName || '').trim();
+  const derivedBusinessName =
+    prefillDraft?.tenantType === 'real_estate'
+      ? brandName || (agentName ? `${agentName} Team` : '')
+      : prefillForm.name;
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <OnboardingWizard
@@ -381,8 +389,14 @@ export default function OnboardingWizardPage() {
         tenantType={resolvedTenantType}
         authMethod={authMethod}
         prefillEmail={prefillForm.ownerEmail || user?.email}
-        prefillName={prefillForm.ownerName || user?.displayName}
-        prefillBusinessName={prefillForm.name}
+        prefillName={
+          prefillDraft?.tenantType === 'real_estate'
+            ? agentName || prefillForm.ownerName || user?.displayName
+            : prefillForm.ownerName || user?.displayName
+        }
+        prefillBusinessName={
+          prefillDraft?.tenantType === 'real_estate' ? derivedBusinessName : prefillForm.name
+        }
         prefillPhone={prefillForm.phoneNumber}
         prefillAddress={parsedAddress.street}
         prefillCity={prefillForm.city || parsedAddress.city}
