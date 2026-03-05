@@ -12,8 +12,8 @@ const getApiBaseUrl = () => {
     return import.meta.env.VITE_API_BASE_URL;
   }
   
-  // Use Cloud Run backend (primary backend service)
-  return `https://merxus-ai-backend-215800813926.us-central1.run.app/api`;
+  // Default to the static API domain
+  return `https://api.merxus.ai/api`;
 };
 
 const baseURL = getApiBaseUrl();
