@@ -473,7 +473,13 @@ export default function LoginPage() {
         await currentUser.getIdToken(true);
       }
       
-      // Navigation will be handled by useEffect once userClaims are loaded
+      // Navigate immediately to intended destination to avoid manual tab juggling
+      const fallbackOnboarding = `/onboarding-wizard?type=${encodeURIComponent(onboardingType)}`;
+      const target = returnToPath || fallbackOnboarding;
+      navigate(target, { replace: true });
+      setShowPasswordSetup(false);
+      setLoading(false);
+      return;
     } catch (err) {
       console.error('Password setup error:', err);
       setError(getErrorMessage(err.code));
