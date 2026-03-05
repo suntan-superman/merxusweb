@@ -28,6 +28,7 @@ import {
 import { submitOnboarding } from '../components/onboarding/onboardingApi';
 import { getEmailSignInMethods, getSignInMethodInfo } from '../utils/authProviders';
 import { capitalizeWordsPreservingApostrophes } from '../utils/textFormatters';
+import { sendVerificationEmail } from '../api/otp';
 import {
   AccountMethodSelector,
   FormInput,
@@ -278,45 +279,49 @@ const Onboarding = () => {
         ownerEmail: isAppleConnected ? user.email : formData.ownerEmail,
       };
 
-      const result = await submitOnboarding(tenantType, submitData, {
-        returnToPath: returnTo,
-        authMethod: submitData.authMethod,
-        firebaseUid: isAppleConnected ? user.uid : null,
-      });
-
-      if (result.emailSent) {
-        if (submitData.authMethod === 'password') {
-          sessionStorage.setItem(
-            ONBOARDING_PENDING_PREFILL_KEY,
-            JSON.stringify({
-              tenantType,
-              formData: {
-                ...submitData,
-              },
-              createdAt: Date.now(),
-            })
-          );
-        }
-
-        const loginPath = returnTo
-          ? `/login?type=${encodeURIComponent(tenantType)}&returnTo=${encodeURIComponent(returnTo)}`
-          : '/login';
-        navigate(loginPath, {
-          state: {
-            message: labels.successMessage,
-            email: formData.ownerEmail,
-            returnTo,
+      if (submitData.authMethod === 'password') {
+        await sendVerificationEmail({ email: submitData.ownerEmail });
+        sessionStorage.setItem(
+          ONBOARDING_PENDING_PREFILL_KEY,
+          JSON.stringify({
             tenantType,
-          },
-        });
+            formData: {
+              ...submitData,
+            },
+            createdAt: Date.now(),
+          })
+        );
+
+        const otpPath = `/onboarding/verify-otp?type=${encodeURIComponent(tenantType)}&email=${encodeURIComponent(submitData.ownerEmail)}${selectedPlan ? `&plan=${encodeURIComponent(selectedPlan)}` : ''}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`;
+        navigate(otpPath);
       } else {
-        // Email couldn't be sent - show invitation link modal
-        setInvitationData({
-          link: result.invitationLink,
-          email: formData.ownerEmail,
-          tenantType: result.tenantType,
+        const result = await submitOnboarding(tenantType, submitData, {
+          returnToPath: returnTo,
+          authMethod: submitData.authMethod,
+          firebaseUid: isAppleConnected ? user.uid : null,
         });
-        setShowInvitationModal(true);
+
+        if (result.emailSent) {
+          const loginPath = returnTo
+            ? `/login?type=${encodeURIComponent(tenantType)}&returnTo=${encodeURIComponent(returnTo)}`
+            : '/login';
+          navigate(loginPath, {
+            state: {
+              message: labels.successMessage,
+              email: formData.ownerEmail,
+              returnTo,
+              tenantType,
+            },
+          });
+        } else {
+          // Email couldn't be sent - show invitation link modal
+          setInvitationData({
+            link: result.invitationLink,
+            email: formData.ownerEmail,
+            tenantType: result.tenantType,
+          });
+          setShowInvitationModal(true);
+        }
       }
     } catch (err) {
       console.error('Onboarding error:', err);
