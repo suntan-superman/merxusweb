@@ -395,6 +395,7 @@ export default function OnboardingWizardPage() {
         paymentSessionId={sessionIdFromQuery}
         resumeTenantId={tenantIdFromQuery}
         lockPrefillFields={prefillLock}
+        disableLocalRestore={prefillLock}
       />
     </div>
   );

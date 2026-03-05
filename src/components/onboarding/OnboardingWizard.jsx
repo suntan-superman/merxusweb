@@ -36,6 +36,7 @@ export default function OnboardingWizard({
   prefillTempPassword,
   tenantCreated,
   lockPrefillFields = false,
+  disableLocalRestore = false,
   skipPayment = false,
   resumeStep = null,
   forcePaymentComplete = false,
@@ -108,6 +109,7 @@ export default function OnboardingWizard({
     null;
 
   useEffect(() => {
+    if (disableLocalRestore) return;
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return;
@@ -124,7 +126,7 @@ export default function OnboardingWizard({
     } catch (error) {
       console.error('Failed to restore wizard state:', error);
     }
-  }, []);
+  }, [disableLocalRestore]);
 
   useEffect(() => {
     if (shouldSkipIndustryStep && currentStep < 2) {

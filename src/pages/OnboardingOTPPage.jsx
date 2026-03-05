@@ -114,9 +114,9 @@ export default function OnboardingOTPPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center px-4">
       <div className="max-w-lg w-full bg-white shadow-lg rounded-2xl p-8 border border-gray-100">
         <div className="text-center mb-1">
-          <p className="text-sm font-semibold text-primary-600">Merxus AI</p>
+          <p className="text-lg font-semibold text-primary-600">Merxus AI</p>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">Verify your email</h1>
+        <h1 className="text-xl font-bold text-gray-900 mb-2 text-center">Verify your email</h1>
         <p className="text-sm text-gray-600 mb-6">
           We sent a 6-digit code to <span className="font-semibold">{email}</span>. Enter it below, set your password, and you’ll continue to the setup wizard.
         </p>
