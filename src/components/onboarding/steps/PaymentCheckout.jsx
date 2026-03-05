@@ -8,15 +8,25 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
   const [captchaToken, setCaptchaToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [pricingData, setPricingData] = useState(null);
+  const [pricingError, setPricingError] = useState(false);
   const [promoCode, setPromoCode] = useState(data.promoCode || '');
 
   useEffect(() => {
     const loadPricing = async () => {
       try {
+        setPricingError(false);
         const pricing = await getBillingPricing();
+        console.debug('💵 Loaded pricing data', pricing);
         setPricingData(pricing);
       } catch (error) {
         console.error('Failed to load pricing:', error);
+        setPricingError(true);
+        toast.error('Payment service unavailable right now. We will let you continue and you can pay later.');
+        onChange({
+          paymentCompleted: true,
+          paymentSessionId: null,
+          paymentSkipped: true,
+        });
       }
     };
 
@@ -76,6 +86,13 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
   };
 
   const handleCheckout = async () => {
+    console.debug('🧭 Proceeding to checkout', {
+      tenantType,
+      tenantId,
+      reservationId: data.reservationId,
+      promoCode,
+    });
+
     if (!tenantType || !tenantId) {
       toast.error('Tenant setup not complete yet. Please continue setup.');
       return;
@@ -157,6 +174,11 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
               {formatMoney(subscriptionPrice, subscriptionCurrency) || '—'} / month
             </p>
             <p className="text-xs text-gray-500">30-day free trial starts after onboarding payment.</p>
+            {pricingError && (
+              <p className="text-xs text-amber-600 font-semibold">
+                Pricing unavailable right now. You can finish setup and pay later from Billing.
+              </p>
+            )}
           </div>
         </div>
 
@@ -187,13 +209,21 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
           />
         </div>
 
-        <button
-          onClick={handleCheckout}
-          disabled={loading}
-          className="w-full py-3 px-4 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Redirecting to Checkout...' : 'Proceed to Secure Checkout'}
-        </button>
+        {!pricingError && (
+          <button
+            onClick={handleCheckout}
+            disabled={loading}
+            className="w-full py-3 px-4 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Redirecting to Checkout...' : 'Proceed to Secure Checkout'}
+          </button>
+        )}
+
+        {pricingError && (
+          <div className="w-full py-3 px-4 rounded-lg font-semibold bg-amber-500 text-white text-center">
+            Payment temporarily skipped due to server error.
+          </div>
+        )}
       </div>
     </div>
   );

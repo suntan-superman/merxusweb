@@ -406,7 +406,18 @@ export default function OnboardingWizard({
   };
 
   const goToNextStep = async () => {
-    if (currentStep < TOTAL_STEPS && canProceed()) {
+    const allowed = canProceed();
+    if (!allowed) {
+      console.warn('🚧 Cannot proceed yet', {
+        step: currentStep,
+        paymentCompleted: wizardData.paymentCompleted,
+        tenantId: resolvedTenantId,
+        skipPayment,
+      });
+      return;
+    }
+
+    if (currentStep < TOTAL_STEPS) {
       if (currentStep === 2 && !isAppleAuth && !skipEmailValidation) {
         const emailIsAvailable = await validateEmailAvailability();
         if (!emailIsAvailable) return;
