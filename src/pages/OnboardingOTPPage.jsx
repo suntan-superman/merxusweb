@@ -56,6 +56,25 @@ export default function OnboardingOTPPage() {
       }
 
       const wizardUrl = `/onboarding-wizard?type=${encodeURIComponent(tenantType)}${selectedPlan ? `&plan=${encodeURIComponent(selectedPlan)}` : ''}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`;
+
+      // Persist password into the pending prefill so the wizard can use it
+      try {
+        const raw = sessionStorage.getItem('merxus_onboarding_pending_prefill');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const next = {
+            ...parsed,
+            formData: {
+              ...(parsed?.formData || {}),
+              tempPassword: password,
+            },
+          };
+          sessionStorage.setItem('merxus_onboarding_pending_prefill', JSON.stringify(next));
+        }
+      } catch (persistErr) {
+        console.warn('Could not persist password for wizard prefill', persistErr);
+      }
+
       navigate(wizardUrl, { replace: true });
     } catch (error) {
       const msg = error?.message || 'OTP verification failed. Please try again.';

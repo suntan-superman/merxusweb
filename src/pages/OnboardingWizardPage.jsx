@@ -53,6 +53,37 @@ function resolveTenantIdFromPayload(payload) {
   return payload.officeId || payload.restaurantId || payload.agentId || payload.tenantId || null;
 }
 
+function parseAddress(fullAddress = '') {
+  const trimmed = (fullAddress || '').trim();
+  if (!trimmed) {
+    return { street: '', city: '', state: '', zip: '' };
+  }
+  // Pattern: "123 Main St, Los Angeles, CA 90001"
+  const regex = /^(.+?),\s*([^,]+?),\s*([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)$/;
+  const match = trimmed.match(regex);
+  if (match) {
+    return {
+      street: match[1].trim(),
+      city: match[2].trim(),
+      state: match[3].trim(),
+      zip: match[4].trim(),
+    };
+  }
+  // Fallback: try splitting by commas
+  const parts = trimmed.split(',').map((p) => p.trim()).filter(Boolean);
+  if (parts.length === 3) {
+    const [street, city, stateZip] = parts;
+    const stateZipMatch = stateZip.match(/^([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)$/);
+    return {
+      street,
+      city,
+      state: stateZipMatch ? stateZipMatch[1] : '',
+      zip: stateZipMatch ? stateZipMatch[2] : '',
+    };
+  }
+  return { street: trimmed, city: '', state: '', zip: '' };
+}
+
 export default function OnboardingWizardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -334,6 +365,8 @@ export default function OnboardingWizardPage() {
 
   const resolvedTenantType = initialTenantType || prefillDraft?.tenantType || null;
   const prefillForm = prefillDraft?.formData || {};
+  const parsedAddress = parseAddress(prefillForm.address || '');
+  const prefillLock = Boolean(prefillDraft);
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -347,7 +380,10 @@ export default function OnboardingWizardPage() {
         prefillName={prefillForm.ownerName || user?.displayName}
         prefillBusinessName={prefillForm.name}
         prefillPhone={prefillForm.phoneNumber}
-        prefillAddress={prefillForm.address}
+        prefillAddress={parsedAddress.street}
+        prefillCity={prefillForm.city || parsedAddress.city}
+        prefillState={prefillForm.state || parsedAddress.state}
+        prefillZip={prefillForm.zip || parsedAddress.zip}
         prefillBusinessType={prefillForm.businessType}
         prefillCuisineType={prefillForm.cuisineType}
         prefillDescription={prefillForm.description}
@@ -357,6 +393,7 @@ export default function OnboardingWizardPage() {
         forcePaymentComplete={isPaymentReturn}
         paymentSessionId={sessionIdFromQuery}
         resumeTenantId={tenantIdFromQuery}
+        lockPrefillFields={prefillLock}
       />
     </div>
   );

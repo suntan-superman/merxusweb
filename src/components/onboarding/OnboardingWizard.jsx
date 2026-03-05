@@ -34,6 +34,7 @@ export default function OnboardingWizard({
   prefillDescription,
   prefillTimezone,
   tenantCreated,
+  lockPrefillFields = false,
   skipPayment = false,
   resumeStep = null,
   forcePaymentComplete = false,
@@ -545,6 +546,12 @@ export default function OnboardingWizard({
                 onEmailBlur={() => validateEmailAvailability({ force: true })}
                 emailValidationStatus={emailValidation.status}
                 emailValidationMessage={emailValidation.message}
+                lockBusinessName={lockPrefillFields}
+                lockOwnerName={lockPrefillFields}
+                lockEmail={lockPrefillFields}
+                lockPassword={lockPrefillFields}
+                lockPhone={lockPrefillFields}
+                lockAddress={lockPrefillFields}
               />
             )}
             {currentStep === 3 && (

@@ -20,6 +20,12 @@ export default function BusinessDetails({
   onEmailBlur,
   emailValidationStatus = 'idle',
   emailValidationMessage = '',
+  lockBusinessName = false,
+  lockOwnerName = false,
+  lockEmail = false,
+  lockPassword = false,
+  lockPhone = false,
+  lockAddress = false,
 }) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -49,7 +55,8 @@ export default function BusinessDetails({
             value={data.businessName || ''}
             onChange={(e) => handleChange('businessName', e.target.value)}
             placeholder="Acme Real Estate"
-            className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none"
+            disabled={lockBusinessName}
+            className={`w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none ${lockBusinessName ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
           />
         </div>
 
@@ -60,13 +67,14 @@ export default function BusinessDetails({
               Your Name <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
-              value={data.ownerName || ''}
-              onChange={(e) => handleChange('ownerName', e.target.value)}
-              placeholder="John Smith"
-              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none"
-            />
-          </div>
+            type="text"
+            value={data.ownerName || ''}
+            onChange={(e) => handleChange('ownerName', e.target.value)}
+            placeholder="John Smith"
+            disabled={lockOwnerName}
+            className={`w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none ${lockOwnerName ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
+          />
+        </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
@@ -80,9 +88,9 @@ export default function BusinessDetails({
               onBlur={() => onEmailBlur?.()}
               placeholder="john@acme.com"
               autoComplete="off"
-              readOnly={emailReadOnly}
+              readOnly={emailReadOnly || lockEmail}
               className={`w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none ${
-                emailReadOnly ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''
+                emailReadOnly || lockEmail ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''
               }`}
             />
             {!!emailValidationMessage && !emailReadOnly && (
@@ -115,7 +123,8 @@ export default function BusinessDetails({
                 onChange={(e) => handleChange('tempPassword', e.target.value)}
                 placeholder="Enter a temporary password"
                 autoComplete="new-password"
-                className="w-full px-4 py-2.5 pr-12 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none"
+                disabled={lockPassword}
+                className={`w-full px-4 py-2.5 pr-12 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none ${lockPassword ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
                 minLength={6}
               />
               <button
@@ -123,6 +132,7 @@ export default function BusinessDetails({
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                 title={showPassword ? "Hide password" : "Show password"}
+                disabled={lockPassword}
               >
                 {showPassword ? (
                   <EyeOff size={18} />
@@ -152,7 +162,8 @@ export default function BusinessDetails({
             value={data.phone || ''}
             onChange={(e) => handleChange('phone', formatPhoneInput(e.target.value))}
             placeholder="(555) 123-4567"
-            className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none"
+            disabled={lockPhone}
+            className={`w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none ${lockPhone ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
           />
         </div>
 
@@ -167,7 +178,8 @@ export default function BusinessDetails({
             value={data.address || ''}
             onChange={(e) => handleChange('address', e.target.value)}
             placeholder="123 Main Street"
-            className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none"
+            disabled={lockAddress}
+            className={`w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none ${lockAddress ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
           />
         </div>
 
