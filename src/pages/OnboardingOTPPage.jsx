@@ -12,8 +12,9 @@ export default function OnboardingOTPPage() {
   const tenantType = searchParams.get('type') || 'restaurant';
   const selectedPlan = searchParams.get('plan');
   const returnTo = searchParams.get('returnTo');
+  const otpPrefill = searchParams.get('otp') || '';
 
-  const [otpCode, setOtpCode] = useState('');
+  const [otpCode, setOtpCode] = useState(otpPrefill);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);

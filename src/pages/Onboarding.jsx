@@ -280,20 +280,25 @@ const Onboarding = () => {
       };
 
       if (submitData.authMethod === 'password') {
-        await sendVerificationEmail({ email: submitData.ownerEmail });
-        sessionStorage.setItem(
-          ONBOARDING_PENDING_PREFILL_KEY,
-          JSON.stringify({
-            tenantType,
-            formData: {
-              ...submitData,
-            },
-            createdAt: Date.now(),
-          })
-        );
+        const otpResponse = await sendVerificationEmail({ email: submitData.ownerEmail });
+        const prefillPayload = {
+          tenantType,
+          formData: {
+            ...submitData,
+          },
+          createdAt: Date.now(),
+        };
+        sessionStorage.setItem(ONBOARDING_PENDING_PREFILL_KEY, JSON.stringify(prefillPayload));
 
-        const otpPath = `/onboarding/verify-otp?type=${encodeURIComponent(tenantType)}&email=${encodeURIComponent(submitData.ownerEmail)}${selectedPlan ? `&plan=${encodeURIComponent(selectedPlan)}` : ''}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`;
-        navigate(otpPath);
+        const otpParams = new URLSearchParams({
+          type: tenantType,
+          email: submitData.ownerEmail,
+        });
+        if (selectedPlan) otpParams.set('plan', selectedPlan);
+        if (returnTo) otpParams.set('returnTo', returnTo);
+        if (otpResponse?.otpCode) otpParams.set('otp', otpResponse.otpCode);
+
+        navigate(`/onboarding/verify-otp?${otpParams.toString()}`);
       } else {
         const result = await submitOnboarding(tenantType, submitData, {
           returnToPath: returnTo,
