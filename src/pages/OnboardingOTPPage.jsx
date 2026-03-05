@@ -79,6 +79,9 @@ export default function OnboardingOTPPage() {
             },
           };
           sessionStorage.setItem('merxus_onboarding_pending_prefill', JSON.stringify(next));
+          try {
+            localStorage.setItem('merxus_onboarding_pending_prefill', JSON.stringify(next));
+          } catch (_) {}
         }
       } catch (persistErr) {
         console.warn('Could not persist password for wizard prefill', persistErr);

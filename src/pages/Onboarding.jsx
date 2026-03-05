@@ -289,6 +289,9 @@ const Onboarding = () => {
           createdAt: Date.now(),
         };
         sessionStorage.setItem(ONBOARDING_PENDING_PREFILL_KEY, JSON.stringify(prefillPayload));
+        try {
+          localStorage.setItem(ONBOARDING_PENDING_PREFILL_KEY, JSON.stringify(prefillPayload));
+        } catch (_) {}
 
         const otpParams = new URLSearchParams({
           type: tenantType,

@@ -119,13 +119,17 @@ export default function OnboardingWizardPage() {
 
   useEffect(() => {
     try {
-      const raw = sessionStorage.getItem(ONBOARDING_PENDING_PREFILL_KEY);
+      let raw = sessionStorage.getItem(ONBOARDING_PENDING_PREFILL_KEY);
+      if (!raw) {
+        raw = localStorage.getItem(ONBOARDING_PENDING_PREFILL_KEY);
+      }
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (parsed) {
         setPrefillDraft(parsed);
       }
       sessionStorage.removeItem(ONBOARDING_PENDING_PREFILL_KEY);
+      localStorage.removeItem(ONBOARDING_PENDING_PREFILL_KEY);
     } catch (err) {
       console.warn('Failed to restore onboarding prefill draft', err);
     }
