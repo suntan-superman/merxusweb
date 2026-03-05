@@ -400,6 +400,7 @@ export default function OnboardingWizardPage() {
         resumeTenantId={tenantIdFromQuery}
         lockPrefillFields={prefillLock}
         disableLocalRestore={prefillLock}
+        skipEmailValidation={prefillLock}
       />
     </div>
   );

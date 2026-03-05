@@ -36,6 +36,7 @@ export default function OnboardingWizard({
   prefillTempPassword,
   tenantCreated,
   lockPrefillFields = false,
+  skipEmailValidation = false,
   disableLocalRestore = false,
   skipPayment = false,
   resumeStep = null,
@@ -372,8 +373,8 @@ export default function OnboardingWizard({
         wizardData.city?.trim() &&
         wizardData.state?.trim() &&
         wizardData.zip?.trim() &&
-        !isCheckingEmail &&
-        emailValidation.status !== 'exists'
+        (!isCheckingEmail || skipEmailValidation) &&
+        (skipEmailValidation || emailValidation.status !== 'exists')
       );
     }
     if (currentStep === 3) {
@@ -406,7 +407,7 @@ export default function OnboardingWizard({
 
   const goToNextStep = async () => {
     if (currentStep < TOTAL_STEPS && canProceed()) {
-      if (currentStep === 2 && !isAppleAuth) {
+      if (currentStep === 2 && !isAppleAuth && !skipEmailValidation) {
         const emailIsAvailable = await validateEmailAvailability();
         if (!emailIsAvailable) return;
       }
