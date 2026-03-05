@@ -193,6 +193,13 @@ export default function LoginPage() {
   // Check if this is a password reset link from invitation
   useEffect(() => {
     if (oobCode && mode === 'resetPassword') {
+      // Always show the password setup form immediately to avoid extra clicks
+      setShowPasswordSetup(true);
+      // If the email was already in state (e.g., passed via link), keep it visible while verifying
+      if (prefillEmail && !passwordSetupEmail) {
+        setPasswordSetupEmail(prefillEmail);
+      }
+
       // Verify the code and get the email
       verifyPasswordResetCode(auth, oobCode)
         .then((email) => {
