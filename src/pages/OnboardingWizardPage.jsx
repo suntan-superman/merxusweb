@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { queueFirstLoginChecklist } from '../utils/firstLoginChecklist';
 
 const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
+const ONBOARDING_PENDING_PREFILL_KEY = 'merxus_onboarding_pending_prefill';
 const WIZARD_STORAGE_KEY = 'merxus_onboarding_wizard';
 const WIZARD_TOTAL_STEPS = 8;
 
@@ -55,10 +56,11 @@ function resolveTenantIdFromPayload(payload) {
 export default function OnboardingWizardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, userClaims, loading, needsOnboarding, isAppleUser, signOut, refreshToken } = useAuth();
+  const { user, userClaims, loading, needsOnboarding, signOut, refreshToken } = useAuth();
   const [showWizard, setShowWizard] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tenantCreated, setTenantCreated] = useState(null);
+  const [prefillDraft, setPrefillDraft] = useState(null);
 
   const queueChecklistPrompt = (tenantType, tenantId) => {
     if (!user?.uid || !tenantType) return;
@@ -81,6 +83,22 @@ export default function OnboardingWizardPage() {
   const hasWizardProgress = hasActiveWizardSession();
   const effectiveResumeStep = isPaymentReturn ? Math.max(6, resumeStep || 0) : resumeStep;
   const shouldResumeTwilio = isPaymentReturn && effectiveResumeStep >= 6;
+  const authMethod =
+    user?.providerData?.some((p) => p?.providerId === 'apple.com') ? 'apple' : 'password';
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(ONBOARDING_PENDING_PREFILL_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed) {
+        setPrefillDraft(parsed);
+      }
+      sessionStorage.removeItem(ONBOARDING_PENDING_PREFILL_KEY);
+    } catch (err) {
+      console.warn('Failed to restore onboarding prefill draft', err);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isPaymentReturn && !isCanceledReturn) return;
@@ -149,10 +167,10 @@ export default function OnboardingWizardPage() {
 
     try {
       const effectiveEmail = user?.email || wizardData.email;
-      const authPayload = {
-        authMethod: 'apple',
-        firebaseUid: user?.uid,
-      };
+      const isAppleAuth = authMethod === 'apple';
+      const authPayload = isAppleAuth
+        ? { authMethod: 'apple', firebaseUid: user?.uid }
+        : { authMethod: 'password', password: wizardData.tempPassword, firebaseUid: user?.uid };
 
       let endpoint = '';
       let payload = {};
@@ -304,16 +322,25 @@ export default function OnboardingWizardPage() {
     );
   }
 
+  const resolvedTenantType = initialTenantType || prefillDraft?.tenantType || null;
+  const prefillForm = prefillDraft?.formData || {};
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <OnboardingWizard
         onClose={handleClose}
         onComplete={handleComplete}
         onSwitchToOwner={() => {}}
-        tenantType={initialTenantType}
-        authMethod="apple"
-        prefillEmail={user?.email}
-        prefillName={user?.displayName}
+        tenantType={resolvedTenantType}
+        authMethod={authMethod}
+        prefillEmail={prefillForm.ownerEmail || user?.email}
+        prefillName={prefillForm.ownerName || user?.displayName}
+        prefillBusinessName={prefillForm.name}
+        prefillPhone={prefillForm.phoneNumber}
+        prefillAddress={prefillForm.address}
+        prefillBusinessType={prefillForm.businessType}
+        prefillCuisineType={prefillForm.cuisineType}
+        prefillDescription={prefillForm.description}
         tenantCreated={tenantCreated}
         resumeStep={shouldResumeTwilio ? effectiveResumeStep : null}
         forcePaymentComplete={isPaymentReturn}

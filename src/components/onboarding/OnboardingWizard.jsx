@@ -23,6 +23,15 @@ export default function OnboardingWizard({
   authMethod = 'password',
   prefillEmail,
   prefillName,
+  prefillBusinessName,
+  prefillPhone,
+  prefillAddress,
+  prefillCity,
+  prefillState,
+  prefillZip,
+  prefillBusinessType,
+  prefillCuisineType,
+  prefillDescription,
   tenantCreated,
   skipPayment = false,
   resumeStep = null,
@@ -46,15 +55,15 @@ export default function OnboardingWizard({
     authMethod,
     
     // Step 2: Business Basics (avoid pre-populating unless Apple sign-in)
-    businessName: '',
+    businessName: prefillBusinessName || '',
     ownerName: prefillName || '',
     email: prefillEmail || '', // Apple sign-in can prefill
     tempPassword: '', // Optional for Apple sign-in
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    zip: '',
+    phone: prefillPhone || '',
+    address: prefillAddress || '',
+    city: prefillCity || '',
+    state: prefillState || '',
+    zip: prefillZip || '',
     timezone: 'America/Los_Angeles',
     
     // Step 3: Twilio
@@ -66,7 +75,11 @@ export default function OnboardingWizard({
     aiVoice: 'alloy',
     
     // Step 5: Industry-specific
-    industryData: {},
+    industryData: {
+      businessType: prefillBusinessType || '',
+      cuisineType: prefillCuisineType || '',
+      description: prefillDescription || '',
+    },
 
     // Payment + reservation
     tenantId: null,

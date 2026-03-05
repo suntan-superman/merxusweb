@@ -116,6 +116,13 @@
     background-color: #dcfce7 !important;
     color: #166534 !important;
   }
+
+  /* Force Windows/Chrome dropdown highlight color */
+  select.onboarding-select:focus > option:checked,
+  select.onboarding-select option:checked:hover {
+    background-color: #22c55e !important;
+    color: #ffffff !important;
+  }
 }
 
 /* Syncfusion Grid customizations - GREEN theme */

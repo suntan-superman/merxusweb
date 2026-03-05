@@ -201,10 +201,12 @@ export default function LoginPage() {
       }
 
       if (needsOnboarding) {
-        showAccountNotFoundPrompt((user?.email || email || '').trim().toLowerCase(), 'apple');
-        firebaseSignOut(auth).catch((signOutError) => {
-          console.warn('Could not sign out unauthorized user:', signOutError);
-        });
+        const onboardingParams = new URLSearchParams();
+        onboardingParams.set('type', onboardingType || 'restaurant');
+        if (returnToPath) {
+          onboardingParams.set('returnTo', returnToPath);
+        }
+        navigate(`/onboarding-wizard?${onboardingParams.toString()}`, { replace: true });
         return;
       }
       // Wait a moment for userClaims to load after login

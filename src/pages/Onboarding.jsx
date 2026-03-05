@@ -44,6 +44,7 @@ import {
 const APPLE_ONBOARDING_FLOW_KEY = 'merxus_onboarding_auth_flow';
 const APPLE_ONBOARDING_DRAFT_KEY = 'merxus_onboarding_apple_draft';
 const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
+const ONBOARDING_PENDING_PREFILL_KEY = 'merxus_onboarding_pending_prefill';
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -284,6 +285,19 @@ const Onboarding = () => {
       });
 
       if (result.emailSent) {
+        if (submitData.authMethod === 'password') {
+          sessionStorage.setItem(
+            ONBOARDING_PENDING_PREFILL_KEY,
+            JSON.stringify({
+              tenantType,
+              formData: {
+                ...submitData,
+              },
+              createdAt: Date.now(),
+            })
+          );
+        }
+
         const loginPath = returnTo
           ? `/login?type=${encodeURIComponent(tenantType)}&returnTo=${encodeURIComponent(returnTo)}`
           : '/login';
