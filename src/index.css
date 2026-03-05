@@ -98,7 +98,14 @@
     accent-color: #22c55e;
   }
 
-  .onboarding-select option:checked {
+  .onboarding-select option {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+
+  .onboarding-select option:checked,
+  .onboarding-select option:focus,
+  .onboarding-select option:active {
     background: linear-gradient(0deg, #22c55e 0%, #22c55e 100%);
     background-color: #22c55e !important;
     color: #ffffff !important;

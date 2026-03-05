@@ -90,20 +90,11 @@ export async function refreshTokenAndClaims(currentUser, { setToken, setUserClai
         });
       });
     } else {
-      // Token doesn't have required claims - could be a new Apple user
-      const providers = currentUser?.providerData?.map((p) => p.providerId) || [];
-      const isAppleUser = providers.includes('apple.com');
-
-      if (isAppleUser) {
-        console.warn('Token missing claims for Apple user. Marking as needs onboarding.');
-        setToken(idToken);
-        setUserClaims(null);
-        return { success: false, needsOnboarding: true, critical: false, token: idToken };
-      }
-
-      console.warn('Token missing required claims. Logging out...');
-      await signOut(auth);
-      return { success: false };
+      // Token missing claims – treat as onboarding needed for any provider
+      console.warn('Token missing required claims. Marking as needs onboarding.');
+      setToken(idToken);
+      setUserClaims(null);
+      return { success: false, needsOnboarding: true, critical: false, token: idToken };
     }
   } catch (error) {
     console.error('Error refreshing token:', error);

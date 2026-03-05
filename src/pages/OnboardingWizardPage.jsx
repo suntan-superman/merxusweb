@@ -113,11 +113,6 @@ export default function OnboardingWizardPage() {
       return;
     }
 
-    if (!isAppleUser) {
-      navigate('/onboarding', { replace: true });
-      return;
-    }
-
     // Allow users to continue wizard after payment return or while an in-progress wizard exists,
     // even if claims are already present from pre-save onboarding.
     if (userClaims && !needsOnboarding && !isPaymentReturn && !isCanceledReturn && !hasWizardProgress) {
@@ -129,7 +124,7 @@ export default function OnboardingWizardPage() {
       };
       navigate(dashboardPaths[userClaims.type] || '/', { replace: true });
     }
-  }, [loading, user, userClaims, needsOnboarding, isAppleUser, isPaymentReturn, isCanceledReturn, hasWizardProgress, navigate]);
+  }, [loading, user, userClaims, needsOnboarding, isPaymentReturn, isCanceledReturn, hasWizardProgress, navigate]);
 
   const handleComplete = async (wizardData, isPreSave = false) => {
     if (tenantCreated && !isPreSave) {
