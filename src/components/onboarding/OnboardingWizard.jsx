@@ -130,24 +130,25 @@ export default function OnboardingWizard({
 
   // Hydrate wizard data when new prefill props arrive (e.g., after async session restore)
   useEffect(() => {
+    const overwrite = lockPrefillFields; // when locked, force overwrite even if values exist
     const updates = {};
-    if (prefillBusinessName && !wizardData.businessName) updates.businessName = prefillBusinessName;
-    if (prefillName && !wizardData.ownerName) updates.ownerName = prefillName;
-    if (prefillEmail && !wizardData.email) updates.email = prefillEmail;
-    if (prefillTempPassword && !wizardData.tempPassword) updates.tempPassword = prefillTempPassword;
-    if (prefillPhone && !wizardData.phone) updates.phone = prefillPhone;
-    if (prefillAddress && !wizardData.address) updates.address = prefillAddress;
-    if (prefillCity && !wizardData.city) updates.city = prefillCity;
-    if (prefillState && !wizardData.state) updates.state = prefillState;
-    if (prefillZip && !wizardData.zip) updates.zip = prefillZip;
-    if (prefillTimezone && wizardData.timezone === 'America/Los_Angeles') updates.timezone = prefillTimezone;
-    if (prefillBusinessType && !wizardData.industryData.businessType) {
+    if (prefillBusinessName && (overwrite || !wizardData.businessName)) updates.businessName = prefillBusinessName;
+    if (prefillName && (overwrite || !wizardData.ownerName)) updates.ownerName = prefillName;
+    if (prefillEmail && (overwrite || !wizardData.email)) updates.email = prefillEmail;
+    if (prefillTempPassword && (overwrite || !wizardData.tempPassword)) updates.tempPassword = prefillTempPassword;
+    if (prefillPhone && (overwrite || !wizardData.phone)) updates.phone = prefillPhone;
+    if (prefillAddress && (overwrite || !wizardData.address)) updates.address = prefillAddress;
+    if (prefillCity && (overwrite || !wizardData.city)) updates.city = prefillCity;
+    if (prefillState && (overwrite || !wizardData.state)) updates.state = prefillState;
+    if (prefillZip && (overwrite || !wizardData.zip)) updates.zip = prefillZip;
+    if (prefillTimezone && (overwrite || wizardData.timezone === 'America/Los_Angeles')) updates.timezone = prefillTimezone;
+    if (prefillBusinessType && (overwrite || !wizardData.industryData.businessType)) {
       updates.industryData = { ...wizardData.industryData, businessType: prefillBusinessType };
     }
-    if (prefillCuisineType && !wizardData.industryData.cuisineType) {
+    if (prefillCuisineType && (overwrite || !wizardData.industryData.cuisineType)) {
       updates.industryData = { ...(updates.industryData || wizardData.industryData), cuisineType: prefillCuisineType };
     }
-    if (prefillDescription && !wizardData.industryData.description) {
+    if (prefillDescription && (overwrite || !wizardData.industryData.description)) {
       updates.industryData = { ...(updates.industryData || wizardData.industryData), description: prefillDescription };
     }
     if (Object.keys(updates).length > 0) {
