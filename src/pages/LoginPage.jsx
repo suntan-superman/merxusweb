@@ -60,6 +60,22 @@ export default function LoginPage() {
   const prefillEmail = locationState?.email || passwordSetupEmail;
   const invitationLink = locationState?.invitationLink;
 
+  const buildLoginActionUrl = (extraParams = {}) => {
+    const url = new URL('/login', window.location.origin);
+    if (returnToPath) url.searchParams.set('returnTo', returnToPath);
+    if (onboardingType) url.searchParams.set('type', onboardingType);
+    if (onboardingSource) url.searchParams.set('source', onboardingSource);
+    if (agentId) url.searchParams.set('agentId', agentId);
+    if (officeId) url.searchParams.set('officeId', officeId);
+    if (restaurantId) url.searchParams.set('restaurantId', restaurantId);
+    Object.entries(extraParams || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.set(key, value);
+      }
+    });
+    return url.toString();
+  };
+
   const updateProviderHint = async (nextEmail, { force = false } = {}) => {
     const trimmed = (nextEmail || '').trim().toLowerCase();
 
@@ -350,7 +366,10 @@ export default function LoginPage() {
         return;
       }
 
-      await sendPasswordResetEmail(auth, normalizedEmail);
+      await sendPasswordResetEmail(auth, normalizedEmail, {
+        url: buildLoginActionUrl(),
+        handleCodeInApp: true,
+      });
       setEmail(normalizedEmail);
       setResetEmailSent(true);
       setLoading(false);
@@ -388,8 +407,8 @@ export default function LoginPage() {
       // SendGrid didn't work, try Firebase Auth as backup.
       try {
         await sendPasswordResetEmail(auth, emailToResend, {
-          url: `${window.location.origin}/login?mode=resetPassword${agentId ? `&agentId=${agentId}` : ''}${officeId ? `&officeId=${officeId}` : ''}${restaurantId ? `&restaurantId=${restaurantId}` : ''}`,
-          handleCodeInApp: false,
+          url: buildLoginActionUrl(),
+          handleCodeInApp: true,
         });
         setResendEmailMessage({
           type: 'success',

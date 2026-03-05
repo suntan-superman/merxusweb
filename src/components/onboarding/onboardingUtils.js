@@ -130,7 +130,7 @@ export async function sendFirebasePasswordReset(email, redirectUrl) {
     const { auth } = await import('../../firebase/config');
     await sendPasswordResetEmail(auth, email, {
       url: redirectUrl,
-      handleCodeInApp: false,
+      handleCodeInApp: true,
     });
     return true;
   } catch (error) {
