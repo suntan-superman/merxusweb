@@ -28,8 +28,8 @@ export default function OnboardingOTPPage() {
 
   const handleVerify = async (e) => {
     e.preventDefault();
-    if (!otpCode || otpCode.length < 4) {
-      toast.error('Enter the OTP code we emailed you.');
+    if (!otpCode || otpCode.length !== 6) {
+      toast.error('Enter the 6-digit OTP code we emailed you.');
       return;
     }
     if (password.length < 6) {
@@ -100,34 +100,36 @@ export default function OnboardingOTPPage() {
               className="input-field"
               placeholder="123456"
               required
-            />
-          </div>
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Set Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="Create a password"
-              required
-              minLength={6}
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Set Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input-field"
+            placeholder="Create a password"
+            required
+            minLength={6}
+            disabled={otpCode.length !== 6}
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Confirm Password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="input-field"
-              placeholder="Re-enter password"
-              required
-              minLength={6}
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Confirm Password</label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="input-field"
+            placeholder="Re-enter password"
+            required
+            minLength={6}
+            disabled={otpCode.length !== 6}
+          />
+        </div>
 
           <div className="flex items-center justify-between">
             <button
@@ -140,7 +142,12 @@ export default function OnboardingOTPPage() {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={
+                loading ||
+                otpCode.length !== 6 ||
+                password.length < 6 ||
+                password !== confirmPassword
+              }
               className="btn-primary px-6 py-2 disabled:opacity-50"
             >
               {loading ? 'Verifying...' : 'Verify & Continue'}

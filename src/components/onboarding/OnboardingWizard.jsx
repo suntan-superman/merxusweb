@@ -32,6 +32,7 @@ export default function OnboardingWizard({
   prefillBusinessType,
   prefillCuisineType,
   prefillDescription,
+  prefillTimezone,
   tenantCreated,
   skipPayment = false,
   resumeStep = null,
@@ -64,7 +65,7 @@ export default function OnboardingWizard({
     city: prefillCity || '',
     state: prefillState || '',
     zip: prefillZip || '',
-    timezone: 'America/Los_Angeles',
+    timezone: prefillTimezone || 'America/Los_Angeles',
     
     // Step 3: Twilio
     twilioPhoneNumber: '',

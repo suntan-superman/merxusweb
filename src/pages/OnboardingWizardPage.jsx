@@ -100,6 +100,16 @@ export default function OnboardingWizardPage() {
     }
   }, []);
 
+  // If we loaded a fresh prefill, clear any stale wizard progress so fields prefill correctly
+  useEffect(() => {
+    if (!prefillDraft) return;
+    try {
+      localStorage.removeItem(WIZARD_STORAGE_KEY);
+    } catch (err) {
+      console.warn('Failed to clear wizard storage', err);
+    }
+  }, [prefillDraft]);
+
   useEffect(() => {
     if (!isPaymentReturn && !isCanceledReturn) return;
 
@@ -341,6 +351,7 @@ export default function OnboardingWizardPage() {
         prefillBusinessType={prefillForm.businessType}
         prefillCuisineType={prefillForm.cuisineType}
         prefillDescription={prefillForm.description}
+        prefillTimezone={prefillForm.timezone}
         tenantCreated={tenantCreated}
         resumeStep={shouldResumeTwilio ? effectiveResumeStep : null}
         forcePaymentComplete={isPaymentReturn}
