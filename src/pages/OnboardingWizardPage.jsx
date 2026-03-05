@@ -58,8 +58,8 @@ function parseAddress(fullAddress = '') {
   if (!trimmed) {
     return { street: '', city: '', state: '', zip: '' };
   }
-  // Pattern: "123 Main St, Los Angeles, CA 90001"
-  const regex = /^(.+?),\s*([^,]+?),\s*([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)$/;
+  // Pattern: "123 Main St, Los Angeles, CA 90001" or "123 Main St Los Angeles CA 90001"
+  const regex = /^(.+?)[,\s]+\s*([^,]+?)[,\s]+\s*([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)$/;
   const match = trimmed.match(regex);
   if (match) {
     return {
@@ -388,6 +388,7 @@ export default function OnboardingWizardPage() {
         prefillCuisineType={prefillForm.cuisineType}
         prefillDescription={prefillForm.description}
         prefillTimezone={prefillForm.timezone}
+        prefillTempPassword={prefillForm.tempPassword}
         tenantCreated={tenantCreated}
         resumeStep={shouldResumeTwilio ? effectiveResumeStep : null}
         forcePaymentComplete={isPaymentReturn}

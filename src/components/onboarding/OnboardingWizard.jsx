@@ -33,6 +33,7 @@ export default function OnboardingWizard({
   prefillCuisineType,
   prefillDescription,
   prefillTimezone,
+  prefillTempPassword,
   tenantCreated,
   lockPrefillFields = false,
   skipPayment = false,
@@ -60,7 +61,7 @@ export default function OnboardingWizard({
     businessName: prefillBusinessName || '',
     ownerName: prefillName || '',
     email: prefillEmail || '', // Apple sign-in can prefill
-    tempPassword: '', // Optional for Apple sign-in
+    tempPassword: prefillTempPassword || '', // Optional for Apple sign-in
     phone: prefillPhone || '',
     address: prefillAddress || '',
     city: prefillCity || '',
