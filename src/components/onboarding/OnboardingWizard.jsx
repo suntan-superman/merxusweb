@@ -30,6 +30,10 @@ export default function OnboardingWizard({
   prefillState,
   prefillZip,
   prefillBusinessType,
+  prefillBrandName,
+  prefillBrokerage,
+  prefillLicenseNumber,
+  prefillMarkets,
   prefillCuisineType,
   prefillDescription,
   prefillTimezone,
@@ -84,6 +88,10 @@ export default function OnboardingWizard({
       businessType: prefillBusinessType || '',
       cuisineType: prefillCuisineType || '',
       description: prefillDescription || '',
+      brandName: prefillBrandName || '',
+      brokerage: prefillBrokerage || '',
+      licenseNumber: prefillLicenseNumber || '',
+      markets: prefillMarkets || '',
     },
 
     // Payment + reservation
@@ -145,6 +153,18 @@ export default function OnboardingWizard({
     if (prefillTimezone && (overwrite || wizardData.timezone === 'America/Los_Angeles')) updates.timezone = prefillTimezone;
     if (prefillBusinessType && (overwrite || !wizardData.industryData.businessType)) {
       updates.industryData = { ...wizardData.industryData, businessType: prefillBusinessType };
+    }
+    if (prefillBrandName && (overwrite || !wizardData.industryData.brandName)) {
+      updates.industryData = { ...(updates.industryData || wizardData.industryData), brandName: prefillBrandName };
+    }
+    if (prefillBrokerage && (overwrite || !wizardData.industryData.brokerage)) {
+      updates.industryData = { ...(updates.industryData || wizardData.industryData), brokerage: prefillBrokerage };
+    }
+    if (prefillLicenseNumber && (overwrite || !wizardData.industryData.licenseNumber)) {
+      updates.industryData = { ...(updates.industryData || wizardData.industryData), licenseNumber: prefillLicenseNumber };
+    }
+    if (prefillMarkets && (overwrite || !wizardData.industryData.markets)) {
+      updates.industryData = { ...(updates.industryData || wizardData.industryData), markets: prefillMarkets };
     }
     if (prefillCuisineType && (overwrite || !wizardData.industryData.cuisineType)) {
       updates.industryData = { ...(updates.industryData || wizardData.industryData), cuisineType: prefillCuisineType };

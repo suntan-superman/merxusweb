@@ -379,6 +379,10 @@ export default function OnboardingWizardPage() {
     prefillDraft?.tenantType === 'real_estate'
       ? brandName || (agentName ? `${agentName} Team` : '')
       : prefillForm.name;
+  const derivedBrandName =
+    prefillDraft?.tenantType === 'real_estate'
+      ? brandName || (agentName ? `${agentName} Team` : '')
+      : brandName;
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -403,6 +407,10 @@ export default function OnboardingWizardPage() {
         prefillState={prefillForm.state || parsedAddress.state}
         prefillZip={prefillForm.zip || parsedAddress.zip}
         prefillBusinessType={prefillForm.businessType}
+        prefillBrandName={derivedBrandName}
+        prefillBrokerage={prefillForm.brokerage}
+        prefillLicenseNumber={prefillForm.licenseNumber}
+        prefillMarkets={prefillForm.markets}
         prefillCuisineType={prefillForm.cuisineType}
         prefillDescription={prefillForm.description}
         prefillTimezone={prefillForm.timezone}
