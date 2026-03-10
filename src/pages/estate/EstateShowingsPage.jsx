@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import { fetchListings, createShowing, updateShowing, deleteShowing } from '../../api/estate';
@@ -9,6 +10,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function EstateShowingsPage() {
   const { agentId } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showings, setShowings] = useState([]);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,6 +19,7 @@ export default function EstateShowingsPage() {
   const [editingShowing, setEditingShowing] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showingToDelete, setShowingToDelete] = useState(null);
+  const requestedShowingId = searchParams.get('showingId') || '';
 
   // Fetch showings from Firestore
   const { data: showingsData = [], loading: showingsLoading } = useFirestoreCollection(
@@ -31,6 +34,18 @@ export default function EstateShowingsPage() {
   useEffect(() => {
     setShowings(showingsData);
   }, [showingsData]);
+
+  useEffect(() => {
+    if (!requestedShowingId || !showingsData.length) {
+      return;
+    }
+    const requestedShowing = showingsData.find((showing) => showing.id === requestedShowingId);
+    if (!requestedShowing) {
+      return;
+    }
+    setEditingShowing(requestedShowing);
+    setFormOpen(true);
+  }, [showingsData, requestedShowingId]);
 
   // Fetch listings for the form
   async function loadListings() {
@@ -55,6 +70,9 @@ export default function EstateShowingsPage() {
   function handleEdit(showing) {
     setEditingShowing(showing);
     setFormOpen(true);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('showingId', showing.id);
+    setSearchParams(nextParams);
   }
 
   async function handleSave(showingData) {
@@ -68,6 +86,9 @@ export default function EstateShowingsPage() {
       }
       setFormOpen(false);
       setEditingShowing(null);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('showingId');
+      setSearchParams(nextParams);
     } catch (err) {
       console.error(err);
       setError('Failed to save showing.');
@@ -141,6 +162,9 @@ export default function EstateShowingsPage() {
         onClose={() => {
           setFormOpen(false);
           setEditingShowing(null);
+          const nextParams = new URLSearchParams(searchParams);
+          nextParams.delete('showingId');
+          setSearchParams(nextParams);
         }}
         onSave={handleSave}
         editing={editingShowing}

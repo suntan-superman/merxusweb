@@ -11,6 +11,32 @@ export async function updateEstateSettings(settings) {
   return res.data;
 }
 
+export async function fetchEstateProviderHealth({ refresh = false } = {}) {
+  const res = await apiClient.get('/estate/provider-health', {
+    params: {
+      refresh,
+    },
+  });
+  return res.data;
+}
+
+export async function fetchEstateSpeechAnalytics({ days = 30, limit } = {}) {
+  const res = await apiClient.get('/estate/speech-analytics', {
+    params: {
+      days,
+      ...(limit ? { limit } : {}),
+    },
+  });
+  return res.data;
+}
+
+export async function invalidateEstateProviderHealthCache(providerTypes = []) {
+  const res = await apiClient.post('/estate/provider-health/invalidate', {
+    providerTypes,
+  });
+  return res.data;
+}
+
 // Listings
 export async function fetchListings() {
   const res = await apiClient.get('/estate/listings');

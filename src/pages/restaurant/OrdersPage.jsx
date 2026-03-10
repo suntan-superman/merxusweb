@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { updateOrderStatus } from '../../api/orders';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import { useNewItemNotifications } from '../../hooks/useNotifications';
@@ -11,6 +12,7 @@ import OrderDetailDrawer from '../../components/orders/OrderDetailDrawer';
 
 export default function OrdersPage() {
   const { restaurantId } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState({
     status: 'active',
     orderType: 'all',
@@ -19,6 +21,7 @@ export default function OrdersPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [error, setError] = useState(null);
+  const requestedOrderId = searchParams.get('orderId') || '';
 
   // Build Firestore collection path
   const collectionPath = restaurantId ? `restaurants/${restaurantId}/orders` : null;
@@ -53,12 +56,23 @@ export default function OrdersPage() {
     }
   }, [listenerError]);
 
+  useEffect(() => {
+    if (!requestedOrderId || !orders.length) {
+      return;
+    }
+    const requestedOrder = orders.find((order) => order.id === requestedOrderId);
+    if (!requestedOrder) {
+      return;
+    }
+    setSelectedOrder(requestedOrder);
+    setDrawerOpen(true);
+  }, [orders, requestedOrderId]);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     'escape': () => {
       if (drawerOpen) {
-        setDrawerOpen(false);
-        setSelectedOrder(null);
+        closeDrawer();
       }
     },
     'ctrl+k': () => {
@@ -78,6 +92,17 @@ export default function OrdersPage() {
   function openOrder(order) {
     setSelectedOrder(order);
     setDrawerOpen(true);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('orderId', order.id);
+    setSearchParams(nextParams);
+  }
+
+  function closeDrawer() {
+    setDrawerOpen(false);
+    setSelectedOrder(null);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('orderId');
+    setSearchParams(nextParams);
   }
 
   async function handleStatusChange(order, nextStatus) {
@@ -172,7 +197,7 @@ export default function OrdersPage() {
 
       <OrderDetailDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
         order={selectedOrder}
         onStatusChange={handleStatusChange}
         updatingId={updatingId}

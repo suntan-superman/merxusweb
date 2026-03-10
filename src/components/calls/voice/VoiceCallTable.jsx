@@ -17,6 +17,47 @@ import { formatPhoneDisplay } from '../../../utils/phoneFormatter';
 
 const GRID_STORAGE_KEY = 'merxus_voice_calls_grid_columns';
 
+function buildSpeechBadge(call) {
+  const speech = call?.speechSession;
+  if (!speech) {
+    return {
+      label: '—',
+      tone: 'bg-slate-100 text-slate-600',
+      detail: 'No telemetry',
+    };
+  }
+
+  if (speech.fallbackTriggered) {
+    return {
+      label: 'Fallback',
+      tone: 'bg-amber-100 text-amber-800',
+      detail: speech.fallbackReason || speech.effectiveProvider || 'standard',
+    };
+  }
+
+  if (speech.healthGated) {
+    return {
+      label: 'Health Gate',
+      tone: 'bg-red-100 text-red-800',
+      detail: speech.healthGateReason || speech.effectiveProvider || 'rerouted',
+    };
+  }
+
+  if (speech.effectiveStrategy === 'standard') {
+    return {
+      label: 'Standard',
+      tone: 'bg-blue-100 text-blue-800',
+      detail: speech.effectiveProvider || 'pipeline',
+    };
+  }
+
+  return {
+    label: 'Realtime',
+    tone: 'bg-emerald-100 text-emerald-800',
+    detail: speech.effectiveProvider || speech.realtimeProvider || 'active',
+  };
+}
+
 export default function VoiceCallTable({ calls, onCallClick }) {
   // Transform calls data for the grid
   const gridData = useMemo(() => {
@@ -79,6 +120,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
           phone: customerPhone || call.from || '',
         },
         importanceBadge: call.importance || 'normal',
+        speechBadge: buildSpeechBadge(call),
         transcriptSummary: call.transcriptSummary || 'No summary available',
       };
     });
@@ -195,6 +237,15 @@ export default function VoiceCallTable({ calls, onCallClick }) {
     </div>
   );
 
+  const speechTemplate = (props) => (
+    <div className="py-1 leading-tight">
+      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${props.speechBadge?.tone || 'bg-slate-100 text-slate-600'}`}>
+        {props.speechBadge?.label || '—'}
+      </span>
+      <div className="mt-1 text-[11px] text-gray-500 truncate">{props.speechBadge?.detail || 'No telemetry'}</div>
+    </div>
+  );
+
   const headerTemplate = (props) => (
     <div style={{ fontSize: '14px', fontWeight: 'bold', padding: '12px 8px' }}>
       {props.headerText}
@@ -274,6 +325,15 @@ export default function VoiceCallTable({ calls, onCallClick }) {
             minWidth={100}
             template={importanceTemplate}
             allowFiltering={true}
+          />
+          <ColumnDirective
+            field="speechBadge"
+            headerText="Speech"
+            headerTemplate={headerTemplate}
+            width={getColumnWidth('speechBadge', 140)}
+            minWidth={120}
+            template={speechTemplate}
+            allowFiltering={false}
           />
           <ColumnDirective
             field="transcriptSummary"

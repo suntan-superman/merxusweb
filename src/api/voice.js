@@ -29,6 +29,32 @@ export async function updateVoiceSettings(settings) {
   return res.data;
 }
 
+export async function fetchVoiceProviderHealth({ refresh = false } = {}) {
+  const res = await apiClient.get('/voice/provider-health', {
+    params: {
+      refresh,
+    },
+  });
+  return res.data;
+}
+
+export async function fetchVoiceSpeechAnalytics({ days = 30, limit } = {}) {
+  const res = await apiClient.get('/voice/speech-analytics', {
+    params: {
+      days,
+      ...(limit ? { limit } : {}),
+    },
+  });
+  return res.data;
+}
+
+export async function invalidateVoiceProviderHealthCache(providerTypes = []) {
+  const res = await apiClient.post('/voice/provider-health/invalidate', {
+    providerTypes,
+  });
+  return res.data;
+}
+
 export async function resendInvitationEmail(email) {
   try {
     const res = await apiClient.post('/onboarding/resend-email', { email });

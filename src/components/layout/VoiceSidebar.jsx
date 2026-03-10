@@ -62,6 +62,12 @@ export default function VoiceSidebar() {
         <NavItem to="/voice" label="Dashboard" icon="📊" />
         <NavItem to="/voice/calls" label="Calls & Messages" icon="📞" />
         <NavItem to="/voice/voicemail" label="Voicemail" icon="📬" />
+        <NavItem to="/voice/sms" label="SMS Inbox" icon="💬" />
+        <NavItem to="/voice/notifications" label="Notifications" icon="🔔" />
+        <NavItem to="/voice/intelligence" label="Intelligence" icon="🧠" />
+        <NavItem to="/voice/work-items" label="Work Items" icon="🧾" />
+        <NavItem to="/voice/customer-360" label="Customer 360" icon="🪪" />
+        <NavItem to="/voice/merge-activity" label="Merge Activity" icon="🔀" />
         <NavItem to="/voice/routing" label="Call Routing" icon="🔄" />
         <NavItem to="/voice/settings" label="Settings" icon="⚙️" />
         <NavItem to="/voice/billing" label="Billing" icon="💳" />

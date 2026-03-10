@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { updateReservationStatus } from '../../api/reservations';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import { useNewItemNotifications } from '../../hooks/useNotifications';
@@ -11,6 +12,7 @@ import ReservationDetailDrawer from '../../components/reservations/ReservationDe
 
 export default function ReservationsPage() {
   const { restaurantId } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState({
     status: 'upcoming',
     dateRange: 'all',
@@ -19,6 +21,7 @@ export default function ReservationsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [error, setError] = useState(null);
+  const requestedReservationId = searchParams.get('reservationId') || '';
 
   // Build Firestore collection path
   const collectionPath = restaurantId ? `restaurants/${restaurantId}/reservations` : null;
@@ -48,12 +51,23 @@ export default function ReservationsPage() {
     }
   }, [listenerError]);
 
+  useEffect(() => {
+    if (!requestedReservationId || !reservations.length) {
+      return;
+    }
+    const requestedReservation = reservations.find((reservation) => reservation.id === requestedReservationId);
+    if (!requestedReservation) {
+      return;
+    }
+    setSelectedReservation(requestedReservation);
+    setDrawerOpen(true);
+  }, [reservations, requestedReservationId]);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     'escape': () => {
       if (drawerOpen) {
-        setDrawerOpen(false);
-        setSelectedReservation(null);
+        closeDrawer();
       }
     },
   });
@@ -65,6 +79,17 @@ export default function ReservationsPage() {
   function openReservation(reservation) {
     setSelectedReservation(reservation);
     setDrawerOpen(true);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('reservationId', reservation.id);
+    setSearchParams(nextParams);
+  }
+
+  function closeDrawer() {
+    setDrawerOpen(false);
+    setSelectedReservation(null);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('reservationId');
+    setSearchParams(nextParams);
   }
 
   async function handleStatusChange(reservation, nextStatus) {
@@ -152,7 +177,7 @@ export default function ReservationsPage() {
 
       <ReservationDetailDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
         reservation={selectedReservation}
         onStatusChange={handleStatusChange}
         updatingId={updatingId}

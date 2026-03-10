@@ -1,15 +1,22 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EscalatedCallsAlert from '../../components/calls/EscalatedCallsAlert';
 import VoiceCallTable from '../../components/calls/voice/VoiceCallTable';
 import CallDetailDrawer from '../../components/calls/CallDetailDrawer';
+import SpeechOperationsPanel from '../../components/calls/SpeechOperationsPanel';
+import { matchesSpeechFilter } from '../../utils/callSpeech';
 
 export default function EstateCallsPage() {
   const { agentId } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCall, setSelectedCall] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [speechFilter, setSpeechFilter] = useState('all');
+  const requestedCallId = searchParams.get('callId') || '';
 
   const { data: calls = [], loading } = useFirestoreCollection(
     agentId ? 'callSessions' : null,
@@ -22,14 +29,37 @@ export default function EstateCallsPage() {
       : {}
   );
 
+  const filteredCalls = useMemo(
+    () => calls.filter((call) => matchesSpeechFilter(call, speechFilter)),
+    [calls, speechFilter]
+  );
+
+  useEffect(() => {
+    if (!requestedCallId || !calls.length) {
+      return;
+    }
+    const requestedCall = calls.find((call) => call.id === requestedCallId);
+    if (!requestedCall) {
+      return;
+    }
+    setSelectedCall(requestedCall);
+    setIsDrawerOpen(true);
+  }, [calls, requestedCallId]);
+
   const handleCallClick = (call) => {
     setSelectedCall(call);
     setIsDrawerOpen(true);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('callId', call.id);
+    setSearchParams(nextParams);
   };
 
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
     setSelectedCall(null);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('callId');
+    setSearchParams(nextParams);
   };
 
   if (loading) {
@@ -47,9 +77,17 @@ export default function EstateCallsPage() {
         </div>
       </div>
 
+      <SpeechOperationsPanel
+        calls={calls}
+        filteredCalls={filteredCalls}
+        speechFilter={speechFilter}
+        onSpeechFilterChange={setSpeechFilter}
+        tenantType="real_estate"
+      />
+
       <EscalatedCallsAlert calls={calls} />
 
-      <VoiceCallTable calls={calls} onCallClick={handleCallClick} />
+      <VoiceCallTable calls={filteredCalls} onCallClick={handleCallClick} />
 
       <CallDetailDrawer
         open={isDrawerOpen}

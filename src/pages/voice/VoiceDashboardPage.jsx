@@ -276,7 +276,21 @@ export default function VoiceDashboardPage() {
             <p className="text-sm text-gray-600">Configure business info and AI settings</p>
           </Link>
           <Link
-            to="/voice/call-routing"
+            to="/voice/sms"
+            className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"
+          >
+            <h3 className="font-semibold text-gray-900 mb-1">💬 SMS Inbox</h3>
+            <p className="text-sm text-gray-600">Review texts, follow-ups, and opt-outs</p>
+          </Link>
+          <Link
+            to="/voice/work-items"
+            className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"
+          >
+            <h3 className="font-semibold text-gray-900 mb-1">🧾 Work Items</h3>
+            <p className="text-sm text-gray-600">Review appointments, quotes, and service requests</p>
+          </Link>
+          <Link
+            to="/voice/routing"
             className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"
           >
             <h3 className="font-semibold text-gray-900 mb-1">🔄 Call Routing</h3>

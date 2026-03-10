@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useEstateSettings, useUpdateEstateSettings } from '../../hooks/useEstateQueries';
 import EstateAgentProfile from '../../components/settings/estate/EstateAgentProfile';
 import EstateAgentHighlights from '../../components/settings/estate/EstateAgentHighlights';
@@ -7,6 +8,8 @@ import HolidaySchedule from '../../components/settings/HolidaySchedule';
 import EstateAISettings from '../../components/settings/estate/EstateAISettings';
 import EstateRouting from '../../components/settings/estate/EstateRouting';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import SmsSettings from '../../components/settings/SmsSettings';
+import VoiceProviderHealthPanel from '../../components/settings/voice/VoiceProviderHealthPanel';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: '👤' },
@@ -15,14 +18,27 @@ const TABS = [
   { id: 'holidays', label: 'Holidays', icon: '📅' },
   { id: 'routing', label: 'Call Routing', icon: '📞' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
+  { id: 'sms', label: 'SMS Messaging', icon: '💬' },
 ];
 
 export default function EstateSettingsPage() {
-  const [activeTab, setActiveTab] = useState('profile');
+  const location = useLocation();
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const requestedTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    TABS.some((tab) => tab.id === requestedTab) ? requestedTab : 'profile'
+  );
+  const highlightSpeechRuntime = activeTab === 'ai' && searchParams.get('panel') === 'speech-runtime';
   
   // React Query hooks
   const { data: settings, isLoading, error: loadError, refetch } = useEstateSettings();
   const updateSettings = useUpdateEstateSettings();
+
+  useEffect(() => {
+    if (TABS.some((tab) => tab.id === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
 
   const handleSave = async (updated) => {
     updateSettings.mutate(updated);
@@ -95,7 +111,19 @@ export default function EstateSettingsPage() {
           <EstateRouting settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
         )}
         {activeTab === 'ai' && (
-          <EstateAISettings settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
+          <div className="space-y-6">
+            <EstateAISettings settings={settings} onSave={handleSave} saving={updateSettings.isPending} />
+            <VoiceProviderHealthPanel
+              settings={settings}
+              onSave={handleSave}
+              saving={updateSettings.isPending}
+              highlighted={highlightSpeechRuntime}
+              tenantType="real_estate"
+            />
+          </div>
+        )}
+        {activeTab === 'sms' && (
+          <SmsSettings settings={settings} tenantType="real_estate" />
         )}
       </div>
     </div>

@@ -2,6 +2,31 @@ import { useEffect, useState } from 'react';
 import { fetchCallTranscript, translateCallTranscript } from '../../api/calls';
 import AddToCalendarButton from '../common/AddToCalendarButton';
 
+function formatMetricDuration(ms) {
+  if (!Number.isFinite(ms) || ms <= 0) return '—';
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function getSpeechSessionSummary(call) {
+  const speech = call?.speechSession;
+  if (!speech) return null;
+
+  const status = [];
+  if (speech.fallbackTriggered) status.push(`Fallback: ${speech.fallbackReason || 'yes'}`);
+  if (speech.healthGated) status.push(`Health gate: ${speech.healthGateReason || 'yes'}`);
+
+  return {
+    requestedStrategy: speech.requestedStrategy || '—',
+    effectiveStrategy: speech.effectiveStrategy || '—',
+    effectiveProvider: speech.effectiveProvider || '—',
+    realtimeProvider: speech.realtimeProvider || '—',
+    fallbackStatus: status.length ? status.join(' • ') : 'No fallback or health gate trigger recorded',
+    healthChecks: Array.isArray(speech.healthChecks) ? speech.healthChecks : [],
+    metrics: speech.metrics || null,
+  };
+}
+
 export default function CallDetailDrawer({ open, onClose, call }) {
   const [loading, setLoading] = useState(false);
   const [transcript, setTranscript] = useState(null);
@@ -57,6 +82,7 @@ export default function CallDetailDrawer({ open, onClose, call }) {
   }
 
   if (!open || !call) return null;
+  const speechSummary = getSpeechSessionSummary(call);
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -100,6 +126,33 @@ export default function CallDetailDrawer({ open, onClose, call }) {
               <div>Duration: {call.durationSec}s</div>
             </div>
           </section>
+
+          {speechSummary ? (
+            <section>
+              <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">Speech Runtime</h3>
+              <div className="rounded-md border bg-gray-50 p-3 text-sm text-gray-800 space-y-2">
+                <div>Requested strategy: <span className="font-medium capitalize">{speechSummary.requestedStrategy}</span></div>
+                <div>Effective strategy: <span className="font-medium capitalize">{speechSummary.effectiveStrategy}</span></div>
+                <div>Effective provider: <span className="font-medium">{speechSummary.effectiveProvider}</span></div>
+                <div>Realtime provider: <span className="font-medium">{speechSummary.realtimeProvider}</span></div>
+                <div>{speechSummary.fallbackStatus}</div>
+                {speechSummary.metrics ? (
+                  <div className="text-xs text-gray-600">
+                    First transcript: {formatMetricDuration(speechSummary.metrics.firstTranscriptLatencyMs)} •
+                    First response: {formatMetricDuration(speechSummary.metrics.firstResponseLatencyMs)} •
+                    Turns: {speechSummary.metrics.turnCount || 0}
+                  </div>
+                ) : null}
+                {speechSummary.healthChecks.length ? (
+                  <div className="pt-1 text-xs text-gray-600">
+                    Latest health checks: {speechSummary.healthChecks
+                      .map((item) => `${item.providerName || item.provider || 'provider'} ${item.ok === false ? 'unhealthy' : 'healthy'}`)
+                      .join(' • ')}
+                  </div>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
 
           {call.orderId && (
             <section>

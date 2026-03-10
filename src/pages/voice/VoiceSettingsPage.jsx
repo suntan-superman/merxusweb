@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useVoiceSettings, useUpdateVoiceSettings } from '../../hooks/useVoiceQueries';
 import VoiceCompanyProfile from '../../components/settings/voice/VoiceCompanyProfile';
 import VoiceBusinessHours from '../../components/settings/voice/VoiceBusinessHours';
 import HolidaySchedule from '../../components/settings/HolidaySchedule';
 import VoiceAISettings from '../../components/settings/voice/VoiceAISettings';
+import VoiceProviderHealthPanel from '../../components/settings/voice/VoiceProviderHealthPanel';
 import VoiceServicesProducts from '../../components/settings/voice/VoiceServicesProducts';
 import ManagersSettings from '../../components/settings/ManagersSettings';
+import SmsSettings from '../../components/settings/SmsSettings';
 
 const TABS = [
   { id: 'profile', label: 'Company Profile', icon: '🏢' },
@@ -14,10 +17,23 @@ const TABS = [
   { id: 'managers', label: 'Managers', icon: '👥' },
   { id: 'services', label: 'Services & Products', icon: '📦' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
+  { id: 'sms', label: 'SMS Messaging', icon: '💬' },
 ];
 
 export default function VoiceSettingsPage() {
-  const [activeTab, setActiveTab] = useState('profile');
+  const location = useLocation();
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const requestedTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    TABS.some((tab) => tab.id === requestedTab) ? requestedTab : 'profile'
+  );
+  const highlightSpeechRuntime = activeTab === 'ai' && searchParams.get('panel') === 'speech-runtime';
+
+  useEffect(() => {
+    if (TABS.some((tab) => tab.id === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
   
   // React Query hooks
   const { data: settings, isLoading, error: loadError, refetch } = useVoiceSettings();
@@ -106,12 +122,23 @@ export default function VoiceSettingsPage() {
           />
         )}
         {activeTab === 'ai' && (
-          <VoiceAISettings 
-            settings={settings} 
-            onSave={handleSave} 
-            saving={updateSettings.isPending}
-            businessType={settings.businessType}
-          />
+          <div className="space-y-6">
+            <VoiceAISettings 
+              settings={settings} 
+              onSave={handleSave} 
+              saving={updateSettings.isPending}
+              businessType={settings.businessType}
+            />
+            <VoiceProviderHealthPanel
+              settings={settings}
+              onSave={handleSave}
+              saving={updateSettings.isPending}
+              highlighted={highlightSpeechRuntime}
+            />
+          </div>
+        )}
+        {activeTab === 'sms' && (
+          <SmsSettings settings={settings} tenantType="voice" />
         )}
       </div>
     </div>

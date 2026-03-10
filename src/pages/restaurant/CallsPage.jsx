@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import { useNewItemNotifications } from '../../hooks/useNotifications';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -7,12 +8,17 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import EscalatedCallsAlert from '../../components/calls/EscalatedCallsAlert';
 import CallTable from '../../components/calls/CallTable';
 import CallDetailDrawer from '../../components/calls/CallDetailDrawer';
+import SpeechOperationsPanel from '../../components/calls/SpeechOperationsPanel';
+import { matchesSpeechFilter } from '../../utils/callSpeech';
 
 export default function CallsPage() {
   const { restaurantId } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [error, setError] = useState(null);
   const [selectedCall, setSelectedCall] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [speechFilter, setSpeechFilter] = useState('all');
+  const requestedCallId = searchParams.get('callId') || '';
 
   // Build Firestore collection path - query root callSessions filtered by restaurantId
   const collectionPath = 'callSessions';
@@ -33,6 +39,11 @@ export default function CallsPage() {
     queryOptions
   );
 
+  const filteredCalls = useMemo(
+    () => calls.filter((call) => matchesSpeechFilter(call, speechFilter)),
+    [calls, speechFilter]
+  );
+
   // Show notifications for new calls
   useNewItemNotifications(calls, 'call', { autoRequest: true });
 
@@ -42,6 +53,18 @@ export default function CallsPage() {
       setError('Failed to load calls. Please refresh the page.');
     }
   }, [listenerError]);
+
+  useEffect(() => {
+    if (!requestedCallId || !calls.length) {
+      return;
+    }
+    const requestedCall = calls.find((call) => call.id === requestedCallId);
+    if (!requestedCall) {
+      return;
+    }
+    setSelectedCall(requestedCall);
+    setDrawerOpen(true);
+  }, [calls, requestedCallId]);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -56,6 +79,17 @@ export default function CallsPage() {
   function openCall(call) {
     setSelectedCall(call);
     setDrawerOpen(true);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('callId', call.id);
+    setSearchParams(nextParams);
+  }
+
+  function closeDrawer() {
+    setDrawerOpen(false);
+    setSelectedCall(null);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('callId');
+    setSearchParams(nextParams);
   }
 
   return (
@@ -66,6 +100,14 @@ export default function CallsPage() {
           View call history, transcripts, and customer communications
         </p>
       </div>
+
+      <SpeechOperationsPanel
+        calls={calls}
+        filteredCalls={filteredCalls}
+        speechFilter={speechFilter}
+        onSpeechFilterChange={setSpeechFilter}
+        tenantType="restaurant"
+      />
 
       <EscalatedCallsAlert calls={calls} />
 
@@ -78,12 +120,12 @@ export default function CallsPage() {
       {loading && calls.length === 0 ? (
         <LoadingSpinner text="Loading calls…" />
       ) : (
-        <CallTable calls={calls} onCallClick={openCall} />
+        <CallTable calls={filteredCalls} onCallClick={openCall} />
       )}
 
       <CallDetailDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
         call={selectedCall}
       />
     </div>

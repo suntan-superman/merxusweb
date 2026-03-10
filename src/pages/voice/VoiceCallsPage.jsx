@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import { useNewItemNotifications } from '../../hooks/useNotifications';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -7,6 +8,8 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import EscalatedCallsAlert from '../../components/calls/EscalatedCallsAlert';
 import VoiceCallTable from '../../components/calls/voice/VoiceCallTable';
 import CallDetailDrawer from '../../components/calls/CallDetailDrawer';
+import SpeechOperationsPanel from '../../components/calls/SpeechOperationsPanel';
+import { matchesSpeechFilter } from '../../utils/callSpeech';
 
 // Helper to get date range based on filter
 function getDateRange(filter) {
@@ -31,12 +34,20 @@ function getDateRange(filter) {
 
 export default function VoiceCallsPage() {
   const { officeId } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [error, setError] = useState(null);
   const [selectedCall, setSelectedCall] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const requestedCallId = searchParams.get('callId') || '';
   const [dateFilter, setDateFilter] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('voiceCallsDateFilter') || 'all';
+    }
+    return 'all';
+  });
+  const [speechFilter, setSpeechFilter] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('voiceCallsSpeechFilter') || 'all';
     }
     return 'all';
   });
@@ -46,10 +57,15 @@ export default function VoiceCallsPage() {
     localStorage.setItem('voiceCallsDateFilter', dateFilter);
   }, [dateFilter]);
 
+  useEffect(() => {
+    localStorage.setItem('voiceCallsSpeechFilter', speechFilter);
+  }, [speechFilter]);
+
   // Query options for callSessions with officeId and date filters
   const queryOptions = useMemo(
     () => {
-      const dateRange = getDateRange(dateFilter);
+      const effectiveDateFilter = requestedCallId ? 'all' : dateFilter;
+      const dateRange = getDateRange(effectiveDateFilter);
       const where = [{ field: 'officeId', operator: '==', value: officeId }];
       
       if (dateRange) {
@@ -63,13 +79,18 @@ export default function VoiceCallsPage() {
         limit: 100,
       };
     },
-    [officeId, dateFilter]
+    [officeId, dateFilter, requestedCallId]
   );
 
   // Use Firestore real-time listener
   const { data: calls = [], loading, error: listenerError } = useFirestoreCollection(
     officeId ? 'callSessions' : null,
     queryOptions
+  );
+
+  const filteredCalls = useMemo(
+    () => calls.filter((call) => matchesSpeechFilter(call, speechFilter)),
+    [calls, speechFilter]
   );
 
   // Show notifications for new calls
@@ -81,6 +102,18 @@ export default function VoiceCallsPage() {
       setError('Failed to load calls. Please refresh the page.');
     }
   }, [listenerError]);
+
+  useEffect(() => {
+    if (!requestedCallId || !calls.length) {
+      return;
+    }
+    const requestedCall = calls.find((call) => call.id === requestedCallId);
+    if (!requestedCall) {
+      return;
+    }
+    setSelectedCall(requestedCall);
+    setDrawerOpen(true);
+  }, [calls, requestedCallId]);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -95,6 +128,17 @@ export default function VoiceCallsPage() {
   function openCall(call) {
     setSelectedCall(call);
     setDrawerOpen(true);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('callId', call.id);
+    setSearchParams(nextParams);
+  }
+
+  function closeDrawer() {
+    setDrawerOpen(false);
+    setSelectedCall(null);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('callId');
+    setSearchParams(nextParams);
   }
 
   return (
@@ -127,6 +171,14 @@ export default function VoiceCallsPage() {
         </div>
       </div>
 
+      <SpeechOperationsPanel
+        calls={calls}
+        filteredCalls={filteredCalls}
+        speechFilter={speechFilter}
+        onSpeechFilterChange={setSpeechFilter}
+        tenantType="voice"
+      />
+
       <EscalatedCallsAlert calls={calls} />
 
       {error && (
@@ -138,12 +190,12 @@ export default function VoiceCallsPage() {
       {loading && calls.length === 0 ? (
         <LoadingSpinner text="Loading calls…" />
       ) : (
-        <VoiceCallTable calls={calls} onCallClick={openCall} />
+        <VoiceCallTable calls={filteredCalls} onCallClick={openCall} />
       )}
 
       <CallDetailDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
         call={selectedCall}
       />
     </div>

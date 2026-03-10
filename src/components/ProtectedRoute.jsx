@@ -105,6 +105,16 @@ export default function ProtectedRoute({
     return <Navigate to="/onboarding-wizard" state={{ from: location }} replace />;
   }
 
+  if (
+    requireAuth &&
+    user &&
+    userClaims?.invitedUser === true &&
+    userClaims?.phoneVerified === false &&
+    location.pathname !== '/verify-phone'
+  ) {
+    return <Navigate to="/verify-phone" replace />;
+  }
+
   // If user is logged in but claims are missing after loading completes,
   // token might be invalid - redirect to login
   if (requireAuth && user && (!userClaims || (!userClaims.role && !userClaims.type))) {

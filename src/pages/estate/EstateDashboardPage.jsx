@@ -303,6 +303,13 @@ export default function EstateDashboardPage() {
             <span className="text-sm font-medium text-gray-700">Schedule Showing</span>
           </Link>
           <Link
+            to="/estate/sms"
+            className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-3xl mb-2">💬</span>
+            <span className="text-sm font-medium text-gray-700">SMS Inbox</span>
+          </Link>
+          <Link
             to="/estate/leads"
             className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >

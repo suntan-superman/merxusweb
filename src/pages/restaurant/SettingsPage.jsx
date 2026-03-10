@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { fetchSettings, updateSettings } from '../../api/settings';
 import RestaurantProfile from '../../components/settings/RestaurantProfile';
 import BusinessHours from '../../components/settings/BusinessHours';
@@ -7,6 +8,8 @@ import NotificationSettings from '../../components/settings/NotificationSettings
 import ManagersSettings from '../../components/settings/ManagersSettings';
 import POSIntegration from '../../components/settings/POSIntegration';
 import AISettings from '../../components/settings/AISettings';
+import SmsSettings from '../../components/settings/SmsSettings';
+import VoiceProviderHealthPanel from '../../components/settings/voice/VoiceProviderHealthPanel';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: '🏪' },
@@ -16,15 +19,22 @@ const TABS = [
   { id: 'managers', label: 'Managers', icon: '👥' },
   { id: 'pos', label: 'POS Integration', icon: '💳' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
+  { id: 'sms', label: 'SMS Messaging', icon: '💬' },
 ];
 
 export default function SettingsPage() {
+  const location = useLocation();
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const requestedTab = searchParams.get('tab');
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState(
+    TABS.some((tab) => tab.id === requestedTab) ? requestedTab : 'profile'
+  );
+  const highlightSpeechRuntime = activeTab === 'ai' && searchParams.get('panel') === 'speech-runtime';
 
   async function load() {
     try {
@@ -43,6 +53,12 @@ export default function SettingsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    if (TABS.some((tab) => tab.id === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
 
   async function handleSave(updated) {
     try {
@@ -152,7 +168,19 @@ export default function SettingsPage() {
           <POSIntegration />
         )}
         {activeTab === 'ai' && (
-          <AISettings settings={settings} onSave={handleSave} saving={saving} />
+          <div className="space-y-6">
+            <AISettings settings={settings} onSave={handleSave} saving={saving} />
+            <VoiceProviderHealthPanel
+              settings={settings}
+              onSave={handleSave}
+              saving={saving}
+              highlighted={highlightSpeechRuntime}
+              tenantType="restaurant"
+            />
+          </div>
+        )}
+        {activeTab === 'sms' && (
+          <SmsSettings settings={settings} tenantType="restaurant" />
         )}
       </div>
     </div>

@@ -235,6 +235,10 @@ export default function LoginPage() {
       // Wait a moment for userClaims to load after login
       const timer = setTimeout(() => {
         if (userClaims) {
+          if (userClaims.invitedUser === true && userClaims.phoneVerified === false) {
+            navigate('/verify-phone', { replace: true });
+            return;
+          }
           // Determine redirect based on user type
           if (userClaims.type === 'merxus') {
             // Super-admins get a tenant selector, regular admins go to restaurant portal

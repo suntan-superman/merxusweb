@@ -15,6 +15,8 @@ import OnboardingWizardDemo from './pages/OnboardingWizardDemo';
 import OnboardingWizardPage from './pages/OnboardingWizardPage';
 import OnboardingOTPPage from './pages/OnboardingOTPPage';
 import LoginPage from './pages/LoginPage';
+import PhoneVerificationPage from './pages/PhoneVerificationPage';
+import InviteAcceptPage from './pages/InviteAcceptPage';
 import DashboardPage from './pages/restaurant/DashboardPage';
 import RestaurantDashboard from './components/restaurant/RestaurantDashboard';
 import OrdersPage from './pages/restaurant/OrdersPage';
@@ -23,6 +25,11 @@ import CallsPage from './pages/restaurant/CallsPage';
 import CustomersPage from './pages/restaurant/CustomersPage';
 import MenuPage from './pages/restaurant/MenuPage';
 import SettingsPage from './pages/restaurant/SettingsPage';
+import RestaurantSmsPage from './pages/restaurant/RestaurantSmsPage';
+import RestaurantNotificationsPage from './pages/restaurant/RestaurantNotificationsPage';
+import RestaurantIntelligencePage from './pages/restaurant/RestaurantIntelligencePage';
+import RestaurantCustomer360Page from './pages/restaurant/RestaurantCustomer360Page';
+import RestaurantMergeActivityPage from './pages/restaurant/RestaurantMergeActivityPage';
 import UsersPage from './pages/restaurant/UsersPage';
 import VoiceLayout from './components/layout/VoiceLayout';
 import VoiceDashboardPage from './pages/voice/VoiceDashboardPage';
@@ -30,6 +37,12 @@ import VoiceCallsPage from './pages/voice/VoiceCallsPage';
 import CallRoutingPage from './pages/voice/CallRoutingPage';
 import VoicemailPage from './pages/voice/VoicemailPage';
 import VoiceSettingsPage from './pages/voice/VoiceSettingsPage';
+import VoiceSmsPage from './pages/voice/VoiceSmsPage';
+import VoiceNotificationsPage from './pages/voice/VoiceNotificationsPage';
+import VoiceIntelligencePage from './pages/voice/VoiceIntelligencePage';
+import VoiceWorkItemsPage from './pages/voice/VoiceWorkItemsPage';
+import VoiceCustomer360Page from './pages/voice/VoiceCustomer360Page';
+import VoiceMergeActivityPage from './pages/voice/VoiceMergeActivityPage';
 import VoiceUsersPage from './pages/voice/VoiceUsersPage';
 import MerxusLayout from './components/layout/MerxusLayout';
 import MerxusDashboardPage from './pages/merxus/MerxusDashboardPage';
@@ -52,6 +65,11 @@ import EstateLeadsPage from './pages/estate/EstateLeadsPage';
 import EstateShowingsPage from './pages/estate/EstateShowingsPage';
 import EstateCallsPage from './pages/estate/EstateCallsPage';
 import EstateSettingsPage from './pages/estate/EstateSettingsPage';
+import EstateSmsPage from './pages/estate/EstateSmsPage';
+import EstateNotificationsPage from './pages/estate/EstateNotificationsPage';
+import EstateIntelligencePage from './pages/estate/EstateIntelligencePage';
+import EstateCustomer360Page from './pages/estate/EstateCustomer360Page';
+import EstateMergeActivityPage from './pages/estate/EstateMergeActivityPage';
 import EstateUsersPage from './pages/estate/EstateUsersPage';
 import FlyerApprovalsPage from './pages/estate/FlyerApprovalsPage';
 import FlyerMetricsPage from './pages/estate/FlyerMetricsPage';
@@ -88,6 +106,15 @@ function App() {
         <Routes>
           {/* Public routes - no NavBar */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/invite/accept" element={<InviteAcceptPage />} />
+          <Route
+            path="/verify-phone"
+            element={
+              <ProtectedRoute requireAuth>
+                <PhoneVerificationPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/onboarding/verify-otp" element={<OnboardingOTPPage />} />
           <Route path="/onboarding-wizard" element={<OnboardingWizardPage />} />
           <Route path="/support" element={<SupportPage />} />
@@ -126,6 +153,12 @@ function App() {
                     <Route path="calls" element={<CallsPage />} />
                     <Route path="customers" element={<CustomersPage />} />
                     <Route path="menu" element={<MenuPage />} />
+                    <Route path="sms" element={<RestaurantSmsPage />} />
+                    <Route path="notifications" element={<RestaurantNotificationsPage />} />
+                    <Route path="intelligence" element={<RestaurantIntelligencePage />} />
+                    <Route path="customer-360" element={<RestaurantCustomer360Page />} />
+                    <Route path="customer-360/:customerId" element={<RestaurantCustomer360Page />} />
+                    <Route path="merge-activity" element={<RestaurantMergeActivityPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                     <Route path="users" element={<UsersPage />} />
                     <Route path="billing" element={<BillingPage />} />
@@ -145,6 +178,13 @@ function App() {
                     <Route path="calls" element={<VoiceCallsPage />} />
                     <Route path="routing" element={<CallRoutingPage />} />
                     <Route path="voicemail" element={<VoicemailPage />} />
+                    <Route path="sms" element={<VoiceSmsPage />} />
+                    <Route path="notifications" element={<VoiceNotificationsPage />} />
+                    <Route path="intelligence" element={<VoiceIntelligencePage />} />
+                    <Route path="work-items" element={<VoiceWorkItemsPage />} />
+                    <Route path="customer-360" element={<VoiceCustomer360Page />} />
+                    <Route path="customer-360/:customerId" element={<VoiceCustomer360Page />} />
+                    <Route path="merge-activity" element={<VoiceMergeActivityPage />} />
                     <Route path="settings" element={<VoiceSettingsPage />} />
                     <Route path="users" element={<VoiceUsersPage />} />
                     <Route path="billing" element={<BillingPage />} />
@@ -169,6 +209,12 @@ function App() {
                     <Route path="calls" element={<EstateCallsPage />} />
                     <Route path="flyers/approvals" element={<FlyerApprovalsPage />} />
                     <Route path="flyers/metrics" element={<FlyerMetricsPage />} />
+                    <Route path="sms" element={<EstateSmsPage />} />
+                    <Route path="notifications" element={<EstateNotificationsPage />} />
+                    <Route path="intelligence" element={<EstateIntelligencePage />} />
+                    <Route path="customer-360" element={<EstateCustomer360Page />} />
+                    <Route path="customer-360/:customerId" element={<EstateCustomer360Page />} />
+                    <Route path="merge-activity" element={<EstateMergeActivityPage />} />
                     <Route path="settings" element={<EstateSettingsPage />} />
                     <Route path="users" element={<EstateUsersPage />} />
                     <Route path="billing" element={<BillingPage />} />

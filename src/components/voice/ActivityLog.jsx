@@ -107,10 +107,7 @@ function ActivityLogEntry({ activity }) {
         </p>
         <p className="mt-0.5 text-xs text-gray-500 flex items-center gap-1">
           <ClockIcon className="w-3 h-3" />
-          {activity.timestamp 
-            ? formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })
-            : 'Unknown time'
-          }
+          {activity.timestamp ? formatTimeAgo(activity.timestamp) : 'Unknown time'}
         </p>
       </div>
     </div>
