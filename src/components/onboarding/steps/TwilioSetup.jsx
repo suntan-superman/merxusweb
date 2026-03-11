@@ -4,6 +4,24 @@ import { searchAvailableNumbers, listUnassignedNumbers, purchasePhoneNumber } fr
 import { toast } from 'react-toastify';
 import { formatPhoneDisplay } from '../../../utils/phoneFormatter';
 
+const RESERVED_TWILIO_PHONE_NUMBER = '+18882506769';
+
+function normalizePhoneNumber(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (!digits) return null;
+  if (String(value || '').trim().startsWith('+') || digits.length >= 11) {
+    return `+${digits}`;
+  }
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+  return `+${digits}`;
+}
+
+function isReservedTwilioPhoneNumber(value) {
+  return normalizePhoneNumber(value) === RESERVED_TWILIO_PHONE_NUMBER;
+}
+
 export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
   const [mode, setMode] = useState('auto'); // 'auto' or 'manual'
   const [areaCode, setAreaCode] = useState('');
@@ -58,7 +76,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
         console.log('🔍 Fetching unassigned numbers from Twilio...');
         const result = await listUnassignedNumbers();
         console.log('📞 Unassigned numbers:', result);
-        setUnassignedNumbers(result.numbers || []);
+        setUnassignedNumbers((result.numbers || []).filter((item) => !isReservedTwilioPhoneNumber(item.phoneNumber)));
       } catch (error) {
         console.error('Failed to fetch unassigned numbers:', error);
         toast.info('Could not load pre-purchased numbers. You can still search by area code below.');
@@ -74,6 +92,15 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     onChange({ [field]: value });
   };
 
+  const handleManualPhoneChange = (value) => {
+    if (isReservedTwilioPhoneNumber(value)) {
+      toast.error('This phone number is reserved for Merxus system messaging and cannot be used.');
+      onChange({ twilioPhoneNumber: '' });
+      return;
+    }
+    onChange({ twilioPhoneNumber: value });
+  };
+
   // Assign or purchase a number after payment
   const assignNumber = async ({ phoneNumber, sid }) => {
     if (!paymentCompleted) {
@@ -86,6 +113,11 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     }
 
     const normalizedTenantType = tenantType === 'office' ? 'voice' : tenantType;
+
+    if (isReservedTwilioPhoneNumber(phoneNumber)) {
+      toast.error('This phone number is reserved for Merxus system messaging and cannot be assigned.');
+      return;
+    }
 
     setPurchasingNumber(phoneNumber);
     try {
@@ -132,7 +164,8 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
   };
 
   const allFieldsFilled = data.twilioPhoneNumber && data.twilioAccountSid && data.twilioAuthToken;
-  const phoneValid = isValidPhoneNumber(data.twilioPhoneNumber);
+  const phoneReserved = isReservedTwilioPhoneNumber(data.twilioPhoneNumber);
+  const phoneValid = isValidPhoneNumber(data.twilioPhoneNumber) && !phoneReserved;
 
   // Handle number search
   const handleSearch = async () => {
@@ -148,11 +181,12 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     setSearchingNumbers(true);
     try {
       const result = await searchAvailableNumbers(areaCode, tenantId);
-      setAvailableNumbers(result.numbers || []);
-      if (result.numbers.length === 0) {
+      const filteredNumbers = (result.numbers || []).filter((item) => !isReservedTwilioPhoneNumber(item.phoneNumber));
+      setAvailableNumbers(filteredNumbers);
+      if (filteredNumbers.length === 0) {
         toast.info(`No available numbers found in area code ${areaCode}. Try a different area code.`);
       } else {
-        toast.success(`🎉 Found ${result.numbers.length} available numbers!`);
+        toast.success(`🎉 Found ${filteredNumbers.length} available numbers!`);
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -465,7 +499,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                 <input
                   type="tel"
                   value={data.twilioPhoneNumber || ''}
-                  onChange={(e) => handleChange('twilioPhoneNumber', e.target.value)}
+                  onChange={(e) => handleManualPhoneChange(e.target.value)}
                   placeholder="+15551234567"
                   className={`w-full px-4 py-2.5 border-2 rounded-lg transition-all outline-none ${
                     data.twilioPhoneNumber && !phoneValid
@@ -474,7 +508,11 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                   }`}
                 />
                 {data.twilioPhoneNumber && !phoneValid && (
-                  <p className="text-xs text-red-600 mt-1">Use E.164 format (e.g., +15551234567)</p>
+                  <p className="text-xs text-red-600 mt-1">
+                    {phoneReserved
+                      ? 'This phone number is reserved for Merxus system messaging and cannot be used.'
+                      : 'Use E.164 format (e.g., +15551234567)'}
+                  </p>
                 )}
               </div>
 
