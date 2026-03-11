@@ -43,19 +43,22 @@ export default function LoginPage() {
   const returnToFromQuery = searchParams.get('returnTo');
   const locationState = location.state;
   const returnToPath = locationState?.returnTo || returnToFromQuery || null;
-  const onboardingType = locationState?.tenantType || searchParams.get('type') || 'restaurant';
+  const onboardingType = locationState?.tenantType || searchParams.get('type') || '';
   const onboardingSource = locationState?.source || searchParams.get('source') || null;
-  const signupParams = new URLSearchParams({
-    type: onboardingType,
-    plan: 'basic',
-  });
+  const signupParams = new URLSearchParams();
+  if (onboardingType) {
+    signupParams.set('type', onboardingType);
+    if (onboardingType === 'voice') {
+      signupParams.set('plan', 'basic');
+    }
+  }
   if (returnToPath) {
     signupParams.set('returnTo', returnToPath);
   }
   if (onboardingSource) {
     signupParams.set('source', onboardingSource);
   }
-  const signupPath = `/onboarding?${signupParams.toString()}`;
+  const signupPath = signupParams.toString() ? `/onboarding?${signupParams.toString()}` : '/onboarding';
   const successMessage = locationState?.message;
   const prefillEmail = locationState?.email || passwordSetupEmail;
   const invitationLink = locationState?.invitationLink;
@@ -113,7 +116,8 @@ export default function LoginPage() {
     if (nextEmail) {
       onboardingParams.set('email', nextEmail);
     }
-    navigate(`/onboarding?${onboardingParams.toString()}`);
+    const nextPath = onboardingParams.toString() ? `/onboarding?${onboardingParams.toString()}` : '/onboarding';
+    navigate(nextPath);
   };
 
   const showAccountNotFoundPrompt = (nextEmail = '', provider = 'email') => {
