@@ -26,6 +26,7 @@ import CustomersPage from './pages/restaurant/CustomersPage';
 import MenuPage from './pages/restaurant/MenuPage';
 import SettingsPage from './pages/restaurant/SettingsPage';
 import RestaurantSmsPage from './pages/restaurant/RestaurantSmsPage';
+import RestaurantCommandCenterPage from './pages/restaurant/RestaurantCommandCenterPage';
 import RestaurantNotificationsPage from './pages/restaurant/RestaurantNotificationsPage';
 import RestaurantIntelligencePage from './pages/restaurant/RestaurantIntelligencePage';
 import RestaurantCustomer360Page from './pages/restaurant/RestaurantCustomer360Page';
@@ -38,6 +39,7 @@ import CallRoutingPage from './pages/voice/CallRoutingPage';
 import VoicemailPage from './pages/voice/VoicemailPage';
 import VoiceSettingsPage from './pages/voice/VoiceSettingsPage';
 import VoiceSmsPage from './pages/voice/VoiceSmsPage';
+import VoiceCommandCenterPage from './pages/voice/VoiceCommandCenterPage';
 import VoiceNotificationsPage from './pages/voice/VoiceNotificationsPage';
 import VoiceIntelligencePage from './pages/voice/VoiceIntelligencePage';
 import VoiceWorkItemsPage from './pages/voice/VoiceWorkItemsPage';
@@ -66,6 +68,7 @@ import EstateShowingsPage from './pages/estate/EstateShowingsPage';
 import EstateCallsPage from './pages/estate/EstateCallsPage';
 import EstateSettingsPage from './pages/estate/EstateSettingsPage';
 import EstateSmsPage from './pages/estate/EstateSmsPage';
+import EstateCommandCenterPage from './pages/estate/EstateCommandCenterPage';
 import EstateNotificationsPage from './pages/estate/EstateNotificationsPage';
 import EstateIntelligencePage from './pages/estate/EstateIntelligencePage';
 import EstateCustomer360Page from './pages/estate/EstateCustomer360Page';
@@ -154,6 +157,7 @@ function App() {
                     <Route path="customers" element={<CustomersPage />} />
                     <Route path="menu" element={<MenuPage />} />
                     <Route path="sms" element={<RestaurantSmsPage />} />
+                    <Route path="command-center" element={<RestaurantCommandCenterPage />} />
                     <Route path="notifications" element={<RestaurantNotificationsPage />} />
                     <Route path="intelligence" element={<RestaurantIntelligencePage />} />
                     <Route path="customer-360" element={<RestaurantCustomer360Page />} />
@@ -179,6 +183,7 @@ function App() {
                     <Route path="routing" element={<CallRoutingPage />} />
                     <Route path="voicemail" element={<VoicemailPage />} />
                     <Route path="sms" element={<VoiceSmsPage />} />
+                    <Route path="command-center" element={<VoiceCommandCenterPage />} />
                     <Route path="notifications" element={<VoiceNotificationsPage />} />
                     <Route path="intelligence" element={<VoiceIntelligencePage />} />
                     <Route path="work-items" element={<VoiceWorkItemsPage />} />
@@ -210,6 +215,7 @@ function App() {
                     <Route path="flyers/approvals" element={<FlyerApprovalsPage />} />
                     <Route path="flyers/metrics" element={<FlyerMetricsPage />} />
                     <Route path="sms" element={<EstateSmsPage />} />
+                    <Route path="command-center" element={<EstateCommandCenterPage />} />
                     <Route path="notifications" element={<EstateNotificationsPage />} />
                     <Route path="intelligence" element={<EstateIntelligencePage />} />
                     <Route path="customer-360" element={<EstateCustomer360Page />} />

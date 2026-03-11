@@ -67,6 +67,7 @@ export default function Sidebar() {
         <NavItem to="/restaurant/customers" label="Customers" icon="👥" />
         <NavItem to="/restaurant/menu" label="Menu" icon="🍽️" />
         <NavItem to="/restaurant/sms" label="SMS Inbox" icon="💬" />
+        <NavItem to="/restaurant/command-center" label="Command Center" icon="🛰️" />
         <NavItem to="/restaurant/notifications" label="Notifications" icon="🔔" />
         <NavItem to="/restaurant/intelligence" label="Intelligence" icon="🧠" />
         <NavItem to="/restaurant/customer-360" label="Customer 360" icon="🪪" />

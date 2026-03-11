@@ -167,3 +167,13 @@ export async function updateSmsNotificationGroups(payload) {
   const res = await apiClient.put('/sms/notification-groups', payload);
   return res.data;
 }
+
+export async function triggerSlackCommandCenterDemo(payload = {}) {
+  const res = await apiClient.post('/demo/command-center', payload);
+  return res.data;
+}
+
+export async function fetchSlackCommandCenterEvents(params = {}) {
+  const res = await apiClient.get('/sms/slack-command-center/events', { params });
+  return res.data;
+}

@@ -65,6 +65,7 @@ export default function EstateSidebar() {
         <NavItem to="/estate/showings" label="Showings" icon="📅" />
         <NavItem to="/estate/calls" label="Calls & Messages" icon="📞" />
         <NavItem to="/estate/sms" label="SMS Inbox" icon="💬" />
+        <NavItem to="/estate/command-center" label="Command Center" icon="🛰️" />
         <NavItem to="/estate/notifications" label="Notifications" icon="🔔" />
         <NavItem to="/estate/intelligence" label="Intelligence" icon="🧠" />
         <NavItem to="/estate/customer-360" label="Customer 360" icon="🪪" />
