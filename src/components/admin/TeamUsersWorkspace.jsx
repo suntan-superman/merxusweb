@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import ConfirmationModal from '../common/ConfirmationModal';
+import InvitationLinkModal from '../common/InvitationLinkModal';
 import {
   disableTeamUser,
+  enableTeamUser,
   fetchTeamUsers,
   inviteTeamUser,
+  resendTeamUserInvite,
+  resendTeamUserPhoneVerification,
   updateTeamUser,
 } from '../../api/teamUsers';
 import { TEAM_NOTIFICATION_GROUPS, getTeamUserCopy } from '../../constants/teamUsers';
@@ -15,9 +19,15 @@ function formatTimestamp(value) {
   return parsed.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
 }
 
+function normalizePhoneInput(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
 function toneForLifecycle(user) {
   if (user.disabled) return 'bg-red-100 text-red-700';
   if (user.notificationEligible) return 'bg-emerald-100 text-emerald-700';
+  if (user.needsInviteAcceptance) return 'bg-blue-100 text-blue-700';
+  if (!user.phone) return 'bg-amber-100 text-amber-700';
   if (user.phoneVerified) return 'bg-amber-100 text-amber-700';
   return 'bg-slate-100 text-slate-700';
 }
@@ -25,8 +35,33 @@ function toneForLifecycle(user) {
 function lifecycleLabel(user) {
   if (user.disabled) return 'Disabled';
   if (user.notificationEligible) return 'Active';
+  if (user.needsInviteAcceptance) return 'Invite not accepted';
+  if (!user.phone) return 'Needs phone number';
   if (user.phoneVerified) return 'Pending activation';
   return 'Needs phone verification';
+}
+
+function lifecycleDetail(user) {
+  if (user.disabled) return 'Portal access and alerts are turned off.';
+  if (user.notificationEligible) return 'Ready for portal access and live alerts.';
+  if (user.needsInviteAcceptance) return 'Waiting for the user to open the invite and finish account setup.';
+  if (!user.phone) return 'Add an SMS number before alerts can be enabled.';
+  if (user.phoneVerified) return 'Finish the remaining setup steps to enable alerts.';
+  return 'Send or resend a verification code to continue activation.';
+}
+
+function formatRoutingGroupLabels(groupKeys, groupOptions) {
+  if (!Array.isArray(groupKeys) || groupKeys.length === 0) return '—';
+  const labelMap = new Map(groupOptions.map((group) => [group.key, group.label]));
+  return groupKeys.map((groupKey) => labelMap.get(groupKey) || groupKey).join(', ');
+}
+
+function buildEditForm(user) {
+  return {
+    displayName: user?.displayName || '',
+    phone: user?.phone || '',
+    notificationGroupKeys: Array.isArray(user?.notificationGroupKeys) ? user.notificationGroupKeys : [],
+  };
 }
 
 export default function TeamUsersWorkspace({ tenantType, footer = null }) {
@@ -35,9 +70,19 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [busyAction, setBusyAction] = useState({ type: '', uid: null });
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [userToDisable, setUserToDisable] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState(buildEditForm(null));
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [inviteLinkState, setInviteLinkState] = useState({
+    isOpen: false,
+    invitationLink: '',
+    email: '',
+  });
   const [form, setForm] = useState({
     displayName: '',
     email: '',
@@ -71,12 +116,30 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
     pending: users.filter((user) => !user.notificationEligible && !user.disabled).length,
   }), [users]);
 
+  function isRowBusy(uid) {
+    return busyAction.uid === uid;
+  }
+
+  function resetBannerState() {
+    setError('');
+    setSuccess('');
+  }
+
+  function showInvitationLink(result, email) {
+    if (!result?.invitationLink) return;
+    setInviteLinkState({
+      isOpen: true,
+      invitationLink: result.invitationLink,
+      email,
+    });
+  }
+
   async function handleInvite(event) {
     event.preventDefault();
     try {
       setSubmitting(true);
-      setError('');
-      await inviteTeamUser(tenantType, form);
+      resetBannerState();
+      const result = await inviteTeamUser(tenantType, form);
       setForm({
         displayName: '',
         email: '',
@@ -84,6 +147,8 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
         role: 'manager',
         notificationGroupKeys: [],
       });
+      setSuccess(`Invitation created for ${form.email}.`);
+      showInvitationLink(result, form.email);
       await load();
     } catch (err) {
       console.error(err);
@@ -95,12 +160,16 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
 
   async function handleRoleChange(uid, role) {
     try {
-      setError('');
+      resetBannerState();
+      setBusyAction({ type: 'role', uid });
       await updateTeamUser(tenantType, uid, { role });
+      setSuccess('Role updated.');
       await load();
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.error || err?.message || 'Failed to update role.');
+    } finally {
+      setBusyAction({ type: '', uid: null });
     }
   }
 
@@ -113,6 +182,110 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
     }));
   }
 
+  function toggleEditNotificationGroup(groupKey) {
+    setEditForm((current) => ({
+      ...current,
+      notificationGroupKeys: current.notificationGroupKeys.includes(groupKey)
+        ? current.notificationGroupKeys.filter((value) => value !== groupKey)
+        : [...current.notificationGroupKeys, groupKey],
+    }));
+  }
+
+  function beginEdit(user) {
+    resetBannerState();
+    setEditingUser(user);
+    setEditForm(buildEditForm(user));
+    setShowEditModal(true);
+  }
+
+  function closeEditModal() {
+    setShowEditModal(false);
+    setEditingUser(null);
+    setEditForm(buildEditForm(null));
+  }
+
+  async function handleSaveEdit() {
+    if (!editingUser) return;
+    const uid = editingUser.uid || editingUser.id;
+    const payload = {
+      displayName: editForm.displayName,
+      notificationGroupKeys: editForm.notificationGroupKeys,
+    };
+    if (editForm.phone.trim()) {
+      payload.phone = editForm.phone.trim();
+    } else if (editingUser.phone) {
+      payload.phone = editingUser.phone;
+    }
+
+    try {
+      resetBannerState();
+      setBusyAction({ type: 'edit', uid });
+      await updateTeamUser(tenantType, uid, payload);
+      const phoneChanged = normalizePhoneInput(editForm.phone) !== normalizePhoneInput(editingUser.phone);
+      setSuccess(
+        phoneChanged
+          ? 'User details updated. Phone verification was reset for the new number.'
+          : 'User details updated.'
+      );
+      closeEditModal();
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError(err?.response?.data?.error || err?.message || 'Failed to update user.');
+    } finally {
+      setBusyAction({ type: '', uid: null });
+    }
+  }
+
+  async function handleResendInvite(user) {
+    const uid = user.uid || user.id;
+    try {
+      resetBannerState();
+      setBusyAction({ type: 'invite', uid });
+      const result = await resendTeamUserInvite(tenantType, uid);
+      setSuccess(result?.emailSent ? `Invitation re-sent to ${user.email}.` : `Invitation link regenerated for ${user.email}.`);
+      showInvitationLink(result, user.email);
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError(err?.response?.data?.error || err?.message || 'Failed to resend invitation.');
+    } finally {
+      setBusyAction({ type: '', uid: null });
+    }
+  }
+
+  async function handleSendCode(user) {
+    const uid = user.uid || user.id;
+    try {
+      resetBannerState();
+      setBusyAction({ type: 'code', uid });
+      const result = await resendTeamUserPhoneVerification(tenantType, uid);
+      setSuccess(`Verification code sent to ${result?.maskedPhone || user.phone || 'the saved phone number'}.`);
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError(err?.response?.data?.error || err?.message || 'Failed to send verification code.');
+    } finally {
+      setBusyAction({ type: '', uid: null });
+    }
+  }
+
+  async function handleEnable(user) {
+    const uid = user.uid || user.id;
+    try {
+      resetBannerState();
+      setBusyAction({ type: 'enable', uid });
+      await enableTeamUser(tenantType, uid);
+      setSuccess(`${user.displayName || user.email} has been re-enabled.`);
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError(err?.response?.data?.error || err?.message || 'Failed to enable user.');
+    } finally {
+      setBusyAction({ type: '', uid: null });
+    }
+  }
+
   function handleDisable(uid) {
     const user = users.find((item) => item.uid === uid || item.id === uid);
     setUserToDisable(user || null);
@@ -121,14 +294,18 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
 
   async function confirmDisable() {
     if (!userToDisable) return;
+    const uid = userToDisable.uid || userToDisable.id;
     try {
-      await disableTeamUser(tenantType, userToDisable.uid || userToDisable.id);
+      resetBannerState();
+      setBusyAction({ type: 'disable', uid });
+      await disableTeamUser(tenantType, uid);
+      setSuccess(`${userToDisable.displayName || userToDisable.email} has been disabled.`);
       await load();
-      setShowDisableModal(false);
-      setUserToDisable(null);
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.error || err?.message || 'Failed to disable user.');
+    } finally {
+      setBusyAction({ type: '', uid: null });
       setShowDisableModal(false);
       setUserToDisable(null);
     }
@@ -154,6 +331,12 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      ) : null}
+
+      {success ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {success}
         </div>
       ) : null}
 
@@ -197,29 +380,12 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
             </div>
           </div>
 
-          <div>
-            <p className="mb-2 text-sm font-medium text-gray-700">Notification Groups</p>
-            <div className="flex flex-wrap gap-2">
-              {groupOptions.map((group) => (
-                <label
-                  key={group.key}
-                  className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm ${
-                    form.notificationGroupKeys.includes(group.key)
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                      : 'border-slate-200 bg-white text-slate-700'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={form.notificationGroupKeys.includes(group.key)}
-                    onChange={() => toggleNotificationGroup(group.key)}
-                  />
-                  <span>{group.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          <NotificationGroupSelector
+            label="Notification Groups"
+            groupOptions={groupOptions}
+            selectedKeys={form.notificationGroupKeys}
+            onToggle={toggleNotificationGroup}
+          />
 
           <button type="submit" disabled={submitting} className="btn-primary">
             {submitting ? 'Sending Invitation…' : 'Send Invitation'}
@@ -250,72 +416,123 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.uid || user.id} className="border-b last:border-b-0 hover:bg-gray-50">
-                    <td className="px-4 py-3 align-top">
-                      <div className="font-medium text-gray-900">{user.displayName || user.email}</div>
-                      <div className="text-xs text-gray-500">{user.email}</div>
-                    </td>
-                    <td className="px-4 py-3 align-top text-xs text-slate-700">
-                      <div>{user.phone || '—'}</div>
-                      {user.phoneVerificationSentAt ? (
-                        <div className="mt-1 text-[11px] text-slate-500">Last code {formatTimestamp(user.phoneVerificationSentAt)}</div>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      {user.role === 'owner' ? (
-                        <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
-                          Owner
-                        </span>
-                      ) : (
-                        <select
-                          className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          value={user.role}
-                          onChange={(event) => handleRoleChange(user.uid || user.id, event.target.value)}
-                        >
-                          <option value="manager">Manager</option>
-                          <option value="staff">Staff</option>
-                        </select>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="flex flex-col gap-1">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${user.emailVerified ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
-                          Email {user.emailVerified ? 'verified' : 'pending'}
-                        </span>
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${user.phoneVerified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                          Phone {user.phoneVerified ? 'verified' : 'pending'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-top text-xs text-slate-700">
-                      {user.notificationGroupKeys?.length ? user.notificationGroupKeys.join(', ') : '—'}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="flex flex-col gap-2">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${toneForLifecycle(user)}`}>
-                          {lifecycleLabel(user)}
-                        </span>
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${user.notificationEligible ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                          {user.notificationEligible ? 'Alerts enabled' : 'Alerts blocked'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-top text-xs text-gray-700">
-                      {formatTimestamp(user.invitedAt)}
-                    </td>
-                    <td className="px-4 py-3 align-top text-right">
-                      {!user.disabled ? (
-                        <button
-                          onClick={() => handleDisable(user.uid || user.id)}
-                          className="text-xs text-red-600 hover:text-red-700 hover:underline"
-                        >
-                          Disable
-                        </button>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
+                {users.map((user) => {
+                  const uid = user.uid || user.id;
+                  return (
+                    <tr key={uid} className="border-b last:border-b-0 hover:bg-gray-50">
+                      <td className="px-4 py-3 align-top">
+                        <div className="font-medium text-gray-900">{user.displayName || user.email}</div>
+                        <div className="text-xs text-gray-500">{user.email}</div>
+                      </td>
+                      <td className="px-4 py-3 align-top text-xs text-slate-700">
+                        <div>{user.phone || '—'}</div>
+                        {user.phoneVerificationSentAt ? (
+                          <div className="mt-1 text-[11px] text-slate-500">Last code {formatTimestamp(user.phoneVerificationSentAt)}</div>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {user.role === 'owner' ? (
+                          <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
+                            Owner
+                          </span>
+                        ) : (
+                          <select
+                            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
+                            value={user.role}
+                            disabled={isRowBusy(uid)}
+                            onChange={(event) => handleRoleChange(uid, event.target.value)}
+                          >
+                            <option value="manager">Manager</option>
+                            <option value="staff">Staff</option>
+                          </select>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <div className="flex flex-col gap-1">
+                          <StatusPill tone={user.needsInviteAcceptance ? 'blue' : 'emerald'}>
+                            {user.needsInviteAcceptance ? 'Invite pending' : 'Portal access ready'}
+                          </StatusPill>
+                          <StatusPill tone={user.phoneVerified ? 'emerald' : (user.phone ? 'amber' : 'slate')}>
+                            {user.phoneVerified ? 'Phone verified' : (user.phone ? 'Phone pending' : 'Phone missing')}
+                          </StatusPill>
+                          {user.inviteSentAt ? (
+                            <div className="mt-1 text-[11px] text-slate-500">Last invite {formatTimestamp(user.inviteSentAt)}</div>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-top text-xs text-slate-700">
+                        {formatRoutingGroupLabels(user.notificationGroupKeys, groupOptions)}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <div className="flex flex-col gap-2">
+                          <StatusPill className={toneForLifecycle(user)}>
+                            {lifecycleLabel(user)}
+                          </StatusPill>
+                          <StatusPill tone={user.notificationEligible ? 'emerald' : 'slate'}>
+                            {user.notificationEligible ? 'Alerts enabled' : 'Alerts blocked'}
+                          </StatusPill>
+                          <div className="text-[11px] leading-5 text-slate-500">{lifecycleDetail(user)}</div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-top text-xs text-gray-700">
+                        {formatTimestamp(user.invitedAt)}
+                      </td>
+                      <td className="px-4 py-3 align-top text-right">
+                        <div className="flex min-w-[11rem] flex-col items-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => beginEdit(user)}
+                            disabled={isRowBusy(uid)}
+                            className="text-xs text-slate-700 hover:text-slate-900 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Edit details
+                          </button>
+                          {!user.disabled && user.needsInviteAcceptance ? (
+                            <button
+                              type="button"
+                              onClick={() => handleResendInvite(user)}
+                              disabled={isRowBusy(uid)}
+                              className="text-xs text-blue-600 hover:text-blue-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {busyAction.type === 'invite' && busyAction.uid === uid ? 'Sending…' : 'Resend invite'}
+                            </button>
+                          ) : null}
+                          {!user.disabled && !user.needsInviteAcceptance && !user.phoneVerified && user.phone ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSendCode(user)}
+                              disabled={isRowBusy(uid)}
+                              className="text-xs text-blue-600 hover:text-blue-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {busyAction.type === 'code' && busyAction.uid === uid
+                                ? 'Sending…'
+                                : (user.phoneVerificationSentAt ? 'Resend code' : 'Send code')}
+                            </button>
+                          ) : null}
+                          {user.disabled ? (
+                            <button
+                              type="button"
+                              onClick={() => handleEnable(user)}
+                              disabled={isRowBusy(uid)}
+                              className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {busyAction.type === 'enable' && busyAction.uid === uid ? 'Enabling…' : 'Enable'}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleDisable(uid)}
+                              disabled={isRowBusy(uid)}
+                              className="text-xs text-red-600 hover:text-red-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Disable
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -323,6 +540,26 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       </section>
 
       {footer}
+
+      <EditTeamUserModal
+        isOpen={showEditModal}
+        user={editingUser}
+        form={editForm}
+        onChange={setEditForm}
+        onClose={closeEditModal}
+        onSubmit={handleSaveEdit}
+        groupOptions={groupOptions}
+        onToggleGroup={toggleEditNotificationGroup}
+        isLoading={busyAction.type === 'edit' && busyAction.uid === (editingUser?.uid || editingUser?.id)}
+      />
+
+      <InvitationLinkModal
+        isOpen={inviteLinkState.isOpen}
+        onClose={() => setInviteLinkState({ isOpen: false, invitationLink: '', email: '' })}
+        invitationLink={inviteLinkState.invitationLink}
+        email={inviteLinkState.email}
+        tenantType={tenantType}
+      />
 
       <ConfirmationModal
         isOpen={showDisableModal}
@@ -336,6 +573,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
         confirmText="Disable"
         cancelText="Cancel"
         variant="warning"
+        isLoading={busyAction.type === 'disable' && busyAction.uid === (userToDisable?.uid || userToDisable?.id)}
       />
     </div>
   );
@@ -360,6 +598,127 @@ function InputField({ label, value, onChange, ...props }) {
         onChange={(event) => onChange(event.target.value)}
         className="input-field"
       />
+    </div>
+  );
+}
+
+function NotificationGroupSelector({ label, groupOptions, selectedKeys, onToggle }) {
+  return (
+    <div>
+      <p className="mb-2 text-sm font-medium text-gray-700">{label}</p>
+      <div className="flex flex-wrap gap-2">
+        {groupOptions.map((group) => (
+          <label
+            key={group.key}
+            className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-sm ${
+              selectedKeys.includes(group.key)
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                : 'border-slate-200 bg-white text-slate-700'
+            }`}
+          >
+            <input
+              type="checkbox"
+              className="sr-only"
+              checked={selectedKeys.includes(group.key)}
+              onChange={() => onToggle(group.key)}
+            />
+            <span>{group.label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatusPill({ tone = 'slate', className = '', children }) {
+  const toneMap = {
+    slate: 'bg-slate-100 text-slate-600',
+    blue: 'bg-blue-100 text-blue-700',
+    amber: 'bg-amber-100 text-amber-700',
+    emerald: 'bg-emerald-100 text-emerald-700',
+  };
+  const classes = className || toneMap[tone] || toneMap.slate;
+  return (
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${classes}`}>
+      {children}
+    </span>
+  );
+}
+
+function EditTeamUserModal({
+  isOpen,
+  user,
+  form,
+  onChange,
+  onClose,
+  onSubmit,
+  groupOptions,
+  onToggleGroup,
+  isLoading = false,
+}) {
+  if (!isOpen || !user) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={isLoading ? undefined : onClose}
+      />
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
+          <div className="rounded-t-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+            <h3 className="text-lg font-semibold text-white">Edit Team Member</h3>
+            <p className="mt-1 text-sm text-blue-100">{user.email}</p>
+          </div>
+
+          <div className="space-y-5 px-6 py-5">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <InputField
+                label="Name"
+                value={form.displayName}
+                onChange={(value) => onChange((current) => ({ ...current, displayName: value }))}
+                placeholder="Jane Doe"
+              />
+              <InputField
+                label="Phone (SMS alerts)"
+                value={form.phone}
+                onChange={(value) => onChange((current) => ({ ...current, phone: value }))}
+                placeholder="+16615551234"
+              />
+            </div>
+
+            <p className="text-xs text-slate-500">
+              Updating the phone number resets verification for that user until a new code is sent and confirmed.
+            </p>
+
+            <NotificationGroupSelector
+              label="Notification Groups"
+              groupOptions={groupOptions}
+              selectedKeys={form.notificationGroupKeys}
+              onToggle={onToggleGroup}
+            />
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={onSubmit}
+              disabled={isLoading}
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              {isLoading ? 'Saving…' : 'Save changes'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

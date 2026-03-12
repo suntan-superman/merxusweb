@@ -22,6 +22,27 @@ export async function updateTeamUser(tenantType, uid, payload) {
   return res.data;
 }
 
+export async function resendTeamUserInvite(tenantType, uid) {
+  const res = await apiClient.patch(`${getTenantBasePath(tenantType)}/users/${uid}`, {
+    action: 'resend_invite',
+  });
+  return res.data;
+}
+
+export async function resendTeamUserPhoneVerification(tenantType, uid) {
+  const res = await apiClient.patch(`${getTenantBasePath(tenantType)}/users/${uid}`, {
+    action: 'resend_phone_verification',
+  });
+  return res.data;
+}
+
+export async function enableTeamUser(tenantType, uid) {
+  const res = await apiClient.patch(`${getTenantBasePath(tenantType)}/users/${uid}`, {
+    action: 'enable',
+  });
+  return res.data;
+}
+
 export async function disableTeamUser(tenantType, uid) {
   const res = await apiClient.delete(`${getTenantBasePath(tenantType)}/users/${uid}`);
   return res.data;
