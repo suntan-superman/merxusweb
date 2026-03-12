@@ -144,6 +144,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       setSubmitting(true);
       resetBannerState();
       const result = await inviteTeamUser(tenantType, form);
+      const invitedEmail = form.email;
       setForm({
         displayName: '',
         email: '',
@@ -151,8 +152,12 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
         role: 'manager',
         notificationGroupKeys: [],
       });
-      setSuccess(`Invitation created for ${form.email}.`);
-      showInvitationLink(result, form.email);
+      setSuccess(
+        result?.emailSent === false
+          ? `Invite created for ${invitedEmail}, but the email was not delivered. Use the setup link below.`
+          : `Invitation sent to ${invitedEmail}.`
+      );
+      showInvitationLink(result, invitedEmail);
       await load();
     } catch (err) {
       console.error(err);
@@ -247,7 +252,11 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       resetBannerState();
       setBusyAction({ type: 'invite', uid });
       const result = await resendTeamUserInvite(tenantType, uid);
-      setSuccess(result?.emailSent ? `Invitation re-sent to ${user.email}.` : `Invitation link regenerated for ${user.email}.`);
+      setSuccess(
+        result?.emailSent
+          ? `Invitation re-sent to ${user.email}.`
+          : `Invite email could not be delivered to ${user.email}. Use the regenerated setup link instead.`
+      );
       showInvitationLink(result, user.email);
       await load();
     } catch (err) {

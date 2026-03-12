@@ -68,6 +68,15 @@ export async function verifyPhoneVerificationCode(code) {
   return res.data;
 }
 
+export async function verifyPhoneVerificationLink(uid, token) {
+  const res = await apiClient.post('/account/phone-verification/verify-link', { uid, token }, {
+    headers: {
+      'X-Suppress-Error-Log': 'true',
+    },
+  });
+  return res.data;
+}
+
 export async function resolveInviteAcceptance(inviteToken) {
   const res = await apiClient.post('/account/invite/resolve', { inviteToken }, {
     headers: {

@@ -16,6 +16,7 @@ import OnboardingWizardPage from './pages/OnboardingWizardPage';
 import OnboardingOTPPage from './pages/OnboardingOTPPage';
 import LoginPage from './pages/LoginPage';
 import PhoneVerificationPage from './pages/PhoneVerificationPage';
+import PhoneVerificationLinkPage from './pages/PhoneVerificationLinkPage';
 import InviteAcceptPage from './pages/InviteAcceptPage';
 import DashboardPage from './pages/restaurant/DashboardPage';
 import RestaurantDashboard from './components/restaurant/RestaurantDashboard';
@@ -110,6 +111,7 @@ function App() {
           {/* Public routes - no NavBar */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/invite/accept" element={<InviteAcceptPage />} />
+          <Route path="/verify-phone-link" element={<PhoneVerificationLinkPage />} />
           <Route
             path="/verify-phone"
             element={

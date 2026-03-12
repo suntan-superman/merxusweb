@@ -59,7 +59,7 @@ export default function PhoneVerificationPage() {
       setError('');
       setSuccess('');
       const response = await sendPhoneVerificationCode();
-      setSuccess(`Verification code sent to ${response.maskedPhone || status?.maskedPhone || 'your phone'}.`);
+      setSuccess(`Verification text sent to ${response.maskedPhone || status?.maskedPhone || 'your phone'}. You can tap the link in the message or enter the code below.`);
       await loadStatus();
     } catch (err) {
       console.error(err);
@@ -107,7 +107,7 @@ export default function PhoneVerificationPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-600">Team Invite Verification</p>
         <h1 className="mt-3 text-3xl font-semibold text-slate-900">Verify your mobile phone</h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Your account is almost ready. Enter the code sent to <span className="font-semibold text-slate-900">{status?.maskedPhone || 'your phone'}</span> to activate alerts and complete your team invitation.
+          Your account is almost ready. Use the link or code sent to <span className="font-semibold text-slate-900">{status?.maskedPhone || 'your phone'}</span> to activate alerts and complete your team invitation.
         </p>
 
         {error ? (

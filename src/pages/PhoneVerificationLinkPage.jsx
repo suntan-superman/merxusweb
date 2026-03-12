@@ -1,0 +1,124 @@
+import { useEffect, useState } from 'react';
+import { getIdToken } from 'firebase/auth';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { auth } from '../firebase/config';
+import { verifyPhoneVerificationLink } from '../api/teamUsers';
+import { useAuth } from '../context/AuthContext';
+import { getPortalBasePath } from '../utils/objectRouting';
+
+export default function PhoneVerificationLinkPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user, userClaims } = useAuth();
+  const [status, setStatus] = useState('verifying');
+  const [message, setMessage] = useState('');
+
+  const uid = searchParams.get('uid') || '';
+  const token = searchParams.get('token') || '';
+
+  useEffect(() => {
+    let active = true;
+
+    async function verify() {
+      if (!uid || !token) {
+        setStatus('error');
+        setMessage('This verification link is incomplete.');
+        return;
+      }
+
+      try {
+        setStatus('verifying');
+        const result = await verifyPhoneVerificationLink(uid, token);
+        if (auth.currentUser) {
+          try {
+            await getIdToken(auth.currentUser, true);
+          } catch (_) {}
+        }
+        if (!active) return;
+        setStatus('success');
+        setMessage(result?.phone ? `Phone ${result.phone} verified successfully.` : 'Phone verified successfully.');
+      } catch (error) {
+        if (!active) return;
+        setStatus('error');
+        setMessage(error?.response?.data?.error || error?.message || 'This verification link could not be completed.');
+      }
+    }
+
+    verify();
+    return () => {
+      active = false;
+    };
+  }, [token, uid]);
+
+  const portalTarget = getPortalBasePath(userClaims?.type || userClaims?.tenantType) || '/';
+  const canOpenPortal = Boolean(user?.uid && user.uid === uid && userClaims);
+
+  return (
+    <div className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-600">Phone Verification</p>
+        <h1 className="mt-3 text-3xl font-semibold text-slate-900">Confirm your mobile phone</h1>
+
+        {status === 'verifying' ? (
+          <div className="mt-8 text-center">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-emerald-600" />
+            <p className="mt-4 text-sm text-slate-500">Verifying your phone number…</p>
+          </div>
+        ) : null}
+
+        {status === 'success' ? (
+          <>
+            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+              {message}
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              Your alert phone is now confirmed. If you already have your portal account open, refresh the page. Otherwise sign in to continue.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {canOpenPortal ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(portalTarget, { replace: true })}
+                  className="btn-primary"
+                >
+                  Open portal
+                </button>
+              ) : null}
+              <Link
+                to="/login"
+                className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+              >
+                Sign in
+              </Link>
+            </div>
+          </>
+        ) : null}
+
+        {status === 'error' ? (
+          <>
+            <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+              {message}
+            </div>
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              Sign in to Merxus and request a new verification text if you still need to activate this phone.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                to="/login"
+                className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/verify-phone"
+                className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+              >
+                Enter code manually
+              </Link>
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
