@@ -464,15 +464,6 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
                           {currentUser.inviteSentAt ? (
                             <div className="mt-1 text-[11px] text-slate-500">Last invite {formatTimestamp(currentUser.inviteSentAt)}</div>
                           ) : null}
-                          {isCurrentUser && !currentUser.disabled && !currentUser.needsInviteAcceptance && !currentUser.phoneVerified && currentUser.phone ? (
-                            <button
-                              type="button"
-                              onClick={() => navigate('/verify-phone')}
-                              className="w-fit text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
-                            >
-                              Enter code
-                            </button>
-                          ) : null}
                         </div>
                       </td>
                       <td className="px-4 py-3 align-top text-xs text-slate-700">
