@@ -6,10 +6,11 @@ import {
   markFirstLoginChecklistCompleted,
 } from '../../utils/firstLoginChecklist';
 
-function getSettingsPath(tenantType) {
-  if (tenantType === 'restaurant') return '/restaurant/settings';
-  if (tenantType === 'real_estate') return '/estate/settings';
-  return '/voice/settings';
+function getSettingsPath(tenantType, tab) {
+  const suffix = tab ? `?tab=${tab}` : '';
+  if (tenantType === 'restaurant') return `/restaurant/settings${suffix}`;
+  if (tenantType === 'real_estate') return `/estate/settings${suffix}`;
+  return `/voice/settings${suffix}`;
 }
 
 function getTenantSpecificItem(tenantType) {
@@ -44,6 +45,7 @@ function getTenantSpecificItem(tenantType) {
 
 export default function FirstPortalChecklist({ tenantType, tenantId, userId, className = '' }) {
   const [visible, setVisible] = useState(false);
+  const [confirmDismiss, setConfirmDismiss] = useState(false);
   const normalizedTenantType =
     tenantType === 'office' || tenantType === 'general'
       ? 'voice'
@@ -51,11 +53,12 @@ export default function FirstPortalChecklist({ tenantType, tenantId, userId, cla
       ? 'real_estate'
       : tenantType;
 
-  const settingsPath = useMemo(() => getSettingsPath(normalizedTenantType), [normalizedTenantType]);
+  const settingsPath = useMemo(
+    () => (tab) => getSettingsPath(normalizedTenantType, tab),
+    [normalizedTenantType]
+  );
   const iosAppStoreUrl =
-    import.meta.env.VITE_IOS_APP_STORE_URL || 'https://apps.apple.com/us/search?term=Merxus';
-  const androidAppStoreUrl =
-    import.meta.env.VITE_ANDROID_APP_STORE_URL || 'https://play.google.com/store/search?q=Merxus&c=apps';
+    import.meta.env.VITE_IOS_APP_STORE_URL || 'https://apps.apple.com/us/iphone/search?term=merxus';
 
   const items = useMemo(() => {
     const baseItems = [
@@ -63,28 +66,36 @@ export default function FirstPortalChecklist({ tenantType, tenantId, userId, cla
         icon: '🕒',
         title: 'Set business hours',
         description: 'Update open/closed hours and timezone so the assistant handles calls correctly.',
-        to: settingsPath,
+        to: settingsPath('hours'),
         actionLabel: 'Open Settings',
       },
       {
         icon: '📬',
         title: 'Choose who gets alerts',
         description: 'Add additional email addresses for notifications and missed-call follow-up.',
-        to: settingsPath,
+        to:
+          normalizedTenantType === 'restaurant'
+            ? settingsPath('notifications')
+            : settingsPath('sms'),
         actionLabel: 'Manage Alerts',
       },
       {
         icon: '🧩',
         title: 'Expand products and services',
         description: 'List what you offer so callers get accurate answers from the assistant.',
-        to: settingsPath,
+        to:
+          normalizedTenantType === 'restaurant'
+            ? '/restaurant/menu'
+            : normalizedTenantType === 'real_estate'
+            ? '/estate/listings'
+            : settingsPath('services'),
         actionLabel: 'Edit Details',
       },
       {
         icon: '🎙️',
         title: 'Customize AI voice and profile',
         description: 'Add specialties, years of experience, testimonials, and other business details.',
-        to: settingsPath,
+        to: settingsPath('ai'),
         actionLabel: 'Customize AI',
       },
       getTenantSpecificItem(normalizedTenantType),
@@ -121,14 +132,16 @@ export default function FirstPortalChecklist({ tenantType, tenantId, userId, cla
       userId,
     });
     setVisible(!completed);
+    setConfirmDismiss(false);
   }, [normalizedTenantType, tenantId, userId]);
 
-  const handleDismiss = () => {
+  const handleConfirmDismiss = () => {
     markFirstLoginChecklistCompleted({
       tenantType: normalizedTenantType,
       tenantId,
       userId,
     });
+    setConfirmDismiss(false);
     setVisible(false);
   };
 
@@ -145,12 +158,41 @@ export default function FirstPortalChecklist({ tenantType, tenantId, userId, cla
         </div>
         <button
           type="button"
-          onClick={handleDismiss}
+          onClick={() => setConfirmDismiss((value) => !value)}
           className="px-3 py-1.5 text-xs font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
         >
-          Dismiss
+          {confirmDismiss ? 'Cancel' : 'Dismiss'}
         </button>
       </div>
+
+      {confirmDismiss ? (
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-white px-4 py-4 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-emerald-900">Setup complete?</p>
+              <p className="text-sm text-emerald-800 mt-1">
+                If everything looks good, we’ll hide this launch checklist from your dashboard.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDismiss(false)}
+                className="rounded-md border border-emerald-200 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+              >
+                Keep Checklist
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDismiss}
+                className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Yes, Hide It
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-4 space-y-3">
         {items.map((item) => (
@@ -184,15 +226,6 @@ export default function FirstPortalChecklist({ tenantType, tenantId, userId, cla
           className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
         >
           iOS App Store
-        </a>
-        <span className="text-gray-400">|</span>
-        <a
-          href={androidAppStoreUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
-        >
-          Google Play
         </a>
       </div>
     </section>

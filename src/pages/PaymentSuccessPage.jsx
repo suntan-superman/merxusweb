@@ -24,7 +24,7 @@ export default function PaymentSuccessPage() {
   const { user, loading } = useAuth();
   const mobileDevice = isMobileDevice();
   const iosAppStoreUrl =
-    import.meta.env.VITE_IOS_APP_STORE_URL || "https://apps.apple.com/us/search?term=Merxus";
+    import.meta.env.VITE_IOS_APP_STORE_URL || "https://apps.apple.com/us/iphone/search?term=merxus";
   const sessionId = params.get("session_id");
   const tenantTypeFromParams = params.get("type") || "voice";
   const tenantIdFromParams = params.get("tenantId") || "";
