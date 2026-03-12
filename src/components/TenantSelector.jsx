@@ -71,7 +71,7 @@ function buildOnboardingLink(type, queryParams = {}) {
 export default function TenantSelector({ queryParams = {} }) {
   const defaultType = queryParams?.type && TENANT_OPTIONS.some((option) => option.type === queryParams.type)
     ? queryParams.type
-    : 'restaurant';
+    : TENANT_OPTIONS[0].type;
   const [selectedType, setSelectedType] = useState(defaultType);
 
   const selectedOption = useMemo(
