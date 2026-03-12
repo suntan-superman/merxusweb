@@ -223,6 +223,8 @@ const NOTIFICATION_TEMPLATE_FIELDS = [
   { key: 'staff.listing_inquiry', label: 'Staff listing alert' },
 ];
 
+const CHECKBOX_CLASS = 'checkbox-green h-4 w-4 rounded border-gray-300 focus:ring-primary-500';
+
 const COMMAND_CENTER_EVENT_OPTIONS = [
   { key: 'incoming_call_detected', label: 'Incoming call detected' },
   { key: 'intent_classified', label: 'Intent classified' },
@@ -505,8 +507,17 @@ export default function SmsSettings({ settings, tenantType }) {
       setSendingTest(true);
       setError('');
       setSuccess('');
-      await sendSmsTest({ to: testNumber.trim() });
-      setSuccess('Test SMS sent.');
+      const result = await sendSmsTest({ to: testNumber.trim() });
+      if (result?.status === 'skipped_self_number') {
+        setError('Test SMS was blocked because the destination matches the tenant SMS number.');
+        return;
+      }
+      const statusLabel =
+        result?.status === 'queued' ? 'queued' :
+        result?.status === 'accepted' ? 'accepted by Twilio' :
+        result?.status === 'sent' ? 'sent' :
+        'submitted';
+      setSuccess(`Test SMS ${statusLabel}.`);
       window.setTimeout(() => setSuccess(''), 3000);
     } catch (sendError) {
       setError(sendError?.response?.data?.error || 'Failed to send test SMS.');
@@ -625,63 +636,63 @@ export default function SmsSettings({ settings, tenantType }) {
       <form onSubmit={handleSave} className="mt-6 space-y-6">
         <div className="grid gap-3 md:grid-cols-2">
           <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-            <input type="checkbox" checked={form.enabled} onChange={(event) => updateField('enabled', event.target.checked)} className="mt-1 h-4 w-4" />
+            <input type="checkbox" checked={form.enabled} onChange={(event) => updateField('enabled', event.target.checked)} className={CHECKBOX_CLASS} />
             <div>
               <p className="text-sm font-medium text-gray-900">Enable SMS</p>
               <p className="text-xs text-gray-500">Turns on texting for this tenant number.</p>
             </div>
           </label>
           <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-            <input type="checkbox" checked={form.aiEnabled} onChange={(event) => updateField('aiEnabled', event.target.checked)} className="mt-1 h-4 w-4" />
+            <input type="checkbox" checked={form.aiEnabled} onChange={(event) => updateField('aiEnabled', event.target.checked)} className={CHECKBOX_CLASS} />
             <div>
               <p className="text-sm font-medium text-gray-900">Enable AI SMS replies</p>
               <p className="text-xs text-gray-500">Allows automatic responses to inbound texts.</p>
             </div>
           </label>
           <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-            <input type="checkbox" checked={form.callerConfirmationEnabled} onChange={(event) => updateField('callerConfirmationEnabled', event.target.checked)} className="mt-1 h-4 w-4" />
+            <input type="checkbox" checked={form.callerConfirmationEnabled} onChange={(event) => updateField('callerConfirmationEnabled', event.target.checked)} className={CHECKBOX_CLASS} />
             <div>
               <p className="text-sm font-medium text-gray-900">Enable caller confirmations</p>
               <p className="text-xs text-gray-500">Send concise confirmations to callers when the outcome is actionable.</p>
             </div>
           </label>
           <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-            <input type="checkbox" checked={form.staffAlertsEnabled} onChange={(event) => updateField('staffAlertsEnabled', event.target.checked)} className="mt-1 h-4 w-4" />
+            <input type="checkbox" checked={form.staffAlertsEnabled} onChange={(event) => updateField('staffAlertsEnabled', event.target.checked)} className={CHECKBOX_CLASS} />
             <div>
               <p className="text-sm font-medium text-gray-900">Enable staff alerts</p>
               <p className="text-xs text-gray-500">Notify tenant-configured contact groups for meaningful events.</p>
             </div>
           </label>
           <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-            <input type="checkbox" checked={form.postCallFollowupEnabled} onChange={(event) => updateField('postCallFollowupEnabled', event.target.checked)} className="mt-1 h-4 w-4" />
+            <input type="checkbox" checked={form.postCallFollowupEnabled} onChange={(event) => updateField('postCallFollowupEnabled', event.target.checked)} className={CHECKBOX_CLASS} />
             <div>
               <p className="text-sm font-medium text-gray-900">Enable legacy post-call follow-up</p>
               <p className="text-xs text-gray-500">Keeps the conservative caller follow-up workflow active after eligible calls.</p>
             </div>
           </label>
           <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-            <input type="checkbox" checked={form.requireMeaningfulInteraction} onChange={(event) => updateField('requireMeaningfulInteraction', event.target.checked)} className="mt-1 h-4 w-4" />
+            <input type="checkbox" checked={form.requireMeaningfulInteraction} onChange={(event) => updateField('requireMeaningfulInteraction', event.target.checked)} className={CHECKBOX_CLASS} />
             <div>
               <p className="text-sm font-medium text-gray-900">Require meaningful interaction</p>
               <p className="text-xs text-gray-500">Suppress alerts for weak or inconclusive calls.</p>
             </div>
           </label>
           <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-            <input type="checkbox" checked={form.requireCapturedContact} onChange={(event) => updateField('requireCapturedContact', event.target.checked)} className="mt-1 h-4 w-4" />
+            <input type="checkbox" checked={form.requireCapturedContact} onChange={(event) => updateField('requireCapturedContact', event.target.checked)} className={CHECKBOX_CLASS} />
             <div>
               <p className="text-sm font-medium text-gray-900">Require captured callback details</p>
               <p className="text-xs text-gray-500">Only send caller confirmations when Merxus captured usable callback data.</p>
             </div>
           </label>
           <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-            <input type="checkbox" checked={form.suppressSpam} onChange={(event) => updateField('suppressSpam', event.target.checked)} className="mt-1 h-4 w-4" />
+            <input type="checkbox" checked={form.suppressSpam} onChange={(event) => updateField('suppressSpam', event.target.checked)} className={CHECKBOX_CLASS} />
             <div>
               <p className="text-sm font-medium text-gray-900">Suppress spam / dead air</p>
               <p className="text-xs text-gray-500">Blocks caller and staff notifications for spam-like calls.</p>
             </div>
           </label>
           <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-            <input type="checkbox" checked={form.suppressGeneralQuestion} onChange={(event) => updateField('suppressGeneralQuestion', event.target.checked)} className="mt-1 h-4 w-4" />
+            <input type="checkbox" checked={form.suppressGeneralQuestion} onChange={(event) => updateField('suppressGeneralQuestion', event.target.checked)} className={CHECKBOX_CLASS} />
             <div>
               <p className="text-sm font-medium text-gray-900">Suppress general questions</p>
               <p className="text-xs text-gray-500">Prevents routine informational calls from spamming staff.</p>
@@ -712,7 +723,7 @@ export default function SmsSettings({ settings, tenantType }) {
               <div className="flex gap-3">
                 {['sms'].map((channel) => (
                   <label key={channel} className="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" checked={form.callerChannels.includes(channel)} onChange={() => toggleChannel('callerChannels', channel)} className="h-4 w-4" />
+                    <input type="checkbox" checked={form.callerChannels.includes(channel)} onChange={() => toggleChannel('callerChannels', channel)} className={CHECKBOX_CLASS} />
                     {channel.toUpperCase()}
                   </label>
                 ))}
@@ -723,7 +734,7 @@ export default function SmsSettings({ settings, tenantType }) {
               <div className="flex flex-wrap gap-3">
                 {['sms', 'email', 'push', 'slack', 'teams', 'webhook'].map((channel) => (
                   <label key={channel} className="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" checked={form.staffChannels.includes(channel)} onChange={() => toggleChannel('staffChannels', channel)} className="h-4 w-4" />
+                    <input type="checkbox" checked={form.staffChannels.includes(channel)} onChange={() => toggleChannel('staffChannels', channel)} className={CHECKBOX_CLASS} />
                     {channel.toUpperCase()}
                   </label>
                 ))}
@@ -739,7 +750,7 @@ export default function SmsSettings({ settings, tenantType }) {
               <p className="text-xs text-gray-500">Send a compact activity summary to designated staff once per day.</p>
             </div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <input type="checkbox" checked={form.dailyDigestEnabled} onChange={(event) => updateField('dailyDigestEnabled', event.target.checked)} className="h-4 w-4" />
+              <input type="checkbox" checked={form.dailyDigestEnabled} onChange={(event) => updateField('dailyDigestEnabled', event.target.checked)} className={CHECKBOX_CLASS} />
               Enabled
             </label>
           </div>
@@ -753,7 +764,7 @@ export default function SmsSettings({ settings, tenantType }) {
               <div className="flex flex-wrap gap-3">
                 {['sms', 'email', 'push', 'slack', 'teams', 'webhook'].map((channel) => (
                   <label key={channel} className="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" checked={form.dailyDigestChannels.includes(channel)} onChange={() => toggleChannel('dailyDigestChannels', channel)} className="h-4 w-4" disabled={!form.dailyDigestEnabled} />
+                    <input type="checkbox" checked={form.dailyDigestChannels.includes(channel)} onChange={() => toggleChannel('dailyDigestChannels', channel)} className={CHECKBOX_CLASS} disabled={!form.dailyDigestEnabled} />
                     {channel.toUpperCase()}
                   </label>
                 ))}
@@ -774,7 +785,7 @@ export default function SmsSettings({ settings, tenantType }) {
                       type="checkbox"
                       checked={(form.dailyDigestRecipientGroupKeys || []).includes(definition.key)}
                       onChange={() => toggleDigestGroup(definition.key)}
-                      className="h-4 w-4"
+                      className={CHECKBOX_CLASS}
                       disabled={!form.dailyDigestEnabled}
                     />
                     {definition.label}
@@ -795,7 +806,7 @@ export default function SmsSettings({ settings, tenantType }) {
               <p className="text-xs text-gray-500">Used by retry sweeps for failed email, SMS, and push notification events.</p>
             </div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <input type="checkbox" checked={form.notificationRetryEnabled} onChange={(event) => updateField('notificationRetryEnabled', event.target.checked)} className="h-4 w-4" />
+              <input type="checkbox" checked={form.notificationRetryEnabled} onChange={(event) => updateField('notificationRetryEnabled', event.target.checked)} className={CHECKBOX_CLASS} />
               Enabled
             </label>
           </div>
@@ -833,7 +844,7 @@ export default function SmsSettings({ settings, tenantType }) {
               <p className="text-xs text-gray-500">Escalate active automation failures that remain unowned so they do not disappear into run history.</p>
             </div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <input type="checkbox" checked={form.alertEscalationEnabled} onChange={(event) => updateField('alertEscalationEnabled', event.target.checked)} className="h-4 w-4" />
+              <input type="checkbox" checked={form.alertEscalationEnabled} onChange={(event) => updateField('alertEscalationEnabled', event.target.checked)} className={CHECKBOX_CLASS} />
               Enabled
             </label>
           </div>
@@ -869,7 +880,7 @@ export default function SmsSettings({ settings, tenantType }) {
               <div className="flex flex-wrap gap-3">
                 {['email', 'sms', 'slack', 'teams', 'webhook'].map((channel) => (
                   <label key={channel} className="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" checked={form.alertEscalationChannels.includes(channel)} onChange={() => toggleChannel('alertEscalationChannels', channel)} className="h-4 w-4" disabled={!form.alertEscalationEnabled} />
+                    <input type="checkbox" checked={form.alertEscalationChannels.includes(channel)} onChange={() => toggleChannel('alertEscalationChannels', channel)} className={CHECKBOX_CLASS} disabled={!form.alertEscalationEnabled} />
                     {channel.toUpperCase()}
                   </label>
                 ))}
@@ -887,7 +898,7 @@ export default function SmsSettings({ settings, tenantType }) {
                         type="checkbox"
                         checked={(form.alertEscalationRecipientGroupKeys || []).includes(definition.key)}
                         onChange={() => toggleAlertEscalationGroup(definition.key)}
-                        className="h-4 w-4"
+                        className={CHECKBOX_CLASS}
                         disabled={!form.alertEscalationEnabled}
                       />
                       {definition.label}
@@ -901,7 +912,7 @@ export default function SmsSettings({ settings, tenantType }) {
 
         <div className="rounded-lg border border-gray-200 p-4">
           <label className="flex items-center gap-3">
-            <input type="checkbox" checked={form.quietHoursEnabled} onChange={(event) => updateField('quietHoursEnabled', event.target.checked)} className="h-4 w-4" />
+            <input type="checkbox" checked={form.quietHoursEnabled} onChange={(event) => updateField('quietHoursEnabled', event.target.checked)} className={CHECKBOX_CLASS} />
             <span className="text-sm font-medium text-gray-900">Enable quiet hours</span>
           </label>
 
@@ -933,21 +944,21 @@ export default function SmsSettings({ settings, tenantType }) {
 
           <div className="grid gap-3 md:grid-cols-2">
             <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-              <input type="checkbox" checked={form.slack.enabled} onChange={(event) => updateSlackField('enabled', event.target.checked)} className="mt-1 h-4 w-4" />
+              <input type="checkbox" checked={form.slack.enabled} onChange={(event) => updateSlackField('enabled', event.target.checked)} className={CHECKBOX_CLASS} />
               <div>
                 <p className="text-sm font-medium text-gray-900">Enable Slack integration</p>
                 <p className="text-xs text-gray-500">Uses an incoming webhook as a tenant-level activity output.</p>
               </div>
             </label>
             <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-              <input type="checkbox" checked={form.slack.commandCenterEnabled} onChange={(event) => updateSlackField('commandCenterEnabled', event.target.checked)} className="mt-1 h-4 w-4" disabled={!form.slack.enabled} />
+              <input type="checkbox" checked={form.slack.commandCenterEnabled} onChange={(event) => updateSlackField('commandCenterEnabled', event.target.checked)} className={CHECKBOX_CLASS} disabled={!form.slack.enabled} />
               <div>
                 <p className="text-sm font-medium text-gray-900">Enable Live AI Command Center</p>
                 <p className="text-xs text-gray-500">Posts incoming-call and structured-event activity into a live Slack feed.</p>
               </div>
             </label>
             <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
-              <input type="checkbox" checked={form.slack.slashCommandsEnabled} onChange={(event) => updateSlackField('slashCommandsEnabled', event.target.checked)} className="mt-1 h-4 w-4" disabled={!form.slack.enabled} />
+              <input type="checkbox" checked={form.slack.slashCommandsEnabled} onChange={(event) => updateSlackField('slashCommandsEnabled', event.target.checked)} className={CHECKBOX_CLASS} disabled={!form.slack.enabled} />
               <div>
                 <p className="text-sm font-medium text-gray-900">Enable signed Slack slash commands</p>
                 <p className="text-xs text-gray-500">Supports `/merxus help`, `activity`, `status`, `inbox`, `notifications`, and `intelligence` via a tenant-specific Slack command URL.</p>
@@ -1144,12 +1155,12 @@ export default function SmsSettings({ settings, tenantType }) {
                   <div className="mt-3 flex flex-wrap items-center gap-4">
                     {['sms', 'email', 'push', 'slack', 'teams', 'webhook'].map((channel) => (
                       <label key={channel} className="flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" checked={contact.channels.includes(channel)} onChange={() => toggleContactChannel(index, channel)} className="h-4 w-4" />
+                        <input type="checkbox" checked={contact.channels.includes(channel)} onChange={() => toggleContactChannel(index, channel)} className={CHECKBOX_CLASS} />
                         {channel.toUpperCase()}
                       </label>
                     ))}
                     <label className="flex items-center gap-2 text-sm text-gray-700">
-                      <input type="checkbox" checked={contact.isActive} onChange={(event) => updateContact(index, 'isActive', event.target.checked)} className="h-4 w-4" />
+                      <input type="checkbox" checked={contact.isActive} onChange={(event) => updateContact(index, 'isActive', event.target.checked)} className={CHECKBOX_CLASS} />
                       Active
                     </label>
                     <button type="button" onClick={() => removeContact(index)} className="ml-auto text-sm font-medium text-red-600 hover:text-red-700">
@@ -1183,7 +1194,7 @@ export default function SmsSettings({ settings, tenantType }) {
                           type="checkbox"
                           checked={(routing.groups?.[definition.key] || []).includes(contact.id)}
                           onChange={() => toggleGroupAssignment(definition.key, contact.id)}
-                          className="h-4 w-4"
+                          className={CHECKBOX_CLASS}
                         />
                         {contact.name || contact.email || contact.phone || contact.id}
                       </label>
