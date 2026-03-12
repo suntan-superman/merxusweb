@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from '../common/ConfirmationModal';
 import InvitationLinkModal from '../common/InvitationLinkModal';
 import {
@@ -11,6 +12,7 @@ import {
   updateTeamUser,
 } from '../../api/teamUsers';
 import { TEAM_NOTIFICATION_GROUPS, getTeamUserCopy } from '../../constants/teamUsers';
+import { useAuth } from '../../context/AuthContext';
 
 function formatTimestamp(value) {
   if (!value) return '—';
@@ -65,6 +67,8 @@ function buildEditForm(user) {
 }
 
 export default function TeamUsersWorkspace({ tenantType, footer = null }) {
+  const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const copy = getTeamUserCopy(tenantType);
   const groupOptions = TEAM_NOTIFICATION_GROUPS[tenantType] || [];
   const [users, setUsers] = useState([]);
@@ -111,9 +115,9 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
 
   const summary = useMemo(() => ({
     total: users.length,
-    verified: users.filter((user) => user.phoneVerified).length,
-    active: users.filter((user) => user.notificationEligible).length,
-    pending: users.filter((user) => !user.notificationEligible && !user.disabled).length,
+    verified: users.filter((currentUser) => currentUser.phoneVerified).length,
+    active: users.filter((currentUser) => currentUser.notificationEligible).length,
+    pending: users.filter((currentUser) => !currentUser.notificationEligible && !currentUser.disabled).length,
   }), [users]);
 
   function isRowBusy(uid) {
@@ -287,8 +291,8 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
   }
 
   function handleDisable(uid) {
-    const user = users.find((item) => item.uid === uid || item.id === uid);
-    setUserToDisable(user || null);
+    const currentUser = users.find((item) => item.uid === uid || item.id === uid);
+    setUserToDisable(currentUser || null);
     setShowDisableModal(true);
   }
 
@@ -416,29 +420,31 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => {
-                  const uid = user.uid || user.id;
+                {users.map((currentUser) => {
+                  const uid = currentUser.uid || currentUser.id;
+                  const isCurrentUser = Boolean(authUser?.uid && uid === authUser.uid);
+
                   return (
                     <tr key={uid} className="border-b last:border-b-0 hover:bg-gray-50">
                       <td className="px-4 py-3 align-top">
-                        <div className="font-medium text-gray-900">{user.displayName || user.email}</div>
-                        <div className="text-xs text-gray-500">{user.email}</div>
+                        <div className="font-medium text-gray-900">{currentUser.displayName || currentUser.email}</div>
+                        <div className="text-xs text-gray-500">{currentUser.email}</div>
                       </td>
                       <td className="px-4 py-3 align-top text-xs text-slate-700">
-                        <div>{user.phone || '—'}</div>
-                        {user.phoneVerificationSentAt ? (
-                          <div className="mt-1 text-[11px] text-slate-500">Last code {formatTimestamp(user.phoneVerificationSentAt)}</div>
+                        <div>{currentUser.phone || '—'}</div>
+                        {currentUser.phoneVerificationSentAt ? (
+                          <div className="mt-1 text-[11px] text-slate-500">Last code {formatTimestamp(currentUser.phoneVerificationSentAt)}</div>
                         ) : null}
                       </td>
                       <td className="px-4 py-3 align-top">
-                        {user.role === 'owner' ? (
+                        {currentUser.role === 'owner' ? (
                           <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
                             Owner
                           </span>
                         ) : (
                           <select
                             className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
-                            value={user.role}
+                            value={currentUser.role}
                             disabled={isRowBusy(uid)}
                             onChange={(event) => handleRoleChange(uid, event.target.value)}
                           >
@@ -449,70 +455,88 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
                       </td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex flex-col gap-1">
-                          <StatusPill tone={user.needsInviteAcceptance ? 'blue' : 'emerald'}>
-                            {user.needsInviteAcceptance ? 'Invite pending' : 'Portal access ready'}
+                          <StatusPill tone={currentUser.needsInviteAcceptance ? 'blue' : 'emerald'}>
+                            {currentUser.needsInviteAcceptance ? 'Invite pending' : 'Portal access ready'}
                           </StatusPill>
-                          <StatusPill tone={user.phoneVerified ? 'emerald' : (user.phone ? 'amber' : 'slate')}>
-                            {user.phoneVerified ? 'Phone verified' : (user.phone ? 'Phone pending' : 'Phone missing')}
+                          <StatusPill tone={currentUser.phoneVerified ? 'emerald' : (currentUser.phone ? 'amber' : 'slate')}>
+                            {currentUser.phoneVerified ? 'Phone verified' : (currentUser.phone ? 'Phone pending' : 'Phone missing')}
                           </StatusPill>
-                          {user.inviteSentAt ? (
-                            <div className="mt-1 text-[11px] text-slate-500">Last invite {formatTimestamp(user.inviteSentAt)}</div>
+                          {currentUser.inviteSentAt ? (
+                            <div className="mt-1 text-[11px] text-slate-500">Last invite {formatTimestamp(currentUser.inviteSentAt)}</div>
+                          ) : null}
+                          {isCurrentUser && !currentUser.disabled && !currentUser.needsInviteAcceptance && !currentUser.phoneVerified && currentUser.phone ? (
+                            <button
+                              type="button"
+                              onClick={() => navigate('/verify-phone')}
+                              className="w-fit text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                            >
+                              Enter code
+                            </button>
                           ) : null}
                         </div>
                       </td>
                       <td className="px-4 py-3 align-top text-xs text-slate-700">
-                        {formatRoutingGroupLabels(user.notificationGroupKeys, groupOptions)}
+                        {formatRoutingGroupLabels(currentUser.notificationGroupKeys, groupOptions)}
                       </td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex flex-col gap-2">
-                          <StatusPill className={toneForLifecycle(user)}>
-                            {lifecycleLabel(user)}
+                          <StatusPill className={toneForLifecycle(currentUser)}>
+                            {lifecycleLabel(currentUser)}
                           </StatusPill>
-                          <StatusPill tone={user.notificationEligible ? 'emerald' : 'slate'}>
-                            {user.notificationEligible ? 'Alerts enabled' : 'Alerts blocked'}
+                          <StatusPill tone={currentUser.notificationEligible ? 'emerald' : 'slate'}>
+                            {currentUser.notificationEligible ? 'Alerts enabled' : 'Alerts blocked'}
                           </StatusPill>
-                          <div className="text-[11px] leading-5 text-slate-500">{lifecycleDetail(user)}</div>
+                          <div className="text-[11px] leading-5 text-slate-500">{lifecycleDetail(currentUser)}</div>
                         </div>
                       </td>
                       <td className="px-4 py-3 align-top text-xs text-gray-700">
-                        {formatTimestamp(user.invitedAt)}
+                        {formatTimestamp(currentUser.invitedAt)}
                       </td>
                       <td className="px-4 py-3 align-top text-right">
                         <div className="flex min-w-[11rem] flex-col items-end gap-2">
                           <button
                             type="button"
-                            onClick={() => beginEdit(user)}
+                            onClick={() => beginEdit(currentUser)}
                             disabled={isRowBusy(uid)}
                             className="text-xs text-slate-700 hover:text-slate-900 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Edit details
                           </button>
-                          {!user.disabled && user.needsInviteAcceptance ? (
+                          {isCurrentUser && !currentUser.disabled && !currentUser.needsInviteAcceptance && !currentUser.phoneVerified && currentUser.phone ? (
                             <button
                               type="button"
-                              onClick={() => handleResendInvite(user)}
+                              onClick={() => navigate('/verify-phone')}
+                              className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                            >
+                              Enter code
+                            </button>
+                          ) : null}
+                          {!currentUser.disabled && currentUser.needsInviteAcceptance ? (
+                            <button
+                              type="button"
+                              onClick={() => handleResendInvite(currentUser)}
                               disabled={isRowBusy(uid)}
                               className="text-xs text-blue-600 hover:text-blue-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {busyAction.type === 'invite' && busyAction.uid === uid ? 'Sending…' : 'Resend invite'}
                             </button>
                           ) : null}
-                          {!user.disabled && !user.needsInviteAcceptance && !user.phoneVerified && user.phone ? (
+                          {!currentUser.disabled && !currentUser.needsInviteAcceptance && !currentUser.phoneVerified && currentUser.phone ? (
                             <button
                               type="button"
-                              onClick={() => handleSendCode(user)}
+                              onClick={() => handleSendCode(currentUser)}
                               disabled={isRowBusy(uid)}
                               className="text-xs text-blue-600 hover:text-blue-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {busyAction.type === 'code' && busyAction.uid === uid
                                 ? 'Sending…'
-                                : (user.phoneVerificationSentAt ? 'Resend code' : 'Send code')}
+                                : (currentUser.phoneVerificationSentAt ? 'Resend code' : 'Send code')}
                             </button>
                           ) : null}
-                          {user.disabled ? (
+                          {currentUser.disabled ? (
                             <button
                               type="button"
-                              onClick={() => handleEnable(user)}
+                              onClick={() => handleEnable(currentUser)}
                               disabled={isRowBusy(uid)}
                               className="text-xs text-emerald-600 hover:text-emerald-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                             >
