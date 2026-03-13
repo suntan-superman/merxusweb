@@ -58,6 +58,7 @@ export default function TimePickerField({
   stepMinutes = 15,
 }) {
   const rootRef = useRef(null);
+  const menuRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const normalizedValue = normalizeTime(value);
   const baseOptions = useMemo(() => buildOptions(stepMinutes), [stepMinutes]);
@@ -93,6 +94,15 @@ export default function TimePickerField({
       document.removeEventListener('keydown', handleKeydown);
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !menuRef.current || !normalizedValue) return;
+
+    const selectedOption = menuRef.current.querySelector('[data-selected="true"]');
+    if (selectedOption && typeof selectedOption.scrollIntoView === 'function') {
+      selectedOption.scrollIntoView({ block: 'center' });
+    }
+  }, [isOpen, normalizedValue]);
 
   function emitChange(nextValue) {
     if (typeof onChange === 'function') {
@@ -138,7 +148,7 @@ export default function TimePickerField({
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-primary-200 bg-white shadow-lg">
+        <div ref={menuRef} className="absolute left-0 z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-primary-200 bg-white shadow-lg">
           {options.map((option) => {
             const isSelected = option === normalizedValue;
             return (
@@ -146,6 +156,7 @@ export default function TimePickerField({
                 key={option}
                 type="button"
                 onClick={() => handleSelect(option)}
+                data-selected={isSelected ? 'true' : 'false'}
                 className={`block w-full px-3 py-2 text-left text-sm transition-colors ${
                   isSelected
                     ? 'bg-primary-600 font-semibold text-white'

@@ -31,6 +31,17 @@ export default function BusinessHours({ settings, onSave, saving }) {
     }));
   }
 
+  function copyMondayToOtherDays() {
+    setHours((prev) => {
+      const monday = prev.monday || { open: '11:00', close: '21:00', closed: false };
+      const next = { ...prev };
+      DAYS.filter((day) => day.key !== 'monday').forEach((day) => {
+        next[day.key] = { ...monday };
+      });
+      return next;
+    });
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     onSave({ businessHours: hours });
@@ -39,6 +50,15 @@ export default function BusinessHours({ settings, onSave, saving }) {
   return (
     <section className="card">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Hours</h3>
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={copyMondayToOtherDays}
+          className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-primary-300 hover:text-primary-700"
+        >
+          Copy Monday to Tue-Sun
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
         {DAYS.map((day) => (

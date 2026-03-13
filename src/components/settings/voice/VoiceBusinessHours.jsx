@@ -31,6 +31,17 @@ export default function VoiceBusinessHours({ settings, onSave, saving }) {
     }));
   }
 
+  function copyMondayToOtherDays() {
+    setHours((prev) => {
+      const monday = prev.monday || { open: '09:00', close: '17:00', closed: false };
+      const next = { ...prev };
+      DAYS.filter((day) => day.key !== 'monday').forEach((day) => {
+        next[day.key] = { ...monday };
+      });
+      return next;
+    });
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     onSave({ businessHours: hours });
@@ -42,6 +53,15 @@ export default function VoiceBusinessHours({ settings, onSave, saving }) {
       <p className="text-sm text-gray-600 mb-4">
         Set your business hours to help the AI assistant inform callers about availability.
       </p>
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={copyMondayToOtherDays}
+          className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-primary-300 hover:text-primary-700"
+        >
+          Copy Monday to Tue-Sun
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
         {DAYS.map((day) => (
