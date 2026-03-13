@@ -94,6 +94,7 @@ function buildFallbackSms(settings = {}) {
     dailyDigestChannels: ['email'],
     dailyDigestRecipientGroupKeys: [],
     displayName: 'Merxus AI',
+    setupWizard: settings.sms?.setupWizard || {},
     businessName:
       settings.sms?.businessName ||
       settings.name ||
@@ -522,40 +523,49 @@ export default function SmsSettings({ settings, tenantType }) {
     });
   }
 
-  async function handleSave(event) {
-    event.preventDefault();
-
+  async function saveCurrentSettings(formToSave = form, routingToSave = routing) {
     try {
       setSaving(true);
       setError('');
       setSuccess('');
 
       const [smsResponse, contactsResponse, groupsResponse] = await Promise.all([
-        updateSmsSettings({ sms: form }),
-        updateSmsNotificationContacts({ contacts: routing.contacts }),
-        updateSmsNotificationGroups({ groups: routing.groups }),
+        updateSmsSettings({ sms: formToSave }),
+        updateSmsNotificationContacts({ contacts: routingToSave.contacts }),
+        updateSmsNotificationGroups({ groups: routingToSave.groups }),
       ]);
 
-      const nextForm = mergeSms(buildFallbackSms(settings), smsResponse.sms || {});
-      const nextRouting = {
+      const resolvedForm = mergeSms(buildFallbackSms(settings), smsResponse.sms || {});
+      const resolvedRouting = {
         ...routing,
-        contacts: contactsResponse.contacts || routing.contacts,
-        groups: groupsResponse.groups || routing.groups,
+        ...routingToSave,
+        contacts: contactsResponse.contacts || routingToSave.contacts,
+        groups: groupsResponse.groups || routingToSave.groups,
       };
-      setForm(nextForm);
+      setForm(resolvedForm);
       setTenantContext({
         tenantId: smsResponse.tenantId || tenantContext.tenantId,
         tenantType: smsResponse.tenantType || tenantContext.tenantType,
       });
-      setRouting(nextRouting);
-      syncBaseline(nextForm, nextRouting);
+      setRouting(resolvedRouting);
+      syncBaseline(resolvedForm, resolvedRouting);
       setSuccess('SMS notification settings saved.');
       window.setTimeout(() => setSuccess(''), 3000);
+      return {
+        form: resolvedForm,
+        routing: resolvedRouting,
+      };
     } catch (saveError) {
       setError(saveError?.response?.data?.error || 'Failed to save SMS notification settings.');
+      throw saveError;
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleSave(event) {
+    event.preventDefault();
+    await saveCurrentSettings(form, routing);
   }
 
   async function handleTestSend() {
@@ -725,6 +735,7 @@ export default function SmsSettings({ settings, tenantType }) {
   return (
     <SmsSettingsRedesign
       copy={copy}
+      settings={settings}
       error={error}
       success={success}
       activeTab={activeTab}
@@ -764,6 +775,7 @@ export default function SmsSettings({ settings, tenantType }) {
       saving={saving}
       handleCancelChanges={handleCancelChanges}
       handleSave={handleSave}
+      saveCurrentSettings={saveCurrentSettings}
       templateEditor={templateEditor}
       setTemplateEditor={setTemplateEditor}
       notificationTemplateFields={NOTIFICATION_TEMPLATE_FIELDS}

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import SmsSetupWizard from './SmsSetupWizard';
 
 function Field({ label, hint, tooltip, children }) {
   return (
@@ -179,6 +180,7 @@ function TemplateEditorModal({ editor, value, onClose, onChange }) {
 export default function SmsSettingsRedesign(props) {
   const {
     copy,
+    settings,
     error,
     success,
     activeTab,
@@ -217,6 +219,8 @@ export default function SmsSettingsRedesign(props) {
     saving,
     handleCancelChanges,
     handleSave,
+    saveCurrentSettings,
+    tenantType,
     templateEditor,
     setTemplateEditor,
     notificationTemplateFields,
@@ -234,6 +238,17 @@ export default function SmsSettingsRedesign(props) {
 
   return (
     <>
+      <SmsSetupWizard
+        copy={copy}
+        form={form}
+        routing={routing}
+        settings={settings}
+        tenantType={tenantType}
+        setActiveTab={setActiveTab}
+        saveCurrentSettings={saveCurrentSettings}
+        saving={saving}
+      />
+
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
