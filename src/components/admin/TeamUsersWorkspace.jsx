@@ -66,6 +66,29 @@ function buildEditForm(user) {
   };
 }
 
+function formatInviteConflict(err) {
+  const response = err?.response?.data || {};
+  const code = response?.code;
+  const details = response?.details || {};
+  const companyName = details?.companyName;
+
+  if (code === 'user_belongs_to_other_tenant') {
+    return companyName
+      ? `This email is already associated with ${companyName}. The invite was not sent.`
+      : 'This email is already associated with another company. The invite was not sent.';
+  }
+
+  if (code === 'pending_invite_exists') {
+    return 'This email already has a pending invite for this company. Use Resend invite instead.';
+  }
+
+  if (code === 'user_already_in_tenant') {
+    return 'This email already belongs to a team member in this company.';
+  }
+
+  return response?.error || err?.message || 'Failed to invite user.';
+}
+
 export default function TeamUsersWorkspace({ tenantType, footer = null }) {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
@@ -161,7 +184,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       await load();
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.error || err?.message || 'Failed to invite user.');
+      setError(formatInviteConflict(err));
     } finally {
       setSubmitting(false);
     }

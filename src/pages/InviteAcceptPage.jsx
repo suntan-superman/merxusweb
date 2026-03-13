@@ -3,21 +3,19 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   confirmPasswordReset,
   getIdToken,
+  signOut,
   signInWithEmailAndPassword,
   verifyPasswordResetCode,
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
-import { useAuth } from '../context/AuthContext';
 import {
   confirmInviteProfile,
   resolveInviteAcceptance,
 } from '../api/teamUsers';
-import { getPortalBasePath } from '../utils/objectRouting';
 
 export default function InviteAcceptPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { userClaims } = useAuth();
   const [invite, setInvite] = useState(null);
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -57,6 +55,9 @@ export default function InviteAcceptPage() {
       try {
         setLoading(true);
         setError('');
+        if (auth.currentUser) {
+          await signOut(auth).catch(() => {});
+        }
         const [inviteResponse, inviteEmail] = await Promise.all([
           resolveInviteAcceptance(inviteToken),
           verifyPasswordResetCode(auth, oobCode),
@@ -88,20 +89,6 @@ export default function InviteAcceptPage() {
     };
   }, [inviteToken, mode, oobCode]);
 
-  useEffect(() => {
-    if (!userClaims) return;
-
-    if (userClaims.invitedUser === true && userClaims.phoneVerified === false) {
-      navigate('/verify-phone', { replace: true });
-      return;
-    }
-
-    const portalPath = getPortalBasePath(userClaims.type || userClaims.tenantType);
-    if (portalPath) {
-      navigate(portalPath, { replace: true });
-    }
-  }, [navigate, userClaims]);
-
   async function handleSubmit(event) {
     event.preventDefault();
     if (!displayName.trim()) {
@@ -124,6 +111,10 @@ export default function InviteAcceptPage() {
 
       await confirmPasswordReset(auth, oobCode, password);
       await signInWithEmailAndPassword(auth, email, password);
+
+      if (!auth.currentUser || auth.currentUser.email?.toLowerCase() !== email.toLowerCase()) {
+        throw new Error('The invite was authenticated under the wrong account. Please retry from a signed-out browser session.');
+      }
 
       await confirmInviteProfile(displayName.trim());
 
