@@ -10,6 +10,7 @@ import {
   updateSmsNotificationGroups,
   updateSmsSettings,
 } from '../../api/sms';
+import SmsSettingsRedesign from './SmsSettingsRedesign';
 
 function tenantCopy(tenantType) {
   const inboxRoute =
@@ -38,10 +39,20 @@ function tenantCopy(tenantType) {
   };
 }
 
-function Field({ label, hint, children }) {
+function Field({ label, hint, tooltip, children }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+        <span>{label}</span>
+        {tooltip ? (
+          <span
+            className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 text-[11px] font-semibold text-slate-500"
+            title={tooltip}
+          >
+            ?
+          </span>
+        ) : null}
+      </label>
       {children}
       {hint ? <p className="text-xs text-gray-500 mt-1">{hint}</p> : null}
     </div>
@@ -243,6 +254,34 @@ const COMMAND_CENTER_EVENT_OPTIONS = [
   { key: 'service_request_updated', label: 'Service request updated' },
 ];
 
+const SMS_NAV_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'caller', label: 'Caller Messaging' },
+  { id: 'staff', label: 'Staff Alerts' },
+  { id: 'routing', label: 'Routing' },
+  { id: 'templates', label: 'Templates' },
+  { id: 'integrations', label: 'Integrations' },
+  { id: 'automation', label: 'Automation' },
+  { id: 'advanced', label: 'Advanced' },
+];
+
+const DEFAULT_EXPANDED_PANELS = {
+  overview_safety: true,
+  caller_templates: true,
+  staff_alerts: true,
+  routing_groups: true,
+  routing_contacts: false,
+  templates_replies: true,
+  templates_overrides: false,
+  integrations_slack: true,
+  integrations_command_center: false,
+  automation_retry: true,
+  automation_escalation: false,
+  automation_digest: false,
+  advanced_links: false,
+  advanced_debug: false,
+};
+
 function formatCommandCenterStatus(status) {
   return String(status || 'unknown')
     .replace(/_/g, ' ')
@@ -277,6 +316,22 @@ export default function SmsSettings({ settings, tenantType }) {
   const [testNumber, setTestNumber] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [expandedPanels, setExpandedPanels] = useState(DEFAULT_EXPANDED_PANELS);
+  const [templateEditor, setTemplateEditor] = useState(null);
+  const [baseline, setBaseline] = useState(null);
+
+  function buildSnapshot(nextForm, nextRouting) {
+    return JSON.stringify({
+      form: nextForm,
+      routingContacts: nextRouting.contacts,
+      routingGroups: nextRouting.groups,
+    });
+  }
+
+  function syncBaseline(nextForm, nextRouting) {
+    setBaseline(buildSnapshot(nextForm, nextRouting));
+  }
 
   useEffect(() => {
     setForm((current) => mergeSms(buildFallbackSms(settings), current));
@@ -304,12 +359,15 @@ export default function SmsSettings({ settings, tenantType }) {
         ]);
 
         if (!cancelled) {
-          setForm(mergeSms(buildFallbackSms(settings), smsData.sms || {}));
+          const nextForm = mergeSms(buildFallbackSms(settings), smsData.sms || {});
+          const nextRouting = normalizeRoutingState(routingData);
+          setForm(nextForm);
           setTenantContext({
             tenantId: smsData.tenantId || '',
             tenantType: smsData.tenantType || tenantType,
           });
-          setRouting(normalizeRoutingState(routingData));
+          setRouting(nextRouting);
+          syncBaseline(nextForm, nextRouting);
         }
         await loadCommandCenterHistory();
       } catch (loadError) {
@@ -478,16 +536,19 @@ export default function SmsSettings({ settings, tenantType }) {
         updateSmsNotificationGroups({ groups: routing.groups }),
       ]);
 
-      setForm(mergeSms(buildFallbackSms(settings), smsResponse.sms || {}));
+      const nextForm = mergeSms(buildFallbackSms(settings), smsResponse.sms || {});
+      const nextRouting = {
+        ...routing,
+        contacts: contactsResponse.contacts || routing.contacts,
+        groups: groupsResponse.groups || routing.groups,
+      };
+      setForm(nextForm);
       setTenantContext({
         tenantId: smsResponse.tenantId || tenantContext.tenantId,
         tenantType: smsResponse.tenantType || tenantContext.tenantType,
       });
-      setRouting((prev) => ({
-        ...prev,
-        contacts: contactsResponse.contacts || prev.contacts,
-        groups: groupsResponse.groups || prev.groups,
-      }));
+      setRouting(nextRouting);
+      syncBaseline(nextForm, nextRouting);
       setSuccess('SMS notification settings saved.');
       window.setTimeout(() => setSuccess(''), 3000);
     } catch (saveError) {
@@ -601,6 +662,57 @@ export default function SmsSettings({ settings, tenantType }) {
     return `${normalizedBase}/integrations/slack/interaction?tenantId=${encodeURIComponent(tenantContext.tenantId)}&tenantType=${encodeURIComponent(tenantContext.tenantType)}`;
   }, [tenantContext]);
 
+  const hasUnsavedChanges = useMemo(() => {
+    if (!baseline) return false;
+    return buildSnapshot(form, routing) !== baseline;
+  }, [baseline, form, routing]);
+
+  const summaryItems = useMemo(() => ([
+    { label: 'Caller confirmations', value: form.callerConfirmationEnabled ? 'Enabled' : 'Disabled' },
+    { label: 'Staff alerts', value: form.staffAlertsEnabled ? 'Enabled' : 'Disabled' },
+    { label: 'Spam suppression', value: form.suppressSpam ? 'Enabled' : 'Disabled' },
+    { label: 'Daily SMS limit', value: String(form.maxAutoTextsPerCallerPer24h || 0) },
+    { label: 'Quiet hours', value: form.quietHoursEnabled ? `${form.quietHoursStart} - ${form.quietHoursEnd}` : 'Disabled' },
+  ]), [form]);
+
+  function togglePanel(panelId) {
+    setExpandedPanels((current) => ({
+      ...current,
+      [panelId]: !current[panelId],
+    }));
+  }
+
+  function handleCancelChanges() {
+    if (!baseline) return;
+    try {
+      const parsed = JSON.parse(baseline);
+      setForm(parsed.form);
+      setRouting((current) => ({
+        ...current,
+        contacts: parsed.routingContacts,
+        groups: parsed.routingGroups,
+      }));
+      setError('');
+      setSuccess('');
+    } catch (_) {}
+  }
+
+  function openTemplateEditor({
+    key,
+    label,
+    type = 'notificationTemplates',
+    placeholder = '{{tenantName}} ...',
+    description = '',
+  }) {
+    setTemplateEditor({
+      key,
+      label,
+      type,
+      placeholder,
+      description,
+    });
+  }
+
   if (loading) {
     return (
       <section className="card">
@@ -609,6 +721,59 @@ export default function SmsSettings({ settings, tenantType }) {
       </section>
     );
   }
+
+  return (
+    <SmsSettingsRedesign
+      copy={copy}
+      error={error}
+      success={success}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      summaryItems={summaryItems}
+      expandedPanels={expandedPanels}
+      togglePanel={togglePanel}
+      form={form}
+      updateField={updateField}
+      updateLink={updateLink}
+      updateTemplate={updateTemplate}
+      updateSlackField={updateSlackField}
+      updateSlackEventChannel={updateSlackEventChannel}
+      toggleChannel={toggleChannel}
+      toggleDigestGroup={toggleDigestGroup}
+      toggleAlertEscalationGroup={toggleAlertEscalationGroup}
+      routing={routing}
+      addContact={addContact}
+      updateContact={updateContact}
+      toggleContactChannel={toggleContactChannel}
+      removeContact={removeContact}
+      toggleGroupAssignment={toggleGroupAssignment}
+      openTemplateEditor={openTemplateEditor}
+      slackCommandUrl={slackCommandUrl}
+      slackInteractionUrl={slackInteractionUrl}
+      sendingCommandCenterDemo={sendingCommandCenterDemo}
+      handleSendCommandCenterDemo={handleSendCommandCenterDemo}
+      loadingCommandCenterHistory={loadingCommandCenterHistory}
+      commandCenterHistory={commandCenterHistory}
+      tenantType={tenantType}
+      policyPreview={policyPreview}
+      testNumber={testNumber}
+      setTestNumber={setTestNumber}
+      handleTestSend={handleTestSend}
+      sendingTest={sendingTest}
+      hasUnsavedChanges={hasUnsavedChanges}
+      saving={saving}
+      handleCancelChanges={handleCancelChanges}
+      handleSave={handleSave}
+      templateEditor={templateEditor}
+      setTemplateEditor={setTemplateEditor}
+      notificationTemplateFields={NOTIFICATION_TEMPLATE_FIELDS}
+      smsNavTabs={SMS_NAV_TABS}
+      commandCenterEventOptions={COMMAND_CENTER_EVENT_OPTIONS}
+      formatCommandCenterDate={formatCommandCenterDate}
+      formatCommandCenterStatus={formatCommandCenterStatus}
+      checkboxClass={CHECKBOX_CLASS}
+    />
+  );
 
   return (
     <section className="card">
