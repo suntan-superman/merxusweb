@@ -561,7 +561,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
                 type="checkbox"
                 checked={serviceForm.available}
                 onChange={(e) => setServiceForm({ ...serviceForm, available: e.target.checked })}
-                className="border-gray-300 rounded text-primary-600 focus:ring-primary-500"
+                className="checkbox-green h-4 w-4 rounded border-gray-300 focus:ring-primary-500"
               />
               <span className="text-sm text-gray-700">Available</span>
             </label>

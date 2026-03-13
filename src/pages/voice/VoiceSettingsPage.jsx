@@ -14,7 +14,7 @@ const TABS = [
   { id: 'profile', label: 'Company Profile', icon: '🏢' },
   { id: 'hours', label: 'Business Hours', icon: '🕐' },
   { id: 'holidays', label: 'Holidays', icon: '📅' },
-  { id: 'managers', label: 'Managers', icon: '👥' },
+  // { id: 'managers', label: 'Managers', icon: '👥' }, // Hidden for now: SMS/team routing is the active path; this legacy manager-availability UI is not wired into live routing.
   { id: 'services', label: 'Services & Products', icon: '📦' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
   { id: 'sms', label: 'SMS Messaging', icon: '💬' },

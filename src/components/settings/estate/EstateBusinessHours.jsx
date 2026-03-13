@@ -110,7 +110,7 @@ export default function EstateBusinessHours({ settings, onSave, saving }) {
                     type="checkbox"
                     checked={hours[day.key]?.closed || false}
                     onChange={(e) => updateDay(day.key, 'closed', e.target.checked)}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="checkbox-green h-4 w-4 rounded border-gray-300 focus:ring-primary-500"
                   />
                   Closed
                 </label>
