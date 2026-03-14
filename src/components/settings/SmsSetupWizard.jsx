@@ -16,9 +16,9 @@ const STAFF_CHANNEL_OPTIONS = ['sms', 'email', 'push', 'slack', 'teams', 'webhoo
 
 const BUSINESS_TYPE_OPTIONS = [
   {
-    id: 'restaurant',
-    label: 'Restaurant',
-    description: 'Reservation, order, and menu messaging defaults.',
+    id: 'voice',
+    label: 'Office / Service',
+    description: 'Appointments, quotes, support, and service requests.',
   },
   {
     id: 'real_estate',
@@ -26,9 +26,9 @@ const BUSINESS_TYPE_OPTIONS = [
     description: 'Listing, showing, buyer, and seller lead workflows.',
   },
   {
-    id: 'voice',
-    label: 'Office / Service',
-    description: 'Appointments, quotes, support, and service requests.',
+    id: 'restaurant',
+    label: 'Restaurant',
+    description: 'Reservation, order, and menu messaging defaults.',
   },
   {
     id: 'custom',
