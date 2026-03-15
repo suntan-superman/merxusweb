@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
 
 const WIZARD_STEPS = [
   { id: 'businessType', label: 'Business Type' },
@@ -461,6 +462,84 @@ function InputField({ label, type = 'text', value, onChange, placeholder = '', h
   );
 }
 
+function SelectField({ label, value, onChange, options = [], placeholder = 'Select option' }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedLabel = value || placeholder;
+
+  return (
+    <div className="block" ref={dropdownRef}>
+      <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen((current) => !current)}
+          className={`input-field flex items-center justify-between text-left ${value ? 'text-slate-900' : 'text-slate-400'}`}
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+        >
+          <span>{selectedLabel}</span>
+          <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+        {isOpen ? (
+          <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+            <div className="max-h-64 overflow-y-auto py-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onChange('');
+                  setIsOpen(false);
+                }}
+                className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${
+                  !value ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'
+                }`}
+                role="option"
+                aria-selected={!value}
+              >
+                <span>{placeholder}</span>
+                {!value ? <Check className="h-4 w-4" /> : null}
+              </button>
+              {options.map((option) => {
+                const selected = value === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => {
+                      onChange(option);
+                      setIsOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${
+                      selected ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
+                    }`}
+                    role="option"
+                    aria-selected={selected}
+                  >
+                    <span>{option}</span>
+                    {selected ? <Check className="h-4 w-4" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function SmsSetupWizard({
   copy,
   form,
@@ -685,13 +764,13 @@ export default function SmsSetupWizard({
               </div>
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 <InputField label="Name" value={contact.name} onChange={(event) => updateContact(index, 'name', event.target.value)} placeholder="Jane Doe" />
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-700">Role</span>
-                  <select value={contact.role} onChange={(event) => updateContact(index, 'role', event.target.value)} className="input-field">
-                    <option value="">Select role</option>
-                    {ROLE_OPTIONS.map((role) => <option key={role} value={role}>{role}</option>)}
-                  </select>
-                </label>
+                <SelectField
+                  label="Role"
+                  value={contact.role}
+                  onChange={(nextValue) => updateContact(index, 'role', nextValue)}
+                  options={ROLE_OPTIONS}
+                  placeholder="Select role"
+                />
                 <InputField label="Phone" type="tel" value={contact.phone} onChange={(event) => updateContact(index, 'phone', event.target.value)} placeholder="+16615551234" />
                 <InputField label="Email" type="email" value={contact.email} onChange={(event) => updateContact(index, 'email', event.target.value)} placeholder="team@example.com" />
               </div>
