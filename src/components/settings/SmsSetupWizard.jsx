@@ -143,31 +143,75 @@ function getServiceLinkFields(businessType) {
   if (businessType === 'restaurant') {
     return [
       { key: 'primaryLink', label: 'Website' },
-      { key: 'reservationLink', label: 'Reservation link' },
-      { key: 'orderLink', label: 'Order link' },
-      { key: 'menuLink', label: 'Menu link' },
+      {
+        key: 'reservationLink',
+        label: 'Reservation link',
+        helperText: 'Used when Merxus texts someone back about booking or changing a reservation. Point this to the page where guests can reserve a table.',
+      },
+      {
+        key: 'orderLink',
+        label: 'Order link',
+        helperText: 'Used in SMS follow-ups for takeout or online ordering. Point this to the page where customers can place or review an order.',
+      },
+      {
+        key: 'menuLink',
+        label: 'Menu link',
+        helperText: 'Used when callers ask to see the menu or learn more before ordering. Point this to your online menu.',
+      },
     ];
   }
   if (businessType === 'real_estate') {
     return [
       { key: 'primaryLink', label: 'Website' },
-      { key: 'listingLink', label: 'Listing link' },
-      { key: 'showingLink', label: 'Showing request link' },
+      {
+        key: 'listingLink',
+        label: 'Listing link',
+        helperText: 'Used when Merxus sends someone to browse available properties or review listing details after a call or text.',
+      },
+      {
+        key: 'showingLink',
+        label: 'Showing request link',
+        helperText: 'Used when a prospect wants to schedule a tour or request a showing. Point this to the page or form that starts that process.',
+      },
     ];
   }
   if (businessType === 'voice') {
     return [
       { key: 'primaryLink', label: 'Website' },
-      { key: 'appointmentLink', label: 'Appointment link' },
-      { key: 'serviceLink', label: 'Service request link' },
-      { key: 'quoteLink', label: 'Quote request link' },
+      {
+        key: 'appointmentLink',
+        label: 'Appointment link',
+        helperText: 'Used when Merxus texts someone who wants to schedule. Point this to your booking calendar or appointment request page.',
+      },
+      {
+        key: 'serviceLink',
+        label: 'Service request link',
+        helperText: 'Used for general service, support, or work-request follow-ups. This is usually the best link to send when someone needs help from your team.',
+      },
+      {
+        key: 'quoteLink',
+        label: 'Quote request link',
+        helperText: 'Used when someone asks for pricing or an estimate. Point this to the page or form where they can request a quote.',
+      },
     ];
   }
   return [
     { key: 'primaryLink', label: 'Website' },
-    { key: 'appointmentLink', label: 'Appointment link' },
-    { key: 'serviceLink', label: 'Service request link' },
-    { key: 'quoteLink', label: 'Quote link' },
+    {
+      key: 'appointmentLink',
+      label: 'Appointment link',
+      helperText: 'Use this if your business needs people to book time with you directly.',
+    },
+    {
+      key: 'serviceLink',
+      label: 'Service request link',
+      helperText: 'Use this for the main action customers should take after a call, such as requesting help, starting service, or submitting a form.',
+    },
+    {
+      key: 'quoteLink',
+      label: 'Quote link',
+      helperText: 'Use this when customers need pricing, estimates, or proposal information.',
+    },
   ];
 }
 
@@ -401,7 +445,7 @@ function StepChip({ active, complete, index, label, onClick }) {
   );
 }
 
-function InputField({ label, type = 'text', value, onChange, placeholder = '' }) {
+function InputField({ label, type = 'text', value, onChange, placeholder = '', helperText = '' }) {
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
@@ -412,6 +456,7 @@ function InputField({ label, type = 'text', value, onChange, placeholder = '' })
         placeholder={placeholder}
         className="input-field"
       />
+      {helperText ? <span className="mt-2 block text-sm leading-6 text-slate-500">{helperText}</span> : null}
     </label>
   );
 }
@@ -579,7 +624,15 @@ export default function SmsSetupWizard({
       return (
         <div className="grid gap-4 lg:grid-cols-2">
           {serviceLinkFields.map((field) => (
-            <InputField key={field.key} label={field.label} type="url" value={draft.serviceLinks[field.key] || ''} onChange={(event) => updateDraftSection('serviceLinks', field.key, event.target.value)} placeholder="https://..." />
+            <InputField
+              key={field.key}
+              label={field.label}
+              type="url"
+              value={draft.serviceLinks[field.key] || ''}
+              onChange={(event) => updateDraftSection('serviceLinks', field.key, event.target.value)}
+              placeholder="https://..."
+              helperText={field.helperText || ''}
+            />
           ))}
         </div>
       );
