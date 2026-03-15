@@ -21,7 +21,7 @@ const ConfirmDialog = ({
     if (confirmVariant === 'danger') {
       return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
     }
-    return 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500';
+    return 'bg-primary-600 hover:bg-primary-700 focus:ring-primary-500';
   };
 
   return (
@@ -36,7 +36,7 @@ const ConfirmDialog = ({
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full transform transition-all">
           {/* Header with Merxus branding */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-xl">
+          <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4 rounded-t-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
@@ -68,7 +68,7 @@ const ConfirmDialog = ({
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

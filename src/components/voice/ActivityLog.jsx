@@ -54,8 +54,8 @@ const ACTION_CONFIG = {
   },
   role_change: {
     icon: ShieldCheckIcon,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
+    color: 'text-primary-600',
+    bgColor: 'bg-primary-100',
     label: 'Role Changed',
   },
   update: {
@@ -142,14 +142,14 @@ export default function ActivityLog({ limit = 20 }) {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            className="input-field !w-auto !px-3 !py-1.5 text-sm"
           >
             <option value="all">All Activity</option>
             <option value="user">User Changes</option>
           </select>
           <button
             onClick={() => refetch()}
-            className="text-sm text-blue-600 hover:text-blue-700"
+            className="text-sm text-primary-600 hover:text-primary-700"
           >
             Refresh
           </button>
@@ -159,7 +159,7 @@ export default function ActivityLog({ limit = 20 }) {
       <div className="px-4 py-2 max-h-96 overflow-y-auto">
         {isLoading ? (
           <div className="py-8 text-center text-gray-500">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-2">Loading activity...</p>
           </div>
         ) : activities?.length === 0 ? (

@@ -93,16 +93,21 @@
     border-color: #22c55e;
   }
 
-  /* Onboarding native select menu styling (remove default blue highlight) */
+  /* Native select menu styling (remove default blue highlight across the app) */
+  select.input-field,
   .onboarding-select {
     accent-color: #22c55e;
   }
 
+  select.input-field option,
   .onboarding-select option {
     background-color: #ffffff;
     color: #0f172a;
   }
 
+  select.input-field option:checked,
+  select.input-field option:focus,
+  select.input-field option:active,
   .onboarding-select option:checked,
   .onboarding-select option:focus,
   .onboarding-select option:active {
@@ -111,6 +116,7 @@
     color: #ffffff !important;
   }
 
+  select.input-field option:hover,
   .onboarding-select option:hover {
     background: linear-gradient(0deg, #dcfce7 0%, #dcfce7 100%);
     background-color: #dcfce7 !important;
@@ -118,6 +124,8 @@
   }
 
   /* Force Windows/Chrome dropdown highlight color */
+  select.input-field:focus > option:checked,
+  select.input-field option:checked:hover,
   select.onboarding-select:focus > option:checked,
   select.onboarding-select option:checked:hover {
     background-color: #22c55e !important;
