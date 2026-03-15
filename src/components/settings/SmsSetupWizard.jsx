@@ -62,6 +62,56 @@ function unique(values = []) {
   return Array.from(new Set((values || []).filter(Boolean)));
 }
 
+function isValidEmail(value) {
+  const email = String(value || '').trim();
+  if (!email) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPhoneNumber(value) {
+  const phone = String(value || '').trim();
+  if (!phone) return false;
+  const cleaned = phone.replace(/[^\d+]/g, '');
+  return /^\+?\d{10,15}$/.test(cleaned);
+}
+
+function validateStaffContacts(contacts = []) {
+  return contacts.reduce((errors, contact, index) => {
+    const contactErrors = {};
+    const name = String(contact?.name || '').trim();
+    const role = String(contact?.role || '').trim();
+    const phone = String(contact?.phone || '').trim();
+    const email = String(contact?.email || '').trim();
+    const channels = Array.isArray(contact?.channels) ? contact.channels.filter(Boolean) : [];
+
+    if (name.length < 3) {
+      contactErrors.name = 'Name must be at least 3 characters.';
+    }
+
+    if (!role) {
+      contactErrors.role = 'Select a role.';
+    }
+
+    if (!isValidPhoneNumber(phone)) {
+      contactErrors.phone = 'Enter a valid phone number.';
+    }
+
+    if (!isValidEmail(email)) {
+      contactErrors.email = 'Enter a valid email address.';
+    }
+
+    if (!channels.length) {
+      contactErrors.channels = 'Select at least one notification method.';
+    }
+
+    if (Object.keys(contactErrors).length) {
+      errors[contact?.id || `contact_${index}`] = contactErrors;
+    }
+
+    return errors;
+  }, {});
+}
+
 function inferPrimaryPhone(settings = {}, routing = {}) {
   return (
     settings.phoneNumber ||
@@ -446,7 +496,7 @@ function StepChip({ active, complete, index, label, onClick }) {
   );
 }
 
-function InputField({ label, type = 'text', value, onChange, placeholder = '', helperText = '' }) {
+function InputField({ label, type = 'text', value, onChange, placeholder = '', helperText = '', errorText = '' }) {
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
@@ -455,14 +505,15 @@ function InputField({ label, type = 'text', value, onChange, placeholder = '', h
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="input-field"
+        className={`input-field ${errorText ? '!border-red-300 !ring-2 !ring-red-100 focus:!ring-red-200' : ''}`}
       />
       {helperText ? <span className="mt-2 block text-sm leading-6 text-slate-500">{helperText}</span> : null}
+      {errorText ? <span className="mt-2 block text-sm leading-6 text-red-600">{errorText}</span> : null}
     </label>
   );
 }
 
-function SelectField({ label, value, onChange, options = [], placeholder = 'Select option' }) {
+function SelectField({ label, value, onChange, options = [], placeholder = 'Select option', errorText = '' }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -486,7 +537,7 @@ function SelectField({ label, value, onChange, options = [], placeholder = 'Sele
         <button
           type="button"
           onClick={() => setIsOpen((current) => !current)}
-          className={`input-field flex items-center justify-between text-left ${value ? 'text-slate-900' : 'text-slate-400'}`}
+          className={`input-field flex items-center justify-between text-left ${value ? 'text-slate-900' : 'text-slate-400'} ${errorText ? '!border-red-300 !ring-2 !ring-red-100 focus:!ring-red-200' : ''}`}
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
@@ -536,6 +587,7 @@ function SelectField({ label, value, onChange, options = [], placeholder = 'Sele
           </div>
         ) : null}
       </div>
+      {errorText ? <span className="mt-2 block text-sm leading-6 text-red-600">{errorText}</span> : null}
     </div>
   );
 }
@@ -554,6 +606,7 @@ export default function SmsSetupWizard({
   const [stepIndex, setStepIndex] = useState(0);
   const [draft, setDraft] = useState(() => buildWizardDraft({ form, routing, settings, tenantType }));
   const [wizardError, setWizardError] = useState('');
+  const [staffContactErrors, setStaffContactErrors] = useState({});
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
 
   const wizardCompleted = Boolean(form.setupWizard?.completedAt);
@@ -565,6 +618,7 @@ export default function SmsSetupWizard({
     if (!isOpen) {
       setDraft(buildWizardDraft({ form, routing, settings, tenantType }));
       setWizardError('');
+      setStaffContactErrors({});
     }
   }, [form, routing, settings, tenantType, isOpen]);
 
@@ -579,6 +633,7 @@ export default function SmsSetupWizard({
     setDraft(buildWizardDraft({ form, routing, settings, tenantType }));
     setStepIndex(0);
     setWizardError('');
+    setStaffContactErrors({});
     setIsOpen(true);
   }
 
@@ -618,6 +673,17 @@ export default function SmsSetupWizard({
         contactIndex === index ? { ...contact, [key]: value } : contact
       )),
     }));
+    setStaffContactErrors((current) => {
+      const contactId = draft.staffContacts[index]?.id;
+      if (!contactId || !current[contactId]?.[key]) return current;
+      return {
+        ...current,
+        [contactId]: {
+          ...current[contactId],
+          [key]: undefined,
+        },
+      };
+    });
   }
 
   function toggleContactChannel(index, channel) {
@@ -631,6 +697,17 @@ export default function SmsSetupWizard({
         return { ...contact, channels: Array.from(channels) };
       }),
     }));
+    setStaffContactErrors((current) => {
+      const contactId = draft.staffContacts[index]?.id;
+      if (!contactId || !current[contactId]?.channels) return current;
+      return {
+        ...current,
+        [contactId]: {
+          ...current[contactId],
+          channels: undefined,
+        },
+      };
+    });
   }
 
   function addContact() {
@@ -641,13 +718,48 @@ export default function SmsSetupWizard({
   }
 
   function removeContact(index) {
+    const removedContactId = draft.staffContacts[index]?.id;
     setDraft((current) => ({
       ...current,
       staffContacts: current.staffContacts.filter((_, contactIndex) => contactIndex !== index),
     }));
+    if (removedContactId) {
+      setStaffContactErrors((current) => {
+        const nextErrors = { ...current };
+        delete nextErrors[removedContactId];
+        return nextErrors;
+      });
+    }
+  }
+
+  function validateStaffContactsStep() {
+    const nextErrors = validateStaffContacts(draft.staffContacts);
+    setStaffContactErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setWizardError('Fix the highlighted staff contact fields before continuing.');
+      setStepIndex(WIZARD_STEPS.findIndex((step) => step.id === 'staffContacts'));
+      return false;
+    }
+
+    setWizardError('');
+    return true;
+  }
+
+  function handleContinue() {
+    if (activeStep.id === 'staffContacts' && !validateStaffContactsStep()) {
+      return;
+    }
+
+    setWizardError('');
+    setStepIndex((current) => Math.min(WIZARD_STEPS.length - 1, current + 1));
   }
 
   async function handleActivate() {
+    if (!validateStaffContactsStep()) {
+      return;
+    }
+
     try {
       setWizardError('');
       const { nextForm, nextRouting } = buildActivatedSettings({ draft, form, routing, tenantType });
@@ -763,16 +875,37 @@ export default function SmsSetupWizard({
                 <button type="button" onClick={() => removeContact(index)} className="text-sm font-semibold text-rose-600 hover:text-rose-700" disabled={draft.staffContacts.length === 1}>Remove</button>
               </div>
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                <InputField label="Name" value={contact.name} onChange={(event) => updateContact(index, 'name', event.target.value)} placeholder="Jane Doe" />
+                <InputField
+                  label="Name"
+                  value={contact.name}
+                  onChange={(event) => updateContact(index, 'name', event.target.value)}
+                  placeholder="Jane Doe"
+                  errorText={staffContactErrors[contact.id]?.name || ''}
+                />
                 <SelectField
                   label="Role"
                   value={contact.role}
                   onChange={(nextValue) => updateContact(index, 'role', nextValue)}
                   options={ROLE_OPTIONS}
                   placeholder="Select role"
+                  errorText={staffContactErrors[contact.id]?.role || ''}
                 />
-                <InputField label="Phone" type="tel" value={contact.phone} onChange={(event) => updateContact(index, 'phone', event.target.value)} placeholder="+16615551234" />
-                <InputField label="Email" type="email" value={contact.email} onChange={(event) => updateContact(index, 'email', event.target.value)} placeholder="team@example.com" />
+                <InputField
+                  label="Phone"
+                  type="tel"
+                  value={contact.phone}
+                  onChange={(event) => updateContact(index, 'phone', event.target.value)}
+                  placeholder="+16615551234"
+                  errorText={staffContactErrors[contact.id]?.phone || ''}
+                />
+                <InputField
+                  label="Email"
+                  type="email"
+                  value={contact.email}
+                  onChange={(event) => updateContact(index, 'email', event.target.value)}
+                  placeholder="team@example.com"
+                  errorText={staffContactErrors[contact.id]?.email || ''}
+                />
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 {STAFF_CHANNEL_OPTIONS.map((channel) => (
@@ -782,6 +915,9 @@ export default function SmsSetupWizard({
                   </label>
                 ))}
               </div>
+              {staffContactErrors[contact.id]?.channels ? (
+                <p className="mt-3 text-sm text-red-600">{staffContactErrors[contact.id].channels}</p>
+              ) : null}
             </div>
           ))}
           <button type="button" onClick={addContact} className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300">Add contact</button>
@@ -932,7 +1068,7 @@ export default function SmsSetupWizard({
                   <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8">
                     <button type="button" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} disabled={stepIndex === 0} className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50">Back</button>
                     {stepIndex < WIZARD_STEPS.length - 1 ? (
-                      <button type="button" onClick={() => setStepIndex((current) => Math.min(WIZARD_STEPS.length - 1, current + 1))} className="btn-primary">Continue</button>
+                      <button type="button" onClick={handleContinue} className="btn-primary">Continue</button>
                     ) : (
                       <button type="button" onClick={handleActivate} className="btn-primary" disabled={saving}>{saving ? 'Activating...' : 'Activate System'}</button>
                     )}
