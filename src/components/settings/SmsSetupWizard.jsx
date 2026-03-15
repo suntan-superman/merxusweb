@@ -146,17 +146,17 @@ function getServiceLinkFields(businessType) {
       {
         key: 'reservationLink',
         label: 'Reservation link',
-        helperText: 'Used when Merxus texts someone back about booking or changing a reservation. Point this to the page where guests can reserve a table.',
+        helperText: 'Used when Merxus texts someone back about booking or changing a reservation. Point this to the page where guests can reserve a table. If left blank, Merxus falls back to the website link.',
       },
       {
         key: 'orderLink',
         label: 'Order link',
-        helperText: 'Used in SMS follow-ups for takeout or online ordering. Point this to the page where customers can place or review an order.',
+        helperText: 'Used in SMS follow-ups for takeout or online ordering. Point this to the page where customers can place or review an order. If left blank, Merxus falls back to the website link.',
       },
       {
         key: 'menuLink',
         label: 'Menu link',
-        helperText: 'Used when callers ask to see the menu or learn more before ordering. Point this to your online menu.',
+        helperText: 'Used when callers ask to see the menu or learn more before ordering. Point this to your online menu. If left blank, Merxus falls back to the website link.',
       },
     ];
   }
@@ -166,12 +166,12 @@ function getServiceLinkFields(businessType) {
       {
         key: 'listingLink',
         label: 'Listing link',
-        helperText: 'Used when Merxus sends someone to browse available properties or review listing details after a call or text.',
+        helperText: 'Used when Merxus sends someone to browse available properties or review listing details after a call or text. If left blank, Merxus falls back to the website link.',
       },
       {
         key: 'showingLink',
         label: 'Showing request link',
-        helperText: 'Used when a prospect wants to schedule a tour or request a showing. Point this to the page or form that starts that process.',
+        helperText: 'Used when a prospect wants to schedule a tour or request a showing. Point this to the page or form that starts that process. If left blank, Merxus falls back to the listing link first, then the website link.',
       },
     ];
   }
@@ -181,17 +181,17 @@ function getServiceLinkFields(businessType) {
       {
         key: 'appointmentLink',
         label: 'Appointment link',
-        helperText: 'Used when Merxus texts someone who wants to schedule. Point this to your booking calendar or appointment request page.',
+        helperText: 'Used when Merxus texts someone who wants to schedule. Point this to your booking calendar or appointment request page. If left blank, Merxus falls back to the service request link first, then the website link.',
       },
       {
         key: 'serviceLink',
         label: 'Service request link',
-        helperText: 'Used for general service, support, or work-request follow-ups. This is usually the best link to send when someone needs help from your team.',
+        helperText: 'Used for general service, support, or work-request follow-ups. This is usually the best link to send when someone needs help from your team. If left blank, Merxus falls back to the quote request link first, then the website link.',
       },
       {
         key: 'quoteLink',
         label: 'Quote request link',
-        helperText: 'Used when someone asks for pricing or an estimate. Point this to the page or form where they can request a quote.',
+        helperText: 'Used when someone asks for pricing or an estimate. Point this to the page or form where they can request a quote. If left blank, Merxus falls back to the service request link first, then the website link.',
       },
     ];
   }
@@ -200,17 +200,17 @@ function getServiceLinkFields(businessType) {
     {
       key: 'appointmentLink',
       label: 'Appointment link',
-      helperText: 'Use this if your business needs people to book time with you directly.',
+      helperText: 'Use this if your business needs people to book time with you directly. If left blank, Merxus falls back to the service request link first, then the website link.',
     },
     {
       key: 'serviceLink',
       label: 'Service request link',
-      helperText: 'Use this for the main action customers should take after a call, such as requesting help, starting service, or submitting a form.',
+      helperText: 'Use this for the main action customers should take after a call, such as requesting help, starting service, or submitting a form. If left blank, Merxus falls back to the quote link first, then the website link.',
     },
     {
       key: 'quoteLink',
       label: 'Quote link',
-      helperText: 'Use this when customers need pricing, estimates, or proposal information.',
+      helperText: 'Use this when customers need pricing, estimates, or proposal information. If left blank, Merxus falls back to the service request link first, then the website link.',
     },
   ];
 }
