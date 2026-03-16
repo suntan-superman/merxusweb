@@ -60,15 +60,37 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const originalRequest = error.config || {};
     // Skip logging if explicitly suppressed (e.g., for expected 403/404 errors)
-    const shouldSuppressLogging = error.config?.headers?.['X-Suppress-Error-Log'] === 'true';
+    const shouldSuppressLogging = originalRequest?.headers?.['X-Suppress-Error-Log'] === 'true';
+
+    const shouldRetryWithFreshToken =
+      auth.currentUser &&
+      !originalRequest._retryWithFreshToken &&
+      (error.response?.status === 401 || error.response?.status === 403);
+
+    if (shouldRetryWithFreshToken) {
+      try {
+        const freshToken = await getIdToken(auth.currentUser, true);
+        originalRequest._retryWithFreshToken = true;
+        originalRequest.headers = {
+          ...(originalRequest.headers || {}),
+          Authorization: `Bearer ${freshToken}`,
+        };
+        return apiClient.request(originalRequest);
+      } catch (refreshError) {
+        if (import.meta.env.DEV && !shouldSuppressLogging) {
+          console.error('❌ Forced token refresh failed during API retry:', refreshError);
+        }
+      }
+    }
     
     // Enhanced error logging in development
     if (import.meta.env.DEV && !shouldSuppressLogging) {
       console.error('❌ API Error:', {
-        url: error.config?.url,
-        baseURL: error.config?.baseURL,
-        fullURL: error.config?.baseURL + error.config?.url,
+        url: originalRequest?.url,
+        baseURL: originalRequest?.baseURL,
+        fullURL: originalRequest?.baseURL + originalRequest?.url,
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
@@ -80,8 +102,8 @@ apiClient.interceptors.response.use(
       // Token expired or invalid - redirect to login
       // BUT: Don't redirect for public onboarding routes
       const currentPath = window.location.pathname;
-      const isPublicRoute = error.config?.url?.includes('/onboarding/') || 
-                           error.config?.url?.includes('/health');
+      const isPublicRoute = originalRequest?.url?.includes('/onboarding/') || 
+                           originalRequest?.url?.includes('/health');
       
       if (!currentPath.includes('/login') && !isPublicRoute) {
         window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
