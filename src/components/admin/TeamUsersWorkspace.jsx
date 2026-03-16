@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from '../common/ConfirmationModal';
 import InvitationLinkModal from '../common/InvitationLinkModal';
@@ -6,7 +6,6 @@ import SelectField from '../common/SelectField';
 import {
   disableTeamUser,
   enableTeamUser,
-  fetchTeamUsers,
   inviteTeamUser,
   resendTeamUserInvite,
   resendTeamUserPhoneVerification,
@@ -14,7 +13,7 @@ import {
 } from '../../api/teamUsers';
 import { TEAM_NOTIFICATION_GROUPS, getTeamUserCopy } from '../../constants/teamUsers';
 import { useAuth } from '../../context/AuthContext';
-import { dispatchTeamUsersChanged } from '../../utils/teamUsersEvents';
+import useTeamUsersQuery from '../../hooks/useTeamUsersQuery';
 
 function formatTimestamp(value) {
   if (!value) return '—';
@@ -96,8 +95,6 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
   const { user: authUser } = useAuth();
   const copy = getTeamUserCopy(tenantType);
   const groupOptions = TEAM_NOTIFICATION_GROUPS[tenantType] || [];
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -119,25 +116,12 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
     role: 'manager',
     notificationGroupKeys: [],
   });
-
-  async function load() {
-    try {
-      setLoading(true);
-      setError('');
-      const data = await fetchTeamUsers(tenantType);
-      setUsers(Array.isArray(data) ? data : []);
-      dispatchTeamUsersChanged({ tenantType });
-    } catch (err) {
-      console.error(err);
-      setError(err?.response?.data?.error || err?.message || 'Failed to load users.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, [tenantType]);
+  const {
+    data: users = [],
+    isLoading: loading,
+    error: loadError,
+    refetch: refetchUsers,
+  } = useTeamUsersQuery({ tenantType, enabled: true });
 
   const summary = useMemo(() => ({
     total: users.length,
@@ -145,6 +129,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
     active: users.filter((currentUser) => currentUser.notificationEligible).length,
     pending: users.filter((currentUser) => !currentUser.notificationEligible && !currentUser.disabled).length,
   }), [users]);
+  const displayError = error || loadError?.response?.data?.error || loadError?.message || '';
 
   function isRowBusy(uid) {
     return busyAction.uid === uid;
@@ -184,7 +169,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
           : `Invitation sent to ${invitedEmail}.`
       );
       showInvitationLink(result, invitedEmail);
-      await load();
+      await refetchUsers();
     } catch (err) {
       console.error(err);
       setError(formatInviteConflict(err));
@@ -199,7 +184,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       setBusyAction({ type: 'role', uid });
       await updateTeamUser(tenantType, uid, { role });
       setSuccess('Role updated.');
-      await load();
+      await refetchUsers();
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.error || err?.message || 'Failed to update role.');
@@ -263,7 +248,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
           : 'User details updated.'
       );
       closeEditModal();
-      await load();
+      await refetchUsers();
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.error || err?.message || 'Failed to update user.');
@@ -284,7 +269,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
           : `Invite email could not be delivered to ${user.email}. Use the regenerated setup link instead.`
       );
       showInvitationLink(result, user.email);
-      await load();
+      await refetchUsers();
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.error || err?.message || 'Failed to resend invitation.');
@@ -300,7 +285,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       setBusyAction({ type: 'code', uid });
       const result = await resendTeamUserPhoneVerification(tenantType, uid);
       setSuccess(`Verification code sent to ${result?.maskedPhone || user.phone || 'the saved phone number'}.`);
-      await load();
+      await refetchUsers();
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.error || err?.message || 'Failed to send verification code.');
@@ -316,7 +301,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       setBusyAction({ type: 'enable', uid });
       await enableTeamUser(tenantType, uid);
       setSuccess(`${user.displayName || user.email} has been re-enabled.`);
-      await load();
+      await refetchUsers();
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.error || err?.message || 'Failed to enable user.');
@@ -339,7 +324,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       setBusyAction({ type: 'disable', uid });
       await disableTeamUser(tenantType, uid);
       setSuccess(`${userToDisable.displayName || userToDisable.email} has been disabled.`);
-      await load();
+      await refetchUsers();
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.error || err?.message || 'Failed to disable user.');
@@ -367,9 +352,9 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
         </div>
       </section>
 
-      {error ? (
+      {displayError ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+          {displayError}
         </div>
       ) : null}
 

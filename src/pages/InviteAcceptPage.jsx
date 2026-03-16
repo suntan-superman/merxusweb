@@ -70,10 +70,14 @@ export default function InviteAcceptPage() {
       } catch (err) {
         console.error(err);
         if (!active) return;
-        setError(
+        const resolvedError =
           err?.response?.data?.error ||
-            err?.message ||
-            'This invite link is invalid or has expired.'
+          (err?.message === 'Network Error'
+            ? 'We could not reach the Merxus invite service. Please try again in a moment. If the problem continues, ask the sender to resend the invite.'
+            : err?.message) ||
+          'This invite link is invalid or has expired.';
+        setError(
+          resolvedError
         );
       } finally {
         if (active) {
