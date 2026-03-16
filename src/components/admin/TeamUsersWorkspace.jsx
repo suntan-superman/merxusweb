@@ -90,9 +90,15 @@ function formatInviteConflict(err) {
   return response?.error || err?.message || 'Failed to invite user.';
 }
 
+function formatRoleLabel(role) {
+  const normalized = String(role || '').trim().toLowerCase();
+  if (!normalized) return 'Unknown role';
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1).replace(/_/g, ' ');
+}
+
 export default function TeamUsersWorkspace({ tenantType, footer = null }) {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
+  const { user: authUser, userClaims } = useAuth();
   const copy = getTeamUserCopy(tenantType);
   const groupOptions = TEAM_NOTIFICATION_GROUPS[tenantType] || [];
   const [error, setError] = useState('');
@@ -342,6 +348,12 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{copy.title}</h2>
             <p className="mt-1 text-sm text-gray-600">{copy.subtitle}</p>
+            <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-sm text-emerald-900">
+              <span className="font-semibold">Signed in as</span>
+              <span className="font-medium break-all">{authUser?.email || 'Unknown user'}</span>
+              <span className="text-emerald-700/70">•</span>
+              <span>{formatRoleLabel(userClaims?.role)}</span>
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-4">
             <SummaryCard label="Team Members" value={summary.total} />
