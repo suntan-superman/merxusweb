@@ -3,7 +3,7 @@ import ProtectedRoute from '../../components/ProtectedRoute';
 
 export default function UsersPage() {
   return (
-    <ProtectedRoute requireAuth requireOwner>
+    <ProtectedRoute requireAuth requireManager>
       <TeamUsersWorkspace tenantType="restaurant" />
     </ProtectedRoute>
   );

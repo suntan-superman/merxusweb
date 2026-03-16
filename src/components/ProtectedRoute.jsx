@@ -2,6 +2,14 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
+function getFallbackPath(pathname = '/') {
+  if (pathname.startsWith('/voice')) return '/voice';
+  if (pathname.startsWith('/estate')) return '/estate';
+  if (pathname.startsWith('/restaurant')) return '/restaurant';
+  if (pathname.startsWith('/merxus')) return '/merxus';
+  return '/';
+}
+
 export default function ProtectedRoute({ 
   children, 
   requireAuth = true,
@@ -154,11 +162,11 @@ export default function ProtectedRoute({
   }
 
   if (requireOwner && !isOwner) {
-    return <Navigate to="/restaurant" replace />;
+    return <Navigate to={getFallbackPath(location.pathname)} replace />;
   }
 
   if (requireManager && !isManager && !isOwner) {
-    return <Navigate to="/restaurant" replace />;
+    return <Navigate to={getFallbackPath(location.pathname)} replace />;
   }
 
   if (requireAdmin && !isMerxusAdminRole) {
