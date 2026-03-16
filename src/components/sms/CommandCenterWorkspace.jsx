@@ -5,6 +5,7 @@ import {
   triggerSlackCommandCenterDemo,
 } from '../../api/sms';
 import { getNativeObjectRoute, getPortalBasePath } from '../../utils/objectRouting';
+import SelectField from '../common/SelectField';
 
 function copyForTenant(tenantType) {
   if (tenantType === 'restaurant') {
@@ -291,31 +292,31 @@ export default function CommandCenterWorkspace({ tenantType }) {
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-gray-700">Window</span>
-            <select className="input-field" value={days} onChange={(event) => setDays(Number(event.target.value || 7))}>
-              <option value={1}>24h</option>
-              <option value={7}>7d</option>
-              <option value={30}>30d</option>
-              <option value={90}>90d</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-gray-700">Status</span>
-            <select className="input-field" value={status} onChange={(event) => setStatus(event.target.value)}>
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value || 'all'} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-gray-700">Event Type</span>
-            <select className="input-field" value={eventType} onChange={(event) => setEventType(event.target.value)}>
-              {EVENT_OPTIONS.map((option) => (
-                <option key={option.value || 'all'} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
+          <SelectField
+            label="Window"
+            value={days}
+            onChange={(nextValue) => setDays(Number(nextValue || 7))}
+            options={[
+              { value: 1, label: '24h' },
+              { value: 7, label: '7d' },
+              { value: 30, label: '30d' },
+              { value: 90, label: '90d' },
+            ]}
+          />
+          <SelectField
+            label="Status"
+            value={status}
+            onChange={setStatus}
+            options={STATUS_OPTIONS.filter((option) => option.value !== '').map((option) => ({ value: option.value, label: option.label }))}
+            placeholder="All statuses"
+          />
+          <SelectField
+            label="Event Type"
+            value={eventType}
+            onChange={setEventType}
+            options={EVENT_OPTIONS.filter((option) => option.value !== '').map((option) => ({ value: option.value, label: option.label }))}
+            placeholder="All event types"
+          />
         </div>
       </div>
 

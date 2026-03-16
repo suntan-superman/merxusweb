@@ -2,6 +2,17 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createRestaurant } from '../../api/merxus';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import SelectField from '../../components/common/SelectField';
+
+const TIMEZONE_OPTIONS = [
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Phoenix', label: 'Arizona (MST)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (HST)' },
+];
 
 export default function CreateRestaurantPage() {
   const navigate = useNavigate();
@@ -191,27 +202,17 @@ export default function CreateRestaurantPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-2">
-                Timezone *
-              </label>
-              <select
-                id="timezone"
-                name="timezone"
-                required
-                value={restaurantData.timezone}
-                onChange={handleRestaurantChange}
-                className="input-field"
-              >
-                <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                <option value="America/Denver">Mountain Time (MT)</option>
-                <option value="America/Chicago">Central Time (CT)</option>
-                <option value="America/New_York">Eastern Time (ET)</option>
-                <option value="America/Phoenix">Arizona (MST)</option>
-                <option value="America/Anchorage">Alaska Time (AKT)</option>
-                <option value="Pacific/Honolulu">Hawaii Time (HST)</option>
-              </select>
-            </div>
+            <SelectField
+              id="timezone"
+              name="timezone"
+              label="Timezone"
+              value={restaurantData.timezone}
+              onChange={(nextValue) =>
+                setRestaurantData((prev) => ({ ...prev, timezone: nextValue }))
+              }
+              options={TIMEZONE_OPTIONS}
+              required
+            />
 
             <div className="flex justify-end">
               <button

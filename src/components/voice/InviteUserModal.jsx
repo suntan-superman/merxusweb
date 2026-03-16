@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import FormModal from '../common/FormModal';
+import SelectField from '../common/SelectField';
 
 export default function InviteUserModal({ isOpen, onClose, onInvite }) {
   const [loading, setLoading] = useState(false);
@@ -112,20 +113,18 @@ export default function InviteUserModal({ isOpen, onClose, onInvite }) {
 
         {/* Role */}
         <div>
-          <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-            Role *
-          </label>
-          <select
+          <SelectField
             id="role"
             name="role"
+            label="Role"
             value={formData.role}
-            onChange={handleChange}
-            className="input-field"
+            onChange={(nextValue) => setFormData((prev) => ({ ...prev, role: nextValue }))}
+            options={[
+              { value: 'manager', label: 'Manager' },
+              { value: 'staff', label: 'Staff' },
+            ]}
             required
-          >
-            <option value="manager">Manager</option>
-            <option value="staff">Staff</option>
-          </select>
+          />
           <div className="mt-2 space-y-1 text-xs text-gray-600">
             <p><strong>Manager:</strong> Full access to manage settings, users, and calls</p>
             <p><strong>Staff:</strong> Can view calls, manage voicemail, limited settings access</p>

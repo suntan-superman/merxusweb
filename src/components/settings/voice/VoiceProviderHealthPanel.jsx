@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import SelectField from '../../common/SelectField';
 import {
   fetchVoiceProviderHealth,
   invalidateVoiceProviderHealthCache,
@@ -193,71 +194,55 @@ export default function VoiceProviderHealthPanel({
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label htmlFor="strategy" className="block text-sm font-medium text-gray-700 mb-2">
-              Strategy
-            </label>
-            <select
-              id="strategy"
-              name="strategy"
-              value={form.strategy}
-              onChange={handleChange}
-              className="input-field"
-            >
-              <option value="realtime">Realtime</option>
-              <option value="standard">Standard Pipeline</option>
-            </select>
-          </div>
+          <SelectField
+            id="strategy"
+            name="strategy"
+            label="Strategy"
+            value={form.strategy}
+            onChange={(nextValue) => setForm((current) => ({ ...current, strategy: nextValue }))}
+            options={[
+              { value: 'realtime', label: 'Realtime' },
+              { value: 'standard', label: 'Standard Pipeline' },
+            ]}
+          />
 
-          <div>
-            <label htmlFor="realtimeProvider" className="block text-sm font-medium text-gray-700 mb-2">
-              Realtime Provider
-            </label>
-            <select
-              id="realtimeProvider"
-              name="realtimeProvider"
-              value={form.realtimeProvider}
-              onChange={handleChange}
-              className="input-field"
-            >
-              <option value="openai_realtime">OpenAI Realtime</option>
-              <option value="mock_realtime">Mock Realtime</option>
-            </select>
-          </div>
+          <SelectField
+            id="realtimeProvider"
+            name="realtimeProvider"
+            label="Realtime Provider"
+            value={form.realtimeProvider}
+            onChange={(nextValue) => setForm((current) => ({ ...current, realtimeProvider: nextValue }))}
+            options={[
+              { value: 'openai_realtime', label: 'OpenAI Realtime' },
+              { value: 'mock_realtime', label: 'Mock Realtime' },
+            ]}
+          />
 
-          <div>
-            <label htmlFor="sttProvider" className="block text-sm font-medium text-gray-700 mb-2">
-              STT Provider
-            </label>
-            <select
-              id="sttProvider"
-              name="sttProvider"
-              value={form.sttProvider}
-              onChange={handleChange}
-              className="input-field"
-            >
-              <option value="openai_managed">OpenAI Managed</option>
-              <option value="openai_stt">OpenAI STT</option>
-              <option value="mock_stt">Mock STT</option>
-            </select>
-          </div>
+          <SelectField
+            id="sttProvider"
+            name="sttProvider"
+            label="STT Provider"
+            value={form.sttProvider}
+            onChange={(nextValue) => setForm((current) => ({ ...current, sttProvider: nextValue }))}
+            options={[
+              { value: 'openai_managed', label: 'OpenAI Managed' },
+              { value: 'openai_stt', label: 'OpenAI STT' },
+              { value: 'mock_stt', label: 'Mock STT' },
+            ]}
+          />
 
-          <div>
-            <label htmlFor="ttsProvider" className="block text-sm font-medium text-gray-700 mb-2">
-              TTS Provider
-            </label>
-            <select
-              id="ttsProvider"
-              name="ttsProvider"
-              value={form.ttsProvider}
-              onChange={handleChange}
-              className="input-field"
-            >
-              <option value="openai_managed">OpenAI Managed</option>
-              <option value="openai_tts">OpenAI TTS</option>
-              <option value="mock_tts">Mock TTS</option>
-            </select>
-          </div>
+          <SelectField
+            id="ttsProvider"
+            name="ttsProvider"
+            label="TTS Provider"
+            value={form.ttsProvider}
+            onChange={(nextValue) => setForm((current) => ({ ...current, ttsProvider: nextValue }))}
+            options={[
+              { value: 'openai_managed', label: 'OpenAI Managed' },
+              { value: 'openai_tts', label: 'OpenAI TTS' },
+              { value: 'mock_tts', label: 'Mock TTS' },
+            ]}
+          />
 
           <div className="md:col-span-2">
             <label htmlFor="realtimeModel" className="block text-sm font-medium text-gray-700 mb-2">

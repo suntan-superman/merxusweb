@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SelectField from '../../common/SelectField';
 
 export default function EstateRouting({ settings, onSave, saving }) {
   const [routing, setRouting] = useState(
@@ -108,17 +109,13 @@ export default function EstateRouting({ settings, onSave, saving }) {
                   <span className="font-medium text-gray-900">{intent.name}</span>
                 </div>
                 <span className="text-gray-500">→</span>
-                <select
+                <SelectField
                   value={intent.routes_to}
-                  onChange={(e) => updateIntent(index, 'routes_to', e.target.value)}
-                  className="input-field text-sm w-48"
-                >
-                  {routing.departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(nextValue) => updateIntent(index, 'routes_to', nextValue)}
+                  options={routing.departments.map((dept) => ({ value: dept.id, label: dept.label }))}
+                  containerClassName="w-48"
+                  buttonClassName="py-2 text-sm"
+                />
               </div>
             ))}
           </div>
@@ -127,20 +124,16 @@ export default function EstateRouting({ settings, onSave, saving }) {
         <div className="border-t pt-4">
           <h4 className="text-md font-semibold text-gray-900 mb-3">After-Hours Handling</h4>
           <div className="space-y-4">
-            <div>
-              <label htmlFor="afterHoursMode" className="block text-sm font-medium text-gray-700 mb-2">
-                Mode
-              </label>
-              <select
-                id="afterHoursMode"
-                value={routing.after_hours.mode}
-                onChange={(e) => updateAfterHours('mode', e.target.value)}
-                className="input-field"
-              >
-                <option value="voicemail_only">Voicemail Only</option>
-                <option value="emergency_or_voicemail">Emergency or Voicemail</option>
-              </select>
-            </div>
+            <SelectField
+              id="afterHoursMode"
+              label="Mode"
+              value={routing.after_hours.mode}
+              onChange={(nextValue) => updateAfterHours('mode', nextValue)}
+              options={[
+                { value: 'voicemail_only', label: 'Voicemail Only' },
+                { value: 'emergency_or_voicemail', label: 'Emergency or Voicemail' },
+              ]}
+            />
 
             <div>
               <label htmlFor="afterHoursMessageEn" className="block text-sm font-medium text-gray-700 mb-2">

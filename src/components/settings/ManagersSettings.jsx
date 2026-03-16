@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SelectField from '../common/SelectField';
 import TimePickerField from '../common/TimePickerField';
 
 export default function ManagersSettings({ settings, onSave, saving }) {
@@ -261,23 +262,18 @@ export default function ManagersSettings({ settings, onSave, saving }) {
                 </div>
 
                 <div className="col-span-3">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  <SelectField
+                    label="Priority"
                     value={editingManager.priority}
-                    onChange={(e) =>
+                    onChange={(nextValue) =>
                       setEditingManager({
                         ...editingManager,
-                        priority: parseInt(e.target.value),
+                        priority: nextValue,
                       })
                     }
-                  >
-                    {managers.map((_, i) => (
-                      <option key={i} value={i + 1}>
-                        {i + 1}
-                      </option>
-                    ))}
-                  </select>
+                    options={managers.map((_, i) => ({ value: i + 1, label: String(i + 1) }))}
+                    buttonClassName="rounded-md px-3 py-2 text-sm"
+                  />
                 </div>
               </div>
 

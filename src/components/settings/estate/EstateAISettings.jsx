@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SelectField from '../../common/SelectField';
 
 export default function EstateAISettings({ settings, onSave, saving }) {
   const [form, setForm] = useState({
@@ -68,65 +69,37 @@ export default function EstateAISettings({ settings, onSave, saving }) {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="model" className="block text-sm font-medium text-gray-700 mb-2">
-            AI Model
-          </label>
-          <select
-            id="model"
-            name="model"
-            value={form.model}
-            onChange={handleChange}
-            className="input-field"
-          >
-            <option value="gpt-4o-mini">GPT-4o Mini (Fast, Cost-effective)</option>
-            <option value="gpt-4o">GPT-4o (More Capable)</option>
-          </select>
-          <p className="text-xs text-gray-500 mt-1">
-            GPT-4o Mini is recommended for most use cases. GPT-4o provides better reasoning for complex inquiries.
-          </p>
-        </div>
+        <SelectField
+          id="model"
+          name="model"
+          label="AI Model"
+          value={form.model}
+          onChange={(nextValue) => setForm((prev) => ({ ...prev, model: nextValue }))}
+          options={[
+            { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Fast, Cost-effective)' },
+            { value: 'gpt-4o', label: 'GPT-4o (More Capable)' },
+          ]}
+          helperText="GPT-4o Mini is recommended for most use cases. GPT-4o provides better reasoning for complex inquiries."
+        />
 
-        <div>
-          <label htmlFor="voiceName" className="block text-sm font-medium text-gray-700 mb-2">
-            Voice
-          </label>
-          <select
-            id="voiceName"
-            name="voiceName"
-            value={form.voiceName}
-            onChange={handleChange}
-            className="input-field"
-          >
-            {VOICE_OPTIONS.map((voice) => (
-              <option key={voice.value} value={voice.value}>
-                {voice.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          id="voiceName"
+          name="voiceName"
+          label="Voice"
+          value={form.voiceName}
+          onChange={(nextValue) => setForm((prev) => ({ ...prev, voiceName: nextValue }))}
+          options={VOICE_OPTIONS}
+        />
 
-        <div>
-          <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-2">
-            Default Language
-          </label>
-          <select
-            id="language"
-            name="language"
-            value={form.language}
-            onChange={handleChange}
-            className="input-field"
-          >
-            {LANGUAGE_OPTIONS.map((lang) => (
-              <option key={lang.value} value={lang.value}>
-                {lang.label}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-500 mt-1">
-            The AI will automatically detect and respond in English or Spanish based on caller preference.
-          </p>
-        </div>
+        <SelectField
+          id="language"
+          name="language"
+          label="Default Language"
+          value={form.language}
+          onChange={(nextValue) => setForm((prev) => ({ ...prev, language: nextValue }))}
+          options={LANGUAGE_OPTIONS}
+          helperText="The AI will automatically detect and respond in English or Spanish based on caller preference."
+        />
 
         <div>
           <label htmlFor="systemPrompt" className="block text-sm font-medium text-gray-700 mb-2">

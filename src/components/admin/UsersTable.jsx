@@ -1,3 +1,5 @@
+import SelectField from '../common/SelectField';
+
 export default function UsersTable({ users, onChangeRole, onDisable }) {
   if (!users || users.length === 0) {
     return (
@@ -29,15 +31,16 @@ export default function UsersTable({ users, onChangeRole, onDisable }) {
                 <div className="text-xs text-gray-500">{u.email}</div>
               </td>
               <td className="px-4 py-3 align-top">
-                <select
-                  className="border border-gray-300 rounded-md px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                <SelectField
                   value={u.role}
-                  onChange={(e) => onChangeRole(u.uid || u.id, e.target.value)}
-                >
-                  <option value="owner">Owner</option>
-                  <option value="manager">Manager</option>
-                  <option value="staff">Staff</option>
-                </select>
+                  onChange={(nextValue) => onChangeRole(u.uid || u.id, nextValue)}
+                  options={[
+                    { value: 'owner', label: 'Owner' },
+                    { value: 'manager', label: 'Manager' },
+                    { value: 'staff', label: 'Staff' },
+                  ]}
+                  buttonClassName="rounded-md px-2 py-1 text-xs"
+                />
               </td>
               <td className="px-4 py-3 align-top">
                 {u.disabled ? (

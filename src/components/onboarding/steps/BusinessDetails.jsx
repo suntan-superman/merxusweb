@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MapPin, Mail, Phone, Globe, Clock, Lock, Eye, EyeOff } from 'lucide-react';
 import { formatPhoneInput } from '../../../utils/phoneFormatter';
 import { capitalizeWordsPreservingApostrophes } from '../../../utils/textFormatters';
+import SelectField from '../../common/SelectField';
 
 const TIMEZONES = [
   { value: 'America/New_York', label: 'Eastern Time (ET)' },
@@ -233,17 +234,12 @@ export default function BusinessDetails({
             <Clock size={14} />
             Timezone <span className="text-red-500">*</span>
           </label>
-          <select
+          <SelectField
             value={data.timezone || 'America/Los_Angeles'}
-            onChange={(e) => handleChange('timezone', e.target.value)}
-            className="onboarding-select w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
-          >
-            {TIMEZONES.map((tz) => (
-              <option key={tz.value} value={tz.value}>
-                {tz.label}
-              </option>
-            ))}
-          </select>
+            onChange={(nextValue) => handleChange('timezone', nextValue)}
+            options={TIMEZONES}
+            buttonClassName="rounded-lg border-2 py-2.5"
+          />
         </div>
 
         {/* Website (Optional) */}

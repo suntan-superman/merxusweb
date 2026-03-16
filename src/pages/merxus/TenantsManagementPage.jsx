@@ -5,6 +5,7 @@ import { db } from '../../firebase/config';
 import { toast } from 'react-toastify';
 import { GridComponent, ColumnsDirective, ColumnDirective, Page, Sort, Filter, Toolbar, ExcelExport, Inject } from '@syncfusion/ej2-react-grids';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
+import SelectField from '../../components/common/SelectField';
 import { pauseSubscriptionForTenant, resumeSubscriptionForTenant, createRefundForTenant } from '../../api/billing';
 
 export default function TenantsManagementPage() {
@@ -719,18 +720,16 @@ export default function TenantsManagementPage() {
                   placeholder="0.00"
                 />
               </div>
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">Reason</label>
-                <select
-                  value={refundReason}
-                  onChange={(e) => setRefundReason(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
-                  <option value="requested_by_customer">Requested by customer</option>
-                  <option value="duplicate">Duplicate</option>
-                  <option value="fraudulent">Fraudulent</option>
-                </select>
-              </div>
+              <SelectField
+                label="Reason"
+                value={refundReason}
+                onChange={setRefundReason}
+                options={[
+                  { value: 'requested_by_customer', label: 'Requested by customer' },
+                  { value: 'duplicate', label: 'Duplicate' },
+                  { value: 'fraudulent', label: 'Fraudulent' },
+                ]}
+              />
             </div>
 
             <div className="flex gap-3 mt-6">

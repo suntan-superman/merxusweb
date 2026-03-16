@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { useActivityLog } from '../../hooks/useVoiceQueries';
+import SelectField from '../common/SelectField';
 import {
   UserPlusIcon,
   UserMinusIcon,
@@ -139,14 +140,16 @@ export default function ActivityLog({ limit = 20 }) {
         <h3 className="text-lg font-medium text-gray-900">Activity Log</h3>
         <div className="flex items-center gap-2">
           <FunnelIcon className="w-4 h-4 text-gray-400" />
-          <select
+          <SelectField
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="input-field !w-auto !px-3 !py-1.5 text-sm"
-          >
-            <option value="all">All Activity</option>
-            <option value="user">User Changes</option>
-          </select>
+            onChange={setFilter}
+            options={[
+              { value: 'all', label: 'All Activity' },
+              { value: 'user', label: 'User Changes' },
+            ]}
+            containerClassName="w-auto min-w-[180px]"
+            buttonClassName="!w-auto px-3 py-1.5 text-sm"
+          />
           <button
             onClick={() => refetch()}
             className="text-sm text-primary-600 hover:text-primary-700"

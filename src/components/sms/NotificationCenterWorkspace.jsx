@@ -21,6 +21,7 @@ import {
   snoozeSmsNotificationRunAlert,
 } from '../../api/sms';
 import { getNativeObjectRoute, getPortalBasePath } from '../../utils/objectRouting';
+import SelectField from '../common/SelectField';
 
 function formatTimestamp(value) {
   if (!value) return '—';
@@ -1619,66 +1620,50 @@ export default function NotificationCenterWorkspace({ tenantType }) {
       ) : null}
 
       <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-        <label className="block">
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Window</span>
-          <select
-            className="input-field"
-            value={filters.days}
-            onChange={(event) => setFilters((prev) => ({ ...prev, days: Number(event.target.value) }))}
-          >
-            <option value={7}>7 days</option>
-            <option value={30}>30 days</option>
-            <option value={90}>90 days</option>
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Status</span>
-          <select
-            className="input-field"
-            value={filters.status}
-            onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value || 'all'} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Channel</span>
-          <select
-            className="input-field"
-            value={filters.channel}
-            onChange={(event) => setFilters((prev) => ({ ...prev, channel: event.target.value }))}
-          >
-            {CHANNEL_OPTIONS.map((option) => (
-              <option key={option.value || 'all'} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Role</span>
-          <select
-            className="input-field"
-            value={filters.recipientRole}
-            onChange={(event) => setFilters((prev) => ({ ...prev, recipientRole: event.target.value }))}
-          >
-            {ROLE_OPTIONS.map((option) => (
-              <option key={option.value || 'all'} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="block xl:col-span-2">
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Event Type</span>
-          <select
-            className="input-field"
-            value={filters.eventType}
-            onChange={(event) => setFilters((prev) => ({ ...prev, eventType: event.target.value }))}
-          >
-            {EVENT_TYPE_OPTIONS.map((option) => (
-              <option key={option.value || 'all'} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          label="Window"
+          value={filters.days}
+          onChange={(nextValue) => setFilters((prev) => ({ ...prev, days: Number(nextValue) }))}
+          options={[
+            { value: 7, label: '7 days' },
+            { value: 30, label: '30 days' },
+            { value: 90, label: '90 days' },
+          ]}
+          labelClassName="text-xs font-semibold uppercase tracking-wide text-gray-500"
+        />
+        <SelectField
+          label="Status"
+          value={filters.status}
+          onChange={(nextValue) => setFilters((prev) => ({ ...prev, status: nextValue }))}
+          options={STATUS_OPTIONS.filter((option) => option.value !== '').map((option) => ({ value: option.value, label: option.label }))}
+          placeholder="All statuses"
+          labelClassName="text-xs font-semibold uppercase tracking-wide text-gray-500"
+        />
+        <SelectField
+          label="Channel"
+          value={filters.channel}
+          onChange={(nextValue) => setFilters((prev) => ({ ...prev, channel: nextValue }))}
+          options={CHANNEL_OPTIONS.filter((option) => option.value !== '').map((option) => ({ value: option.value, label: option.label }))}
+          placeholder="All channels"
+          labelClassName="text-xs font-semibold uppercase tracking-wide text-gray-500"
+        />
+        <SelectField
+          label="Role"
+          value={filters.recipientRole}
+          onChange={(nextValue) => setFilters((prev) => ({ ...prev, recipientRole: nextValue }))}
+          options={ROLE_OPTIONS.filter((option) => option.value !== '').map((option) => ({ value: option.value, label: option.label }))}
+          placeholder="All roles"
+          labelClassName="text-xs font-semibold uppercase tracking-wide text-gray-500"
+        />
+        <SelectField
+          label="Event Type"
+          value={filters.eventType}
+          onChange={(nextValue) => setFilters((prev) => ({ ...prev, eventType: nextValue }))}
+          options={EVENT_TYPE_OPTIONS.filter((option) => option.value !== '').map((option) => ({ value: option.value, label: option.label }))}
+          placeholder="All event types"
+          containerClassName="xl:col-span-2"
+          labelClassName="text-xs font-semibold uppercase tracking-wide text-gray-500"
+        />
       </div>
 
       <div className="mt-3">

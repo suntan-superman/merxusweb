@@ -7,6 +7,7 @@ import { getCategories, getIndustriesForCategory } from '../../../data/voiceProm
 import { useAuth } from '../../context/AuthContext';
 import { validateForm, voiceBusinessSchema, voiceContactSchema, voiceIndustrySchema } from '../../utils/validation';
 import TimePickerField from '../common/TimePickerField';
+import SelectField from '../common/SelectField';
 
 // Storage key for flyover progress
 const FLYOVER_STORAGE_KEY = 'merxus_voice_flyover_state';
@@ -605,16 +606,12 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Business Category <span className="text-red-500">*</span>
                 </label>
-                <select
+                <SelectField
                   value={formData.businessType.category}
-                  onChange={(e) => handleBusinessTypeChange('category', e.target.value)}
-                  className="input-field"
-                >
-                  <option value="">Select a category...</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                  onChange={(nextValue) => handleBusinessTypeChange('category', nextValue)}
+                  options={categories.map((cat) => ({ value: cat, label: cat }))}
+                  placeholder="Select a category..."
+                />
               </div>
 
               {industries.length > 0 && (
@@ -622,16 +619,12 @@ export default function VoiceFlyover({ isOpen, onClose, onComplete }) {
                   <label className="block mb-1 text-sm font-medium text-gray-700">
                     Industry / Specialty
                   </label>
-                  <select
+                  <SelectField
                     value={formData.businessType.industry}
-                    onChange={(e) => handleBusinessTypeChange('industry', e.target.value)}
-                    className="input-field"
-                  >
-                    <option value="">Select an industry...</option>
-                    {industries.map((ind) => (
-                      <option key={ind} value={ind}>{ind}</option>
-                    ))}
-                  </select>
+                    onChange={(nextValue) => handleBusinessTypeChange('industry', nextValue)}
+                    options={industries.map((ind) => ({ value: ind, label: ind }))}
+                    placeholder="Select an industry..."
+                  />
                   <p className="mt-1 text-xs text-gray-500">
                     This helps your AI use industry-specific language
                   </p>

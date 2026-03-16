@@ -1,3 +1,5 @@
+import SelectField from '../common/SelectField';
+
 // Voice Users Table Component
 
 export default function VoiceUsersTable({ users, onChangeRole, onDisable }) {
@@ -36,14 +38,15 @@ export default function VoiceUsersTable({ users, onChangeRole, onDisable }) {
                     Owner
                   </span>
                 ) : (
-                  <select
-                    className="border border-gray-300 rounded-md px-2 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  <SelectField
                     value={u.role}
-                    onChange={(e) => onChangeRole(u.uid || u.id, e.target.value)}
-                  >
-                    <option value="manager">Manager</option>
-                    <option value="staff">Staff</option>
-                  </select>
+                    onChange={(nextValue) => onChangeRole(u.uid || u.id, nextValue)}
+                    options={[
+                      { value: 'manager', label: 'Manager' },
+                      { value: 'staff', label: 'Staff' },
+                    ]}
+                    buttonClassName="rounded-md px-2 py-1 text-xs"
+                  />
                 )}
               </td>
               <td className="px-4 py-3 align-top">

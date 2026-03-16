@@ -1,4 +1,5 @@
 import { Building2, Utensils, Phone, Briefcase, AlertCircle } from 'lucide-react';
+import SelectField from '../../common/SelectField';
 
 const BUSINESS_TYPES = [
   { value: 'Law Firm', label: 'Law Firm' },
@@ -71,28 +72,30 @@ export default function IndustryCustomization({ tenantType, data, onChange }) {
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Dine-in Available?
               </label>
-              <select
+              <SelectField
                 value={data.industryData?.dineIn || 'yes'}
-                onChange={(e) => handleChange('dineIn', e.target.value)}
-                className="onboarding-select w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
-              >
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
+                onChange={(nextValue) => handleChange('dineIn', nextValue)}
+                options={[
+                  { value: 'yes', label: 'Yes' },
+                  { value: 'no', label: 'No' },
+                ]}
+                buttonClassName="rounded-lg border-2 py-2.5"
+              />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Delivery/Takeout?
               </label>
-              <select
+              <SelectField
                 value={data.industryData?.delivery || 'yes'}
-                onChange={(e) => handleChange('delivery', e.target.value)}
-                className="onboarding-select w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
-              >
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
+                onChange={(nextValue) => handleChange('delivery', nextValue)}
+                options={[
+                  { value: 'yes', label: 'Yes' },
+                  { value: 'no', label: 'No' },
+                ]}
+                buttonClassName="rounded-lg border-2 py-2.5"
+              />
             </div>
           </div>
 
@@ -196,18 +199,13 @@ export default function IndustryCustomization({ tenantType, data, onChange }) {
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               Business Type <span className="text-red-500">*</span>
             </label>
-            <select
+            <SelectField
               value={data.industryData?.businessType || ''}
-              onChange={(e) => handleChange('businessType', e.target.value)}
-              className="onboarding-select w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all outline-none bg-white"
-            >
-              <option value="">Select a business type...</option>
-              {BUSINESS_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
+              onChange={(nextValue) => handleChange('businessType', nextValue)}
+              options={BUSINESS_TYPES}
+              placeholder="Select a business type..."
+              buttonClassName="rounded-lg border-2 py-2.5"
+            />
           </div>
 
           <div>

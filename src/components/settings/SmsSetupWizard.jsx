@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, ChevronDown } from 'lucide-react';
+import SelectField from '../common/SelectField';
 
 const WIZARD_STEPS = [
   { id: 'businessType', label: 'Business Type' },
@@ -513,85 +513,6 @@ function InputField({ label, type = 'text', value, onChange, placeholder = '', h
   );
 }
 
-function SelectField({ label, value, onChange, options = [], placeholder = 'Select option', errorText = '' }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const selectedLabel = value || placeholder;
-
-  return (
-    <div className="block" ref={dropdownRef}>
-      <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setIsOpen((current) => !current)}
-          className={`input-field flex items-center justify-between text-left ${value ? 'text-slate-900' : 'text-slate-400'} ${errorText ? '!border-red-300 !ring-2 !ring-red-100 focus:!ring-red-200' : ''}`}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
-        >
-          <span>{selectedLabel}</span>
-          <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {isOpen ? (
-          <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-            <div className="max-h-64 overflow-y-auto py-2">
-              <button
-                type="button"
-                onClick={() => {
-                  onChange('');
-                  setIsOpen(false);
-                }}
-                className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${
-                  !value ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'
-                }`}
-                role="option"
-                aria-selected={!value}
-              >
-                <span>{placeholder}</span>
-                {!value ? <Check className="h-4 w-4" /> : null}
-              </button>
-              {options.map((option) => {
-                const selected = value === option;
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => {
-                      onChange(option);
-                      setIsOpen(false);
-                    }}
-                    className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors ${
-                      selected ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
-                    }`}
-                    role="option"
-                    aria-selected={selected}
-                  >
-                    <span>{option}</span>
-                    {selected ? <Check className="h-4 w-4" /> : null}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-      </div>
-      {errorText ? <span className="mt-2 block text-sm leading-6 text-red-600">{errorText}</span> : null}
-    </div>
-  );
-}
-
 export default function SmsSetupWizard({
   copy,
   form,
@@ -930,10 +851,10 @@ export default function SmsSetupWizard({
         <div className="space-y-6">
           <div className="grid gap-4 lg:grid-cols-2">
             {[
-              ['smsEnabled', 'Enable SMS', 'Turns on SMS messaging for this tenant number.'],
+              ['smsEnabled', 'Enable SMS on your business line', 'Turns on SMS messaging for this tenant number. This is the master switch for texting from your Merxus line.'],
               ['staffAlertsEnabled', 'Enable staff alerts', 'Delivers alerts to the routing groups selected in this wizard.'],
               ['callerConfirmationEnabled', 'Enable caller confirmations', 'Sends concise automated follow-ups after qualifying calls.'],
-              ['callerSmsEnabled', 'Caller SMS confirmation', 'Keeps caller confirmation focused on SMS so setup stays simple.'],
+              ['callerSmsEnabled', 'Send caller confirmations by SMS', 'Uses SMS as the delivery method for caller follow-up messages sent from your business line.'],
             ].map(([key, title, description]) => (
               <label key={key} className="rounded-[28px] border border-slate-200 bg-white p-5">
                 <div className="flex items-start gap-3">
@@ -945,6 +866,12 @@ export default function SmsSetupWizard({
                 </div>
               </label>
             ))}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Staff alert delivery methods</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Choose how your internal team can receive alerts. These channel checkboxes control staff delivery, not whether your Merxus line has SMS enabled.
+            </p>
           </div>
           <div className="flex flex-wrap gap-3">
             {STAFF_CHANNEL_OPTIONS.map((channel) => (

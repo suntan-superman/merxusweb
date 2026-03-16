@@ -2,6 +2,7 @@
  * Reusable form field components for onboarding
  */
 import { Link } from 'react-router-dom';
+import SelectField from '../common/SelectField';
 
 const BUSINESS_TYPE_OPTIONS = [
   'Law Firm',
@@ -293,21 +294,15 @@ export function VoiceFields({ formData, onChange }) {
       <label htmlFor="businessType" className="block text-sm font-medium text-gray-700 mb-2">
         Business Type *
       </label>
-      <select
+      <SelectField
         id="businessType"
         name="businessType"
-        required
         value={formData.businessType}
-        onChange={onChange}
-        className="input-field onboarding-select"
-      >
-        <option value="">Select business type...</option>
-        {BUSINESS_TYPE_OPTIONS.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
+        onChange={(nextValue) => onChange({ target: { name: 'businessType', value: nextValue } })}
+        options={BUSINESS_TYPE_OPTIONS.map((option) => ({ value: option, label: option }))}
+        placeholder="Select business type..."
+        required
+      />
       <p className="mt-1 text-xs text-gray-500">This helps the AI match your business context.</p>
     </div>
   );

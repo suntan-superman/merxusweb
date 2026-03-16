@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import SelectField from '../common/SelectField';
 
 export default function RoutingRuleModal({ rule, onSave, onClose, saving }) {
   const isEdit = !!rule;
@@ -155,22 +156,18 @@ export default function RoutingRuleModal({ rule, onSave, onClose, saving }) {
             </p>
 
             <div className="space-y-4">
-              <div>
-                <label htmlFor="timeType" className="block text-sm font-medium text-gray-700 mb-1">
-                  Time Condition
-                </label>
-                <select
-                  id="timeType"
-                  value={formData.conditions.timeType}
-                  onChange={(e) => handleConditionChange('timeType', e.target.value)}
-                  className="input-field"
-                >
-                  <option value="all">All Times</option>
-                  <option value="business_hours">Business Hours Only</option>
-                  <option value="after_hours">After Hours Only</option>
-                  <option value="specific_times">Specific Times (Advanced)</option>
-                </select>
-              </div>
+              <SelectField
+                id="timeType"
+                label="Time Condition"
+                value={formData.conditions.timeType}
+                onChange={(nextValue) => handleConditionChange('timeType', nextValue)}
+                options={[
+                  { value: 'all', label: 'All Times' },
+                  { value: 'business_hours', label: 'Business Hours Only' },
+                  { value: 'after_hours', label: 'After Hours Only' },
+                  { value: 'specific_times', label: 'Specific Times (Advanced)' },
+                ]}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -224,23 +221,19 @@ export default function RoutingRuleModal({ rule, onSave, onClose, saving }) {
             </p>
 
             <div className="space-y-4">
-              <div>
-                <label htmlFor="actionType" className="block text-sm font-medium text-gray-700 mb-1">
-                  Action Type *
-                </label>
-                <select
-                  id="actionType"
-                  value={formData.action.type}
-                  onChange={(e) => handleActionChange('type', e.target.value)}
-                  className="input-field"
-                  required
-                >
-                  <option value="transfer">Transfer to Phone Number</option>
-                  <option value="voicemail">Send to Voicemail</option>
-                  <option value="message">Play Custom Message</option>
-                  <option value="department">Route to Department</option>
-                </select>
-              </div>
+              <SelectField
+                id="actionType"
+                label="Action Type"
+                value={formData.action.type}
+                onChange={(nextValue) => handleActionChange('type', nextValue)}
+                options={[
+                  { value: 'transfer', label: 'Transfer to Phone Number' },
+                  { value: 'voicemail', label: 'Send to Voicemail' },
+                  { value: 'message', label: 'Play Custom Message' },
+                  { value: 'department', label: 'Route to Department' },
+                ]}
+                required
+              />
 
               {formData.action.type === 'transfer' && (
                 <div>

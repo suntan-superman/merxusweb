@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from '../common/ConfirmationModal';
 import InvitationLinkModal from '../common/InvitationLinkModal';
+import SelectField from '../common/SelectField';
 import {
   disableTeamUser,
   enableTeamUser,
@@ -403,17 +404,16 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
               onChange={(value) => setForm((current) => ({ ...current, phone: value }))}
               placeholder="+16615551234"
             />
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">Role *</label>
-              <select
-                value={form.role}
-                onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}
-                className="input-field"
-              >
-                <option value="manager">Manager</option>
-                <option value="staff">Staff</option>
-              </select>
-            </div>
+            <SelectField
+              label="Role"
+              value={form.role}
+              onChange={(nextValue) => setForm((current) => ({ ...current, role: nextValue }))}
+              options={[
+                { value: 'manager', label: 'Manager' },
+                { value: 'staff', label: 'Staff' },
+              ]}
+              required
+            />
           </div>
 
           <NotificationGroupSelector
@@ -474,15 +474,16 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
                             Owner
                           </span>
                         ) : (
-                          <select
-                            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
+                          <SelectField
                             value={currentUser.role}
                             disabled={isRowBusy(uid)}
-                            onChange={(event) => handleRoleChange(uid, event.target.value)}
-                          >
-                            <option value="manager">Manager</option>
-                            <option value="staff">Staff</option>
-                          </select>
+                            onChange={(nextValue) => handleRoleChange(uid, nextValue)}
+                            options={[
+                              { value: 'manager', label: 'Manager' },
+                              { value: 'staff', label: 'Staff' },
+                            ]}
+                            buttonClassName="rounded-md px-2 py-1 text-xs"
+                          />
                         )}
                       </td>
                       <td className="px-4 py-3 align-top">

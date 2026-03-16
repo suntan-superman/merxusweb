@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SelectField from '../common/SelectField';
 
 export default function InviteUserForm({ onInvite, submitting }) {
   const [email, setEmail] = useState('');
@@ -48,20 +49,17 @@ export default function InviteUserForm({ onInvite, submitting }) {
             />
           </div>
 
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
-              Role *
-            </label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="input-field"
-            >
-              <option value="manager">Manager</option>
-              <option value="staff">Staff</option>
-            </select>
-          </div>
+          <SelectField
+            id="role"
+            label="Role"
+            value={role}
+            onChange={setRole}
+            options={[
+              { value: 'manager', label: 'Manager' },
+              { value: 'staff', label: 'Staff' },
+            ]}
+            required
+          />
         </div>
 
         <button

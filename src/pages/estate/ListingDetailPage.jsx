@@ -10,6 +10,7 @@ import {
 } from '../../hooks/useEstateQueries';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ListingForm from '../../components/listings/ListingForm';
+import SelectField from '../../components/common/SelectField';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft,
@@ -278,16 +279,17 @@ export default function ListingDetailPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Listing Status
             </label>
-            <select
+            <SelectField
               value={listing.status || 'active'}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              className="input-field w-full md:w-64"
-            >
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="sold">Sold</option>
-              <option value="withdrawn">Withdrawn</option>
-            </select>
+              onChange={handleStatusChange}
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'sold', label: 'Sold' },
+                { value: 'withdrawn', label: 'Withdrawn' },
+              ]}
+              containerClassName="w-full md:w-64"
+            />
           </div>
         </div>
       </div>

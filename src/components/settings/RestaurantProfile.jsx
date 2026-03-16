@@ -1,4 +1,15 @@
 import { useState } from 'react';
+import SelectField from '../common/SelectField';
+
+const TIMEZONE_OPTIONS = [
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Phoenix', label: 'Arizona (MST)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (HST)' },
+];
 
 export default function RestaurantProfile({ settings, onSave, saving }) {
   const merxusAiNumber = settings.twilioPhoneNumber || settings.phoneNumber || '';
@@ -60,27 +71,15 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
           />
         </div>
 
-        <div>
-          <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-2">
-            Timezone *
-          </label>
-          <select
-            id="timezone"
-            name="timezone"
-            required
-            value={form.timezone}
-            onChange={handleChange}
-            className="input-field"
-          >
-            <option value="America/Los_Angeles">Pacific Time (PT)</option>
-            <option value="America/Denver">Mountain Time (MT)</option>
-            <option value="America/Chicago">Central Time (CT)</option>
-            <option value="America/New_York">Eastern Time (ET)</option>
-            <option value="America/Phoenix">Arizona (MST)</option>
-            <option value="America/Anchorage">Alaska Time (AKT)</option>
-            <option value="Pacific/Honolulu">Hawaii Time (HST)</option>
-          </select>
-        </div>
+        <SelectField
+          id="timezone"
+          name="timezone"
+          label="Timezone"
+          value={form.timezone}
+          onChange={(nextValue) => setForm((prev) => ({ ...prev, timezone: nextValue }))}
+          options={TIMEZONE_OPTIONS}
+          required
+        />
 
         <div>
           <label htmlFor="merxusAiNumber" className="block text-sm font-medium text-gray-700 mb-2">

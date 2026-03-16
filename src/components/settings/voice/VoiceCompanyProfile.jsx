@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
 import { getCategories, getIndustriesForCategory } from '../../../../data/voicePromptLibraryWithRouting';
+import SelectField from '../../common/SelectField';
+
+const TIMEZONE_OPTIONS = [
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Phoenix', label: 'Arizona (MST)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (HST)' },
+];
 
 export default function VoiceCompanyProfile({ settings, onSave, saving }) {
   const [form, setForm] = useState({
@@ -208,27 +219,15 @@ export default function VoiceCompanyProfile({ settings, onSave, saving }) {
           />
         </div>
 
-        <div>
-          <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-2">
-            Timezone *
-          </label>
-          <select
-            id="timezone"
-            name="timezone"
-            required
-            value={form.timezone}
-            onChange={handleChange}
-            className="input-field"
-          >
-            <option value="America/Los_Angeles">Pacific Time (PT)</option>
-            <option value="America/Denver">Mountain Time (MT)</option>
-            <option value="America/Chicago">Central Time (CT)</option>
-            <option value="America/New_York">Eastern Time (ET)</option>
-            <option value="America/Phoenix">Arizona (MST)</option>
-            <option value="America/Anchorage">Alaska Time (AKT)</option>
-            <option value="Pacific/Honolulu">Hawaii Time (HST)</option>
-          </select>
-        </div>
+        <SelectField
+          id="timezone"
+          name="timezone"
+          label="Timezone"
+          value={form.timezone}
+          onChange={(nextValue) => setForm((prev) => ({ ...prev, timezone: nextValue }))}
+          options={TIMEZONE_OPTIONS}
+          required
+        />
 
         <div className="border-t pt-4 mt-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -239,48 +238,28 @@ export default function VoiceCompanyProfile({ settings, onSave, saving }) {
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="businessCategory" className="block text-xs font-medium text-gray-600 mb-1">
-                Category
-              </label>
-              <select
-                id="businessCategory"
-                required
-                value={form.businessType.category}
-                onChange={(e) => handleBusinessTypeChange('category', e.target.value)}
-                className="input-field"
-              >
-                <option value="">Select a category...</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              id="businessCategory"
+              label="Category"
+              value={form.businessType.category}
+              onChange={(nextValue) => handleBusinessTypeChange('category', nextValue)}
+              options={categories.map((category) => ({ value: category, label: category }))}
+              placeholder="Select a category..."
+              required
+              labelClassName="text-xs text-gray-600"
+            />
 
-            <div>
-              <label htmlFor="businessIndustry" className="block text-xs font-medium text-gray-600 mb-1">
-                Industry
-              </label>
-              <select
-                id="businessIndustry"
-                required
-                value={form.businessType.industry}
-                onChange={(e) => handleBusinessTypeChange('industry', e.target.value)}
-                className="input-field"
-                disabled={!form.businessType.category}
-              >
-                <option value="">
-                  {form.businessType.category ? 'Select an industry...' : 'Select category first...'}
-                </option>
-                {industries.map((industry) => (
-                  <option key={industry} value={industry}>
-                    {industry}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              id="businessIndustry"
+              label="Industry"
+              value={form.businessType.industry}
+              onChange={(nextValue) => handleBusinessTypeChange('industry', nextValue)}
+              options={industries.map((industry) => ({ value: industry, label: industry }))}
+              placeholder={form.businessType.category ? 'Select an industry...' : 'Select category first...'}
+              disabled={!form.businessType.category}
+              required
+              labelClassName="text-xs text-gray-600"
+            />
           </div>
         </div>
 
