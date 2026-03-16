@@ -10,6 +10,12 @@ import {
   updateSmsNotificationGroups,
   updateSmsSettings,
 } from '../../api/sms';
+import {
+  fetchTeamUsers,
+  inviteTeamUser,
+  updateTeamUser,
+} from '../../api/teamUsers';
+import { dispatchTeamUsersChanged } from '../../utils/teamUsersEvents';
 import SmsSettingsRedesign from './SmsSettingsRedesign';
 
 function tenantCopy(tenantType) {
@@ -222,6 +228,57 @@ function normalizeRoutingState(data = {}) {
     groups: data.groups || {},
     definitions: data.definitions || [],
   };
+}
+
+function normalizeTeamEmail(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function normalizeWizardTeamRole(role) {
+  return String(role || '').trim().toLowerCase() === 'manager' ? 'manager' : 'staff';
+}
+
+function getContactGroupKeys(contact, routingGroups = {}) {
+  return Object.entries(routingGroups || {}).reduce((groupKeys, [groupKey, contactIds]) => {
+    if ((contactIds || []).includes(contact.id)) {
+      groupKeys.push(groupKey);
+    }
+    return groupKeys;
+  }, []);
+}
+
+function buildTeamSyncMessage({ invitedCount, updatedCount, deliveryIssueCount }) {
+  const summary = [];
+
+  if (invitedCount > 0) {
+    summary.push(
+      invitedCount === 1
+        ? '1 team invite was added to Team & Access.'
+        : `${invitedCount} team invites were added to Team & Access.`
+    );
+  }
+
+  if (updatedCount > 0) {
+    summary.push(
+      updatedCount === 1
+        ? '1 existing team member was linked to messaging routing.'
+        : `${updatedCount} existing team members were linked to messaging routing.`
+    );
+  }
+
+  if (!summary.length) {
+    summary.push('Messaging setup was saved.');
+  }
+
+  if (deliveryIssueCount > 0) {
+    summary.push(
+      deliveryIssueCount === 1
+        ? '1 invite email still needs follow-up from Team & Access.'
+        : `${deliveryIssueCount} invite emails still need follow-up from Team & Access.`
+    );
+  }
+
+  return summary.join(' ');
 }
 
 const NOTIFICATION_TEMPLATE_FIELDS = [
@@ -523,17 +580,113 @@ export default function SmsSettings({ settings, tenantType }) {
     });
   }
 
-  async function saveCurrentSettings(formToSave = form, routingToSave = routing) {
+  async function syncWizardTeamUsers(formToSync, routingToSync) {
+    try {
+      const teamUsers = await fetchTeamUsers(tenantType);
+      const existingByEmail = new Map(
+        (Array.isArray(teamUsers) ? teamUsers : [])
+          .filter((user) => normalizeTeamEmail(user?.email))
+          .map((user) => [normalizeTeamEmail(user.email), user])
+      );
+
+      const uniqueContacts = [];
+      const seenEmails = new Set();
+      for (const contact of routingToSync.contacts || []) {
+        const email = normalizeTeamEmail(contact?.email);
+        if (!email || seenEmails.has(email)) continue;
+        seenEmails.add(email);
+        uniqueContacts.push(contact);
+      }
+
+      let invitedCount = 0;
+      let updatedCount = 0;
+      let deliveryIssueCount = 0;
+
+      for (const contact of uniqueContacts) {
+        const email = normalizeTeamEmail(contact.email);
+        const existingUser = existingByEmail.get(email);
+        const notificationGroupKeys = getContactGroupKeys(contact, routingToSync.groups);
+        const payload = {
+          displayName: String(contact.name || '').trim(),
+          phone: String(contact.phone || '').trim(),
+          notificationGroupKeys,
+        };
+
+        if (existingUser) {
+          const roleUpgrade =
+            existingUser.role !== 'owner' &&
+            existingUser.role !== 'manager' &&
+            normalizeWizardTeamRole(contact.role) === 'manager';
+
+          await updateTeamUser(tenantType, existingUser.uid, {
+            ...payload,
+            ...(roleUpgrade ? { role: 'manager' } : {}),
+          });
+          updatedCount += 1;
+          continue;
+        }
+
+        const inviteResult = await inviteTeamUser(tenantType, {
+          ...payload,
+          email,
+          role: normalizeWizardTeamRole(contact.role),
+        });
+
+        invitedCount += 1;
+        if (inviteResult?.emailSent === false) {
+          deliveryIssueCount += 1;
+        }
+      }
+
+      const refreshedRouting = normalizeRoutingState(await fetchSmsNotificationRouting());
+      setRouting(refreshedRouting);
+      syncBaseline(formToSync, refreshedRouting);
+      dispatchTeamUsersChanged({ tenantType });
+
+      const message = buildTeamSyncMessage({
+        invitedCount,
+        updatedCount,
+        deliveryIssueCount,
+      });
+      setSuccess(message);
+      window.setTimeout(() => setSuccess(''), 4000);
+
+      return {
+        invitedCount,
+        updatedCount,
+        deliveryIssueCount,
+        routing: refreshedRouting,
+      };
+    } catch (syncError) {
+      const syncMessage =
+        syncError?.response?.data?.error ||
+        syncError?.message ||
+        'Team & Access could not be synced from the messaging contacts.';
+      setError(syncMessage);
+      const error = new Error(`Team & Access could not be synced. ${syncMessage}`);
+      throw error;
+    }
+  }
+
+  async function saveCurrentSettings(formToSave = form, routingToSave = routing, options = {}) {
+    const {
+      persistRouting = true,
+      syncBaselineAfterSave = true,
+      successMessage = 'SMS notification settings saved.',
+    } = options;
+
     try {
       setSaving(true);
       setError('');
       setSuccess('');
 
-      const [smsResponse, contactsResponse, groupsResponse] = await Promise.all([
-        updateSmsSettings({ sms: formToSave }),
-        updateSmsNotificationContacts({ contacts: routingToSave.contacts }),
-        updateSmsNotificationGroups({ groups: routingToSave.groups }),
-      ]);
+      const smsResponse = await updateSmsSettings({ sms: formToSave });
+      const [contactsResponse, groupsResponse] = persistRouting
+        ? await Promise.all([
+            updateSmsNotificationContacts({ contacts: routingToSave.contacts }),
+            updateSmsNotificationGroups({ groups: routingToSave.groups }),
+          ])
+        : [{ contacts: routingToSave.contacts }, { groups: routingToSave.groups }];
 
       const resolvedForm = mergeSms(buildFallbackSms(settings), smsResponse.sms || {});
       const resolvedRouting = {
@@ -548,9 +701,13 @@ export default function SmsSettings({ settings, tenantType }) {
         tenantType: smsResponse.tenantType || tenantContext.tenantType,
       });
       setRouting(resolvedRouting);
-      syncBaseline(resolvedForm, resolvedRouting);
-      setSuccess('SMS notification settings saved.');
-      window.setTimeout(() => setSuccess(''), 3000);
+      if (syncBaselineAfterSave) {
+        syncBaseline(resolvedForm, resolvedRouting);
+      }
+      if (successMessage) {
+        setSuccess(successMessage);
+        window.setTimeout(() => setSuccess(''), 3000);
+      }
       return {
         form: resolvedForm,
         routing: resolvedRouting,
@@ -776,6 +933,7 @@ export default function SmsSettings({ settings, tenantType }) {
       handleCancelChanges={handleCancelChanges}
       handleSave={handleSave}
       saveCurrentSettings={saveCurrentSettings}
+      syncWizardTeamUsers={syncWizardTeamUsers}
       templateEditor={templateEditor}
       setTemplateEditor={setTemplateEditor}
       notificationTemplateFields={NOTIFICATION_TEMPLATE_FIELDS}

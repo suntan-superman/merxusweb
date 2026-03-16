@@ -220,6 +220,7 @@ export default function SmsSettingsRedesign(props) {
     handleCancelChanges,
     handleSave,
     saveCurrentSettings,
+    syncWizardTeamUsers,
     tenantType,
     templateEditor,
     setTemplateEditor,
@@ -246,6 +247,7 @@ export default function SmsSettingsRedesign(props) {
         tenantType={tenantType}
         setActiveTab={setActiveTab}
         saveCurrentSettings={saveCurrentSettings}
+        syncWizardTeamUsers={syncWizardTeamUsers}
         saving={saving}
       />
 

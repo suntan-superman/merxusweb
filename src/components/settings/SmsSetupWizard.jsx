@@ -521,6 +521,7 @@ export default function SmsSetupWizard({
   tenantType,
   setActiveTab,
   saveCurrentSettings,
+  syncWizardTeamUsers,
   saving,
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -684,10 +685,23 @@ export default function SmsSetupWizard({
     try {
       setWizardError('');
       const { nextForm, nextRouting } = buildActivatedSettings({ draft, form, routing, tenantType });
-      await saveCurrentSettings(nextForm, nextRouting);
+      const saved = await saveCurrentSettings(nextForm, nextRouting, {
+        persistRouting: false,
+        syncBaselineAfterSave: false,
+        successMessage: '',
+      });
+      await syncWizardTeamUsers(saved.form, nextRouting);
       setActiveTab('overview');
       setIsOpen(false);
-    } catch (_) {
+    } catch (error) {
+      if (error?.response?.data?.error || error?.message) {
+        setWizardError(
+          error?.message?.includes('Team & Access')
+            ? error.message
+            : 'Messaging settings were saved, but Team & Access could not be fully synced. Review the error banner and retry.'
+        );
+        return;
+      }
       setWizardError('The wizard could not save your messaging setup. Review the fields and try again.');
     }
   }

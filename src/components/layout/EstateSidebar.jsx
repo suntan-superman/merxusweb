@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase/config';
 import { useAuth } from '../../context/AuthContext';
 import { fetchEstateSettings } from '../../api/estate';
+import useTeamAccessPending from '../../hooks/useTeamAccessPending';
 
 export default function EstateSidebar() {
   const { user, userClaims } = useAuth();
@@ -41,6 +42,10 @@ export default function EstateSidebar() {
 
   const isOwner = userClaims?.role === 'owner';
   const isManager = userClaims?.role === 'manager';
+  const { pendingCount: teamPendingCount } = useTeamAccessPending({
+    tenantType: 'real_estate',
+    enabled: isOwner,
+  });
 
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen">
@@ -74,7 +79,12 @@ export default function EstateSidebar() {
         <NavItem to="/estate/settings" label="Settings" icon="⚙️" />
         <NavItem to="/estate/billing" label="Billing" icon="💳" />
         {isOwner && (
-          <NavItem to="/estate/users" label="Team & Access" icon="👤" />
+          <NavItem
+            to="/estate/users"
+            label="Team & Access"
+            icon="👤"
+            attentionCount={teamPendingCount}
+          />
         )}
       </nav>
 
@@ -106,20 +116,35 @@ export default function EstateSidebar() {
   );
 }
 
-function NavItem({ to, label, icon }) {
+function NavItem({ to, label, icon, attentionCount = 0 }) {
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+      className={({ isActive }) => {
+        if (attentionCount > 0) {
+          return `flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            isActive
+              ? 'border-l-4 border-amber-500 bg-amber-50 text-amber-800'
+              : 'bg-amber-50/80 text-amber-800 hover:bg-amber-100'
+          }`;
+        }
+
+        return `flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
           isActive
-            ? 'bg-green-50 text-green-700'
+            ? 'border-l-4 border-green-600 bg-green-50 text-green-700'
             : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
-        }`
-      }
+        }`;
+      }}
     >
-      <span className="text-lg">{icon}</span>
-      <span>{label}</span>
+      <span className="flex items-center gap-3">
+        <span className="text-lg">{icon}</span>
+        <span>{label}</span>
+      </span>
+      {attentionCount > 0 ? (
+        <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
+          {attentionCount}
+        </span>
+      ) : null}
     </NavLink>
   );
 }

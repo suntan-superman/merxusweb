@@ -14,6 +14,7 @@ import {
 } from '../../api/teamUsers';
 import { TEAM_NOTIFICATION_GROUPS, getTeamUserCopy } from '../../constants/teamUsers';
 import { useAuth } from '../../context/AuthContext';
+import { dispatchTeamUsersChanged } from '../../utils/teamUsersEvents';
 
 function formatTimestamp(value) {
   if (!value) return '—';
@@ -125,6 +126,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       setError('');
       const data = await fetchTeamUsers(tenantType);
       setUsers(Array.isArray(data) ? data : []);
+      dispatchTeamUsersChanged({ tenantType });
     } catch (err) {
       console.error(err);
       setError(err?.response?.data?.error || err?.message || 'Failed to load users.');
