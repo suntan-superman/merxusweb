@@ -15,6 +15,7 @@ import {
   updateSmsNotificationContacts,
   updateSmsNotificationGroups,
   updateSmsSettings,
+  validateSlackOAuth,
 } from '../../api/sms';
 import {
   fetchTeamUsers,
@@ -415,6 +416,8 @@ export default function SmsSettings({ settings, tenantType }) {
   const [syncingSlackUsers, setSyncingSlackUsers] = useState(false);
   const [provisioningSlackChannels, setProvisioningSlackChannels] = useState(false);
   const [sendingSlackTest, setSendingSlackTest] = useState(false);
+  const [slackValidation, setSlackValidation] = useState(null);
+  const [selectedSlackChannelId, setSelectedSlackChannelId] = useState('');
 
   function buildSnapshot(nextForm, nextRouting) {
     return JSON.stringify({
@@ -525,6 +528,28 @@ export default function SmsSettings({ settings, tenantType }) {
   useEffect(() => {
     let cancelled = false;
 
+    async function loadSlackValidation() {
+      try {
+        const result = await validateSlackOAuth();
+        if (!cancelled) {
+          setSlackValidation(result);
+        }
+      } catch (validationError) {
+        if (!cancelled) {
+          setSlackValidation(validationError?.response?.data || null);
+        }
+      }
+    }
+
+    loadSlackValidation();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     async function loadCommandCenterHistory() {
       const historyData = await fetchSlackCommandCenterEvents({ limit: 12, days: 7 });
       if (!cancelled) {
@@ -578,6 +603,16 @@ export default function SmsSettings({ settings, tenantType }) {
       cancelled = true;
     };
   }, [settings]);
+
+  useEffect(() => {
+    if (form.slack?.commandCenterChannel) {
+      setSelectedSlackChannelId(form.slack.commandCenterChannel);
+      return;
+    }
+    if (slackDiscovery?.channels?.[0]?.id) {
+      setSelectedSlackChannelId(slackDiscovery.channels[0].id);
+    }
+  }, [form.slack?.commandCenterChannel, slackDiscovery]);
 
   function updateField(name, value) {
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -918,6 +953,17 @@ export default function SmsSettings({ settings, tenantType }) {
     }
   }
 
+  async function handleCopySlackRedirectUrl() {
+    const url = slackValidation?.expected_redirect_url || `${getBackendBaseUrl()}/api/integrations/slack/oauth/callback`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setSuccess('Slack redirect URL copied.');
+      window.setTimeout(() => setSuccess(''), 2500);
+    } catch (_) {
+      setError('Could not copy the Slack redirect URL automatically.');
+    }
+  }
+
   async function handleRefreshSlack() {
     try {
       setError('');
@@ -960,6 +1006,63 @@ export default function SmsSettings({ settings, tenantType }) {
       window.setTimeout(() => setSuccess(''), 4000);
     } catch (provisionError) {
       setError(provisionError?.response?.data?.error || 'Failed to apply the recommended Slack channel plan.');
+    } finally {
+      setProvisioningSlackChannels(false);
+    }
+  }
+
+  async function handleCreateSlackCommandCenter() {
+    try {
+      setProvisioningSlackChannels(true);
+      setError('');
+      const result = await provisionSlackChannels({ mode: 'command_center' });
+      const refreshed = await fetchSmsSettings();
+      const nextForm = mergeSms(buildFallbackSms(settings), refreshed.sms || {});
+      setForm(nextForm);
+      setTenantContext({
+        tenantId: refreshed.tenantId || tenantContext.tenantId,
+        tenantType: refreshed.tenantType || tenantContext.tenantType,
+      });
+      await loadSlackDiscovery({ silent: true });
+      const action = result?.channels?.[0]?.action || 'configured';
+      setSuccess(
+        action === 'created'
+          ? 'Created #merxus-command-center and connected alerts to it.'
+          : 'Slack alert channel is configured.'
+      );
+      window.setTimeout(() => setSuccess(''), 4000);
+    } catch (createError) {
+      setError(createError?.response?.data?.error || 'Failed to set up the Slack alert channel.');
+    } finally {
+      setProvisioningSlackChannels(false);
+    }
+  }
+
+  async function handleUseExistingSlackChannel() {
+    if (!selectedSlackChannelId) {
+      setError('Select a Slack channel first.');
+      return;
+    }
+
+    try {
+      setProvisioningSlackChannels(true);
+      setError('');
+      await provisionSlackChannels({
+        mode: 'command_center',
+        channelId: selectedSlackChannelId,
+      });
+      const refreshed = await fetchSmsSettings();
+      const nextForm = mergeSms(buildFallbackSms(settings), refreshed.sms || {});
+      setForm(nextForm);
+      setTenantContext({
+        tenantId: refreshed.tenantId || tenantContext.tenantId,
+        tenantType: refreshed.tenantType || tenantContext.tenantType,
+      });
+      await loadSlackDiscovery({ silent: true });
+      setSuccess('Slack alerts will now go to the selected channel.');
+      window.setTimeout(() => setSuccess(''), 4000);
+    } catch (selectError) {
+      setError(selectError?.response?.data?.error || 'Failed to use the selected Slack channel.');
     } finally {
       setProvisioningSlackChannels(false);
     }
@@ -1140,10 +1243,16 @@ export default function SmsSettings({ settings, tenantType }) {
       syncingSlackUsers={syncingSlackUsers}
       provisioningSlackChannels={provisioningSlackChannels}
       sendingSlackTest={sendingSlackTest}
+      slackValidation={slackValidation}
+      selectedSlackChannelId={selectedSlackChannelId}
+      setSelectedSlackChannelId={setSelectedSlackChannelId}
       handleConnectSlack={handleConnectSlack}
+      handleCopySlackRedirectUrl={handleCopySlackRedirectUrl}
       handleRefreshSlack={handleRefreshSlack}
       handleDisconnectSlack={handleDisconnectSlack}
       handleMatchSlackUsers={handleMatchSlackUsers}
+      handleCreateSlackCommandCenter={handleCreateSlackCommandCenter}
+      handleUseExistingSlackChannel={handleUseExistingSlackChannel}
       handleProvisionSlackChannels={handleProvisionSlackChannels}
       handleSendSlackTest={handleSendSlackTest}
       formatSlackSyncTimestamp={formatSlackSyncTimestamp}

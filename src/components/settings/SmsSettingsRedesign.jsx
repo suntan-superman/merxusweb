@@ -202,10 +202,16 @@ export default function SmsSettingsRedesign(props) {
     syncingSlackUsers,
     provisioningSlackChannels,
     sendingSlackTest,
+    slackValidation,
+    selectedSlackChannelId,
+    setSelectedSlackChannelId,
     handleConnectSlack,
+    handleCopySlackRedirectUrl,
     handleRefreshSlack,
     handleDisconnectSlack,
     handleMatchSlackUsers,
+    handleCreateSlackCommandCenter,
+    handleUseExistingSlackChannel,
     handleProvisionSlackChannels,
     handleSendSlackTest,
     formatSlackSyncTimestamp,
@@ -518,22 +524,30 @@ export default function SmsSettingsRedesign(props) {
                   <div className="rounded-3xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-slate-50 p-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">Slack Workspace</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">Slack Upgrade</p>
                         <h5 className="mt-2 text-lg font-semibold text-slate-900">
                           {form.slack.connected
                             ? `Connected${form.slack.teamName ? ` to ${form.slack.teamName}` : ''}`
-                            : 'Not connected yet'}
+                            : 'Boost Your Team Visibility'}
                         </h5>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                          Slack is designed around a tenant-owned workspace. Merxus connects the workspace through Slack OAuth,
-                          discovers channels and users, then matches your Merxus staff contacts by email. If someone is not
-                          already in Slack, invite them to the workspace first and then run the email match again.
+                          {form.slack.connected
+                            ? 'Slack is now connected. Merxus can send alerts, leads, and live AI activity into your team workspace.'
+                            : 'Want real-time alerts, leads, and AI activity sent directly to your team? Connect Slack in one step, then choose where alerts should land.'}
                         </p>
+                        {!form.slack.connected ? (
+                          <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                            <div className="rounded-2xl border border-white bg-white px-4 py-3">Instant team notifications</div>
+                            <div className="rounded-2xl border border-white bg-white px-4 py-3">Live Command Center</div>
+                            <div className="rounded-2xl border border-white bg-white px-4 py-3">Team collaboration</div>
+                            <div className="rounded-2xl border border-white bg-white px-4 py-3">Faster response times</div>
+                          </div>
+                        ) : null}
                       </div>
                       <div className="flex flex-wrap gap-3">
                         {!form.slack.connected ? (
                           <button type="button" onClick={handleConnectSlack} className="btn-primary">
-                            Connect Slack
+                            Connect Slack (Recommended)
                           </button>
                         ) : null}
                         {form.slack.connected ? (
@@ -544,7 +558,7 @@ export default function SmsSettingsRedesign(props) {
                               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
                               disabled={provisioningSlackChannels}
                             >
-                              {provisioningSlackChannels ? 'Applying…' : 'Apply Recommended Channels'}
+                              {provisioningSlackChannels ? 'Applying…' : 'Advanced Channel Plan'}
                             </button>
                             <button
                               type="button"
@@ -579,6 +593,11 @@ export default function SmsSettingsRedesign(props) {
                             </button>
                           </>
                         ) : null}
+                        {!form.slack.connected ? (
+                          <button type="button" onClick={() => setActiveTab('overview')} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300">
+                            Skip for Now
+                          </button>
+                        ) : null}
                       </div>
                     </div>
 
@@ -602,26 +621,96 @@ export default function SmsSettingsRedesign(props) {
                     </div>
                   </div>
 
+                  {!form.slack.connected ? (
+                    <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm font-semibold text-slate-900">Connect Slack Workspace</p>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          Click <span className="font-semibold text-slate-900">Connect Slack</span>. If Slack opens normally, you are done with setup on that side.
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                        <p className="text-sm font-semibold text-slate-900">If Slack says the redirect URL does not match</p>
+                        <ol className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                          <li>1. Open the Slack Developer Portal</li>
+                          <li>2. Select the <span className="font-semibold text-slate-900">Merxus AI</span> app</li>
+                          <li>3. Open <span className="font-semibold text-slate-900">OAuth &amp; Permissions</span></li>
+                          <li>4. Add this Redirect URL</li>
+                        </ol>
+                        <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                          <input
+                            type="text"
+                            className="input-field"
+                            value={slackValidation?.expected_redirect_url || 'https://api.merxus.ai/api/integrations/slack/oauth/callback'}
+                            readOnly
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCopySlackRedirectUrl}
+                            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+                          >
+                            Copy URL
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleConnectSlack}
+                          className="mt-3 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+                        >
+                          Retry Connection
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
                   <div className="mt-4 grid gap-4 lg:grid-cols-2">
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-sm font-semibold text-slate-900">How this works</p>
-                      <ol className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-                        <li>1. Connect your Slack workspace once using the button above.</li>
-                        <li>2. Merxus reads available channels and existing Slack users in that workspace.</li>
-                        <li>3. We compare your staff contact emails against Slack user emails.</li>
-                        <li>4. If a person is missing, invite them to Slack first, then click <span className="font-semibold text-slate-900">Match Staff by Email</span> again.</li>
-                      </ol>
+                      <p className="text-sm font-semibold text-slate-900">Slack Connected Successfully</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Workspace: <span className="font-semibold text-slate-900">{form.slack.teamName || slackDiscovery?.workspace?.teamName || 'Connected workspace'}</span>
+                      </p>
+                      <div className="mt-4 rounded-2xl border border-white bg-white px-4 py-4 text-sm text-slate-700">
+                        <p className="font-semibold text-slate-900">Preview</p>
+                        <p className="mt-2">📢 New Lead Captured</p>
+                        <p>John Smith — Interested in services</p>
+                      </div>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-sm font-semibold text-slate-900">Current status</p>
+                      <p className="text-sm font-semibold text-slate-900">Where should we send your alerts?</p>
                       <div className="mt-3 space-y-2 text-sm text-slate-600">
-                        <p>Workspace URL: {form.slack.workspaceUrl ? <a className="font-semibold text-emerald-700 hover:text-emerald-800" href={form.slack.workspaceUrl} target="_blank" rel="noreferrer">Open Slack workspace</a> : 'Not available yet'}</p>
-                        <p>Default channel: <span className="font-semibold text-slate-900">{form.slack.defaultChannel || '#merxus-activity'}</span></p>
-                        <p>Matched staff: <span className="font-semibold text-slate-900">{slackDiscovery?.mappings?.filter((item) => item.status === 'matched').length || form.slack.userLookupSummary?.matched || 0}</span></p>
-                        <p>Still missing from Slack: <span className="font-semibold text-slate-900">{slackDiscovery?.mappings?.filter((item) => item.status !== 'matched').length || form.slack.userLookupSummary?.missing || 0}</span></p>
+                        <button
+                          type="button"
+                          onClick={handleCreateSlackCommandCenter}
+                          className="btn-primary"
+                          disabled={provisioningSlackChannels}
+                        >
+                          {provisioningSlackChannels ? 'Setting Up…' : 'Create New #merxus-command-center'}
+                        </button>
+                        <p className="pt-2">Or use an existing channel:</p>
+                        <select
+                          className="input-field"
+                          value={selectedSlackChannelId}
+                          onChange={(event) => setSelectedSlackChannelId(event.target.value)}
+                        >
+                          <option value="">Select existing channel</option>
+                          {(slackDiscovery?.channels || []).map((channel) => (
+                            <option key={channel.id} value={channel.id}>
+                              #{channel.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={handleUseExistingSlackChannel}
+                          className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+                          disabled={provisioningSlackChannels || !selectedSlackChannelId}
+                        >
+                          Use Selected Channel
+                        </button>
+                        <p className="pt-2">Current alert channel: <span className="font-semibold text-slate-900">{form.slack.commandCenterChannel || form.slack.defaultChannel || 'Not configured yet'}</span></p>
                       </div>
                     </div>
                   </div>
+                  )}
 
                   {slackDiscovery?.recommendedChannels?.length ? (
                     <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -708,7 +797,7 @@ export default function SmsSettingsRedesign(props) {
                   </div>
                 </CollapsePanel>
 
-                <CollapsePanel title="Command Center" subtitle="Demo tools and recent delivery history." isOpen={expandedPanels.integrations_command_center} onToggle={() => togglePanel('integrations_command_center')} action={<button type="button" onClick={handleSendCommandCenterDemo} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700" disabled={sendingCommandCenterDemo || !form.slack.enabled || !form.slack.commandCenterEnabled || !form.slack.webhookUrl}>{sendingCommandCenterDemo ? 'Sending Demo…' : 'Send Demo Event'}</button>}>
+                <CollapsePanel title="Command Center" subtitle="Demo tools and recent delivery history." isOpen={expandedPanels.integrations_command_center} onToggle={() => togglePanel('integrations_command_center')} action={<button type="button" onClick={handleSendCommandCenterDemo} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700" disabled={sendingCommandCenterDemo || !form.slack.enabled || !form.slack.commandCenterEnabled || (!form.slack.webhookUrl && !form.slack.connected)}>{sendingCommandCenterDemo ? 'Sending Demo…' : 'Send Demo Event'}</button>}>
                   {loadingCommandCenterHistory ? (
                     <p className="text-sm text-slate-500">Loading Command Center history…</p>
                   ) : commandCenterHistory.length === 0 ? (

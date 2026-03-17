@@ -185,6 +185,11 @@ export async function startSlackOAuth(payload = {}) {
   return res.data;
 }
 
+export async function validateSlackOAuth() {
+  const res = await apiClient.post('/integrations/slack/validate');
+  return res.data;
+}
+
 export async function fetchSlackWorkspaceDiscovery() {
   const res = await apiClient.get('/integrations/slack/discovery');
   return res.data;
