@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  disconnectSlackIntegration,
+  fetchSlackWorkspaceDiscovery,
   fetchSlackCommandCenterEvents,
   fetchSmsNotificationRouting,
   fetchSmsSettings,
+  mapSlackUsers,
   sendSmsTest,
+  startSlackOAuth,
   triggerSlackCommandCenterDemo,
   updateSmsNotificationContacts,
   updateSmsNotificationGroups,
@@ -130,6 +134,19 @@ function buildFallbackSms(settings = {}) {
     },
     slack: {
       enabled: settings.sms?.slack?.enabled === true,
+      connected: settings.sms?.slack?.connected === true,
+      installationId: settings.sms?.slack?.installationId || '',
+      teamId: settings.sms?.slack?.teamId || '',
+      teamName: settings.sms?.slack?.teamName || '',
+      workspaceUrl: settings.sms?.slack?.workspaceUrl || '',
+      connectedAt: settings.sms?.slack?.connectedAt || '',
+      lastSyncAt: settings.sms?.slack?.lastSyncAt || '',
+      discoveredChannelsCount: Number(settings.sms?.slack?.discoveredChannelsCount || 0),
+      discoveredUsersCount: Number(settings.sms?.slack?.discoveredUsersCount || 0),
+      userLookupSummary: {
+        matched: Number(settings.sms?.slack?.userLookupSummary?.matched || 0),
+        missing: Number(settings.sms?.slack?.userLookupSummary?.missing || 0),
+      },
       webhookUrl: settings.sms?.slack?.webhookUrl || '',
       defaultChannel: settings.sms?.slack?.defaultChannel || '#merxus-activity',
       eventChannels: settings.sms?.slack?.eventChannels || {},
@@ -360,6 +377,18 @@ function formatCommandCenterDate(value) {
   return date.toLocaleString();
 }
 
+function getBackendBaseUrl() {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://api.merxus.ai/api';
+  return String(apiBase).replace(/\/api\/?$/g, '').replace(/\/+$/g, '');
+}
+
+function formatSlackSyncTimestamp(value) {
+  if (!value) return 'Not yet synced';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Not yet synced';
+  return date.toLocaleString();
+}
+
 export default function SmsSettings({ settings, tenantType }) {
   const copy = tenantCopy(tenantType);
   const [form, setForm] = useState(() => buildFallbackSms(settings));
@@ -378,6 +407,9 @@ export default function SmsSettings({ settings, tenantType }) {
   const [expandedPanels, setExpandedPanels] = useState(DEFAULT_EXPANDED_PANELS);
   const [templateEditor, setTemplateEditor] = useState(null);
   const [baseline, setBaseline] = useState(null);
+  const [slackDiscovery, setSlackDiscovery] = useState(null);
+  const [loadingSlackDiscovery, setLoadingSlackDiscovery] = useState(false);
+  const [syncingSlackUsers, setSyncingSlackUsers] = useState(false);
 
   function buildSnapshot(nextForm, nextRouting) {
     return JSON.stringify({
@@ -391,9 +423,99 @@ export default function SmsSettings({ settings, tenantType }) {
     setBaseline(buildSnapshot(nextForm, nextRouting));
   }
 
+  async function syncSlackUserMappings(contacts, options = {}) {
+    const normalizedContacts = Array.isArray(contacts)
+      ? contacts.filter((contact) => normalizeTeamEmail(contact?.email))
+      : [];
+
+    if (!normalizedContacts.length) {
+      if (!options.silent) {
+        setSuccess('No staff emails are available to match in Slack yet.');
+        window.setTimeout(() => setSuccess(''), 3000);
+      }
+      setSlackDiscovery((current) => current ? { ...current, mappings: [] } : current);
+      return { matches: [], summary: { matched: 0, missing: 0 } };
+    }
+
+    setSyncingSlackUsers(true);
+    try {
+      const result = await mapSlackUsers({ contacts: normalizedContacts });
+      setSlackDiscovery((current) => ({
+        ...(current || {}),
+        mappings: result.matches || [],
+      }));
+      if (!options.silent) {
+        const matched = Number(result?.summary?.matched || 0);
+        const missing = Number(result?.summary?.missing || 0);
+        setSuccess(
+          matched > 0
+            ? `${matched} Slack user${matched === 1 ? '' : 's'} matched by email.${missing ? ` ${missing} still need a Slack workspace invite.` : ''}`
+            : `${missing || normalizedContacts.length} contact${(missing || normalizedContacts.length) === 1 ? '' : 's'} still need a Slack workspace invite.`
+        );
+        window.setTimeout(() => setSuccess(''), 4000);
+      }
+      return result;
+    } catch (syncError) {
+      if (!options.silent) {
+        setError(syncError?.response?.data?.error || 'Slack email matching failed.');
+      }
+      throw syncError;
+    } finally {
+      setSyncingSlackUsers(false);
+    }
+  }
+
+  async function loadSlackDiscovery(options = {}) {
+    const { silent = false, contacts = routing.contacts } = options;
+    setLoadingSlackDiscovery(true);
+    try {
+      const discovery = await fetchSlackWorkspaceDiscovery();
+      setSlackDiscovery(discovery);
+      if (Array.isArray(contacts) && contacts.length) {
+        const mapped = await syncSlackUserMappings(contacts, { silent: true });
+        setSlackDiscovery((current) =>
+          current
+            ? { ...current, mappings: mapped.matches || current.mappings || [] }
+            : current
+        );
+      }
+      return discovery;
+    } catch (loadError) {
+      setSlackDiscovery(null);
+      if (!silent) {
+        setError(loadError?.response?.data?.error || 'Failed to load Slack workspace details.');
+      }
+      throw loadError;
+    } finally {
+      setLoadingSlackDiscovery(false);
+    }
+  }
+
   useEffect(() => {
     setForm((current) => mergeSms(buildFallbackSms(settings), current));
   }, [settings]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const slackStatus = params.get('slack');
+    if (!slackStatus) return;
+
+    setActiveTab('integrations');
+
+    if (slackStatus === 'connected') {
+      const teamName = params.get('slackTeam');
+      setSuccess(teamName ? `Slack connected to ${teamName}.` : 'Slack connected successfully.');
+      window.setTimeout(() => setSuccess(''), 4000);
+    } else if (slackStatus === 'error') {
+      setError(params.get('slackMessage') || 'Slack connection failed.');
+    }
+
+    params.delete('slack');
+    params.delete('slackTeam');
+    params.delete('slackMessage');
+    const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}${window.location.hash || ''}`;
+    window.history.replaceState({}, '', nextUrl);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -426,6 +548,11 @@ export default function SmsSettings({ settings, tenantType }) {
           });
           setRouting(nextRouting);
           syncBaseline(nextForm, nextRouting);
+          if (nextForm.slack?.installationId || nextForm.slack?.connected) {
+            loadSlackDiscovery({ silent: true, contacts: nextRouting.contacts }).catch(() => {});
+          } else {
+            setSlackDiscovery(null);
+          }
         }
         await loadCommandCenterHistory();
       } catch (loadError) {
@@ -771,6 +898,62 @@ export default function SmsSettings({ settings, tenantType }) {
     }
   }
 
+  async function handleConnectSlack() {
+    try {
+      setError('');
+      const returnTo = `${window.location.origin}${window.location.pathname}?tab=sms&smsTab=integrations`;
+      const result = await startSlackOAuth({ returnTo });
+      if (!result?.authorizationUrl) {
+        setError('Slack did not return an authorization URL.');
+        return;
+      }
+      window.location.assign(result.authorizationUrl);
+    } catch (connectError) {
+      setError(connectError?.response?.data?.error || 'Failed to start Slack connection.');
+    }
+  }
+
+  async function handleRefreshSlack() {
+    try {
+      setError('');
+      setSuccess('');
+      await loadSlackDiscovery({ silent: false });
+      setSuccess('Slack workspace refreshed.');
+      window.setTimeout(() => setSuccess(''), 3000);
+    } catch (_) {
+      // Error state is already handled in loadSlackDiscovery.
+    }
+  }
+
+  async function handleMatchSlackUsers() {
+    try {
+      setError('');
+      await syncSlackUserMappings(routing.contacts, { silent: false });
+    } catch (_) {
+      // Error state is already handled in syncSlackUserMappings.
+    }
+  }
+
+  async function handleDisconnectSlack() {
+    try {
+      setError('');
+      await disconnectSlackIntegration();
+      const refreshed = await fetchSmsSettings();
+      const nextForm = mergeSms(buildFallbackSms(settings), refreshed.sms || {});
+      setForm(nextForm);
+      setTenantContext({
+        tenantId: refreshed.tenantId || tenantContext.tenantId,
+        tenantType: refreshed.tenantType || tenantContext.tenantType,
+      });
+      setSlackDiscovery(null);
+      syncBaseline(nextForm, routing);
+      setSuccess('Slack workspace disconnected.');
+      window.setTimeout(() => setSuccess(''), 3000);
+    } catch (disconnectError) {
+      setError(disconnectError?.response?.data?.error || 'Failed to disconnect Slack.');
+    }
+  }
+
   const policyPreview = useMemo(() => {
     const parts = [
       `Caller confirmations are ${form.callerConfirmationEnabled ? 'enabled' : 'disabled'}.`,
@@ -812,20 +995,18 @@ export default function SmsSettings({ settings, tenantType }) {
   }, [form]);
 
   const slackCommandUrl = useMemo(() => {
-    const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://api.merxus.ai/api';
     if (!tenantContext.tenantId || !tenantContext.tenantType) {
       return '';
     }
-    const normalizedBase = String(apiBase).replace(/\/+$/g, '');
+    const normalizedBase = `${getBackendBaseUrl()}/api`;
     return `${normalizedBase}/integrations/slack/command?tenantId=${encodeURIComponent(tenantContext.tenantId)}&tenantType=${encodeURIComponent(tenantContext.tenantType)}`;
   }, [tenantContext]);
 
   const slackInteractionUrl = useMemo(() => {
-    const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://api.merxus.ai/api';
     if (!tenantContext.tenantId || !tenantContext.tenantType) {
       return '';
     }
-    const normalizedBase = String(apiBase).replace(/\/+$/g, '');
+    const normalizedBase = `${getBackendBaseUrl()}/api`;
     return `${normalizedBase}/integrations/slack/interaction?tenantId=${encodeURIComponent(tenantContext.tenantId)}&tenantType=${encodeURIComponent(tenantContext.tenantType)}`;
   }, [tenantContext]);
 
@@ -909,6 +1090,14 @@ export default function SmsSettings({ settings, tenantType }) {
       toggleChannel={toggleChannel}
       toggleDigestGroup={toggleDigestGroup}
       toggleAlertEscalationGroup={toggleAlertEscalationGroup}
+      slackDiscovery={slackDiscovery}
+      loadingSlackDiscovery={loadingSlackDiscovery}
+      syncingSlackUsers={syncingSlackUsers}
+      handleConnectSlack={handleConnectSlack}
+      handleRefreshSlack={handleRefreshSlack}
+      handleDisconnectSlack={handleDisconnectSlack}
+      handleMatchSlackUsers={handleMatchSlackUsers}
+      formatSlackSyncTimestamp={formatSlackSyncTimestamp}
       routing={routing}
       addContact={addContact}
       updateContact={updateContact}

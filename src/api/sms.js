@@ -177,3 +177,25 @@ export async function fetchSlackCommandCenterEvents(params = {}) {
   const res = await apiClient.get('/sms/slack-command-center/events', { params });
   return res.data;
 }
+
+export async function startSlackOAuth(payload = {}) {
+  const res = await apiClient.get('/integrations/slack/oauth/start', {
+    params: payload,
+  });
+  return res.data;
+}
+
+export async function fetchSlackWorkspaceDiscovery() {
+  const res = await apiClient.get('/integrations/slack/discovery');
+  return res.data;
+}
+
+export async function mapSlackUsers(payload = {}) {
+  const res = await apiClient.post('/integrations/slack/users/map', payload);
+  return res.data;
+}
+
+export async function disconnectSlackIntegration() {
+  const res = await apiClient.post('/integrations/slack/disconnect');
+  return res.data;
+}

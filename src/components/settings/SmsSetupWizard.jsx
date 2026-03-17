@@ -178,8 +178,6 @@ function buildWizardDraft({ form, routing, settings, tenantType }) {
       callerSmsEnabled: (form.callerChannels || []).includes('sms'),
       staffAlertsEnabled: form.staffAlertsEnabled !== false,
       staffChannels: unique(form.staffChannels?.length ? form.staffChannels : ['sms', 'email']),
-      slackWebhookUrl: form.slack?.webhookUrl || '',
-      slackDefaultChannel: form.slack?.defaultChannel || '#merxus-activity',
     },
     aiBehavior: {
       minimumCallDurationSeconds: Number(form.minimumCallDurationSeconds || 15),
@@ -426,7 +424,7 @@ function buildActivatedSettings({ draft, form, routing, tenantType }) {
   ]);
   const slackEnabled =
     selectedStaffChannels.includes('slack') &&
-    Boolean(draft.communicationChannels.slackWebhookUrl.trim());
+    Boolean(form.slack?.installationId || form.slack?.connected || form.slack?.webhookUrl);
 
   return {
     nextForm: {
@@ -457,8 +455,6 @@ function buildActivatedSettings({ draft, form, routing, tenantType }) {
       slack: {
         ...form.slack,
         enabled: slackEnabled,
-        webhookUrl: draft.communicationChannels.slackWebhookUrl.trim(),
-        defaultChannel: draft.communicationChannels.slackDefaultChannel.trim() || '#merxus-activity',
       },
       dailyDigestRecipientGroupKeys: audienceGroups,
       alertEscalationRecipientGroupKeys: audienceGroups,
@@ -523,6 +519,8 @@ export default function SmsSetupWizard({
   saveCurrentSettings,
   syncWizardTeamUsers,
   saving,
+  slackDiscovery,
+  handleConnectSlack,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
@@ -535,6 +533,7 @@ export default function SmsSetupWizard({
   const activeStep = WIZARD_STEPS[stepIndex];
   const progress = ((stepIndex + 1) / WIZARD_STEPS.length) * 100;
   const serviceLinkFields = useMemo(() => getServiceLinkFields(draft.businessType), [draft.businessType]);
+  const slackConnected = Boolean(form.slack?.installationId || form.slack?.connected);
 
   useEffect(() => {
     if (!isOpen) {
@@ -896,9 +895,37 @@ export default function SmsSetupWizard({
             ))}
           </div>
           {draft.communicationChannels.staffChannels.includes('slack') ? (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <InputField label="Slack webhook URL" type="url" value={draft.communicationChannels.slackWebhookUrl} onChange={(event) => updateDraftSection('communicationChannels', 'slackWebhookUrl', event.target.value)} placeholder="https://hooks.slack.com/services/..." />
-              <InputField label="Default Slack channel" value={draft.communicationChannels.slackDefaultChannel} onChange={(event) => updateDraftSection('communicationChannels', 'slackDefaultChannel', event.target.value)} placeholder="#merxus-activity" />
+            <div className="rounded-[28px] border border-emerald-200 bg-emerald-50/70 p-5">
+              <p className="text-sm font-semibold text-slate-900">
+                {slackConnected
+                  ? `Slack is already connected${form.slack?.teamName ? ` to ${form.slack.teamName}` : ''}.`
+                  : 'Slack is a connected workspace step.'}
+              </p>
+              <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                <p>1. Activate messaging first.</p>
+                <p>2. Connect your Slack workspace from the Integrations section.</p>
+                <p>3. Merxus will discover channels and try to match your staff contacts by email.</p>
+                <p>4. If someone is not already in Slack, invite them to Slack first, then run the email match again.</p>
+              </div>
+              {!slackConnected && wizardCompleted ? (
+                <button
+                  type="button"
+                  onClick={handleConnectSlack}
+                  className="mt-4 rounded-full border border-emerald-300 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 hover:border-emerald-400"
+                >
+                  Connect Slack Workspace
+                </button>
+              ) : null}
+              {!slackConnected && !wizardCompleted ? (
+                <p className="mt-4 text-sm text-slate-600">
+                  Finish the wizard first. After activation, open the Integrations section and connect Slack there.
+                </p>
+              ) : null}
+              {slackDiscovery?.workspace?.teamName ? (
+                <p className="mt-4 text-sm text-slate-600">
+                  Connected workspace: <span className="font-semibold text-slate-900">{slackDiscovery.workspace.teamName}</span>
+                </p>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -954,7 +981,11 @@ export default function SmsSetupWizard({
             <li>Business website: {draft.serviceLinks.primaryLink || 'Not provided'}</li>
             <li>Staff channels: {draft.communicationChannels.staffChannels.length ? draft.communicationChannels.staffChannels.join(', ').toUpperCase() : 'None selected'}</li>
             <li>AI minimum duration: {draft.aiBehavior.minimumCallDurationSeconds} seconds</li>
-            <li>Slack integration: {draft.communicationChannels.staffChannels.includes('slack') && draft.communicationChannels.slackWebhookUrl ? 'Ready' : 'Not configured'}</li>
+            <li>
+              Slack integration: {draft.communicationChannels.staffChannels.includes('slack')
+                ? (slackConnected ? `Connected${form.slack?.teamName ? ` to ${form.slack.teamName}` : ''}` : 'Selected, but workspace connection still needs to be completed in Integrations')
+                : 'Not selected'}
+            </li>
           </ul>
         </div>
         {wizardError ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{wizardError}</div> : null}
