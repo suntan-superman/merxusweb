@@ -200,10 +200,14 @@ export default function SmsSettingsRedesign(props) {
     slackDiscovery,
     loadingSlackDiscovery,
     syncingSlackUsers,
+    provisioningSlackChannels,
+    sendingSlackTest,
     handleConnectSlack,
     handleRefreshSlack,
     handleDisconnectSlack,
     handleMatchSlackUsers,
+    handleProvisionSlackChannels,
+    handleSendSlackTest,
     formatSlackSyncTimestamp,
     routing,
     addContact,
@@ -536,6 +540,14 @@ export default function SmsSettingsRedesign(props) {
                           <>
                             <button
                               type="button"
+                              onClick={handleProvisionSlackChannels}
+                              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+                              disabled={provisioningSlackChannels}
+                            >
+                              {provisioningSlackChannels ? 'Applying…' : 'Apply Recommended Channels'}
+                            </button>
+                            <button
+                              type="button"
                               onClick={handleRefreshSlack}
                               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
                               disabled={loadingSlackDiscovery}
@@ -549,6 +561,14 @@ export default function SmsSettingsRedesign(props) {
                               disabled={syncingSlackUsers}
                             >
                               {syncingSlackUsers ? 'Matching…' : 'Match Staff by Email'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSendSlackTest}
+                              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+                              disabled={sendingSlackTest}
+                            >
+                              {sendingSlackTest ? 'Sending Test…' : 'Send Slack Test'}
                             </button>
                             <button
                               type="button"
@@ -602,6 +622,21 @@ export default function SmsSettingsRedesign(props) {
                       </div>
                     </div>
                   </div>
+
+                  {slackDiscovery?.recommendedChannels?.length ? (
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-sm font-semibold text-slate-900">Recommended channel plan</p>
+                      <p className="mt-1 text-xs text-slate-500">When you apply the plan, Merxus reuses exact name matches first and creates any missing channels automatically.</p>
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        {slackDiscovery.recommendedChannels.map((item) => (
+                          <div key={item.key} className="rounded-2xl border border-white bg-white px-4 py-3">
+                            <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                            <p className="mt-1 text-sm text-slate-600">#{item.suggestedName}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="grid gap-3 md:grid-cols-2">
                     <ToggleCard title="Enable Slack Integration" description="Turns Slack posting on for this tenant after the workspace is connected." checked={form.slack.enabled} onChange={(value) => updateSlackField('enabled', value)} compact disabled={!form.slack.connected && !form.slack.webhookUrl} />

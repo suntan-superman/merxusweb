@@ -7,7 +7,9 @@ import {
   fetchSmsNotificationRouting,
   fetchSmsSettings,
   mapSlackUsers,
+  provisionSlackChannels,
   sendSmsTest,
+  sendSlackIntegrationTest,
   startSlackOAuth,
   triggerSlackCommandCenterDemo,
   updateSmsNotificationContacts,
@@ -143,6 +145,7 @@ function buildFallbackSms(settings = {}) {
       lastSyncAt: settings.sms?.slack?.lastSyncAt || '',
       discoveredChannelsCount: Number(settings.sms?.slack?.discoveredChannelsCount || 0),
       discoveredUsersCount: Number(settings.sms?.slack?.discoveredUsersCount || 0),
+      channelPlan: Array.isArray(settings.sms?.slack?.channelPlan) ? settings.sms.slack.channelPlan : [],
       userLookupSummary: {
         matched: Number(settings.sms?.slack?.userLookupSummary?.matched || 0),
         missing: Number(settings.sms?.slack?.userLookupSummary?.missing || 0),
@@ -410,6 +413,8 @@ export default function SmsSettings({ settings, tenantType }) {
   const [slackDiscovery, setSlackDiscovery] = useState(null);
   const [loadingSlackDiscovery, setLoadingSlackDiscovery] = useState(false);
   const [syncingSlackUsers, setSyncingSlackUsers] = useState(false);
+  const [provisioningSlackChannels, setProvisioningSlackChannels] = useState(false);
+  const [sendingSlackTest, setSendingSlackTest] = useState(false);
 
   function buildSnapshot(nextForm, nextRouting) {
     return JSON.stringify({
@@ -934,6 +939,46 @@ export default function SmsSettings({ settings, tenantType }) {
     }
   }
 
+  async function handleProvisionSlackChannels() {
+    try {
+      setProvisioningSlackChannels(true);
+      setError('');
+      const result = await provisionSlackChannels();
+      const refreshed = await fetchSmsSettings();
+      const nextForm = mergeSms(buildFallbackSms(settings), refreshed.sms || {});
+      setForm(nextForm);
+      setTenantContext({
+        tenantId: refreshed.tenantId || tenantContext.tenantId,
+        tenantType: refreshed.tenantType || tenantContext.tenantType,
+      });
+      await loadSlackDiscovery({ silent: true });
+      const createdCount = (result?.channels || []).filter((item) => item.action === 'created').length;
+      const reusedCount = (result?.channels || []).filter((item) => item.action === 'reused').length;
+      setSuccess(
+        `Slack channel plan applied.${createdCount ? ` ${createdCount} created.` : ''}${reusedCount ? ` ${reusedCount} reused.` : ''}`
+      );
+      window.setTimeout(() => setSuccess(''), 4000);
+    } catch (provisionError) {
+      setError(provisionError?.response?.data?.error || 'Failed to apply the recommended Slack channel plan.');
+    } finally {
+      setProvisioningSlackChannels(false);
+    }
+  }
+
+  async function handleSendSlackTest() {
+    try {
+      setSendingSlackTest(true);
+      setError('');
+      await sendSlackIntegrationTest();
+      setSuccess('Slack test messages were sent.');
+      window.setTimeout(() => setSuccess(''), 3000);
+    } catch (testError) {
+      setError(testError?.response?.data?.error || 'Failed to send Slack test messages.');
+    } finally {
+      setSendingSlackTest(false);
+    }
+  }
+
   async function handleDisconnectSlack() {
     try {
       setError('');
@@ -1093,10 +1138,14 @@ export default function SmsSettings({ settings, tenantType }) {
       slackDiscovery={slackDiscovery}
       loadingSlackDiscovery={loadingSlackDiscovery}
       syncingSlackUsers={syncingSlackUsers}
+      provisioningSlackChannels={provisioningSlackChannels}
+      sendingSlackTest={sendingSlackTest}
       handleConnectSlack={handleConnectSlack}
       handleRefreshSlack={handleRefreshSlack}
       handleDisconnectSlack={handleDisconnectSlack}
       handleMatchSlackUsers={handleMatchSlackUsers}
+      handleProvisionSlackChannels={handleProvisionSlackChannels}
+      handleSendSlackTest={handleSendSlackTest}
       formatSlackSyncTimestamp={formatSlackSyncTimestamp}
       routing={routing}
       addContact={addContact}

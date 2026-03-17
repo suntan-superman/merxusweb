@@ -195,6 +195,16 @@ export async function mapSlackUsers(payload = {}) {
   return res.data;
 }
 
+export async function provisionSlackChannels(payload = {}) {
+  const res = await apiClient.post('/integrations/slack/channels/provision', payload);
+  return res.data;
+}
+
+export async function sendSlackIntegrationTest(payload = {}) {
+  const res = await apiClient.post('/integrations/slack/test', payload);
+  return res.data;
+}
+
 export async function disconnectSlackIntegration() {
   const res = await apiClient.post('/integrations/slack/disconnect');
   return res.data;
