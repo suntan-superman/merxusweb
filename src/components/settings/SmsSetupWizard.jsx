@@ -556,6 +556,37 @@ function StepChip({ active, complete, index, label, onClick }) {
   );
 }
 
+function buildTeamSyncNotice(syncResult = {}) {
+  const skippedContacts = Array.isArray(syncResult.skippedContacts) ? syncResult.skippedContacts : [];
+  const deliveryIssueCount = Number(syncResult.deliveryIssueCount || 0);
+  const invitedCount = Number(syncResult.invitedCount || 0);
+  const updatedCount = Number(syncResult.updatedCount || 0);
+  const parts = [];
+
+  if (invitedCount > 0 || updatedCount > 0) {
+    parts.push('Messaging settings were saved and activation completed.');
+  } else {
+    parts.push('Messaging settings were saved.');
+  }
+
+  if (skippedContacts.length) {
+    parts.push(
+      `Team & Access skipped ${skippedContacts.length === 1 ? '1 contact' : `${skippedContacts.length} contacts`}: ${skippedContacts
+        .map((item) => item.message)
+        .join('; ')}.`
+    );
+  }
+
+  if (deliveryIssueCount > 0) {
+    parts.push(
+      `${deliveryIssueCount === 1 ? '1 invite email needs follow-up' : `${deliveryIssueCount} invite emails need follow-up`} in Team & Access.`
+    );
+  }
+
+  parts.push('You can close the wizard and resolve any skipped team invites later.');
+  return parts.join(' ');
+}
+
 function InputField({
   label,
   type = 'text',
@@ -602,6 +633,7 @@ export default function SmsSetupWizard({
   const [stepIndex, setStepIndex] = useState(0);
   const [draft, setDraft] = useState(() => buildWizardDraft({ form, routing, settings, tenantType }));
   const [wizardError, setWizardError] = useState('');
+  const [wizardNotice, setWizardNotice] = useState('');
   const [staffContactErrors, setStaffContactErrors] = useState({});
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
 
@@ -616,6 +648,7 @@ export default function SmsSetupWizard({
     if (!isOpen) {
       setDraft(buildWizardDraft({ form, routing, settings, tenantType }));
       setWizardError('');
+      setWizardNotice('');
       setStaffContactErrors({});
     }
   }, [form, routing, settings, tenantType, isOpen]);
@@ -631,6 +664,7 @@ export default function SmsSetupWizard({
     setDraft(buildWizardDraft({ form, routing, settings, tenantType }));
     setStepIndex(0);
     setWizardError('');
+    setWizardNotice('');
     setStaffContactErrors({});
     setIsOpen(true);
   }
@@ -768,6 +802,7 @@ export default function SmsSetupWizard({
     }
 
     setWizardError('');
+    setWizardNotice('');
     setStepIndex((current) => Math.min(WIZARD_STEPS.length - 1, current + 1));
   }
 
@@ -778,13 +813,19 @@ export default function SmsSetupWizard({
 
     try {
       setWizardError('');
+      setWizardNotice('');
       const { nextForm, nextRouting } = buildActivatedSettings({ draft, form, routing, tenantType });
       const saved = await saveCurrentSettings(nextForm, nextRouting, {
         persistRouting: true,
         syncBaselineAfterSave: false,
         successMessage: '',
       });
-      await syncWizardTeamUsers(saved.form, nextRouting);
+      const syncResult = await syncWizardTeamUsers(saved.form, nextRouting);
+      if ((syncResult?.skippedContacts || []).length || Number(syncResult?.deliveryIssueCount || 0) > 0) {
+        setWizardNotice(buildTeamSyncNotice(syncResult));
+        setStepIndex(WIZARD_STEPS.findIndex((step) => step.id === 'review'));
+        return;
+      }
       setActiveTab('overview');
       setIsOpen(false);
     } catch (error) {
@@ -915,6 +956,9 @@ export default function SmsSetupWizard({
     if (activeStep.id === 'staffContacts') {
       return (
         <div className="space-y-4">
+          <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Staff Contacts control messaging and routing inside this wizard. They do not appear in Team & Access until you finish Step 8 and activate the system, which is when Merxus creates or updates the related team invites.
+          </div>
           {draft.staffContacts.map((contact, index) => (
             <div key={contact.id} className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
               <div className="flex items-center justify-between">
@@ -1098,6 +1142,7 @@ export default function SmsSetupWizard({
           <ul className="space-y-3 text-sm text-slate-600">
             <li>Enable SMS: {draft.communicationChannels.smsEnabled ? 'Yes' : 'No'}</li>
             <li>Business website: {draft.serviceLinks.primaryLink || 'Not provided'}</li>
+            <li>Team & Access sync: {draft.staffContacts.length === 1 ? '1 staff contact will be synced on activation' : `${draft.staffContacts.length} staff contacts will be synced on activation`}</li>
             <li>Allowed staff channels: {draft.communicationChannels.staffChannels.length ? draft.communicationChannels.staffChannels.join(', ').toUpperCase() : 'None selected'}</li>
             <li>
               Notification profiles: {NOTIFICATION_AUDIENCES.map((audience) => {
@@ -1114,6 +1159,7 @@ export default function SmsSetupWizard({
             </li>
           </ul>
         </div>
+        {wizardNotice ? <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{wizardNotice}</div> : null}
         {wizardError ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{wizardError}</div> : null}
       </div>
     );
