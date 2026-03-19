@@ -346,6 +346,81 @@ function formatWizardTeamSyncError(syncError) {
   return syncError?.message || 'Team & Access could not be synced from the messaging contacts.';
 }
 
+function getRecoverableTeamSyncConflict(syncError) {
+  const response = syncError?.response?.data || {};
+  const code = response?.code;
+  const details = response?.details || {};
+  const email = normalizeTeamEmail(details?.email);
+  const companyName = details?.companyName;
+
+  if (code === 'user_belongs_to_other_tenant') {
+    return {
+      code,
+      email,
+      message: email && companyName
+        ? `${email} already belongs to ${companyName}`
+        : email
+          ? `${email} already belongs to another company`
+          : 'A contact email already belongs to another company',
+    };
+  }
+
+  if (code === 'pending_invite_exists') {
+    return {
+      code,
+      email,
+      message: email
+        ? `${email} already has a pending invite for this company`
+        : 'A contact already has a pending invite for this company',
+    };
+  }
+
+  if (code === 'user_already_in_tenant') {
+    return {
+      code,
+      email,
+      message: email
+        ? `${email} already belongs to a team member in this company`
+        : 'A contact already belongs to a team member in this company',
+    };
+  }
+
+  if (code === 'user_already_exists') {
+    return {
+      code,
+      email,
+      message: email
+        ? `${email} already belongs to an existing Merxus account`
+        : 'A contact already belongs to an existing Merxus account',
+    };
+  }
+
+  return null;
+}
+
+function buildTeamSyncResultMessage({
+  invitedCount,
+  updatedCount,
+  deliveryIssueCount,
+  skippedContacts = [],
+}) {
+  const baseMessage = buildTeamSyncMessage({
+    invitedCount,
+    updatedCount,
+    deliveryIssueCount,
+  });
+
+  if (!skippedContacts.length) {
+    return baseMessage;
+  }
+
+  const skippedSummary = skippedContacts
+    .map((item) => item.message)
+    .join('; ');
+
+  return `${baseMessage} Team & Access skipped ${skippedContacts.length === 1 ? '1 contact' : `${skippedContacts.length} contacts`}: ${skippedSummary}.`;
+}
+
 const NOTIFICATION_TEMPLATE_FIELDS = [
   { key: 'caller.reservation_confirmed', label: 'Caller reservation confirmation' },
   { key: 'caller.order_confirmed', label: 'Caller order confirmation' },
@@ -812,6 +887,7 @@ export default function SmsSettings({ settings, tenantType }) {
       let invitedCount = 0;
       let updatedCount = 0;
       let deliveryIssueCount = 0;
+      const skippedContacts = [];
 
       for (const contact of uniqueContacts) {
         const email = normalizeTeamEmail(contact.email);
@@ -837,15 +913,24 @@ export default function SmsSettings({ settings, tenantType }) {
           continue;
         }
 
-        const inviteResult = await inviteTeamUser(tenantType, {
-          ...payload,
-          email,
-          role: normalizeWizardTeamRole(contact.role),
-        });
+        try {
+          const inviteResult = await inviteTeamUser(tenantType, {
+            ...payload,
+            email,
+            role: normalizeWizardTeamRole(contact.role),
+          });
 
-        invitedCount += 1;
-        if (inviteResult?.emailSent === false) {
-          deliveryIssueCount += 1;
+          invitedCount += 1;
+          if (inviteResult?.emailSent === false) {
+            deliveryIssueCount += 1;
+          }
+        } catch (inviteError) {
+          const recoverableConflict = getRecoverableTeamSyncConflict(inviteError);
+          if (recoverableConflict) {
+            skippedContacts.push(recoverableConflict);
+            continue;
+          }
+          throw inviteError;
         }
       }
 
@@ -854,10 +939,11 @@ export default function SmsSettings({ settings, tenantType }) {
       syncBaseline(formToSync, refreshedRouting);
       dispatchTeamUsersChanged({ tenantType });
 
-      const message = buildTeamSyncMessage({
+      const message = buildTeamSyncResultMessage({
         invitedCount,
         updatedCount,
         deliveryIssueCount,
+        skippedContacts,
       });
       setSuccess(message);
       window.setTimeout(() => setSuccess(''), 4000);
@@ -866,6 +952,7 @@ export default function SmsSettings({ settings, tenantType }) {
         invitedCount,
         updatedCount,
         deliveryIssueCount,
+        skippedContacts,
         routing: refreshedRouting,
       };
     } catch (syncError) {

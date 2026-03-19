@@ -741,7 +741,7 @@ export default function SmsSetupWizard({
       setWizardError('');
       const { nextForm, nextRouting } = buildActivatedSettings({ draft, form, routing, tenantType });
       const saved = await saveCurrentSettings(nextForm, nextRouting, {
-        persistRouting: false,
+        persistRouting: true,
         syncBaselineAfterSave: false,
         successMessage: '',
       });
