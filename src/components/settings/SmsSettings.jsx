@@ -310,6 +310,42 @@ function buildTeamSyncMessage({ invitedCount, updatedCount, deliveryIssueCount }
   return summary.join(' ');
 }
 
+function formatWizardTeamSyncError(syncError) {
+  const response = syncError?.response?.data || {};
+  const code = response?.code;
+  const details = response?.details || {};
+  const email = normalizeTeamEmail(details?.email);
+  const companyName = details?.companyName;
+
+  if (code === 'user_belongs_to_other_tenant') {
+    if (email && companyName) {
+      return `Team & Access could not be synced. ${email} already belongs to ${companyName}.`;
+    }
+    if (email) {
+      return `Team & Access could not be synced. ${email} already belongs to another company.`;
+    }
+    return response?.error || 'Team & Access could not be synced because one contact email already belongs to another company.';
+  }
+
+  if (code === 'pending_invite_exists') {
+    return email
+      ? `Team & Access could not be synced. ${email} already has a pending invite for this company.`
+      : (response?.error || 'Team & Access could not be synced because a contact already has a pending invite.');
+  }
+
+  if (code === 'user_already_in_tenant') {
+    return email
+      ? `Team & Access could not be synced. ${email} already belongs to a team member in this company.`
+      : (response?.error || 'Team & Access could not be synced because a contact already belongs to this company.');
+  }
+
+  if (response?.error) {
+    return email ? `${response.error} (${email})` : response.error;
+  }
+
+  return syncError?.message || 'Team & Access could not be synced from the messaging contacts.';
+}
+
 const NOTIFICATION_TEMPLATE_FIELDS = [
   { key: 'caller.reservation_confirmed', label: 'Caller reservation confirmation' },
   { key: 'caller.order_confirmed', label: 'Caller order confirmation' },
@@ -833,12 +869,9 @@ export default function SmsSettings({ settings, tenantType }) {
         routing: refreshedRouting,
       };
     } catch (syncError) {
-      const syncMessage =
-        syncError?.response?.data?.error ||
-        syncError?.message ||
-        'Team & Access could not be synced from the messaging contacts.';
+      const syncMessage = formatWizardTeamSyncError(syncError);
       setError(syncMessage);
-      const error = new Error(`Team & Access could not be synced. ${syncMessage}`);
+      const error = new Error(syncMessage);
       throw error;
     }
   }
