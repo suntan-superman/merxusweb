@@ -806,6 +806,11 @@ export default function SmsSetupWizard({
     setStepIndex((current) => Math.min(WIZARD_STEPS.length - 1, current + 1));
   }
 
+  function handleCloseWizard() {
+    setActiveTab('overview');
+    setIsOpen(false);
+  }
+
   async function handleActivate() {
     if (!validateStaffContactsStep()) {
       return;
@@ -826,8 +831,7 @@ export default function SmsSetupWizard({
         setStepIndex(WIZARD_STEPS.findIndex((step) => step.id === 'review'));
         return;
       }
-      setActiveTab('overview');
-      setIsOpen(false);
+      handleCloseWizard();
     } catch (error) {
       if (error?.response?.data?.error || error?.message) {
         setWizardError(
@@ -1198,7 +1202,7 @@ export default function SmsSetupWizard({
                     {WIZARD_STEPS.map((step, index) => <StepChip key={step.id} index={index} label={step.label} active={index === stepIndex} complete={index < stepIndex} onClick={() => setStepIndex(index)} />)}
                   </div>
                   <div className="mt-8 space-y-3">
-                    <button type="button" onClick={() => setIsOpen(false)} className="w-full rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300">Skip for now</button>
+                    <button type="button" onClick={() => setIsOpen(false)} className="w-full rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300">{wizardNotice ? 'Keep open' : 'Skip for now'}</button>
                     <button type="button" onClick={() => { setIsOpen(false); setActiveTab('advanced'); }} className="w-full rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300">Switch to advanced</button>
                   </div>
                 </aside>
@@ -1214,7 +1218,20 @@ export default function SmsSetupWizard({
                     {stepIndex < WIZARD_STEPS.length - 1 ? (
                       <button type="button" onClick={handleContinue} className="btn-primary">Continue</button>
                     ) : (
-                      <button type="button" onClick={handleActivate} className="btn-primary" disabled={saving}>{saving ? 'Activating...' : 'Activate System'}</button>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        {wizardNotice ? (
+                          <button
+                            type="button"
+                            onClick={handleCloseWizard}
+                            className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300"
+                          >
+                            Close Wizard
+                          </button>
+                        ) : null}
+                        <button type="button" onClick={handleActivate} className="btn-primary" disabled={saving}>
+                          {saving ? 'Activating...' : wizardNotice ? 'Retry Team Sync' : 'Activate System'}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
