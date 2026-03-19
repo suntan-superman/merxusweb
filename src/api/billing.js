@@ -102,3 +102,11 @@ export const createRefundForTenant = async (payload) => {
   const response = await apiClient.post('/billing/admin/refund', payload);
   return response.data;
 };
+
+/**
+ * Admin: Cancel a tenant subscription in Stripe
+ */
+export const cancelSubscriptionForTenant = async (payload) => {
+  const response = await apiClient.post('/billing/admin/cancel', payload);
+  return response.data;
+};

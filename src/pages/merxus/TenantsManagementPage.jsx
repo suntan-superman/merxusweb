@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Building, Home, Phone, Mail, Calendar, AlertCircle, CheckCircle, XCircle, Edit2, PauseCircle, PlayCircle, DollarSign, History } from 'lucide-react';
+import { Users, Building, Home, Phone, AlertCircle, CheckCircle, XCircle, Edit2, PauseCircle, PlayCircle, DollarSign, History } from 'lucide-react';
 import { collection, query, where, getDocs, doc, updateDoc, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { toast } from 'react-toastify';
 import { GridComponent, ColumnsDirective, ColumnDirective, Page, Sort, Filter, Toolbar, ExcelExport, Inject } from '@syncfusion/ej2-react-grids';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 import SelectField from '../../components/common/SelectField';
-import { pauseSubscriptionForTenant, resumeSubscriptionForTenant, createRefundForTenant } from '../../api/billing';
+import { pauseSubscriptionForTenant, resumeSubscriptionForTenant, createRefundForTenant, cancelSubscriptionForTenant } from '../../api/billing';
 
 export default function TenantsManagementPage() {
   const [activeTab, setActiveTab] = useState('restaurants');
@@ -25,6 +25,10 @@ export default function TenantsManagementPage() {
   const [refundHistoryTenant, setRefundHistoryTenant] = useState(null);
   const [refundHistory, setRefundHistory] = useState([]);
   const [loadingRefundHistory, setLoadingRefundHistory] = useState(false);
+  const [cancelTenant, setCancelTenant] = useState(null);
+  const [cancelImmediately, setCancelImmediately] = useState(false);
+  const [cancelReason, setCancelReason] = useState('admin_request');
+  const [processingCancel, setProcessingCancel] = useState(false);
 
   const tabs = [
     { id: 'restaurants', label: 'Restaurants', icon: Building, collection: 'restaurants', type: 'Restaurant' },
@@ -67,6 +71,7 @@ export default function TenantsManagementPage() {
         let subscriptionStatus = 'Unknown';
         let trialEndsAt = null;
         let billingPaused = false;
+        let cancelAtPeriodEnd = false;
         try {
           const subsSnapshot = await getDocs(
             query(collection(db, 'subscriptions'), where('tenantId', '==', tenantDoc.id))
@@ -74,7 +79,12 @@ export default function TenantsManagementPage() {
           if (subsSnapshot.docs.length > 0) {
             const sub = subsSnapshot.docs[0].data();
             billingPaused = !!sub.billingPaused;
-            subscriptionStatus = billingPaused ? 'paused' : (sub.status || 'unknown');
+            cancelAtPeriodEnd = !!sub.cancelAtPeriodEnd;
+            subscriptionStatus = billingPaused
+              ? 'paused'
+              : (cancelAtPeriodEnd && sub.status && sub.status !== 'canceled'
+                  ? 'canceling'
+                  : (sub.status || 'unknown'));
             trialEndsAt = sub.trialEndsAt?.toDate?.() || null;
             console.log(`[TenantsManagement] ${tenantDoc.id} - Found subscription with status: "${subscriptionStatus}"`);
           } else {
@@ -99,6 +109,7 @@ export default function TenantsManagementPage() {
           subscriptionStatus,
           trialEndsAt,
           billingPaused,
+          cancelAtPeriodEnd,
           type: currentTab.type,
           tenantType: currentTab.id === 'offices' ? 'voice' : currentTab.id === 'agents' ? 'real_estate' : 'restaurant',
         });
@@ -211,6 +222,7 @@ export default function TenantsManagementPage() {
       trialing: { color: 'bg-blue-100 text-blue-800 border-blue-300', icon: AlertCircle, label: 'Trial' },
       past_due: { color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: AlertCircle, label: 'Past Due' },
       paused: { color: 'bg-orange-100 text-orange-800 border-orange-300', icon: PauseCircle, label: 'Paused' },
+      canceling: { color: 'bg-amber-100 text-amber-800 border-amber-300', icon: AlertCircle, label: 'Ending' },
       canceled: { color: 'bg-red-100 text-red-800 border-red-300', icon: XCircle, label: 'Canceled' },
       'No Subscription': { color: 'bg-gray-100 text-gray-800 border-gray-300', icon: AlertCircle, label: 'No Sub' },
       Unknown: { color: 'bg-gray-100 text-gray-600 border-gray-300', icon: AlertCircle, label: 'Unknown' },
@@ -243,6 +255,7 @@ export default function TenantsManagementPage() {
   const actionsTemplate = (props) => {
     const isPaused = props.billingPaused || props.subscriptionStatus === 'paused';
     const hasSubscription = props.subscriptionStatus && props.subscriptionStatus !== 'No Subscription';
+    const canCancel = hasSubscription && props.subscriptionStatus !== 'canceled' && !props.cancelAtPeriodEnd;
     return (
       <div className="flex items-center gap-2">
         <button
@@ -277,6 +290,19 @@ export default function TenantsManagementPage() {
             title="Issue Refund"
           >
             <DollarSign size={16} />
+          </button>
+        )}
+        {canCancel && (
+          <button
+            onClick={() => {
+              setCancelTenant(props);
+              setCancelImmediately(false);
+              setCancelReason('admin_request');
+            }}
+            className="p-2 text-red-700 transition-colors rounded-lg hover:bg-red-50"
+            title="Cancel Subscription"
+          >
+            <XCircle size={16} />
           </button>
         )}
         {hasSubscription && (
@@ -377,6 +403,34 @@ export default function TenantsManagementPage() {
       toast.error('Failed to issue refund');
     } finally {
       setProcessingRefund(false);
+    }
+  };
+
+  const handleSubmitCancelSubscription = async () => {
+    if (!cancelTenant?.id || !cancelTenant?.tenantType) return;
+
+    setProcessingCancel(true);
+    try {
+      await cancelSubscriptionForTenant({
+        tenantId: cancelTenant.id,
+        tenantType: cancelTenant.tenantType,
+        cancelImmediately,
+        reason: cancelReason.trim() || 'admin_request',
+      });
+      toast.success(
+        cancelImmediately
+          ? 'Subscription canceled immediately'
+          : 'Subscription will cancel at period end'
+      );
+      setCancelTenant(null);
+      setCancelImmediately(false);
+      setCancelReason('admin_request');
+      loadTenants();
+    } catch (error) {
+      console.error('Error canceling subscription:', error);
+      toast.error(error?.response?.data?.error || 'Failed to cancel subscription');
+    } finally {
+      setProcessingCancel(false);
     }
   };
 
@@ -570,7 +624,7 @@ export default function TenantsManagementPage() {
               />
               <ColumnDirective 
                 headerText="Actions" 
-                width="120"
+                width="170"
                 headerTemplate={headerTemplate}
                 template={actionsTemplate}
                 allowSorting={false}
@@ -677,6 +731,89 @@ export default function TenantsManagementPage() {
                 className="flex-1 px-4 py-2 text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {savingEdit ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Subscription Modal */}
+      {cancelTenant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-xl p-6 mx-4 bg-white rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold">Cancel Subscription</h2>
+              <button
+                onClick={() => {
+                  setCancelTenant(null);
+                  setCancelImmediately(false);
+                  setCancelReason('admin_request');
+                }}
+                className="p-1 text-gray-400 hover:text-gray-600"
+                title="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+                <p className="font-medium text-red-900">{cancelTenant.name}</p>
+                <p className="mt-1 text-sm text-red-800">
+                  This will cancel the tenant&apos;s Stripe subscription.
+                </p>
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                  Cancellation Reason
+                </label>
+                <input
+                  type="text"
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="admin_request"
+                />
+              </div>
+
+              <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cancelImmediately}
+                  onChange={(e) => setCancelImmediately(e.target.checked)}
+                  className="mt-1"
+                />
+                <div>
+                  <p className="font-medium text-gray-900">Cancel immediately</p>
+                  <p className="text-sm text-gray-600">
+                    Leave this unchecked to stop renewal only at the end of the current billing period.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setCancelTenant(null);
+                  setCancelImmediately(false);
+                  setCancelReason('admin_request');
+                }}
+                className="flex-1 px-4 py-2 text-gray-800 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleSubmitCancelSubscription}
+                disabled={processingCancel}
+                className="flex-1 px-4 py-2 text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {processingCancel
+                  ? 'Canceling...'
+                  : (cancelImmediately ? 'Cancel Immediately' : 'End at Period End')}
               </button>
             </div>
           </div>
