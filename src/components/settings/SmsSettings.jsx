@@ -73,6 +73,7 @@ function Field({ label, hint, tooltip, children }) {
 }
 
 function buildFallbackSms(settings = {}) {
+  const defaultStaffChannels = settings.sms?.staffChannels || ['sms', 'email', 'push'];
   return {
     enabled: false,
     aiEnabled: false,
@@ -93,7 +94,13 @@ function buildFallbackSms(settings = {}) {
     suppressSpam: true,
     suppressGeneralQuestion: true,
     callerChannels: ['sms'],
-    staffChannels: ['sms', 'email', 'push'],
+    staffChannels: defaultStaffChannels,
+    staffChannelsByAudience: settings.sms?.staffChannelsByAudience || {
+      managers: [],
+      sales: [],
+      support: [],
+      everyone: defaultStaffChannels,
+    },
     notificationRetryEnabled: false,
     notificationRetryMaxAttempts: 2,
     notificationRetryDelayMinutes: 15,
@@ -182,6 +189,7 @@ function mergeSms(base, incoming = {}) {
     ...incoming,
     callerChannels: incoming.callerChannels || base.callerChannels,
     staffChannels: incoming.staffChannels || base.staffChannels,
+    staffChannelsByAudience: incoming.staffChannelsByAudience || base.staffChannelsByAudience,
     notificationRetryEnabled: incoming.notificationRetryEnabled ?? base.notificationRetryEnabled,
     notificationRetryMaxAttempts: incoming.notificationRetryMaxAttempts ?? base.notificationRetryMaxAttempts,
     notificationRetryDelayMinutes: incoming.notificationRetryDelayMinutes ?? base.notificationRetryDelayMinutes,

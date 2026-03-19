@@ -14,6 +14,7 @@ const WIZARD_STEPS = [
 
 const ROLE_OPTIONS = ['Manager', 'Support', 'Sales', 'Operations'];
 const STAFF_CHANNEL_OPTIONS = ['sms', 'email', 'push', 'slack', 'teams', 'webhook'];
+const NOTIFICATION_AUDIENCES = ['managers', 'sales', 'support', 'everyone'];
 
 const BUSINESS_TYPE_OPTIONS = [
   {
@@ -60,6 +61,28 @@ function createDraftContact(index = 0, base = {}) {
 
 function unique(values = []) {
   return Array.from(new Set((values || []).filter(Boolean)));
+}
+
+function buildDefaultAudienceChannels(fallbackChannels = ['sms', 'email']) {
+  const normalizedFallback = unique(fallbackChannels);
+  return {
+    managers: [],
+    sales: [],
+    support: [],
+    everyone: normalizedFallback,
+  };
+}
+
+function normalizeAudienceChannelsMap(value, fallbackChannels = ['sms', 'email']) {
+  const defaults = buildDefaultAudienceChannels(fallbackChannels);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return defaults;
+  }
+
+  return NOTIFICATION_AUDIENCES.reduce((acc, audience) => {
+    acc[audience] = Array.isArray(value[audience]) ? unique(value[audience]) : defaults[audience];
+    return acc;
+  }, {});
 }
 
 function isValidEmail(value) {
@@ -145,6 +168,11 @@ function buildWizardDraft({ form, routing, settings, tenantType }) {
   const safeSettings = settings || {};
   const safeRouting = routing || { contacts: [], definitions: [] };
   const businessType = normalizeBusinessType(form.setupWizard?.businessType || tenantType);
+  const baseStaffChannels = unique(form.staffChannels?.length ? form.staffChannels : ['sms', 'email']);
+  const channelsByAudience = normalizeAudienceChannelsMap(
+    form.staffChannelsByAudience || form.setupWizard?.notificationPreferences?.channelsByAudience,
+    baseStaffChannels
+  );
   return {
     businessType,
     businessInfo: {
@@ -167,7 +195,7 @@ function buildWizardDraft({ form, routing, settings, tenantType }) {
     },
     notificationPreferences: {
       alertAudience: inferAlertAudience(form, safeRouting, tenantType),
-      channels: unique(form.staffChannels?.length ? form.staffChannels : ['sms', 'email']),
+      channelsByAudience,
     },
     staffContacts: safeRouting.contacts?.length
       ? safeRouting.contacts.map((contact, index) => createDraftContact(index, contact))
@@ -177,7 +205,7 @@ function buildWizardDraft({ form, routing, settings, tenantType }) {
       callerConfirmationEnabled: form.callerConfirmationEnabled !== false,
       callerSmsEnabled: (form.callerChannels || []).includes('sms'),
       staffAlertsEnabled: form.staffAlertsEnabled !== false,
-      staffChannels: unique(form.staffChannels?.length ? form.staffChannels : ['sms', 'email']),
+      staffChannels: baseStaffChannels,
     },
     aiBehavior: {
       minimumCallDurationSeconds: Number(form.minimumCallDurationSeconds || 15),
@@ -418,12 +446,16 @@ function buildActivatedSettings({ draft, form, routing, tenantType }) {
     ...buildRoutingDraft(tenantType, routing.definitions, draft.staffContacts),
   };
 
-  const selectedStaffChannels = unique([
-    ...(draft.notificationPreferences.channels || []),
-    ...(draft.communicationChannels.staffChannels || []),
-  ]);
+  const selectedStaffChannels = unique(draft.communicationChannels.staffChannels || []);
+  const channelsByAudience = normalizeAudienceChannelsMap(
+    draft.notificationPreferences.channelsByAudience,
+    selectedStaffChannels.length ? selectedStaffChannels : ['sms', 'email']
+  );
+  const anyAudienceUsesSlack = NOTIFICATION_AUDIENCES.some((audience) =>
+    channelsByAudience[audience]?.includes('slack')
+  );
   const slackEnabled =
-    selectedStaffChannels.includes('slack') &&
+    (selectedStaffChannels.includes('slack') || anyAudienceUsesSlack) &&
     Boolean(form.slack?.installationId || form.slack?.connected || form.slack?.webhookUrl);
 
   return {
@@ -438,6 +470,7 @@ function buildActivatedSettings({ draft, form, routing, tenantType }) {
       staffAlertsEnabled: draft.communicationChannels.staffAlertsEnabled,
       callerChannels: draft.communicationChannels.callerSmsEnabled ? ['sms'] : [],
       staffChannels: selectedStaffChannels,
+      staffChannelsByAudience: channelsByAudience,
       minimumCallDurationSeconds: Number(draft.aiBehavior.minimumCallDurationSeconds || 15),
       requireMeaningfulInteraction: draft.aiBehavior.requireMeaningfulInteraction,
       requireCapturedContact: draft.aiBehavior.requireCapturedContact,
@@ -465,6 +498,10 @@ function buildActivatedSettings({ draft, form, routing, tenantType }) {
         businessType: draft.businessType,
         primaryPhone: draft.businessInfo.primaryPhone.trim(),
         primaryEmail: draft.businessInfo.primaryEmail.trim(),
+        notificationPreferences: {
+          alertAudience: draft.notificationPreferences.alertAudience,
+          channelsByAudience,
+        },
       },
     },
     nextRouting,
@@ -534,6 +571,7 @@ export default function SmsSetupWizard({
   const progress = ((stepIndex + 1) / WIZARD_STEPS.length) * 100;
   const serviceLinkFields = useMemo(() => getServiceLinkFields(draft.businessType), [draft.businessType]);
   const slackConnected = Boolean(form.slack?.installationId || form.slack?.connected);
+  const selectedAudienceChannels = draft.notificationPreferences.channelsByAudience?.[draft.notificationPreferences.alertAudience] || [];
 
   useEffect(() => {
     if (!isOpen) {
@@ -570,6 +608,24 @@ export default function SmsSetupWizard({
         [key]: value,
       },
     }));
+  }
+
+  function toggleAudienceChannel(audience, channel) {
+    setDraft((current) => {
+      const nextValues = new Set(current.notificationPreferences.channelsByAudience?.[audience] || []);
+      if (nextValues.has(channel)) nextValues.delete(channel);
+      else nextValues.add(channel);
+      return {
+        ...current,
+        notificationPreferences: {
+          ...current.notificationPreferences,
+          channelsByAudience: {
+            ...current.notificationPreferences.channelsByAudience,
+            [audience]: Array.from(nextValues),
+          },
+        },
+      };
+    });
   }
 
   function toggleDraftChannel(section, field, value) {
@@ -766,6 +822,12 @@ export default function SmsSetupWizard({
     if (activeStep.id === 'notifications') {
       return (
         <div className="space-y-6">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Delivery methods by staff classification</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Select a classification, then choose how that group should receive alerts. The Everyone profile acts as the shared default.
+            </p>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {[
               { value: 'managers', label: 'Managers' },
@@ -787,10 +849,22 @@ export default function SmsSetupWizard({
               </button>
             ))}
           </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              {draft.notificationPreferences.alertAudience === 'everyone'
+                ? 'Everyone Default'
+                : `${draft.notificationPreferences.alertAudience} profile`}
+            </p>
+          </div>
           <div className="flex flex-wrap gap-3">
             {STAFF_CHANNEL_OPTIONS.map((channel) => (
               <label key={channel} className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700">
-                <input type="checkbox" checked={draft.notificationPreferences.channels.includes(channel)} onChange={() => toggleDraftChannel('notificationPreferences', 'channels', channel)} className="checkbox-green h-4 w-4 rounded border-gray-300 focus:ring-primary-500" />
+                <input
+                  type="checkbox"
+                  checked={selectedAudienceChannels.includes(channel)}
+                  onChange={() => toggleAudienceChannel(draft.notificationPreferences.alertAudience, channel)}
+                  className="checkbox-green h-4 w-4 rounded border-gray-300 focus:ring-primary-500"
+                />
                 {channel.toUpperCase()}
               </label>
             ))}
@@ -883,7 +957,7 @@ export default function SmsSetupWizard({
           <div>
             <p className="text-sm font-semibold text-slate-900">Staff alert delivery methods</p>
             <p className="mt-1 text-sm text-slate-500">
-              Choose how your internal team can receive alerts. These channel checkboxes control staff delivery, not whether your Merxus line has SMS enabled.
+              Choose which delivery methods are globally allowed for staff alerts. Classification-specific settings from the previous step can narrow these further.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -979,7 +1053,14 @@ export default function SmsSetupWizard({
           <ul className="space-y-3 text-sm text-slate-600">
             <li>Enable SMS: {draft.communicationChannels.smsEnabled ? 'Yes' : 'No'}</li>
             <li>Business website: {draft.serviceLinks.primaryLink || 'Not provided'}</li>
-            <li>Staff channels: {draft.communicationChannels.staffChannels.length ? draft.communicationChannels.staffChannels.join(', ').toUpperCase() : 'None selected'}</li>
+            <li>Allowed staff channels: {draft.communicationChannels.staffChannels.length ? draft.communicationChannels.staffChannels.join(', ').toUpperCase() : 'None selected'}</li>
+            <li>
+              Notification profiles: {NOTIFICATION_AUDIENCES.map((audience) => {
+                const channels = draft.notificationPreferences.channelsByAudience?.[audience] || [];
+                const label = audience === 'everyone' ? 'Everyone' : audience.charAt(0).toUpperCase() + audience.slice(1);
+                return `${label}: ${channels.length ? channels.join('/').toUpperCase() : 'None'}`;
+              }).join(' | ')}
+            </li>
             <li>AI minimum duration: {draft.aiBehavior.minimumCallDurationSeconds} seconds</li>
             <li>
               Slack integration: {draft.communicationChannels.staffChannels.includes('slack')
