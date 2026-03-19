@@ -556,12 +556,24 @@ function StepChip({ active, complete, index, label, onClick }) {
   );
 }
 
-function InputField({ label, type = 'text', value, onChange, placeholder = '', helperText = '', errorText = '' }) {
+function InputField({
+  label,
+  type = 'text',
+  value,
+  onChange,
+  placeholder = '',
+  helperText = '',
+  errorText = '',
+  name = '',
+  autoComplete = 'off',
+}) {
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
       <input
         type={type}
+        name={name}
+        autoComplete={autoComplete}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
@@ -815,14 +827,14 @@ export default function SmsSetupWizard({
       return (
         <div className="grid gap-4 lg:grid-cols-2">
           <InputField label="Business name" value={draft.businessInfo.businessName} onChange={(event) => updateDraftSection('businessInfo', 'businessName', event.target.value)} placeholder="Kern Pest Control" />
-          <InputField label="Display name" value={draft.businessInfo.displayName} onChange={(event) => updateDraftSection('businessInfo', 'displayName', event.target.value)} placeholder="Merxus AI" />
-          <InputField label="Primary phone" type="tel" value={draft.businessInfo.primaryPhone} onChange={(event) => updateDraftSection('businessInfo', 'primaryPhone', event.target.value)} placeholder="+16615551234" />
-          <InputField label="Primary email" type="email" value={draft.businessInfo.primaryEmail} onChange={(event) => updateDraftSection('businessInfo', 'primaryEmail', event.target.value)} placeholder="hello@example.com" />
+          <InputField label="Display name" value={draft.businessInfo.displayName} onChange={(event) => updateDraftSection('businessInfo', 'displayName', event.target.value)} placeholder="Merxus AI" name="wizard-display-name" autoComplete="organization-title" />
+          <InputField label="Primary phone" type="tel" value={draft.businessInfo.primaryPhone} onChange={(event) => updateDraftSection('businessInfo', 'primaryPhone', event.target.value)} placeholder="+16615551234" name="wizard-primary-phone" autoComplete="tel" />
+          <InputField label="Primary email" type="email" value={draft.businessInfo.primaryEmail} onChange={(event) => updateDraftSection('businessInfo', 'primaryEmail', event.target.value)} placeholder="hello@example.com" name="wizard-primary-email" autoComplete="email" />
           <div className="lg:col-span-2">
             <InputField label="Website" type="url" value={draft.businessInfo.website} onChange={(event) => {
               updateDraftSection('businessInfo', 'website', event.target.value);
               updateDraftSection('serviceLinks', 'primaryLink', event.target.value);
-            }} placeholder="https://example.com" />
+            }} placeholder="https://example.com" name="wizard-website" autoComplete="url" />
           </div>
         </div>
       );
@@ -916,6 +928,8 @@ export default function SmsSetupWizard({
                   onChange={(event) => updateContact(index, 'name', event.target.value)}
                   placeholder="Jane Doe"
                   errorText={staffContactErrors[contact.id]?.name || ''}
+                  name={`staff-contact-${contact.id}-name`}
+                  autoComplete={`section-staff-${contact.id} name`}
                 />
                 <SelectField
                   label="Role"
@@ -932,6 +946,8 @@ export default function SmsSetupWizard({
                   onChange={(event) => updateContact(index, 'phone', event.target.value)}
                   placeholder="+16615551234"
                   errorText={staffContactErrors[contact.id]?.phone || ''}
+                  name={`staff-contact-${contact.id}-phone`}
+                  autoComplete={`section-staff-${contact.id} tel`}
                 />
                 <InputField
                   label="Email"
@@ -940,6 +956,8 @@ export default function SmsSetupWizard({
                   onChange={(event) => updateContact(index, 'email', event.target.value)}
                   placeholder="team@example.com"
                   errorText={staffContactErrors[contact.id]?.email || ''}
+                  name={`staff-contact-${contact.id}-email`}
+                  autoComplete={`section-staff-${contact.id} email`}
                 />
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
