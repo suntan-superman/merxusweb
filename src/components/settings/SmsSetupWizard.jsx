@@ -91,11 +91,37 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function isValidPhoneNumber(value) {
+function getPhoneValidationMessage(value) {
   const phone = String(value || '').trim();
-  if (!phone) return false;
-  const cleaned = phone.replace(/[^\d+]/g, '');
-  return /^\+?\d{10,15}$/.test(cleaned);
+  if (!phone) return 'Phone number is required.';
+
+  const digits = phone.replace(/\D/g, '');
+  if (!digits) {
+    return 'Enter a valid phone number.';
+  }
+
+  if (phone.startsWith('+')) {
+    if (digits.startsWith('1')) {
+      return digits.length === 11 ? '' : 'Enter a valid US number in +1XXXXXXXXXX format.';
+    }
+    return digits.length >= 8 && digits.length <= 15
+      ? ''
+      : 'Enter a valid international number with country code.';
+  }
+
+  if (digits.length === 10) {
+    return '';
+  }
+
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return '';
+  }
+
+  return 'Enter a valid 10-digit phone number or +1XXXXXXXXXX.';
+}
+
+function isValidPhoneNumber(value) {
+  return getPhoneValidationMessage(value) === '';
 }
 
 function validateStaffContacts(contacts = []) {
@@ -115,8 +141,9 @@ function validateStaffContacts(contacts = []) {
       contactErrors.role = 'Select a role.';
     }
 
-    if (!isValidPhoneNumber(phone)) {
-      contactErrors.phone = 'Enter a valid phone number.';
+    const phoneError = getPhoneValidationMessage(phone);
+    if (phoneError) {
+      contactErrors.phone = phoneError;
     }
 
     if (!isValidEmail(email)) {
