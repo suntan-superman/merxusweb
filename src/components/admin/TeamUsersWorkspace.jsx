@@ -189,7 +189,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
       resetBannerState();
       setBusyAction({ type: 'role', uid });
       await updateTeamUser(tenantType, uid, { role });
-      setSuccess('Role updated.');
+      setSuccess('Access role updated.');
       await refetchUsers();
     } catch (err) {
       console.error(err);
@@ -404,7 +404,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
               placeholder="+16615551234"
             />
             <SelectField
-              label="Role"
+              label="Access Role"
               value={form.role}
               onChange={(nextValue) => setForm((current) => ({ ...current, role: nextValue }))}
               options={[
@@ -442,7 +442,7 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
                 <tr>
                   <th className="px-4 py-3">User</th>
                   <th className="px-4 py-3">Phone</th>
-                  <th className="px-4 py-3">Role</th>
+                  <th className="px-4 py-3">Access Role</th>
                   <th className="px-4 py-3">Verification</th>
                   <th className="px-4 py-3">Routing Groups</th>
                   <th className="px-4 py-3">Lifecycle</th>

@@ -1163,11 +1163,11 @@ export default function SmsSetupWizard({
                   autoComplete={`section-staff-${contact.id} name`}
                 />
                 <SelectField
-                  label="Role"
+                  label="Staff Classification"
                   value={contact.role}
                   onChange={(nextValue) => updateContact(index, 'role', nextValue)}
                   options={ROLE_OPTIONS}
-                  placeholder="Select role"
+                  placeholder="Select classification"
                   errorText={staffContactErrors[contact.id]?.role || ''}
                 />
                 <InputField
