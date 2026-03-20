@@ -181,6 +181,7 @@ export default function SmsSettingsRedesign(props) {
   const {
     copy,
     settings,
+    teamUsers,
     error,
     success,
     activeTab,
@@ -261,6 +262,7 @@ export default function SmsSettingsRedesign(props) {
         copy={copy}
         form={form}
         routing={routing}
+        teamUsers={teamUsers}
         settings={settings}
         tenantType={tenantType}
         setActiveTab={setActiveTab}

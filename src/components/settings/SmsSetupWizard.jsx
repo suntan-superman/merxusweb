@@ -193,7 +193,58 @@ function inferAlertAudience(form = {}, routing = {}, tenantType = 'voice') {
   return 'support';
 }
 
-function buildWizardDraft({ form, routing, settings, tenantType }) {
+function inferRoleFromTeamUser(teamUser = {}, tenantType = 'voice') {
+  const normalizedType = normalizeBusinessType(tenantType);
+  const role = String(teamUser?.role || '').trim().toLowerCase();
+  const groupKeys = Array.isArray(teamUser?.notificationGroupKeys)
+    ? teamUser.notificationGroupKeys.map((value) => String(value || '').trim().toLowerCase())
+    : [];
+
+  if (role === 'manager') return 'Manager';
+
+  if (normalizedType === 'restaurant') {
+    if (groupKeys.includes('sales_contacts')) return 'Sales';
+    if (groupKeys.includes('reservation_contacts') || groupKeys.includes('order_contacts')) return 'Operations';
+    return 'Manager';
+  }
+
+  if (normalizedType === 'real_estate') {
+    if (groupKeys.includes('buyer_agent_contacts') || groupKeys.includes('seller_agent_contacts')) return 'Sales';
+    if (groupKeys.includes('showing_contacts') || groupKeys.includes('property_contacts')) return 'Operations';
+    return 'Manager';
+  }
+
+  if (groupKeys.includes('sales_contacts')) return 'Sales';
+  if (groupKeys.includes('appointment_contacts')) return 'Operations';
+  if (groupKeys.includes('support_contacts')) return 'Support';
+  if (groupKeys.includes('manager_contacts')) return 'Manager';
+  return 'Support';
+}
+
+function buildDraftContactsFromTeamUsers(teamUsers = [], tenantType = 'voice') {
+  const normalizedContacts = (Array.isArray(teamUsers) ? teamUsers : [])
+    .filter((teamUser) => teamUser?.disabled !== true)
+    .filter((teamUser) => String(teamUser?.role || '').trim().toLowerCase() !== 'owner')
+    .filter((teamUser) => String(teamUser?.email || '').trim() || String(teamUser?.phone || '').trim())
+    .map((teamUser, index) => createDraftContact(index, {
+      id: teamUser.uid ? `team_user_${teamUser.uid}` : `wizard_team_user_${index}`,
+      name: teamUser.displayName || '',
+      role: inferRoleFromTeamUser(teamUser, tenantType),
+      phone: teamUser.phone || '',
+      email: teamUser.email || '',
+      userId: teamUser.uid || '',
+      channels: unique([
+        teamUser.phone ? 'sms' : '',
+        teamUser.email ? 'email' : '',
+        'push',
+      ]),
+      isActive: teamUser.disabled !== true,
+    }));
+
+  return normalizedContacts;
+}
+
+function buildWizardDraft({ form, routing, settings, tenantType, teamUsers = [] }) {
   const safeSettings = settings || {};
   const safeRouting = routing || { contacts: [], definitions: [] };
   const businessType = normalizeBusinessType(form.setupWizard?.businessType || tenantType);
@@ -202,6 +253,7 @@ function buildWizardDraft({ form, routing, settings, tenantType }) {
     form.staffChannelsByAudience || form.setupWizard?.notificationPreferences?.channelsByAudience,
     baseStaffChannels
   );
+  const fallbackStaffContacts = buildDraftContactsFromTeamUsers(teamUsers, tenantType);
   return {
     businessType,
     businessInfo: {
@@ -228,7 +280,9 @@ function buildWizardDraft({ form, routing, settings, tenantType }) {
     },
     staffContacts: safeRouting.contacts?.length
       ? safeRouting.contacts.map((contact, index) => createDraftContact(index, contact))
-      : [createDraftContact(0)],
+      : fallbackStaffContacts.length
+        ? fallbackStaffContacts
+        : [createDraftContact(0)],
     communicationChannels: {
       smsEnabled: form.enabled !== false,
       callerConfirmationEnabled: form.callerConfirmationEnabled !== false,
@@ -659,6 +713,7 @@ export default function SmsSetupWizard({
   copy,
   form,
   routing,
+  teamUsers,
   settings,
   tenantType,
   setActiveTab,
@@ -675,7 +730,7 @@ export default function SmsSetupWizard({
     const nextIndex = Number(persistedWizardDraft?.stepIndex || 0);
     return Math.min(Math.max(nextIndex, 0), WIZARD_STEPS.length - 1);
   });
-  const [draft, setDraft] = useState(() => persistedWizardDraft?.draft || buildWizardDraft({ form, routing, settings, tenantType }));
+  const [draft, setDraft] = useState(() => persistedWizardDraft?.draft || buildWizardDraft({ form, routing, settings, tenantType, teamUsers }));
   const [wizardError, setWizardError] = useState('');
   const [wizardNotice, setWizardNotice] = useState('');
   const [staffContactErrors, setStaffContactErrors] = useState({});
@@ -711,12 +766,12 @@ export default function SmsSetupWizard({
 
   useEffect(() => {
     if (!isOpen) {
-      setDraft(buildWizardDraft({ form, routing, settings, tenantType }));
+      setDraft(buildWizardDraft({ form, routing, settings, tenantType, teamUsers }));
       setWizardError('');
       setWizardNotice('');
       setStaffContactErrors({});
     }
-  }, [form, routing, settings, tenantType, isOpen]);
+  }, [form, routing, settings, tenantType, teamUsers, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -734,7 +789,7 @@ export default function SmsSetupWizard({
   }, [wizardCompleted, hasAutoOpened]);
 
   function openWizard() {
-    setDraft(buildWizardDraft({ form, routing, settings, tenantType }));
+    setDraft(buildWizardDraft({ form, routing, settings, tenantType, teamUsers }));
     setStepIndex(0);
     setWizardError('');
     setWizardNotice('');
@@ -898,6 +953,8 @@ export default function SmsSetupWizard({
     try {
       setWizardError('');
       setWizardNotice('');
+      const shouldConnectSlackAfterActivation =
+        draft.communicationChannels.staffChannels.includes('slack') && !slackConnected;
       const { nextForm, nextRouting } = buildActivatedSettings({ draft, form, routing, tenantType });
       const saved = await saveCurrentSettings(nextForm, nextRouting, {
         persistRouting: true,
@@ -908,6 +965,10 @@ export default function SmsSetupWizard({
       if ((syncResult?.skippedContacts || []).length || Number(syncResult?.deliveryIssueCount || 0) > 0) {
         setWizardNotice(buildTeamSyncNotice(syncResult));
         setStepIndex(WIZARD_STEPS.findIndex((step) => step.id === 'review'));
+        return;
+      }
+      if (shouldConnectSlackAfterActivation) {
+        await handleWizardSlackConnect();
         return;
       }
       handleCloseWizard();
@@ -1164,7 +1225,7 @@ export default function SmsSetupWizard({
               ) : null}
               {!slackConnected && !wizardCompleted ? (
                 <p className="mt-4 text-sm text-slate-600">
-                  Finish the wizard first. After activation, open the Integrations section and connect Slack there.
+                  Finish the wizard first. If Slack is selected here, Merxus will take you into the Slack connection flow right after activation.
                 </p>
               ) : null}
               {slackDiscovery?.workspace?.teamName ? (

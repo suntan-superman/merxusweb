@@ -516,6 +516,7 @@ export default function SmsSettings({ settings, tenantType }) {
   const copy = tenantCopy(tenantType);
   const [form, setForm] = useState(() => buildFallbackSms(settings));
   const [routing, setRouting] = useState(() => normalizeRoutingState());
+  const [teamUsers, setTeamUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
@@ -682,9 +683,10 @@ export default function SmsSettings({ settings, tenantType }) {
         setLoading(true);
         setLoadingCommandCenterHistory(true);
         setError('');
-        const [smsData, routingData] = await Promise.all([
+        const [smsData, routingData, teamUsersData] = await Promise.all([
           fetchSmsSettings(),
           fetchSmsNotificationRouting(),
+          fetchTeamUsers(tenantType),
         ]);
 
         if (!cancelled) {
@@ -696,6 +698,7 @@ export default function SmsSettings({ settings, tenantType }) {
             tenantType: smsData.tenantType || tenantType,
           });
           setRouting(nextRouting);
+          setTeamUsers(Array.isArray(teamUsersData) ? teamUsersData : []);
           syncBaseline(nextForm, nextRouting);
           if (nextForm.slack?.installationId || nextForm.slack?.connected) {
             loadSlackDiscovery({ silent: true, contacts: nextRouting.contacts }).catch(() => {});
@@ -935,7 +938,9 @@ export default function SmsSettings({ settings, tenantType }) {
       }
 
       const refreshedRouting = normalizeRoutingState(await fetchSmsNotificationRouting());
+      const refreshedTeamUsers = await fetchTeamUsers(tenantType);
       setRouting(refreshedRouting);
+      setTeamUsers(Array.isArray(refreshedTeamUsers) ? refreshedTeamUsers : []);
       syncBaseline(formToSync, refreshedRouting);
       dispatchTeamUsersChanged({ tenantType });
 
