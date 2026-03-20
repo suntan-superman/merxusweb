@@ -716,6 +716,19 @@ export default function SmsSettingsRedesign(props) {
                   </div>
                   )}
 
+                  {form.slack.connected ? (
+                    <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 p-4">
+                      <p className="text-sm font-semibold text-slate-900">What each invited staff member needs to do</p>
+                      <ol className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                        <li>1. Accept the Merxus team invite and finish account setup.</li>
+                        <li>2. Join the connected Slack workspace using the same email address if possible.</li>
+                        <li>3. Return here and click <span className="font-semibold text-slate-900">Match Staff by Email</span>.</li>
+                        <li>4. If they should receive Slack alerts, make sure <span className="font-semibold text-slate-900">Slack</span> is enabled in their notification methods.</li>
+                        <li>5. If they need SMS alerts too, they still must verify their phone in Team &amp; Access.</li>
+                      </ol>
+                    </div>
+                  ) : null}
+
                   {slackDiscovery?.recommendedChannels?.length ? (
                     <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                       <p className="text-sm font-semibold text-slate-900">Recommended channel plan</p>

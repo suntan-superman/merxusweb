@@ -1254,8 +1254,9 @@ export default function SmsSetupWizard({
               <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
                 <p>1. Activate messaging first.</p>
                 <p>2. Connect your Slack workspace from the Integrations section.</p>
-                <p>3. Merxus will discover channels and try to match your staff contacts by email.</p>
-                <p>4. If someone is not already in Slack, invite them to Slack first, then run the email match again.</p>
+                <p>3. Invite each staff member to the Slack workspace and have them accept their Merxus invite.</p>
+                <p>4. Merxus will discover channels and try to match your staff contacts by email.</p>
+                <p>5. If someone is not already in Slack, invite them to Slack first, then run the email match again.</p>
               </div>
               {!slackConnected && wizardCompleted ? (
                 <button
