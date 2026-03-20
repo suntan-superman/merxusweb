@@ -1402,6 +1402,8 @@ export default function SmsSettings({ settings, tenantType }) {
       handleSendCommandCenterDemo={handleSendCommandCenterDemo}
       loadingCommandCenterHistory={loadingCommandCenterHistory}
       commandCenterHistory={commandCenterHistory}
+      teamUsers={teamUsers}
+      loading={loading}
       tenantType={tenantType}
       policyPreview={policyPreview}
       testNumber={testNumber}

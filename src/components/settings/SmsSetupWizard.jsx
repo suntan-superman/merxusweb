@@ -753,6 +753,7 @@ export default function SmsSetupWizard({
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
 
   const wizardCompleted = Boolean(form.setupWizard?.completedAt);
+  const businessTypeLocked = wizardCompleted && Boolean(form.setupWizard?.businessType || tenantType);
   const activeStep = WIZARD_STEPS[stepIndex];
   const progress = ((stepIndex + 1) / WIZARD_STEPS.length) * 100;
   const serviceLinkFields = useMemo(() => getServiceLinkFields(draft.businessType), [draft.businessType]);
@@ -831,6 +832,7 @@ export default function SmsSetupWizard({
   }
 
   function updateBusinessType(value) {
+    if (businessTypeLocked) return;
     setDraft((current) => ({ ...current, businessType: value }));
   }
 
@@ -1021,22 +1023,30 @@ export default function SmsSetupWizard({
   function renderStepContent() {
     if (activeStep.id === 'businessType') {
       return (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {BUSINESS_TYPE_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => updateBusinessType(option.id)}
-              className={`rounded-[28px] border p-5 text-left ${
-                draft.businessType === option.id
-                  ? 'border-emerald-400 bg-emerald-50'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <p className="text-lg font-semibold text-slate-900">{option.label}</p>
-              <p className="mt-2 text-sm text-slate-600">{option.description}</p>
-            </button>
-          ))}
+        <div className="space-y-4">
+          {businessTypeLocked ? (
+            <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              Business type was already set during the original setup and cannot be changed from a rerun of the messaging wizard.
+            </div>
+          ) : null}
+          <div className="grid gap-4 lg:grid-cols-2">
+            {BUSINESS_TYPE_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => updateBusinessType(option.id)}
+                disabled={businessTypeLocked}
+                className={`rounded-[28px] border p-5 text-left ${
+                  draft.businessType === option.id
+                    ? 'border-emerald-400 bg-emerald-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                } ${businessTypeLocked ? 'cursor-not-allowed opacity-70' : ''}`}
+              >
+                <p className="text-lg font-semibold text-slate-900">{option.label}</p>
+                <p className="mt-2 text-sm text-slate-600">{option.description}</p>
+              </button>
+            ))}
+          </div>
         </div>
       );
     }
