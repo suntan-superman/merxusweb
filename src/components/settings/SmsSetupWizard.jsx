@@ -15,6 +15,8 @@ const WIZARD_STEPS = [
 const ROLE_OPTIONS = ['Manager', 'Support', 'Sales', 'Operations'];
 const STAFF_CHANNEL_OPTIONS = ['sms', 'email', 'push', 'slack', 'teams', 'webhook'];
 const NOTIFICATION_AUDIENCES = ['managers', 'sales', 'support', 'everyone'];
+const WIZARD_DRAFT_STORAGE_PREFIX = 'merxus_sms_setup_wizard_v1';
+const WIZARD_DRAFT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 
 const BUSINESS_TYPE_OPTIONS = [
   {
@@ -587,6 +589,43 @@ function buildTeamSyncNotice(syncResult = {}) {
   return parts.join(' ');
 }
 
+function getWizardDraftStorageKey(tenantType) {
+  const path = typeof window !== 'undefined' ? window.location.pathname : 'server';
+  return `${WIZARD_DRAFT_STORAGE_PREFIX}:${tenantType || 'voice'}:${path}`;
+}
+
+function readPersistedWizardDraft(storageKey) {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(storageKey);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    const savedAt = Number(parsed?.savedAt || 0);
+    if (!savedAt || (Date.now() - savedAt) > WIZARD_DRAFT_MAX_AGE_MS) {
+      window.sessionStorage.removeItem(storageKey);
+      return null;
+    }
+
+    if (!parsed?.draft || typeof parsed.draft !== 'object') {
+      window.sessionStorage.removeItem(storageKey);
+      return null;
+    }
+
+    return {
+      isOpen: parsed.isOpen === true,
+      stepIndex: Number.isInteger(parsed.stepIndex) ? parsed.stepIndex : 0,
+      draft: parsed.draft,
+    };
+  } catch (_) {
+    try {
+      window.sessionStorage.removeItem(storageKey);
+    } catch {}
+    return null;
+  }
+}
+
 function InputField({
   label,
   type = 'text',
@@ -629,9 +668,14 @@ export default function SmsSetupWizard({
   slackDiscovery,
   handleConnectSlack,
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [draft, setDraft] = useState(() => buildWizardDraft({ form, routing, settings, tenantType }));
+  const wizardDraftStorageKey = useMemo(() => getWizardDraftStorageKey(tenantType), [tenantType]);
+  const persistedWizardDraft = useMemo(() => readPersistedWizardDraft(wizardDraftStorageKey), [wizardDraftStorageKey]);
+  const [isOpen, setIsOpen] = useState(() => persistedWizardDraft?.isOpen === true);
+  const [stepIndex, setStepIndex] = useState(() => {
+    const nextIndex = Number(persistedWizardDraft?.stepIndex || 0);
+    return Math.min(Math.max(nextIndex, 0), WIZARD_STEPS.length - 1);
+  });
+  const [draft, setDraft] = useState(() => persistedWizardDraft?.draft || buildWizardDraft({ form, routing, settings, tenantType }));
   const [wizardError, setWizardError] = useState('');
   const [wizardNotice, setWizardNotice] = useState('');
   const [staffContactErrors, setStaffContactErrors] = useState({});
@@ -644,6 +688,27 @@ export default function SmsSetupWizard({
   const slackConnected = Boolean(form.slack?.installationId || form.slack?.connected);
   const selectedAudienceChannels = draft.notificationPreferences.channelsByAudience?.[draft.notificationPreferences.alertAudience] || [];
 
+  function persistWizardDraft(nextState = {}) {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const payload = {
+        isOpen: nextState.isOpen ?? isOpen,
+        stepIndex: nextState.stepIndex ?? stepIndex,
+        draft: nextState.draft ?? draft,
+        savedAt: Date.now(),
+      };
+      window.sessionStorage.setItem(wizardDraftStorageKey, JSON.stringify(payload));
+    } catch (_) {}
+  }
+
+  function clearPersistedWizardDraft() {
+    if (typeof window === 'undefined') return;
+    try {
+      window.sessionStorage.removeItem(wizardDraftStorageKey);
+    } catch (_) {}
+  }
+
   useEffect(() => {
     if (!isOpen) {
       setDraft(buildWizardDraft({ form, routing, settings, tenantType }));
@@ -652,6 +717,14 @@ export default function SmsSetupWizard({
       setStaffContactErrors({});
     }
   }, [form, routing, settings, tenantType, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      persistWizardDraft({ isOpen, stepIndex, draft });
+      return;
+    }
+    clearPersistedWizardDraft();
+  }, [draft, isOpen, stepIndex, wizardDraftStorageKey]);
 
   useEffect(() => {
     if (!wizardCompleted && !hasAutoOpened) {
@@ -807,8 +880,14 @@ export default function SmsSetupWizard({
   }
 
   function handleCloseWizard() {
+    clearPersistedWizardDraft();
     setActiveTab('overview');
     setIsOpen(false);
+  }
+
+  async function handleWizardSlackConnect() {
+    persistWizardDraft({ isOpen: true, stepIndex, draft });
+    await handleConnectSlack();
   }
 
   async function handleActivate() {
@@ -1077,7 +1156,7 @@ export default function SmsSetupWizard({
               {!slackConnected && wizardCompleted ? (
                 <button
                   type="button"
-                  onClick={handleConnectSlack}
+                  onClick={handleWizardSlackConnect}
                   className="mt-4 rounded-full border border-emerald-300 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 hover:border-emerald-400"
                 >
                   Connect Slack Workspace
