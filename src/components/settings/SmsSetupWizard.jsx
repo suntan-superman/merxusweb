@@ -244,6 +244,21 @@ function buildDraftContactsFromTeamUsers(teamUsers = [], tenantType = 'voice') {
   return normalizedContacts;
 }
 
+function isBlankDraftContact(contact = {}) {
+  return !String(contact?.name || '').trim()
+    && !String(contact?.role || '').trim()
+    && !String(contact?.phone || '').trim()
+    && !String(contact?.email || '').trim()
+    && !String(contact?.userId || '').trim()
+    && !String(contact?.webhookUrl || '').trim();
+}
+
+function isPlaceholderOnlyStaffContacts(contacts = []) {
+  return Array.isArray(contacts)
+    && contacts.length === 1
+    && isBlankDraftContact(contacts[0]);
+}
+
 function buildWizardDraft({ form, routing, settings, tenantType, teamUsers = [] }) {
   const safeSettings = settings || {};
   const safeRouting = routing || { contacts: [], definitions: [] };
@@ -720,6 +735,7 @@ export default function SmsSetupWizard({
   saveCurrentSettings,
   syncWizardTeamUsers,
   saving,
+  loading = false,
   slackDiscovery,
   handleConnectSlack,
 }) {
@@ -782,11 +798,28 @@ export default function SmsSetupWizard({
   }, [draft, isOpen, stepIndex, wizardDraftStorageKey]);
 
   useEffect(() => {
-    if (!wizardCompleted && !hasAutoOpened) {
+    if (!isOpen) return;
+    if (!isPlaceholderOnlyStaffContacts(draft.staffContacts)) return;
+
+    const hydratedDraft = buildWizardDraft({ form, routing, settings, tenantType, teamUsers });
+    if (!hydratedDraft.staffContacts.length || isPlaceholderOnlyStaffContacts(hydratedDraft.staffContacts)) {
+      return;
+    }
+
+    setDraft((current) => ({
+      ...current,
+      staffContacts: hydratedDraft.staffContacts,
+    }));
+    setStaffContactErrors({});
+    setWizardError('');
+  }, [draft.staffContacts, form, isOpen, routing, settings, teamUsers, tenantType]);
+
+  useEffect(() => {
+    if (!loading && !wizardCompleted && !hasAutoOpened) {
       setIsOpen(true);
       setHasAutoOpened(true);
     }
-  }, [wizardCompleted, hasAutoOpened]);
+  }, [wizardCompleted, hasAutoOpened, loading]);
 
   function openWizard() {
     setDraft(buildWizardDraft({ form, routing, settings, tenantType, teamUsers }));

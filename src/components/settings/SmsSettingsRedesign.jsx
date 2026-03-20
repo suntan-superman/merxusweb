@@ -182,6 +182,7 @@ export default function SmsSettingsRedesign(props) {
     copy,
     settings,
     teamUsers,
+    loading,
     error,
     success,
     activeTab,
@@ -269,6 +270,7 @@ export default function SmsSettingsRedesign(props) {
         saveCurrentSettings={saveCurrentSettings}
         syncWizardTeamUsers={syncWizardTeamUsers}
         saving={saving}
+        loading={loading}
         slackDiscovery={slackDiscovery}
         handleConnectSlack={handleConnectSlack}
       />
