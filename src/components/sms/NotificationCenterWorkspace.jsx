@@ -256,6 +256,8 @@ const CHANNEL_OPTIONS = [
   { value: 'sms', label: 'SMS' },
   { value: 'email', label: 'Email' },
   { value: 'push', label: 'Push' },
+  { value: 'slack', label: 'Slack' },
+  { value: 'webhook', label: 'Webhook' },
 ];
 
 const ROLE_OPTIONS = [

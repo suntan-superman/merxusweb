@@ -13,7 +13,14 @@ const WIZARD_STEPS = [
 ];
 
 const ROLE_OPTIONS = ['Manager', 'Support', 'Sales', 'Operations'];
-const STAFF_CHANNEL_OPTIONS = ['sms', 'email', 'push', 'slack', 'teams', 'webhook'];
+const STAFF_CHANNEL_OPTIONS = [
+  'sms',
+  'email',
+  'push',
+  'slack',
+  // 'teams',
+  'webhook',
+];
 const NOTIFICATION_AUDIENCES = ['managers', 'sales', 'support', 'everyone'];
 const WIZARD_DRAFT_STORAGE_PREFIX = 'merxus_sms_setup_wizard_v1';
 const WIZARD_DRAFT_MAX_AGE_MS = 2 * 60 * 60 * 1000;

@@ -1,5 +1,43 @@
+import { useMemo, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SmsSetupWizard from './SmsSetupWizard';
+import SelectField from '../common/SelectField';
+
+function safeTrim(value) {
+  return value == null ? '' : String(value).trim();
+}
+
+function resolveSlackChannelDisplay(value, channels = []) {
+  const normalizedValue = safeTrim(value);
+  if (!normalizedValue) {
+    return '';
+  }
+
+  if (normalizedValue.startsWith('#')) {
+    return normalizedValue;
+  }
+
+  const matchedChannel = (Array.isArray(channels) ? channels : []).find((channel) => {
+    const channelId = safeTrim(channel?.id);
+    const channelName = safeTrim(channel?.name);
+    return channelId === normalizedValue || channelName === normalizedValue.replace(/^#/, '');
+  });
+
+  if (!matchedChannel) {
+    return '';
+  }
+
+  const matchedName = safeTrim(matchedChannel.name);
+  const matchedId = safeTrim(matchedChannel.id);
+  if (!matchedName) {
+    return matchedId ? `Slack channel ID ${matchedId}` : '';
+  }
+
+  return matchedId && matchedId !== normalizedValue
+    ? `#${matchedName} (${matchedId})`
+    : `#${matchedName}`;
+}
 
 function Field({ label, hint, tooltip, children }) {
   return (
@@ -251,11 +289,21 @@ export default function SmsSettingsRedesign(props) {
     formatCommandCenterStatus,
     checkboxClass,
   } = props;
+  const [showSlackWebhook, setShowSlackWebhook] = useState(false);
 
   const templateValue =
     templateEditor?.type === 'field'
       ? form?.[templateEditor.key] || ''
       : form?.[templateEditor?.type || 'notificationTemplates']?.[templateEditor?.key] || '';
+  const slackChannels = Array.isArray(slackDiscovery?.channels) ? slackDiscovery.channels : [];
+  const defaultSlackChannelDisplay = useMemo(
+    () => resolveSlackChannelDisplay(form.slack?.defaultChannel, slackChannels),
+    [form.slack?.defaultChannel, slackChannels]
+  );
+  const commandCenterSlackChannelDisplay = useMemo(
+    () => resolveSlackChannelDisplay(form.slack?.commandCenterChannel, slackChannels),
+    [form.slack?.commandCenterChannel, slackChannels]
+  );
 
   return (
     <>
@@ -427,7 +475,7 @@ export default function SmsSettingsRedesign(props) {
                     <span className="text-sm font-medium text-slate-900">Enable staff alerts</span>
                   </label>
                   <div className="mt-4 flex flex-wrap gap-3">
-                    {['sms', 'email', 'push', 'slack', 'teams', 'webhook'].map((channel) => (
+                    {['sms', 'email', 'push', 'slack', /* 'teams', */ 'webhook'].map((channel) => (
                       <label key={channel} className="flex items-center gap-2 text-sm text-slate-700">
                         <input type="checkbox" checked={form.staffChannels.includes(channel)} onChange={() => toggleChannel('staffChannels', channel)} className={checkboxClass} />
                         {channel.toUpperCase()}
@@ -461,7 +509,7 @@ export default function SmsSettingsRedesign(props) {
                   </div>
                 </CollapsePanel>
 
-                <CollapsePanel title="Staff Contact Directory" subtitle="Contacts can receive SMS, email, push, Slack, Teams, and webhook alerts." isOpen={expandedPanels.routing_contacts} onToggle={() => togglePanel('routing_contacts')} action={<button type="button" onClick={addContact} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700">Add Contact</button>}>
+                <CollapsePanel title="Staff Contact Directory" subtitle="Contacts can receive SMS, email, push, Slack, and webhook alerts." isOpen={expandedPanels.routing_contacts} onToggle={() => togglePanel('routing_contacts')} action={<button type="button" onClick={addContact} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700">Add Contact</button>}>
                   {routing.contacts.length === 0 ? (
                     <p className="text-sm text-slate-500">No staff contacts configured yet.</p>
                   ) : (
@@ -476,7 +524,7 @@ export default function SmsSettingsRedesign(props) {
                             <Field label="Webhook URL"><input type="url" className="input-field" value={contact.webhookUrl} onChange={(event) => updateContact(index, 'webhookUrl', event.target.value)} placeholder="https://hooks.slack.com/..." /></Field>
                           </div>
                           <div className="mt-3 flex flex-wrap items-center gap-4">
-                            {['sms', 'email', 'push', 'slack', 'teams', 'webhook'].map((channel) => (
+                            {['sms', 'email', 'push', 'slack', /* 'teams', */ 'webhook'].map((channel) => (
                               <label key={channel} className="flex items-center gap-2 text-sm text-slate-700">
                                 <input type="checkbox" checked={contact.channels.includes(channel)} onChange={() => toggleContactChannel(index, channel)} className={checkboxClass} />
                                 {channel.toUpperCase()}
@@ -690,18 +738,17 @@ export default function SmsSettingsRedesign(props) {
                           {provisioningSlackChannels ? 'Setting Up…' : 'Create New #merxus-command-center'}
                         </button>
                         <p className="pt-2">Or use an existing channel:</p>
-                        <select
-                          className="input-field"
+                        <SelectField
                           value={selectedSlackChannelId}
-                          onChange={(event) => setSelectedSlackChannelId(event.target.value)}
-                        >
-                          <option value="">Select existing channel</option>
-                          {(slackDiscovery?.channels || []).map((channel) => (
-                            <option key={channel.id} value={channel.id}>
-                              #{channel.name}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(nextValue) => setSelectedSlackChannelId(nextValue)}
+                          options={(slackDiscovery?.channels || []).map((channel) => ({
+                            value: channel.id,
+                            label: `#${channel.name}`,
+                          }))}
+                          placeholder="Select existing channel"
+                          buttonClassName="rounded-lg"
+                          menuClassName="rounded-2xl"
+                        />
                         <button
                           type="button"
                           onClick={handleUseExistingSlackChannel}
@@ -754,10 +801,39 @@ export default function SmsSettingsRedesign(props) {
                       <input type="text" className="input-field" value={form.slack.connected ? 'Connected workspace' : (form.slack.webhookUrl ? 'Legacy webhook fallback' : 'Not configured')} readOnly />
                     </Field>
                     <Field label="Legacy Webhook Override" hint="Only use this if you intentionally want to keep the older webhook-based posting path or your Slack app did not return an incoming webhook URL.">
-                      <input type="url" className="input-field" value={form.slack.webhookUrl} onChange={(event) => updateSlackField('webhookUrl', event.target.value)} placeholder="https://hooks.slack.com/services/..." />
+                      <div className="flex gap-2">
+                        <input
+                          type={showSlackWebhook ? 'url' : 'password'}
+                          className="input-field"
+                          value={form.slack.webhookUrl}
+                          onChange={(event) => updateSlackField('webhookUrl', event.target.value)}
+                          placeholder="https://hooks.slack.com/services/..."
+                          autoComplete="off"
+                          spellCheck={false}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSlackWebhook((current) => !current)}
+                          className="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3 text-slate-600 hover:border-emerald-200 hover:text-emerald-700"
+                          aria-label={showSlackWebhook ? 'Hide Slack webhook URL' : 'Show Slack webhook URL'}
+                          title={showSlackWebhook ? 'Hide webhook URL' : 'Show webhook URL'}
+                        >
+                          {showSlackWebhook ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </Field>
-                    <Field label="Default Slack Channel"><input type="text" className="input-field" value={form.slack.defaultChannel} onChange={(event) => updateSlackField('defaultChannel', event.target.value)} placeholder="#merxus-activity" disabled={!form.slack.enabled} /></Field>
-                    <Field label="Command Center Channel"><input type="text" className="input-field" value={form.slack.commandCenterChannel} onChange={(event) => updateSlackField('commandCenterChannel', event.target.value)} placeholder="#merxus-command-center" disabled={!form.slack.enabled || !form.slack.commandCenterEnabled} /></Field>
+                    <Field
+                      label="Default Slack Channel"
+                      hint={defaultSlackChannelDisplay ? `Resolved channel: ${defaultSlackChannelDisplay}` : 'Enter a Slack channel name like #merxus-activity or paste a Slack channel ID.'}
+                    >
+                      <input type="text" className="input-field" value={form.slack.defaultChannel} onChange={(event) => updateSlackField('defaultChannel', event.target.value)} placeholder="#merxus-activity" disabled={!form.slack.enabled} />
+                    </Field>
+                    <Field
+                      label="Command Center Channel"
+                      hint={commandCenterSlackChannelDisplay ? `Resolved channel: ${commandCenterSlackChannelDisplay}` : 'Enter a Slack channel name like #merxus-command-center or paste a Slack channel ID.'}
+                    >
+                      <input type="text" className="input-field" value={form.slack.commandCenterChannel} onChange={(event) => updateSlackField('commandCenterChannel', event.target.value)} placeholder="#merxus-command-center" disabled={!form.slack.enabled || !form.slack.commandCenterEnabled} />
+                    </Field>
                   </div>
 
                   {form.slack.connected && slackDiscovery?.mappings?.length ? (
@@ -875,7 +951,7 @@ export default function SmsSettingsRedesign(props) {
                     <div>
                       <p className="mb-2 text-sm font-medium text-slate-700">Escalation channels</p>
                       <div className="flex flex-wrap gap-3">
-                        {['email', 'sms', 'slack', 'teams', 'webhook'].map((channel) => (
+                        {['email', 'sms', 'slack', /* 'teams', */ 'webhook'].map((channel) => (
                           <label key={channel} className="flex items-center gap-2 text-sm text-slate-700">
                             <input type="checkbox" checked={form.alertEscalationChannels.includes(channel)} onChange={() => toggleChannel('alertEscalationChannels', channel)} className={checkboxClass} disabled={!form.alertEscalationEnabled} />
                             {channel.toUpperCase()}
@@ -907,7 +983,7 @@ export default function SmsSettingsRedesign(props) {
                     <div>
                       <p className="mb-2 text-sm font-medium text-slate-700">Digest channels</p>
                       <div className="flex flex-wrap gap-3">
-                        {['sms', 'email', 'push', 'slack', 'teams', 'webhook'].map((channel) => (
+                        {['sms', 'email', 'push', 'slack', /* 'teams', */ 'webhook'].map((channel) => (
                           <label key={channel} className="flex items-center gap-2 text-sm text-slate-700">
                             <input type="checkbox" checked={form.dailyDigestChannels.includes(channel)} onChange={() => toggleChannel('dailyDigestChannels', channel)} className={checkboxClass} disabled={!form.dailyDigestEnabled} />
                             {channel.toUpperCase()}

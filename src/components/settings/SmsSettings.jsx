@@ -1549,7 +1549,7 @@ export default function SmsSettings({ settings, tenantType }) {
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Staff channels</p>
               <div className="flex flex-wrap gap-3">
-                {['sms', 'email', 'push', 'slack', 'teams', 'webhook'].map((channel) => (
+                {['sms', 'email', 'push', 'slack', /* 'teams', */ 'webhook'].map((channel) => (
                   <label key={channel} className="flex items-center gap-2 text-sm text-gray-700">
                     <input type="checkbox" checked={form.staffChannels.includes(channel)} onChange={() => toggleChannel('staffChannels', channel)} className={CHECKBOX_CLASS} />
                     {channel.toUpperCase()}
@@ -1579,7 +1579,7 @@ export default function SmsSettings({ settings, tenantType }) {
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Digest channels</p>
               <div className="flex flex-wrap gap-3">
-                {['sms', 'email', 'push', 'slack', 'teams', 'webhook'].map((channel) => (
+                {['sms', 'email', 'push', 'slack', /* 'teams', */ 'webhook'].map((channel) => (
                   <label key={channel} className="flex items-center gap-2 text-sm text-gray-700">
                     <input type="checkbox" checked={form.dailyDigestChannels.includes(channel)} onChange={() => toggleChannel('dailyDigestChannels', channel)} className={CHECKBOX_CLASS} disabled={!form.dailyDigestEnabled} />
                     {channel.toUpperCase()}
@@ -1695,7 +1695,7 @@ export default function SmsSettings({ settings, tenantType }) {
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Escalation channels</p>
               <div className="flex flex-wrap gap-3">
-                {['email', 'sms', 'slack', 'teams', 'webhook'].map((channel) => (
+                {['email', 'sms', 'slack', /* 'teams', */ 'webhook'].map((channel) => (
                   <label key={channel} className="flex items-center gap-2 text-sm text-gray-700">
                     <input type="checkbox" checked={form.alertEscalationChannels.includes(channel)} onChange={() => toggleChannel('alertEscalationChannels', channel)} className={CHECKBOX_CLASS} disabled={!form.alertEscalationEnabled} />
                     {channel.toUpperCase()}
@@ -1970,7 +1970,7 @@ export default function SmsSettings({ settings, tenantType }) {
                     </Field>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-4">
-                    {['sms', 'email', 'push', 'slack', 'teams', 'webhook'].map((channel) => (
+                    {['sms', 'email', 'push', 'slack', /* 'teams', */ 'webhook'].map((channel) => (
                       <label key={channel} className="flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" checked={contact.channels.includes(channel)} onChange={() => toggleContactChannel(index, channel)} className={CHECKBOX_CLASS} />
                         {channel.toUpperCase()}
