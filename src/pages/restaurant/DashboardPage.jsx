@@ -10,6 +10,7 @@ const RESERVATIONS_VIEW_KEY = 'merxus_dashboard_reservations_view';
 export default function DashboardPage() {
   const { user, userClaims, restaurantId } = useAuth();
   const tenantType = userClaims?.type;
+  const canManagePortal = userClaims?.role === 'owner' || userClaims?.role === 'manager';
   
   // Load saved reservations view preference (today/week)
   const [reservationsView, setReservationsView] = useState(() => {
@@ -201,26 +202,26 @@ export default function DashboardPage() {
         { href: '/restaurant/orders', icon: '📦', label: 'View Orders', desc: 'Manage incoming orders' },
         { href: '/restaurant/menu', icon: '🍽️', label: 'Menu Management', desc: 'Add, edit, and manage menu items' },
         { href: '/restaurant/sms', icon: '💬', label: 'SMS Inbox', desc: 'Review texts, follow-ups, and opt-outs' },
-        { href: '/restaurant/settings', icon: '⚙️', label: 'Settings', desc: 'Configure restaurant, hours, AI settings' },
+        canManagePortal && { href: '/restaurant/settings', icon: '⚙️', label: 'Settings', desc: 'Configure restaurant, hours, AI settings' },
         { href: '/restaurant/customers', icon: '👥', label: 'View Customers', desc: 'Manage customer relationships' },
         { href: '/restaurant/calls', icon: '📞', label: 'Calls & Messages', desc: 'View call history and transcripts' },
         userClaims?.role === 'owner' && { href: '/restaurant/users', icon: '👤', label: 'Team & Access', desc: 'Manage team members and permissions' },
-      ];
+      ].filter(Boolean);
     } else if (tenantType === 'real_estate') {
       return [
         { href: '/estate/listings', icon: '🏠', label: 'Manage Listings', desc: 'Add and manage property listings' },
         { href: '/estate/sms', icon: '💬', label: 'SMS Inbox', desc: 'Review inquiry texts and suppressed numbers' },
-        { href: '/estate/settings', icon: '⚙️', label: 'Settings', desc: 'Configure agency details and AI settings' },
+        canManagePortal && { href: '/estate/settings', icon: '⚙️', label: 'Settings', desc: 'Configure agency details and AI settings' },
         { href: '/estate/calls', icon: '📞', label: 'Calls & Messages', desc: 'View inquiry calls and messages' },
         userClaims?.role === 'owner' && { href: '/estate/users', icon: '👤', label: 'Team & Access', desc: 'Manage team members and permissions' },
-      ];
+      ].filter(Boolean);
     } else if (tenantType === 'voice' || tenantType === 'general') {
       return [
-        { href: '/voice/settings', icon: '⚙️', label: 'Settings', desc: 'Configure office details and AI settings' },
+        canManagePortal && { href: '/voice/settings', icon: '⚙️', label: 'Settings', desc: 'Configure office details and AI settings' },
         { href: '/voice/sms', icon: '💬', label: 'SMS Inbox', desc: 'Review business texts, replies, and opt-outs' },
         { href: '/voice/calls', icon: '📞', label: 'Calls & Messages', desc: 'View call history and transcripts' },
         userClaims?.role === 'owner' && { href: '/voice/users', icon: '👤', label: 'Team & Access', desc: 'Manage team members and permissions' },
-      ];
+      ].filter(Boolean);
     }
 
     return baseActions.filter(Boolean);

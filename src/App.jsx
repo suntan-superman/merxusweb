@@ -171,9 +171,23 @@ function App() {
                     <Route path="customer-360" element={<RestaurantCustomer360Page />} />
                     <Route path="customer-360/:customerId" element={<RestaurantCustomer360Page />} />
                     <Route path="merge-activity" element={<RestaurantMergeActivityPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
+                    <Route
+                      path="settings"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager>
+                          <SettingsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route path="users" element={<UsersPage />} />
-                    <Route path="billing" element={<BillingPage />} />
+                    <Route
+                      path="billing"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager>
+                          <BillingPage />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route path="*" element={<Navigate to="/restaurant" replace />} />
                   </Route>
 
@@ -188,7 +202,14 @@ function App() {
                   >
                     <Route index element={<VoiceDashboardPage />} />
                     <Route path="calls" element={<VoiceCallsPage />} />
-                    <Route path="routing" element={<CallRoutingPage />} />
+                    <Route
+                      path="routing"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager>
+                          <CallRoutingPage />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route path="voicemail" element={<VoicemailPage />} />
                     <Route path="sms" element={<VoiceSmsPage />} />
                     <Route path="command-center" element={<VoiceCommandCenterPage />} />
@@ -198,9 +219,23 @@ function App() {
                     <Route path="customer-360" element={<VoiceCustomer360Page />} />
                     <Route path="customer-360/:customerId" element={<VoiceCustomer360Page />} />
                     <Route path="merge-activity" element={<VoiceMergeActivityPage />} />
-                    <Route path="settings" element={<VoiceSettingsPage />} />
+                    <Route
+                      path="settings"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager>
+                          <VoiceSettingsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route path="users" element={<VoiceUsersPage />} />
-                    <Route path="billing" element={<BillingPage />} />
+                    <Route
+                      path="billing"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager>
+                          <BillingPage />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route path="*" element={<Navigate to="/voice" replace />} />
                   </Route>
 
@@ -229,9 +264,23 @@ function App() {
                     <Route path="customer-360" element={<EstateCustomer360Page />} />
                     <Route path="customer-360/:customerId" element={<EstateCustomer360Page />} />
                     <Route path="merge-activity" element={<EstateMergeActivityPage />} />
-                    <Route path="settings" element={<EstateSettingsPage />} />
+                    <Route
+                      path="settings"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager>
+                          <EstateSettingsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route path="users" element={<EstateUsersPage />} />
-                    <Route path="billing" element={<BillingPage />} />
+                    <Route
+                      path="billing"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager>
+                          <BillingPage />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route path="*" element={<Navigate to="/estate" replace />} />
                   </Route>
 

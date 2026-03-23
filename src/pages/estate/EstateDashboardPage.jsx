@@ -12,6 +12,7 @@ import { CallVolumeChart, PeakHoursChart, LeadSourceChart, ShowingConversionChar
 
 export default function EstateDashboardPage() {
   const { user, userClaims, agentId } = useAuth();
+  const canManagePortal = userClaims?.role === 'owner' || userClaims?.role === 'manager';
   
   // Flyover state
   const [flyoverOpen, setFlyoverOpen] = useState(false);
@@ -316,13 +317,15 @@ export default function EstateDashboardPage() {
             <span className="text-3xl mb-2">👥</span>
             <span className="text-sm font-medium text-gray-700">View Leads</span>
           </Link>
-          <Link
-            to="/estate/settings"
-            className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <span className="text-3xl mb-2">⚙️</span>
-            <span className="text-sm font-medium text-gray-700">Settings</span>
-          </Link>
+          {canManagePortal && (
+            <Link
+              to="/estate/settings"
+              className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <span className="text-3xl mb-2">⚙️</span>
+              <span className="text-sm font-medium text-gray-700">Settings</span>
+            </Link>
+          )}
         </div>
       </div>
 

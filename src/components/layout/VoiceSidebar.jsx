@@ -42,6 +42,7 @@ export default function VoiceSidebar() {
 
   const isOwner = userClaims?.role === 'owner';
   const isManager = userClaims?.role === 'manager';
+  const canManagePortal = isOwner || isManager;
   const { pendingCount: teamPendingCount } = useTeamAccessPending({
     tenantType: 'voice',
     enabled: isOwner,
@@ -74,9 +75,9 @@ export default function VoiceSidebar() {
         <NavItem to="/voice/work-items" label="Work Items" icon="🧾" />
         <NavItem to="/voice/customer-360" label="Customer 360" icon="🪪" />
         <NavItem to="/voice/merge-activity" label="Merge Activity" icon="🔀" />
-        <NavItem to="/voice/routing" label="Call Routing" icon="🔄" />
-        <NavItem to="/voice/settings" label="Settings" icon="⚙️" />
-        <NavItem to="/voice/billing" label="Billing" icon="💳" />
+        {canManagePortal && <NavItem to="/voice/routing" label="Call Routing" icon="🔄" />}
+        {canManagePortal && <NavItem to="/voice/settings" label="Settings" icon="⚙️" />}
+        {canManagePortal && <NavItem to="/voice/billing" label="Billing" icon="💳" />}
         {isOwner && (
           <NavItem
             to="/voice/users"

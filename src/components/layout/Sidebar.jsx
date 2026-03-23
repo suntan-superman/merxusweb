@@ -43,6 +43,7 @@ export default function Sidebar() {
 
   const isOwner = userClaims?.role === 'owner';
   const isManager = userClaims?.role === 'manager';
+  const canManagePortal = isOwner || isManager;
   const { pendingCount: teamPendingCount } = useTeamAccessPending({
     tenantType: 'restaurant',
     enabled: isOwner,
@@ -77,8 +78,8 @@ export default function Sidebar() {
         <NavItem to="/restaurant/intelligence" label="Intelligence" icon="🧠" />
         <NavItem to="/restaurant/customer-360" label="Customer 360" icon="🪪" />
         <NavItem to="/restaurant/merge-activity" label="Merge Activity" icon="🔀" />
-        <NavItem to="/restaurant/settings" label="Settings" icon="⚙️" />
-        <NavItem to="/restaurant/billing" label="Billing" icon="💳" />
+        {canManagePortal && <NavItem to="/restaurant/settings" label="Settings" icon="⚙️" />}
+        {canManagePortal && <NavItem to="/restaurant/billing" label="Billing" icon="💳" />}
         {isOwner && (
           <NavItem
             to="/restaurant/users"

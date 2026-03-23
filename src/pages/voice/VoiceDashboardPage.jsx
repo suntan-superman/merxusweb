@@ -11,6 +11,7 @@ import { CallVolumeChart, PeakHoursChart, ConversionChart } from '../../componen
 
 export default function VoiceDashboardPage() {
   const { user, userClaims, officeId } = useAuth();
+  const canManagePortal = userClaims?.role === 'owner' || userClaims?.role === 'manager';
   
   // Flyover state
   const [flyoverOpen, setFlyoverOpen] = useState(false);
@@ -268,13 +269,15 @@ export default function VoiceDashboardPage() {
             <h3 className="font-semibold text-gray-900 mb-1">📞 View Calls</h3>
             <p className="text-sm text-gray-600">View call history and transcripts</p>
           </Link>
-          <Link
-            to="/voice/settings"
-            className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"
-          >
-            <h3 className="font-semibold text-gray-900 mb-1">⚙️ Settings</h3>
-            <p className="text-sm text-gray-600">Configure business info and AI settings</p>
-          </Link>
+          {canManagePortal && (
+            <Link
+              to="/voice/settings"
+              className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"
+            >
+              <h3 className="font-semibold text-gray-900 mb-1">⚙️ Settings</h3>
+              <p className="text-sm text-gray-600">Configure business info and AI settings</p>
+            </Link>
+          )}
           <Link
             to="/voice/sms"
             className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"
@@ -289,13 +292,15 @@ export default function VoiceDashboardPage() {
             <h3 className="font-semibold text-gray-900 mb-1">🧾 Work Items</h3>
             <p className="text-sm text-gray-600">Review appointments, quotes, and service requests</p>
           </Link>
-          <Link
-            to="/voice/routing"
-            className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"
-          >
-            <h3 className="font-semibold text-gray-900 mb-1">🔄 Call Routing</h3>
-            <p className="text-sm text-gray-600">Set up department routing rules</p>
-          </Link>
+          {canManagePortal && (
+            <Link
+              to="/voice/routing"
+              className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"
+            >
+              <h3 className="font-semibold text-gray-900 mb-1">🔄 Call Routing</h3>
+              <p className="text-sm text-gray-600">Set up department routing rules</p>
+            </Link>
+          )}
           <Link
             to="/voice/voicemail"
             className="btn-secondary text-left p-4 hover:bg-primary-50 transition-colors"

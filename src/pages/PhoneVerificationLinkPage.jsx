@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getIdToken } from 'firebase/auth';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { auth } from '../firebase/config';
@@ -10,54 +10,70 @@ export default function PhoneVerificationLinkPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, userClaims } = useAuth();
-  const [status, setStatus] = useState('verifying');
-  const [message, setMessage] = useState('');
-
   const uid = searchParams.get('uid') || '';
   const token = searchParams.get('token') || '';
-
-  useEffect(() => {
-    let active = true;
-
-    async function verify() {
-      if (!uid || !token) {
-        setStatus('error');
-        setMessage('This verification link is incomplete.');
-        return;
-      }
-
-      try {
-        setStatus('verifying');
-        const result = await verifyPhoneVerificationLink(uid, token);
-        if (auth.currentUser) {
-          try {
-            await getIdToken(auth.currentUser, true);
-          } catch (_) {}
-        }
-        if (!active) return;
-        setStatus('success');
-        setMessage(result?.phone ? `Phone ${result.phone} verified successfully.` : 'Phone verified successfully.');
-      } catch (error) {
-        if (!active) return;
-        setStatus('error');
-        setMessage(error?.response?.data?.error || error?.message || 'This verification link could not be completed.');
-      }
-    }
-
-    verify();
-    return () => {
-      active = false;
-    };
-  }, [token, uid]);
+  const linkReady = Boolean(uid && token);
+  const [status, setStatus] = useState(linkReady ? 'ready' : 'error');
+  const [message, setMessage] = useState(linkReady ? '' : 'This verification link is incomplete.');
+  const [verifying, setVerifying] = useState(false);
 
   const portalTarget = getPortalBasePath(userClaims?.type || userClaims?.tenantType) || '/';
   const canOpenPortal = Boolean(user?.uid && user.uid === uid && userClaims);
+
+  async function handleVerify() {
+    if (!uid || !token || verifying) {
+      return;
+    }
+
+    try {
+      setVerifying(true);
+      setStatus('verifying');
+      setMessage('');
+      const result = await verifyPhoneVerificationLink(uid, token);
+      if (auth.currentUser) {
+        try {
+          await getIdToken(auth.currentUser, true);
+        } catch (_) {}
+      }
+      setStatus('success');
+      setMessage(result?.phone ? `Phone ${result.phone} verified successfully.` : 'Phone verified successfully.');
+    } catch (error) {
+      setStatus('error');
+      setMessage(error?.response?.data?.error || error?.message || 'This verification link could not be completed.');
+    } finally {
+      setVerifying(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-10">
       <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-600">Phone Verification</p>
         <h1 className="mt-3 text-3xl font-semibold text-slate-900">Confirm your mobile phone</h1>
+
+        {status === 'ready' ? (
+          <>
+            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+              Tap the button below to complete phone verification. This extra confirmation helps prevent one-time links from being consumed by message previews or security scanners before you actually use them.
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleVerify}
+                className="btn-primary"
+                disabled={verifying}
+              >
+                {verifying ? 'Verifying…' : 'Verify phone now'}
+              </button>
+              <Link
+                to="/login"
+                className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+              >
+                Sign in instead
+              </Link>
+            </div>
+          </>
+        ) : null}
 
         {status === 'verifying' ? (
           <div className="mt-8 text-center">

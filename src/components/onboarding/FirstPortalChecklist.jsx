@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   getPendingFirstLoginChecklist,
   isFirstLoginChecklistCompleted,
@@ -44,8 +45,10 @@ function getTenantSpecificItem(tenantType) {
 }
 
 export default function FirstPortalChecklist({ tenantType, tenantId, userId, className = '' }) {
+  const { userClaims } = useAuth();
   const [visible, setVisible] = useState(false);
   const [confirmDismiss, setConfirmDismiss] = useState(false);
+  const canManagePortal = userClaims?.role === 'owner' || userClaims?.role === 'manager';
   const normalizedTenantType =
     tenantType === 'office' || tenantType === 'general'
       ? 'voice'
@@ -105,6 +108,11 @@ export default function FirstPortalChecklist({ tenantType, tenantId, userId, cla
   }, [settingsPath, normalizedTenantType]);
 
   useEffect(() => {
+    if (!canManagePortal) {
+      setVisible(false);
+      return;
+    }
+
     if (!normalizedTenantType || !userId) {
       setVisible(false);
       return;
@@ -133,7 +141,7 @@ export default function FirstPortalChecklist({ tenantType, tenantId, userId, cla
     });
     setVisible(!completed);
     setConfirmDismiss(false);
-  }, [normalizedTenantType, tenantId, userId]);
+  }, [canManagePortal, normalizedTenantType, tenantId, userId]);
 
   const handleConfirmDismiss = () => {
     markFirstLoginChecklistCompleted({
@@ -145,7 +153,7 @@ export default function FirstPortalChecklist({ tenantType, tenantId, userId, cla
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!visible || !canManagePortal) return null;
 
   return (
     <section className={`bg-emerald-50 border border-emerald-200 rounded-xl p-5 ${className}`}>

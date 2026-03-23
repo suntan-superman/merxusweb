@@ -42,6 +42,7 @@ export default function EstateSidebar() {
 
   const isOwner = userClaims?.role === 'owner';
   const isManager = userClaims?.role === 'manager';
+  const canManagePortal = isOwner || isManager;
   const { pendingCount: teamPendingCount } = useTeamAccessPending({
     tenantType: 'real_estate',
     enabled: isOwner,
@@ -76,8 +77,8 @@ export default function EstateSidebar() {
         <NavItem to="/estate/customer-360" label="Customer 360" icon="🪪" />
         <NavItem to="/estate/merge-activity" label="Merge Activity" icon="🔀" />
         <NavItem to="/estate/flyers/metrics" label="Flyer Analytics" icon="📊" />
-        <NavItem to="/estate/settings" label="Settings" icon="⚙️" />
-        <NavItem to="/estate/billing" label="Billing" icon="💳" />
+        {canManagePortal && <NavItem to="/estate/settings" label="Settings" icon="⚙️" />}
+        {canManagePortal && <NavItem to="/estate/billing" label="Billing" icon="💳" />}
         {isOwner && (
           <NavItem
             to="/estate/users"
