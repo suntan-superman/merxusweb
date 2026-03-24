@@ -36,6 +36,13 @@ export async function resendTeamUserPhoneVerification(tenantType, uid) {
   return res.data;
 }
 
+export async function resetTeamUserPhoneVerification(tenantType, uid) {
+  const res = await apiClient.patch(`${getTenantBasePath(tenantType)}/users/${uid}`, {
+    action: 'reset_phone_verification',
+  });
+  return res.data;
+}
+
 export async function enableTeamUser(tenantType, uid) {
   const res = await apiClient.patch(`${getTenantBasePath(tenantType)}/users/${uid}`, {
     action: 'enable',

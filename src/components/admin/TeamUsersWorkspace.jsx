@@ -7,6 +7,7 @@ import {
   disableTeamUser,
   enableTeamUser,
   inviteTeamUser,
+  resetTeamUserPhoneVerification,
   resendTeamUserInvite,
   resendTeamUserPhoneVerification,
   updateTeamUser,
@@ -300,6 +301,22 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
     }
   }
 
+  async function handleResetPhoneVerification(user) {
+    const uid = user.uid || user.id;
+    try {
+      resetBannerState();
+      setBusyAction({ type: 'reset-phone', uid });
+      await resetTeamUserPhoneVerification(tenantType, uid);
+      setSuccess(`Phone verification was reset for ${user.displayName || user.email}. Send a new code when you're ready to retest.`);
+      await refetchUsers();
+    } catch (err) {
+      console.error(err);
+      setError(err?.response?.data?.error || err?.message || 'Failed to reset phone verification.');
+    } finally {
+      setBusyAction({ type: '', uid: null });
+    }
+  }
+
   async function handleEnable(user) {
     const uid = user.uid || user.id;
     try {
@@ -554,6 +571,18 @@ export default function TeamUsersWorkspace({ tenantType, footer = null }) {
                               {busyAction.type === 'code' && busyAction.uid === uid
                                 ? 'Sending…'
                                 : (currentUser.phoneVerificationSentAt ? 'Resend code' : 'Send code')}
+                            </button>
+                          ) : null}
+                          {!currentUser.disabled && !currentUser.needsInviteAcceptance && currentUser.phoneVerified && currentUser.phone ? (
+                            <button
+                              type="button"
+                              onClick={() => handleResetPhoneVerification(currentUser)}
+                              disabled={isRowBusy(uid)}
+                              className="text-xs text-amber-700 hover:text-amber-800 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {busyAction.type === 'reset-phone' && busyAction.uid === uid
+                                ? 'Resetting…'
+                                : 'Reset phone verification'}
                             </button>
                           ) : null}
                           {currentUser.disabled ? (
