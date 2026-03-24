@@ -43,6 +43,15 @@ export default function AutoRedirect() {
       return;
     }
 
+    if (
+      userClaims.invitedUser === true &&
+      userClaims.phoneVerified === false &&
+      location.pathname !== '/verify-phone'
+    ) {
+      navigate('/verify-phone', { replace: true });
+      return;
+    }
+
     // Only redirect from public routes
     const publicRoutes = ['/', '/features', '/onboarding'];
     const isPublicRoute = publicRoutes.includes(location.pathname);

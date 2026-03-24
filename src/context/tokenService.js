@@ -43,6 +43,11 @@ export function extractUserClaims(decodedClaims) {
     type: decodedClaims.type,
     tenantType: decodedClaims.type, // Alias for clarity
     tenantId: decodedClaims.restaurantId || decodedClaims.officeId || decodedClaims.agentId,
+    invitedUser: decodedClaims.invitedUser === true,
+    phoneVerified: decodedClaims.phoneVerified === true,
+    emailVerified: decodedClaims.emailVerified === true,
+    inviteStatus: decodedClaims.inviteStatus || null,
+    disabled: decodedClaims.disabled === true,
   };
 }
 
