@@ -132,6 +132,7 @@ export default function OnboardingOTPPage() {
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={6}
+              autoComplete="one-time-code"
               value={otpCode}
               onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
               className="input-field"
@@ -149,6 +150,7 @@ export default function OnboardingOTPPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="input-field pr-10"
               placeholder="Create a password"
+              autoComplete="new-password"
               required
               minLength={6}
               disabled={otpCode.length !== 6}
@@ -173,6 +175,7 @@ export default function OnboardingOTPPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="input-field pr-10"
               placeholder="Re-enter password"
+              autoComplete="new-password"
               required
               minLength={6}
               disabled={otpCode.length !== 6}

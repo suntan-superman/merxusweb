@@ -121,6 +121,40 @@ const Onboarding = () => {
   }, [selectedPlan, tenantType]);
 
   useEffect(() => {
+    let raw = sessionStorage.getItem(ONBOARDING_PENDING_PREFILL_KEY);
+    if (!raw) {
+      raw = localStorage.getItem(ONBOARDING_PENDING_PREFILL_KEY);
+    }
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed?.tenantType !== tenantType) return;
+
+      const draftData = parsed?.formData || {};
+      setFormData((prev) => {
+        const isStillInitial =
+          !prev.name &&
+          !prev.ownerEmail &&
+          !prev.phoneNumber &&
+          !prev.address;
+
+        if (!isStillInitial) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          ...draftData,
+          selectedPlan,
+        };
+      });
+    } catch (error) {
+      console.warn('Failed to restore pending onboarding prefill:', error);
+    }
+  }, [selectedPlan, tenantType]);
+
+  useEffect(() => {
     if (!prefillEmailFromQuery) return;
     setFormData((prev) => {
       if (prev.ownerEmail && prev.ownerEmail.trim().length > 0) return prev;
@@ -280,7 +314,6 @@ const Onboarding = () => {
       };
 
       if (submitData.authMethod === 'password') {
-        const otpResponse = await sendVerificationEmail({ email: submitData.ownerEmail });
         const prefillPayload = {
           tenantType,
           formData: {
@@ -299,6 +332,23 @@ const Onboarding = () => {
         });
         if (selectedPlan) otpParams.set('plan', selectedPlan);
         if (returnTo) otpParams.set('returnTo', returnTo);
+
+        let otpResponse;
+        try {
+          otpResponse = await sendVerificationEmail({ email: submitData.ownerEmail });
+        } catch (otpError) {
+          const retryAfterSeconds = otpError?.response?.data?.retryAfterSeconds;
+          if (otpError?.response?.status === 429) {
+            toast('A verification code was already sent. Use that code below or resend after the short wait.');
+            if (retryAfterSeconds) {
+              console.info(`OTP resend available in ${retryAfterSeconds} seconds.`);
+            }
+            navigate(`/onboarding/verify-otp?${otpParams.toString()}`);
+            return;
+          }
+          throw otpError;
+        }
+
         if (otpResponse?.otpCode) otpParams.set('otp', otpResponse.otpCode);
 
         navigate(`/onboarding/verify-otp?${otpParams.toString()}`);
