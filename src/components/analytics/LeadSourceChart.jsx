@@ -127,7 +127,7 @@ export default function LeadSourceChart({
   const totalValue = displayData.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className={`min-w-0 bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
+    <div className={`w-full min-w-0 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -205,9 +205,9 @@ export default function LeadSourceChart({
 
       {/* Pie Chart for Sources/Priority */}
       {view !== 'conversion' && (
-        <div className="h-56 min-w-0 min-h-[14rem]">
+        <div className="h-56 w-full min-w-0 min-h-[14rem]">
           {totalValue > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={224}>
               <PieChart>
                 <Pie
                   data={displayData}

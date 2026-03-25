@@ -148,7 +148,7 @@ export default function PeakHoursChart({ calls = [], title = 'Peak Hours', class
   }, [calls]);
 
   return (
-    <div className={`min-w-0 bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
+    <div className={`w-full min-w-0 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -184,8 +184,8 @@ export default function PeakHoursChart({ calls = [], title = 'Peak Hours', class
       </div>
 
       {/* Chart */}
-      <div className="h-56 min-w-0 min-h-[14rem]">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-56 w-full min-w-0 min-h-[14rem]">
+        <ResponsiveContainer width="100%" height={224}>
           <BarChart 
             data={currentData} 
             margin={{ top: 5, right: 5, left: -20, bottom: 5 }}

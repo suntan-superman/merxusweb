@@ -19,15 +19,24 @@ export default function FlyerMetricsDashboard() {
   async function loadData() {
     try {
       setLoading(true);
-      const [metricsData, logsData] = await Promise.all([
+      const [metricsResult, logsResult] = await Promise.allSettled([
         fetchFlyerMetrics(),
         fetchFlyerLogs({ limit: 5 }),
       ]);
-      setMetrics(metricsData);
-      setRecentLogs(logsData);
-    } catch (error) {
-      console.error('Failed to load flyer metrics:', error);
-      toast.error('Failed to load flyer metrics');
+
+      if (metricsResult.status === 'fulfilled') {
+        setMetrics(metricsResult.value);
+      } else {
+        console.error('Failed to load flyer metrics:', metricsResult.reason);
+        toast.error('Failed to load flyer metrics');
+      }
+
+      if (logsResult.status === 'fulfilled') {
+        setRecentLogs(logsResult.value);
+      } else {
+        console.error('Failed to load flyer logs:', logsResult.reason);
+        setRecentLogs([]);
+      }
     } finally {
       setLoading(false);
     }
