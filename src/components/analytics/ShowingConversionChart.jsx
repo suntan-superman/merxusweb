@@ -142,7 +142,7 @@ export default function ShowingConversionChart({
   }
 
   return (
-    <div className={`card ${className}`}>
+    <div className={`card min-w-0 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -188,7 +188,7 @@ export default function ShowingConversionChart({
       </div>
 
       {/* Chart */}
-      <div className="h-56">
+      <div className="h-56 min-w-0 min-h-[14rem]">
         <ResponsiveContainer width="100%" height="100%">
           {view === 'funnel' ? (
             <BarChart

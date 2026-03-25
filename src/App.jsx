@@ -82,6 +82,7 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import BillingPage from './pages/BillingPage';
 import CheckoutReturnPage from './pages/CheckoutReturnPage';
+import CheckoutHandoffPage from './pages/CheckoutHandoffPage';
 import InstagramLandingPage from './pages/InstagramLandingPage';
 import SimpleOnboardingWizard from './pages/SimpleOnboardingWizard';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
@@ -115,6 +116,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/invite/accept" element={<InviteAcceptPage />} />
           <Route path="/verify-phone-link" element={<PhoneVerificationLinkPage />} />
+          <Route path="/checkout/start" element={<CheckoutHandoffPage />} />
           <Route
             path="/verify-phone"
             element={

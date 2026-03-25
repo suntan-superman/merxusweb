@@ -99,7 +99,7 @@ export async function fetchEstateCalls() {
 // Flyer queue (agent approval)
 export async function fetchFlyerQueue(limit = 50) {
   const res = await apiClient.get('/estate/flyers/queue', { params: { limit } });
-  return res.data;
+  return res.data?.queue || [];
 }
 
 export async function approveFlyerQueue(id) {
@@ -116,7 +116,7 @@ export async function fetchFlyerLogs({ limit = 50, listingId, leadId } = {}) {
   const res = await apiClient.get('/estate/flyers/logs', {
     params: { limit, listingId, leadId },
   });
-  return res.data;
+  return res.data?.logs || [];
 }
 
 export async function sendTestFlyer(listingId, testEmail) {

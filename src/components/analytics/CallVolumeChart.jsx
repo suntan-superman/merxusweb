@@ -103,7 +103,7 @@ export default function CallVolumeChart({ calls = [], title = 'Call Volume', cla
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
+    <div className={`min-w-0 bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -132,7 +132,7 @@ export default function CallVolumeChart({ calls = [], title = 'Call Volume', cla
       </div>
 
       {/* Chart */}
-      <div className="h-64">
+      <div className="h-64 min-w-0 min-h-[16rem]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
             <defs>
