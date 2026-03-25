@@ -12,12 +12,22 @@ const DEFAULT_BUSINESS_HOURS = {
   sunday: { open: '00:00', close: '00:00', closed: true },
 };
 
-export default function FlyoverHoursStep({ formData, onHoursChange }) {
+export default function FlyoverHoursStep({ formData, onHoursChange, onCopyMondayToAll }) {
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">
         <h3 className="text-xl font-bold text-gray-900">Business Hours</h3>
         <p className="text-gray-600 text-sm">When is your AI available to take calls?</p>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onCopyMondayToAll}
+          className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+        >
+          Copy Monday to all days
+        </button>
       </div>
 
       <div className="space-y-3">

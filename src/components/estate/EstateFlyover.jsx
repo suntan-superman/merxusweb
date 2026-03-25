@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { X, ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatPhoneInput, toE164, isValidPhone } from '../../utils/phoneFormatter';
-import { updateEstateSettings, fetchEstateSettings } from '../../api/estate';
+import * as XLSX from 'xlsx';
+import { updateEstateSettings, fetchEstateSettings, createListing } from '../../api/estate';
 import { useAuth } from '../../context/AuthContext';
 import { validateForm, estateBrandSchema, estateContactSchema } from '../../utils/validation';
 import {
@@ -37,6 +38,46 @@ const DEFAULT_BUSINESS_HOURS = {
   sunday: { open: '00:00', close: '00:00', closed: true },
 };
 
+const LISTING_COLUMN_ALIASES = {
+  address: ['address', 'street', 'street address'],
+  city: ['city'],
+  state: ['state'],
+  zipCode: ['zip', 'zipcode', 'zip code', 'postal code', 'postal'],
+  price: ['price', 'list price', 'asking price'],
+  sqft: ['sqft', 'sq ft', 'square feet', 'square footage', 'sqfeet'],
+  bedrooms: ['beds', 'bedrooms', 'bed', 'br'],
+  bathrooms: ['baths', 'bathrooms', 'bath', 'ba'],
+  propertyType: ['property type', 'type', 'property_type', 'propertytype'],
+  status: ['status', 'listing status'],
+  lotSize: ['lotsize', 'lot size', 'lot sq ft', 'lot sqft', 'acreage', 'acres'],
+  mlsNumber: ['mls', 'mls number', 'mls#', 'mlsnumber', 'mls_number'],
+  yearBuilt: ['year built', 'yearbuilt', 'year_built', 'built'],
+  description: ['description', 'notes', 'remarks', 'features', 'comments'],
+};
+
+const PROPERTY_TYPE_MAP = {
+  'single family': 'Single Family',
+  single_family: 'Single Family',
+  singlefamily: 'Single Family',
+  sfh: 'Single Family',
+  condo: 'Condo',
+  condominium: 'Condo',
+  townhouse: 'Townhouse',
+  townhome: 'Townhouse',
+  'multi family': 'Multi-Family',
+  'multi-family': 'Multi-Family',
+  multifamily: 'Multi-Family',
+};
+
+const STATUS_MAP = {
+  active: 'active',
+  'for sale': 'active',
+  pending: 'pending',
+  'under contract': 'pending',
+  sold: 'sold',
+  closed: 'sold',
+};
+
 const normalizeBusinessHours = (input) => {
   const hours = input && typeof input === 'object' ? input : {};
   return Object.keys(DEFAULT_BUSINESS_HOURS).reduce((acc, day) => {
@@ -48,6 +89,179 @@ const normalizeBusinessHours = (input) => {
     };
     return acc;
   }, {});
+};
+
+const firstFilledString = (...values) => {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value;
+    }
+  }
+  return '';
+};
+
+const parseCsvLine = (line) => {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current.trim());
+  return result;
+};
+
+const resolveListingColumnIndices = (headers) =>
+  Object.entries(LISTING_COLUMN_ALIASES).reduce((acc, [key, aliases]) => {
+    const match = headers.findIndex((header) => aliases.some((alias) => header.includes(alias)));
+    if (match !== -1) {
+      acc[key] = match;
+    }
+    return acc;
+  }, {});
+
+const parseCombinedAddress = (rawAddress) => {
+  const value = String(rawAddress || '').trim();
+  if (!value) {
+    return { address: '', city: '', state: '', zipCode: '' };
+  }
+
+  const segments = value.split(',').map((segment) => segment.trim()).filter(Boolean);
+  const [address = value, city = '', stateZip = ''] = segments;
+  const stateZipParts = stateZip.split(/\s+/).filter(Boolean);
+
+  return {
+    address,
+    city,
+    state: stateZipParts[0] || '',
+    zipCode: stateZipParts.slice(1).join(' '),
+  };
+};
+
+const parseNumber = (value, allowDecimal = false) => {
+  const cleaned = String(value || '').replace(allowDecimal ? /[^0-9.]/g : /[^0-9]/g, '');
+  if (!cleaned) return 0;
+  return allowDecimal ? parseFloat(cleaned) || 0 : parseInt(cleaned, 10) || 0;
+};
+
+const buildListingFromRow = (row, columnIndices) => {
+  const getValue = (key) => {
+    const index = columnIndices[key];
+    return index === undefined ? '' : String(row[index] ?? '').trim();
+  };
+
+  const rawAddress = getValue('address');
+  const rawCity = getValue('city');
+  const parsedAddress = rawCity ? null : parseCombinedAddress(rawAddress);
+
+  const address = rawCity ? rawAddress : parsedAddress?.address || '';
+  const city = rawCity || parsedAddress?.city || '';
+  const state = getValue('state') || parsedAddress?.state || '';
+  const zipCode = getValue('zipCode') || parsedAddress?.zipCode || '';
+
+  if (!address || !city) {
+    return null;
+  }
+
+  const propertyTypeKey = getValue('propertyType').toLowerCase();
+  const statusKey = getValue('status').toLowerCase();
+  const lotSizeRaw = getValue('lotSize');
+
+  const listing = {
+    address,
+    city,
+    state,
+    zipCode,
+    price: parseNumber(getValue('price'), true),
+    sqft: parseNumber(getValue('sqft')),
+    bedrooms: parseNumber(getValue('bedrooms')),
+    bathrooms: parseNumber(getValue('bathrooms'), true),
+    propertyType: PROPERTY_TYPE_MAP[propertyTypeKey] || 'Single Family',
+    status: STATUS_MAP[statusKey] || 'active',
+    mlsNumber: getValue('mlsNumber'),
+    yearBuilt: getValue('yearBuilt'),
+    description: getValue('description'),
+  };
+
+  if (lotSizeRaw) {
+    if (lotSizeRaw.toLowerCase().includes('acre')) {
+      const acres = parseNumber(lotSizeRaw, true);
+      if (acres) {
+        listing.lotSize = `${acres} acres`;
+      }
+    } else {
+      const lotSize = parseNumber(lotSizeRaw);
+      if (lotSize) {
+        listing.lotSize = `${lotSize} sqft`;
+      }
+    }
+  }
+
+  return listing;
+};
+
+const parseListingRows = (rows) => {
+  if (!Array.isArray(rows) || rows.length < 2) {
+    throw new Error('Your file must include a header row and at least one listing.');
+  }
+
+  const headers = rows[0].map((header) => String(header || '').trim().toLowerCase());
+  const columnIndices = resolveListingColumnIndices(headers);
+
+  if (columnIndices.address === undefined) {
+    throw new Error('Missing required Address column.');
+  }
+
+  const listings = rows
+    .slice(1)
+    .map((row) => buildListingFromRow(row, columnIndices))
+    .filter(Boolean);
+
+  if (listings.length === 0) {
+    throw new Error('No valid listings were found in the file.');
+  }
+
+  return listings;
+};
+
+const parseListingsFromFile = async (file) => {
+  const fileName = file.name.toLowerCase();
+  if (fileName.endsWith('.csv')) {
+    const text = await file.text();
+    const rows = text
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => parseCsvLine(line));
+    return parseListingRows(rows);
+  }
+
+  if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+    return parseListingRows(rows);
+  }
+
+  throw new Error('Please select a CSV or Excel file (.csv, .xlsx, .xls).');
 };
 
 const STEPS = [
@@ -69,6 +283,8 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
   const [saving, setSaving] = useState(false);
   const [playingVoice, setPlayingVoice] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
+  const [importingListings, setImportingListings] = useState(false);
+  const [importSummary, setImportSummary] = useState(null);
   const fileInputRef = useRef(null);
 
   // Form state for all steps
@@ -143,7 +359,7 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
         brokerage: savedFormData.brokerage ?? data.brokerage ?? '',
         licenseNumber: savedFormData.licenseNumber ?? data.licenseNumber ?? '',
         address: savedFormData.address ?? data.address ?? '',
-        phonePrimary: savedFormData.phonePrimary ?? data.phonePrimary ?? data.phoneNumber ?? '',
+        phonePrimary: firstFilledString(savedFormData.phonePrimary, data.phonePrimary, data.phoneNumber),
         websiteUrl: savedFormData.websiteUrl ?? data.websiteUrl ?? '',
         markets: savedFormData.markets ?? (Array.isArray(data.markets) ? data.markets.join(', ') : data.markets ?? ''),
         twilioPhoneNumber: savedFormData.twilioPhoneNumber ?? data.twilioPhoneNumber ?? '',
@@ -196,6 +412,16 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
       },
     };
     handleChange('businessHours', newHours);
+  };
+
+  const handleCopyMondayToAll = () => {
+    const mondayHours = formData.businessHours?.monday || DEFAULT_BUSINESS_HOURS.monday;
+    const copiedHours = Object.keys(DEFAULT_BUSINESS_HOURS).reduce((acc, day) => {
+      acc[day] = day === 'monday' ? mondayHours : { ...mondayHours };
+      return acc;
+    }, {});
+    handleChange('businessHours', copiedHours);
+    toast.success('Monday hours copied to the rest of the week.');
   };
 
   // Save current step data to backend
@@ -364,11 +590,47 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // For now, just show a success message - actual import would need backend work
-    toast.success(`File "${file.name}" selected. Import functionality coming soon!`);
-    // Reset the input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    setImportingListings(true);
+    setImportSummary(null);
+    const toastId = toast.loading(`Importing listings from ${file.name}...`);
+
+    try {
+      const listings = await parseListingsFromFile(file);
+      let imported = 0;
+      let failed = 0;
+
+      for (const listing of listings) {
+        try {
+          await createListing(listing);
+          imported += 1;
+        } catch (error) {
+          failed += 1;
+          console.error('Failed to import listing:', listing.address, error);
+        }
+      }
+
+      const summary = { fileName: file.name, imported, failed };
+      setImportSummary(summary);
+
+      if (imported === 0) {
+        throw new Error('No listings were imported. Please review the file and try again.');
+      }
+
+      toast.dismiss(toastId);
+      toast.success(
+        failed > 0
+          ? `Imported ${imported} listings. ${failed} could not be imported.`
+          : `Imported ${imported} listings successfully.`
+      );
+    } catch (error) {
+      console.error('Listing import failed:', error);
+      toast.dismiss(toastId);
+      toast.error(error.message || 'Failed to import listings.');
+    } finally {
+      setImportingListings(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -476,6 +738,7 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
             <FlyoverHoursStep
               formData={formData}
               onHoursChange={handleHoursChange}
+              onCopyMondayToAll={handleCopyMondayToAll}
             />
           )}
           {currentStep === 6 && (
@@ -483,6 +746,8 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
               fileInputRef={fileInputRef}
               onDownloadTemplate={handleDownloadTemplate}
               onFileUpload={handleFileUpload}
+              importing={importingListings}
+              importSummary={importSummary}
             />
           )}
           {currentStep === 7 && <FlyoverCompleteStep />}
