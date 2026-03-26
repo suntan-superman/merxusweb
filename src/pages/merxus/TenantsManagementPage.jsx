@@ -14,6 +14,7 @@ export default function TenantsManagementPage() {
   const [loading, setLoading] = useState(false);
   const [editingTenant, setEditingTenant] = useState(null);
   const [editFormData, setEditFormData] = useState({});
+  const [editErrors, setEditErrors] = useState({});
   const [savingEdit, setSavingEdit] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tenantToToggle, setTenantToToggle] = useState(null);
@@ -37,6 +38,35 @@ export default function TenantsManagementPage() {
   ];
 
   const currentTab = tabs.find(t => t.id === activeTab);
+
+  const normalizeEditableValue = (value) => {
+    if (value == null) return '';
+    const trimmed = String(value).trim();
+    if (!trimmed || trimmed.toUpperCase() === 'N/A') return '';
+    return trimmed;
+  };
+
+  const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  const validateE164Phone = (value) => /^\+[1-9]\d{7,14}$/.test(value);
+
+  const getSubscriptionSortValue = (sub) => {
+    const toMillis = (value) => {
+      if (!value) return 0;
+      if (typeof value?.toDate === 'function') return value.toDate().getTime();
+      if (value?.seconds) return value.seconds * 1000;
+      if (value?._seconds) return value._seconds * 1000;
+      const parsed = new Date(value).getTime();
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    return Math.max(
+      toMillis(sub?.updatedAt),
+      toMillis(sub?.createdAt),
+      toMillis(sub?.currentPeriodEnd),
+      toMillis(sub?.trialEndsAt)
+    );
+  };
 
   // Load tenants when tab changes
   useEffect(() => {
@@ -77,7 +107,9 @@ export default function TenantsManagementPage() {
             query(collection(db, 'subscriptions'), where('tenantId', '==', tenantDoc.id))
           );
           if (subsSnapshot.docs.length > 0) {
-            const sub = subsSnapshot.docs[0].data();
+            const sub = subsSnapshot.docs
+              .map((docSnap) => docSnap.data() || {})
+              .sort((a, b) => getSubscriptionSortValue(b) - getSubscriptionSortValue(a))[0];
             billingPaused = !!sub.billingPaused;
             cancelAtPeriodEnd = !!sub.cancelAtPeriodEnd;
             subscriptionStatus = billingPaused
@@ -110,6 +142,7 @@ export default function TenantsManagementPage() {
           trialEndsAt,
           billingPaused,
           cancelAtPeriodEnd,
+          noRecurringChargesOverride: !!settings.noRecurringChargesOverride,
           type: currentTab.type,
           tenantType: currentTab.id === 'offices' ? 'voice' : currentTab.id === 'agents' ? 'real_estate' : 'restaurant',
         });
@@ -135,16 +168,48 @@ export default function TenantsManagementPage() {
 
   const handleEditTenant = (tenant) => {
     setEditingTenant(tenant);
+    setEditErrors({});
     setEditFormData({
-      name: tenant.name,
-      email: tenant.email,
-      phoneNumber: tenant.phoneNumber,
-      twilioPhoneNumber: tenant.twilioPhoneNumber,
+      name: normalizeEditableValue(tenant.name),
+      email: normalizeEditableValue(tenant.email),
+      phoneNumber: normalizeEditableValue(tenant.phoneNumber),
+      twilioPhoneNumber: normalizeEditableValue(tenant.twilioPhoneNumber),
+      noRecurringChargesOverride: !!tenant.noRecurringChargesOverride,
     });
   };
 
   const handleSaveTenant = async () => {
     if (!editingTenant || !editFormData) return;
+
+    const normalizedName = normalizeEditableValue(editFormData.name);
+    const normalizedEmail = normalizeEditableValue(editFormData.email).toLowerCase();
+    const normalizedBusinessPhone = normalizeEditableValue(editFormData.phoneNumber);
+    const normalizedAiPhone = normalizeEditableValue(editFormData.twilioPhoneNumber);
+    const nextErrors = {};
+
+    if (!normalizedName) {
+      nextErrors.name = 'Business name is required.';
+    }
+
+    if (!normalizedEmail) {
+      nextErrors.email = 'Email is required.';
+    } else if (!validateEmail(normalizedEmail)) {
+      nextErrors.email = 'Enter a valid email address, for example owner@example.com.';
+    }
+
+    if (normalizedBusinessPhone && !validateE164Phone(normalizedBusinessPhone)) {
+      nextErrors.phoneNumber = 'Use E.164 format, for example +16615551234.';
+    }
+
+    if (normalizedAiPhone && !validateE164Phone(normalizedAiPhone)) {
+      nextErrors.twilioPhoneNumber = 'Use E.164 format, for example +16615551234.';
+    }
+
+    setEditErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      toast.error('Please fix the highlighted tenant details before saving.');
+      return;
+    }
 
     setSavingEdit(true);
     try {
@@ -153,38 +218,61 @@ export default function TenantsManagementPage() {
       // Update meta/settings document - save both phone fields consistently
       const settingsRef = doc(db, collectionName, editingTenant.id, 'meta', 'settings');
       const updateObj = {
-        name: editFormData.name,
-        email: editFormData.email,
+        name: normalizedName,
+        email: normalizedEmail,
+        noRecurringChargesOverride: editFormData.noRecurringChargesOverride === true,
       };
       
       // Save both phone fields for all tenant types consistently
-      if (editFormData.phoneNumber && editFormData.phoneNumber !== 'N/A') {
-        updateObj.phoneNumber = editFormData.phoneNumber;
-      }
-      if (editFormData.twilioPhoneNumber && editFormData.twilioPhoneNumber !== 'N/A') {
-        updateObj.twilioPhoneNumber = editFormData.twilioPhoneNumber;
-      }
+      updateObj.phoneNumber = normalizedBusinessPhone || '';
+      updateObj.twilioPhoneNumber = normalizedAiPhone || '';
       
       await updateDoc(settingsRef, updateObj);
+
+      const shouldDisableRecurringCharges =
+        editFormData.noRecurringChargesOverride === true &&
+        editingTenant.subscriptionStatus &&
+        editingTenant.subscriptionStatus !== 'No Subscription' &&
+        editingTenant.subscriptionStatus !== 'canceled' &&
+        !editingTenant.cancelAtPeriodEnd;
+
+      if (shouldDisableRecurringCharges) {
+        await cancelSubscriptionForTenant({
+          tenantId: editingTenant.id,
+          tenantType: editingTenant.tenantType,
+          reason: 'admin_test_override',
+        });
+      }
 
       // Update local state to reflect changes
       const updatedTenants = tenants.map(t => 
         t.id === editingTenant.id 
           ? { 
               ...t, 
-              name: editFormData.name, 
-              email: editFormData.email, 
-              phoneNumber: editFormData.phoneNumber,
-              twilioPhoneNumber: editFormData.twilioPhoneNumber,
-              phone: editFormData.twilioPhoneNumber || editFormData.phoneNumber // Display Twilio if available, else business phone
+              name: normalizedName, 
+              email: normalizedEmail, 
+              phoneNumber: normalizedBusinessPhone || 'N/A',
+              twilioPhoneNumber: normalizedAiPhone || 'N/A',
+              phone: normalizedAiPhone || normalizedBusinessPhone || 'N/A',
+              noRecurringChargesOverride: editFormData.noRecurringChargesOverride === true,
+              cancelAtPeriodEnd: shouldDisableRecurringCharges ? true : t.cancelAtPeriodEnd,
+              subscriptionStatus:
+                shouldDisableRecurringCharges && t.subscriptionStatus !== 'canceled'
+                  ? 'canceling'
+                  : t.subscriptionStatus,
             }
           : t
       );
       setTenants(updatedTenants);
 
-      toast.success('Tenant updated successfully!');
+      toast.success(
+        shouldDisableRecurringCharges
+          ? 'Tenant updated and recurring charges were disabled for future renewals.'
+          : 'Tenant updated successfully!'
+      );
       setEditingTenant(null);
       setEditFormData({});
+      setEditErrors({});
     } catch (error) {
       console.error('Error saving tenant:', error);
       toast.error('Failed to save tenant changes');
@@ -248,6 +336,11 @@ export default function TenantsManagementPage() {
           </span>
         )}
         {getStatusBadge(props.subscriptionStatus)}
+        {props.noRecurringChargesOverride && (
+          <span className="px-2 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded">
+            No Renew
+          </span>
+        )}
       </div>
     );
   };
@@ -411,12 +504,23 @@ export default function TenantsManagementPage() {
 
     setProcessingCancel(true);
     try {
-      await cancelSubscriptionForTenant({
+      const result = await cancelSubscriptionForTenant({
         tenantId: cancelTenant.id,
         tenantType: cancelTenant.tenantType,
         cancelImmediately,
         reason: cancelReason.trim() || 'admin_request',
       });
+      setTenants((prev) =>
+        prev.map((tenant) =>
+          tenant.id === cancelTenant.id
+            ? {
+                ...tenant,
+                cancelAtPeriodEnd: !!result?.cancelAtPeriodEnd,
+                subscriptionStatus: cancelImmediately || result?.status === 'canceled' ? 'canceled' : 'canceling',
+              }
+            : tenant
+        )
+      );
       toast.success(
         cancelImmediately
           ? 'Subscription canceled immediately'
@@ -646,6 +750,7 @@ export default function TenantsManagementPage() {
                 onClick={() => {
                   setEditingTenant(null);
                   setEditFormData({});
+                  setEditErrors({});
                 }}
                 className="text-gray-400 hover:text-gray-600 p-1"
                 title="Close"
@@ -667,9 +772,17 @@ export default function TenantsManagementPage() {
                 <input
                   type="text"
                   value={editFormData.name || ''}
-                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  onChange={(e) => {
+                    setEditFormData({ ...editFormData, name: e.target.value });
+                    if (editErrors.name) setEditErrors((current) => ({ ...current, name: '' }));
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                    editErrors.name ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  }`}
                 />
+                {editErrors.name && (
+                  <p className="mt-1 text-xs text-red-600">{editErrors.name}</p>
+                )}
               </div>
 
               <div>
@@ -679,9 +792,22 @@ export default function TenantsManagementPage() {
                 <input
                   type="email"
                   value={editFormData.email || ''}
-                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="owner@example.com"
+                  autoComplete="email"
+                  onChange={(e) => {
+                    setEditFormData({ ...editFormData, email: e.target.value });
+                    if (editErrors.email) setEditErrors((current) => ({ ...current, email: '' }));
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                    editErrors.email ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  }`}
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Expected format: owner@example.com
+                </p>
+                {editErrors.email && (
+                  <p className="mt-1 text-xs text-red-600">{editErrors.email}</p>
+                )}
               </div>
 
               <div>
@@ -691,12 +817,22 @@ export default function TenantsManagementPage() {
                 <input
                   type="tel"
                   value={editFormData.phoneNumber || ''}
-                  onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  inputMode="tel"
+                  placeholder="+16615551234"
+                  onChange={(e) => {
+                    setEditFormData({ ...editFormData, phoneNumber: e.target.value });
+                    if (editErrors.phoneNumber) setEditErrors((current) => ({ ...current, phoneNumber: '' }));
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                    editErrors.phoneNumber ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  }`}
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Main contact number for the business
+                  Main contact number for the business. Expected format: +16615551234
                 </p>
+                {editErrors.phoneNumber && (
+                  <p className="mt-1 text-xs text-red-600">{editErrors.phoneNumber}</p>
+                )}
               </div>
 
               <div>
@@ -706,12 +842,48 @@ export default function TenantsManagementPage() {
                 <input
                   type="tel"
                   value={editFormData.twilioPhoneNumber || ''}
-                  onChange={(e) => setEditFormData({ ...editFormData, twilioPhoneNumber: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  inputMode="tel"
+                  placeholder="+16615551234"
+                  onChange={(e) => {
+                    setEditFormData({ ...editFormData, twilioPhoneNumber: e.target.value });
+                    if (editErrors.twilioPhoneNumber) setEditErrors((current) => ({ ...current, twilioPhoneNumber: '' }));
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                    editErrors.twilioPhoneNumber ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  }`}
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Phone number used for AI Assistant calls and voice interactions
+                  Phone number used for AI Assistant calls and voice interactions. Expected format: +16615551234
                 </p>
+                {editErrors.twilioPhoneNumber && (
+                  <p className="mt-1 text-xs text-red-600">{editErrors.twilioPhoneNumber}</p>
+                )}
+              </div>
+
+              <div className="p-4 border border-indigo-200 rounded-lg bg-indigo-50">
+                <label className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={editFormData.noRecurringChargesOverride === true}
+                    onChange={(e) => {
+                      setEditFormData({
+                        ...editFormData,
+                        noRecurringChargesOverride: e.target.checked,
+                      });
+                    }}
+                    className="w-4 h-4 mt-1 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">
+                      No recurring charges override
+                    </div>
+                    <p className="mt-1 text-xs text-gray-600">
+                      Intended for internal admin and testing tenants. If this tenant already has an active Stripe
+                      subscription, saving with this enabled will stop future renewals at the end of the current billing
+                      period.
+                    </p>
+                  </div>
+                </label>
               </div>
             </div>
 
@@ -720,6 +892,7 @@ export default function TenantsManagementPage() {
                 onClick={() => {
                   setEditingTenant(null);
                   setEditFormData({});
+                  setEditErrors({});
                 }}
                 className="flex-1 px-4 py-2 text-gray-800 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
               >
