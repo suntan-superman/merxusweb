@@ -110,3 +110,13 @@ export async function updateSystemSettings(payload) {
   return res.data;
 }
 
+export async function fetchBillingConfig() {
+  const res = await apiClient.get('/merxus/billing-config');
+  return res.data;
+}
+
+export async function updateBillingConfig(payload) {
+  const res = await apiClient.patch('/merxus/billing-config', payload);
+  return res.data;
+}
+

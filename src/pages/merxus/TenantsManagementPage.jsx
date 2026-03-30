@@ -433,6 +433,16 @@ export default function TenantsManagementPage() {
     return `${daysLeft} days`;
   };
 
+  const noRecurringTemplate = (props) => {
+    return props.noRecurringChargesOverride ? (
+      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md">
+        Enabled
+      </span>
+    ) : (
+      <span className="text-xs text-gray-400">-</span>
+    );
+  };
+
   const handlePauseBilling = async (tenant) => {
     if (!tenant?.id || !tenant?.tenantType) return;
     setProcessingActionId(tenant.id);
@@ -718,6 +728,14 @@ export default function TenantsManagementPage() {
                 headerTemplate={headerTemplate}
                 headerText="Created" 
                 template={dateTemplate}
+              />
+              <ColumnDirective
+                field="noRecurringChargesOverride"
+                headerText="No Renew"
+                width="110"
+                template={noRecurringTemplate}
+                headerTemplate={headerTemplate}
+                allowFiltering={false}
               />
               <ColumnDirective 
                 headerText="Trial Left" 
