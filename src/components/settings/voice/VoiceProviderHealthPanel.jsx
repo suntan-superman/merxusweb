@@ -18,6 +18,7 @@ function buildSpeechForm(settings = {}) {
   const speech = settings?.speech || settings?.voiceProviders || {};
   const realtime = speech?.realtime || {};
   const pipeline = speech?.pipeline || {};
+  const turnDetection = realtime?.turnDetection || {};
 
   return {
     strategy: speech?.strategy || 'realtime',
@@ -27,7 +28,17 @@ function buildSpeechForm(settings = {}) {
     realtimeModel: realtime?.model || '',
     sttProvider: pipeline?.sttProvider || speech?.sttProvider || 'openai_managed',
     ttsProvider: pipeline?.ttsProvider || speech?.ttsProvider || 'openai_managed',
+    interruptOnCallerSpeech: realtime?.interruptOnCallerSpeech !== false && speech?.interruptOnCallerSpeech !== false,
+    turnDetectionThreshold: String(turnDetection?.threshold ?? 0.5),
+    turnDetectionPrefixPaddingMs: String(turnDetection?.prefixPaddingMs ?? turnDetection?.prefix_padding_ms ?? 300),
+    turnDetectionSilenceDurationMs: String(turnDetection?.silenceDurationMs ?? turnDetection?.silence_duration_ms ?? 500),
   };
+}
+
+function normalizeNumericValue(value, fallback, { min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY, integer = false } = {}) {
+  const parsed = integer ? Number.parseInt(value, 10) : Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
 }
 
 function formatTimestamp(value) {
@@ -134,17 +145,28 @@ export default function VoiceProviderHealthPanel({
 
   function handleSubmit(event) {
     event.preventDefault();
+    const threshold = normalizeNumericValue(form.turnDetectionThreshold, 0.5, { min: 0.1, max: 1 });
+    const prefixPaddingMs = normalizeNumericValue(form.turnDetectionPrefixPaddingMs, 300, { min: 0, max: 2000, integer: true });
+    const silenceDurationMs = normalizeNumericValue(form.turnDetectionSilenceDurationMs, 500, { min: 100, max: 4000, integer: true });
+
     onSave({
       speech: {
         strategy: form.strategy,
         allowFallback: form.allowFallback,
         healthGatingEnabled: form.healthGatingEnabled,
+        interruptOnCallerSpeech: form.interruptOnCallerSpeech,
         realtimeProvider: form.realtimeProvider,
         sttProvider: form.sttProvider,
         ttsProvider: form.ttsProvider,
         realtime: {
           provider: form.realtimeProvider,
           ...(form.realtimeModel ? { model: form.realtimeModel } : {}),
+          interruptOnCallerSpeech: form.interruptOnCallerSpeech,
+          turnDetection: {
+            threshold,
+            prefixPaddingMs,
+            silenceDurationMs,
+          },
         },
         pipeline: {
           sttProvider: form.sttProvider,
@@ -256,6 +278,83 @@ export default function VoiceProviderHealthPanel({
               className="input-field"
               placeholder="gpt-4o-realtime-preview-2024-12-17"
             />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900">Realtime Interruption</h4>
+              <p className="mt-1 text-xs text-gray-500">
+                Let callers barge in while the AI is speaking, then tune how sensitive server-side voice activity detection should be.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              name="interruptOnCallerSpeech"
+              checked={form.interruptOnCallerSpeech}
+              onChange={handleChange}
+              className="mt-1 h-4 w-4"
+            />
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <div>
+              <label htmlFor="turnDetectionThreshold" className="mb-2 block text-sm font-medium text-gray-700">
+                Speech Sensitivity
+              </label>
+              <input
+                id="turnDetectionThreshold"
+                name="turnDetectionThreshold"
+                type="number"
+                min="0.1"
+                max="1"
+                step="0.05"
+                value={form.turnDetectionThreshold}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="0.50"
+              />
+              <p className="mt-1 text-xs text-gray-500">Lower values react faster to caller speech.</p>
+            </div>
+
+            <div>
+              <label htmlFor="turnDetectionPrefixPaddingMs" className="mb-2 block text-sm font-medium text-gray-700">
+                Prefix Padding
+              </label>
+              <input
+                id="turnDetectionPrefixPaddingMs"
+                name="turnDetectionPrefixPaddingMs"
+                type="number"
+                min="0"
+                max="2000"
+                step="50"
+                value={form.turnDetectionPrefixPaddingMs}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="300"
+              />
+              <p className="mt-1 text-xs text-gray-500">Milliseconds of speech to retain before detection triggers.</p>
+            </div>
+
+            <div>
+              <label htmlFor="turnDetectionSilenceDurationMs" className="mb-2 block text-sm font-medium text-gray-700">
+                Silence Hold
+              </label>
+              <input
+                id="turnDetectionSilenceDurationMs"
+                name="turnDetectionSilenceDurationMs"
+                type="number"
+                min="100"
+                max="4000"
+                step="50"
+                value={form.turnDetectionSilenceDurationMs}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="500"
+              />
+              <p className="mt-1 text-xs text-gray-500">How long to wait before OpenAI treats speech as finished.</p>
+            </div>
           </div>
         </div>
 
