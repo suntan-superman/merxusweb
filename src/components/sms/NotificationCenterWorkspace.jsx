@@ -48,6 +48,9 @@ function toneForStatus(status) {
   if (normalized === 'failed' || normalized === 'undelivered' || normalized === 'error') {
     return 'bg-red-100 text-red-700';
   }
+  if (normalized === 'attention_required' || normalized === 'needs_attention') {
+    return 'bg-rose-100 text-rose-700';
+  }
   if (normalized === 'queued' || normalized === 'pending') {
     return 'bg-amber-100 text-amber-700';
   }
@@ -78,6 +81,12 @@ function labelForJobType(jobType) {
 function formatReasonLabel(value) {
   if (!value) return '—';
   return String(value).replace(/_/g, ' ');
+}
+
+const REVIEW_ALERT_EVENT_TYPES = ['negative_review', 'review_spike', 'feedback_low_rating'];
+
+function isReviewAlertEvent(event = {}) {
+  return REVIEW_ALERT_EVENT_TYPES.includes(String(event?.eventType || '').toLowerCase());
 }
 
 function getSpeechProviders(run) {
@@ -135,6 +144,44 @@ function getAlertInspectTarget(alert) {
   }
 
   return null;
+}
+
+function buildReviewDetailPath(tenantType, event = {}) {
+  const portalBasePath = getPortalBasePath(tenantType);
+  if (!portalBasePath) {
+    return null;
+  }
+
+  const reviewId =
+    event?.reviewId ||
+    event?.rootEvent?.reviewId ||
+    event?.event?.reviewId ||
+    null;
+
+  if (!reviewId) {
+    return null;
+  }
+
+  return `${portalBasePath}/reviews?reviewId=${encodeURIComponent(reviewId)}`;
+}
+
+function resolveFeedbackRecoveryId(event = {}) {
+  return (
+    event?.feedbackRecovery?.id ||
+    event?.rootEvent?.structuredData?.internalFeedbackId ||
+    event?.event?.structuredData?.internalFeedbackId ||
+    event?.structuredData?.internalFeedbackId ||
+    null
+  );
+}
+
+function buildFeedbackRecoveryPath(tenantType, event = {}) {
+  const portalBasePath = getPortalBasePath(tenantType);
+  const feedbackId = resolveFeedbackRecoveryId(event);
+  if (!portalBasePath || !feedbackId) {
+    return null;
+  }
+  return `${portalBasePath}/feedback?feedbackId=${encodeURIComponent(feedbackId)}`;
 }
 
 function buildSpeechRuntimePath(tenantType, jobType) {
@@ -270,6 +317,9 @@ const ROLE_OPTIONS = [
 const EVENT_TYPE_OPTIONS = [
   { value: '', label: 'All event types' },
   { value: 'daily_digest', label: 'Daily digest' },
+  { value: 'negative_review', label: 'Negative review' },
+  { value: 'review_spike', label: 'Review spike' },
+  { value: 'feedback_low_rating', label: 'Feedback low rating' },
   { value: 'reservation_confirmed', label: 'Reservation confirmed' },
   { value: 'order_confirmed', label: 'Order confirmed' },
   { value: 'support_request', label: 'Support request' },
@@ -384,6 +434,8 @@ export default function NotificationCenterWorkspace({ tenantType }) {
         event.status,
         event.channel,
         event.recipientRole,
+        event.reviewerName,
+        event.reviewPlatform,
         event.to,
         event.toUserId,
         event.callSessionId,
@@ -677,6 +729,22 @@ export default function NotificationCenterWorkspace({ tenantType }) {
     navigate(targetPath.path);
   }
 
+  function handleOpenReviewDetail(event) {
+    const targetPath = buildReviewDetailPath(tenantType, event);
+    if (!targetPath) {
+      return;
+    }
+    navigate(targetPath);
+  }
+
+  function handleOpenFeedbackRecovery(event) {
+    const targetPath = buildFeedbackRecoveryPath(tenantType, event);
+    if (!targetPath) {
+      return;
+    }
+    navigate(targetPath);
+  }
+
   function handleOpenSourceSurface(interactionEvent) {
     if (!interactionEvent?.sourceType) {
       return;
@@ -960,6 +1028,15 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                   </div>
                 ) : null}
                 <div className="mt-3 flex flex-wrap gap-2">
+                {buildReviewDetailPath(tenantType, alert) ? (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenReviewDetail(alert)}
+                    className="rounded-md border border-current px-3 py-1.5 text-xs font-medium hover:bg-white/70"
+                  >
+                    Open Review
+                  </button>
+                ) : null}
                 {getAlertInspectTarget(alert) ? (
                   <button
                     type="button"
@@ -1453,6 +1530,29 @@ export default function NotificationCenterWorkspace({ tenantType }) {
             </div>
           </div>
 
+          {buildReviewDetailPath(tenantType, selectedEventDetail) || buildFeedbackRecoveryPath(tenantType, selectedEventDetail) ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {buildReviewDetailPath(tenantType, selectedEventDetail) ? (
+                <button
+                  type="button"
+                  onClick={() => handleOpenReviewDetail(selectedEventDetail)}
+                  className="rounded-md border border-fuchsia-200 bg-fuchsia-50 px-3 py-1.5 text-xs font-medium text-fuchsia-700 hover:bg-fuchsia-100"
+                >
+                  Open Review Detail
+                </button>
+              ) : null}
+              {buildFeedbackRecoveryPath(tenantType, selectedEventDetail) ? (
+                <button
+                  type="button"
+                  onClick={() => handleOpenFeedbackRecovery(selectedEventDetail)}
+                  className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
+                >
+                  Open Recovery Detail
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Structured Source</p>
@@ -1462,6 +1562,9 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                   <p>Channel: {String(selectedEventDetail.interactionEvent.channel || '—').toUpperCase()}</p>
                   <p>Review status: {formatReasonLabel(selectedEventDetail.interactionEvent.reviewStatus)}</p>
                   <p>Customer: {selectedEventDetail.interactionEvent.customer?.name || selectedEventDetail.interactionEvent.customer?.phone || '—'}</p>
+                  {selectedEventDetail.rootEvent?.reviewId ? (
+                    <p>Review ID: {selectedEventDetail.rootEvent.reviewId}</p>
+                  ) : null}
                   {selectedEventDetail.notificationContext?.objectSummary ? (
                     <p className="pt-1 text-sm font-medium text-gray-800">
                       {selectedEventDetail.notificationContext.objectSummary}
@@ -1474,6 +1577,28 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                     Graph refs:{' '}
                     {formatGraphRefs(selectedEventDetail.interactionEvent.graphRefs)}
                   </p>
+                  {buildReviewDetailPath(tenantType, selectedEventDetail) || buildFeedbackRecoveryPath(tenantType, selectedEventDetail) ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {buildReviewDetailPath(tenantType, selectedEventDetail) ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReviewDetail(selectedEventDetail)}
+                          className="rounded-md border border-fuchsia-200 bg-fuchsia-50 px-3 py-1.5 text-xs font-medium text-fuchsia-700 hover:bg-fuchsia-100"
+                        >
+                          Open Review Detail
+                        </button>
+                      ) : null}
+                      {buildFeedbackRecoveryPath(tenantType, selectedEventDetail) ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenFeedbackRecovery(selectedEventDetail)}
+                          className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
+                        >
+                          Open Recovery Detail
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {selectedEventCustomerTarget ? (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {selectedEventNativeObjectTarget ? (
@@ -1686,7 +1811,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
           <div>
             <h3 className="text-sm font-semibold text-gray-900">Notification Events</h3>
             <p className="mt-1 text-xs text-gray-500">
-              Delivery failures and queued events need operator attention. Sent and delivered events are logged for audit history.
+              Delivery failures, review alerts, and queued events need operator attention. Sent and delivered events are logged for audit history.
             </p>
           </div>
           <button
@@ -1743,6 +1868,24 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
+                        {isReviewAlertEvent(event) && buildReviewDetailPath(tenantType, event) ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenReviewDetail(event)}
+                            className="rounded-md border border-fuchsia-200 bg-fuchsia-50 px-3 py-1.5 text-xs font-medium text-fuchsia-700 hover:bg-fuchsia-100"
+                          >
+                            Open Review
+                          </button>
+                        ) : null}
+                        {buildFeedbackRecoveryPath(tenantType, event) ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenFeedbackRecovery(event)}
+                            className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
+                          >
+                            Open Recovery
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => handleInspectEvent(event.id)}

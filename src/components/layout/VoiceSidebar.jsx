@@ -5,6 +5,8 @@ import { auth } from '../../firebase/config';
 import { useAuth } from '../../context/AuthContext';
 import { fetchVoiceSettings } from '../../api/voice';
 import useTeamAccessPending from '../../hooks/useTeamAccessPending';
+import useSubscriptionPlan, { meetsPlanRequirement } from '../../hooks/useSubscriptionPlan';
+import PlanTierBadge from '../billing/PlanTierBadge';
 
 export default function VoiceSidebar() {
   const { user, userClaims } = useAuth();
@@ -43,10 +45,13 @@ export default function VoiceSidebar() {
   const isOwner = userClaims?.role === 'owner';
   const isManager = userClaims?.role === 'manager';
   const canManagePortal = isOwner || isManager;
+  const { tier, tierLabel, loading: subscriptionLoading } = useSubscriptionPlan();
   const { pendingCount: teamPendingCount } = useTeamAccessPending({
     tenantType: 'voice',
     enabled: isOwner,
   });
+  const professionalUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'professional');
+  const eliteUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'elite');
 
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen">
@@ -59,7 +64,10 @@ export default function VoiceSidebar() {
               {officeName || 'Office'}
             </h1>
           </div>
-          <p className="text-xs text-gray-500 mt-1 ml-9">Powered by Merxus Voice</p>
+          <div className="mt-1 ml-9 flex flex-wrap items-center gap-2">
+            <p className="text-xs text-gray-500">Powered by Merxus Voice</p>
+            {!subscriptionLoading ? <PlanTierBadge tier={tier} label={tierLabel} /> : null}
+          </div>
         </NavLink>
       </div>
 
@@ -71,10 +79,78 @@ export default function VoiceSidebar() {
         <NavItem to="/voice/sms" label="SMS Inbox" icon="💬" />
         <NavItem to="/voice/command-center" label="Command Center" icon="🛰️" />
         <NavItem to="/voice/notifications" label="Notifications" icon="🔔" />
-        <NavItem to="/voice/intelligence" label="Intelligence" icon="🧠" />
-        <NavItem to="/voice/work-items" label="Work Items" icon="🧾" />
-        <NavItem to="/voice/customer-360" label="Customer 360" icon="🪪" />
-        <NavItem to="/voice/merge-activity" label="Merge Activity" icon="🔀" />
+        <NavItem
+          to="/voice/intelligence"
+          label="Intelligence"
+          icon="🧠"
+          locked={!professionalUnlocked}
+          lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fintelligence"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/voice/work-items"
+          label="Work Items"
+          icon="🧾"
+          locked={!professionalUnlocked}
+          lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fwork-items"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/voice/customer-360"
+          label="Customer 360"
+          icon="🪪"
+          locked={!professionalUnlocked}
+          lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fcustomer-360"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/voice/merge-activity"
+          label="Merge Activity"
+          icon="🔀"
+          locked={!professionalUnlocked}
+          lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fmerge-activity"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/voice/reviews"
+          label="Reviews"
+          icon="⭐"
+          locked={!eliteUnlocked}
+          lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Freviews"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
+        <NavItem
+          to="/voice/feedback"
+          label="Feedback"
+          icon="🗣️"
+          locked={!eliteUnlocked}
+          lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Ffeedback"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
+        <NavItem
+          to="/voice/automations"
+          label="Automations"
+          icon="⚡"
+          locked={!eliteUnlocked}
+          lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Fautomations"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
+        <NavItem
+          to="/voice/cx-analytics"
+          label="CX Analytics"
+          icon="📈"
+          locked={!eliteUnlocked}
+          lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Fcx-analytics"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
         {canManagePortal && <NavItem to="/voice/routing" label="Call Routing" icon="🔄" />}
         {canManagePortal && <NavItem to="/voice/settings" label="Settings" icon="⚙️" />}
         {canManagePortal && <NavItem to="/voice/billing" label="Billing" icon="💳" />}
@@ -116,16 +192,33 @@ export default function VoiceSidebar() {
   );
 }
 
-function NavItem({ to, label, icon, attentionCount = 0 }) {
+function NavItem({
+  to,
+  label,
+  icon,
+  attentionCount = 0,
+  locked = false,
+  lockedPath = '',
+  planBadgeLabel = '',
+  planBadgeTier = 'professional',
+}) {
   return (
     <NavLink
-      to={to}
+      to={locked ? lockedPath || to : to}
       className={({ isActive }) => {
         if (attentionCount > 0) {
           return `flex items-center justify-between space-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
             isActive
               ? 'border-l-4 border-amber-500 bg-amber-50 text-amber-800'
               : 'bg-amber-50/80 text-amber-800 hover:bg-amber-100'
+          }`;
+        }
+
+        if (locked) {
+          return `flex items-center justify-between space-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            isActive
+              ? 'border-l-4 border-blue-500 bg-blue-50 text-blue-800'
+              : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700'
           }`;
         }
 
@@ -144,6 +237,8 @@ function NavItem({ to, label, icon, attentionCount = 0 }) {
         <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
           {attentionCount}
         </span>
+      ) : locked && planBadgeLabel ? (
+        <PlanTierBadge tier={planBadgeTier} label={planBadgeLabel} />
       ) : null}
     </NavLink>
   );

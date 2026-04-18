@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getSubscription, cancelSubscription, getBillingPricing, createPortalSession } from '../api/billing';
 import { refreshClaims } from '../api/auth';
 import { Check, X, CreditCard, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import { getTierLabel } from '../hooks/useSubscriptionPlan';
 
 const BillingPage = () => {
   const { user, tenantType: userTenantType } = useAuth();
@@ -27,6 +28,33 @@ const BillingPage = () => {
   };
 
   const pricing = getPricingForTenant();
+  const upgradeContext = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requiredTier = params.get('requiredTier');
+    const from = params.get('from');
+
+    if (!requiredTier) {
+      return null;
+    }
+
+    const normalizedFrom = from ? decodeURIComponent(from) : '';
+    const prettyFrom = normalizedFrom
+      ? normalizedFrom
+          .split('/')
+          .filter(Boolean)
+          .slice(1)
+          .join(' / ')
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, (char) => char.toUpperCase())
+      : '';
+
+    return {
+      requiredTier,
+      requiredTierLabel: getTierLabel(requiredTier),
+      from: normalizedFrom,
+      prettyFrom,
+    };
+  }, []);
 
   const formatMoney = (amount, currency = 'usd') => {
     if (amount === null || amount === undefined) return null;
@@ -241,6 +269,26 @@ const BillingPage = () => {
           <h1 className="text-3xl font-bold text-gray-900">Billing & Subscription</h1>
           <p className="mt-2 text-gray-600">Manage your subscription and billing information</p>
         </div>
+
+        {upgradeContext ? (
+          <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold text-blue-900">
+                {upgradeContext.requiredTierLabel} plan required
+              </p>
+              <p className="text-sm text-blue-800">
+                {upgradeContext.prettyFrom
+                  ? `${upgradeContext.prettyFrom} is available on the ${upgradeContext.requiredTierLabel} tier or higher.`
+                  : `This feature is available on the ${upgradeContext.requiredTierLabel} tier or higher.`}
+              </p>
+              {upgradeContext.from ? (
+                <p className="text-xs text-blue-700">
+                  Requested route: <span className="font-medium">{upgradeContext.from}</span>
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {deeplinkUrl && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">

@@ -173,6 +173,11 @@ export async function triggerSlackCommandCenterDemo(payload = {}) {
   return res.data;
 }
 
+export async function fetchCommandCenterDashboard(params = {}) {
+  const res = await apiClient.get('/sms/command-center/dashboard', { params });
+  return res.data;
+}
+
 export async function fetchSlackCommandCenterEvents(params = {}) {
   const res = await apiClient.get('/sms/slack-command-center/events', { params });
   return res.data;

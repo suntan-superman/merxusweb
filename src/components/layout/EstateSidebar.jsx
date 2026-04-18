@@ -5,6 +5,8 @@ import { auth } from '../../firebase/config';
 import { useAuth } from '../../context/AuthContext';
 import { fetchEstateSettings } from '../../api/estate';
 import useTeamAccessPending from '../../hooks/useTeamAccessPending';
+import useSubscriptionPlan, { meetsPlanRequirement } from '../../hooks/useSubscriptionPlan';
+import PlanTierBadge from '../billing/PlanTierBadge';
 
 export default function EstateSidebar() {
   const { user, userClaims } = useAuth();
@@ -43,10 +45,13 @@ export default function EstateSidebar() {
   const isOwner = userClaims?.role === 'owner';
   const isManager = userClaims?.role === 'manager';
   const canManagePortal = isOwner || isManager;
+  const { tier, tierLabel, loading: subscriptionLoading } = useSubscriptionPlan();
   const { pendingCount: teamPendingCount } = useTeamAccessPending({
     tenantType: 'real_estate',
     enabled: isOwner,
   });
+  const professionalUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'professional');
+  const eliteUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'elite');
 
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen">
@@ -59,7 +64,10 @@ export default function EstateSidebar() {
               {agentName || 'Agent'}
             </h1>
           </div>
-          <p className="text-xs text-gray-500 mt-1 ml-9">Powered by Merxus Real Estate</p>
+          <div className="mt-1 ml-9 flex flex-wrap items-center gap-2">
+            <p className="text-xs text-gray-500">Powered by Merxus Real Estate</p>
+            {!subscriptionLoading ? <PlanTierBadge tier={tier} label={tierLabel} /> : null}
+          </div>
         </NavLink>
       </div>
 
@@ -73,9 +81,69 @@ export default function EstateSidebar() {
         <NavItem to="/estate/sms" label="SMS Inbox" icon="💬" />
         <NavItem to="/estate/command-center" label="Command Center" icon="🛰️" />
         <NavItem to="/estate/notifications" label="Notifications" icon="🔔" />
-        <NavItem to="/estate/intelligence" label="Intelligence" icon="🧠" />
-        <NavItem to="/estate/customer-360" label="Customer 360" icon="🪪" />
-        <NavItem to="/estate/merge-activity" label="Merge Activity" icon="🔀" />
+        <NavItem
+          to="/estate/intelligence"
+          label="Intelligence"
+          icon="🧠"
+          locked={!professionalUnlocked}
+          lockedPath="/estate/billing?requiredTier=professional&from=%2Festate%2Fintelligence"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/estate/customer-360"
+          label="Customer 360"
+          icon="🪪"
+          locked={!professionalUnlocked}
+          lockedPath="/estate/billing?requiredTier=professional&from=%2Festate%2Fcustomer-360"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/estate/merge-activity"
+          label="Merge Activity"
+          icon="🔀"
+          locked={!professionalUnlocked}
+          lockedPath="/estate/billing?requiredTier=professional&from=%2Festate%2Fmerge-activity"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/estate/reviews"
+          label="Reviews"
+          icon="⭐"
+          locked={!eliteUnlocked}
+          lockedPath="/estate/billing?requiredTier=elite&from=%2Festate%2Freviews"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
+        <NavItem
+          to="/estate/feedback"
+          label="Feedback"
+          icon="🗣️"
+          locked={!eliteUnlocked}
+          lockedPath="/estate/billing?requiredTier=elite&from=%2Festate%2Ffeedback"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
+        <NavItem
+          to="/estate/automations"
+          label="Automations"
+          icon="⚡"
+          locked={!eliteUnlocked}
+          lockedPath="/estate/billing?requiredTier=elite&from=%2Festate%2Fautomations"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
+        <NavItem
+          to="/estate/cx-analytics"
+          label="CX Analytics"
+          icon="📈"
+          locked={!eliteUnlocked}
+          lockedPath="/estate/billing?requiredTier=elite&from=%2Festate%2Fcx-analytics"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
         <NavItem to="/estate/flyers/metrics" label="Flyer Analytics" icon="📊" />
         {canManagePortal && <NavItem to="/estate/settings" label="Settings" icon="⚙️" />}
         {canManagePortal && <NavItem to="/estate/billing" label="Billing" icon="💳" />}
@@ -117,16 +185,33 @@ export default function EstateSidebar() {
   );
 }
 
-function NavItem({ to, label, icon, attentionCount = 0 }) {
+function NavItem({
+  to,
+  label,
+  icon,
+  attentionCount = 0,
+  locked = false,
+  lockedPath = '',
+  planBadgeLabel = '',
+  planBadgeTier = 'professional',
+}) {
   return (
     <NavLink
-      to={to}
+      to={locked ? lockedPath || to : to}
       className={({ isActive }) => {
         if (attentionCount > 0) {
           return `flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
             isActive
               ? 'border-l-4 border-amber-500 bg-amber-50 text-amber-800'
               : 'bg-amber-50/80 text-amber-800 hover:bg-amber-100'
+          }`;
+        }
+
+        if (locked) {
+          return `flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            isActive
+              ? 'border-l-4 border-blue-500 bg-blue-50 text-blue-800'
+              : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700'
           }`;
         }
 
@@ -145,6 +230,8 @@ function NavItem({ to, label, icon, attentionCount = 0 }) {
         <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
           {attentionCount}
         </span>
+      ) : locked && planBadgeLabel ? (
+        <PlanTierBadge tier={planBadgeTier} label={planBadgeLabel} />
       ) : null}
     </NavLink>
   );

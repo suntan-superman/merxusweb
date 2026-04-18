@@ -5,6 +5,8 @@ import { auth } from '../../firebase/config';
 import { useAuth } from '../../context/AuthContext';
 import { fetchSettings } from '../../api/settings';
 import useTeamAccessPending from '../../hooks/useTeamAccessPending';
+import useSubscriptionPlan, { meetsPlanRequirement } from '../../hooks/useSubscriptionPlan';
+import PlanTierBadge from '../billing/PlanTierBadge';
 
 export default function Sidebar() {
   const { user, userClaims } = useAuth();
@@ -44,10 +46,13 @@ export default function Sidebar() {
   const isOwner = userClaims?.role === 'owner';
   const isManager = userClaims?.role === 'manager';
   const canManagePortal = isOwner || isManager;
+  const { tier, tierLabel, loading: subscriptionLoading } = useSubscriptionPlan();
   const { pendingCount: teamPendingCount } = useTeamAccessPending({
     tenantType: 'restaurant',
     enabled: isOwner,
   });
+  const professionalUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'professional');
+  const eliteUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'elite');
 
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen">
@@ -60,7 +65,10 @@ export default function Sidebar() {
               {restaurantName || 'Restaurant'}
             </h1>
           </div>
-          <p className="text-xs text-gray-500 mt-1 ml-9">Powered by Merxus</p>
+          <div className="mt-1 ml-9 flex flex-wrap items-center gap-2">
+            <p className="text-xs text-gray-500">Powered by Merxus</p>
+            {!subscriptionLoading ? <PlanTierBadge tier={tier} label={tierLabel} /> : null}
+          </div>
         </NavLink>
       </div>
 
@@ -75,9 +83,69 @@ export default function Sidebar() {
         <NavItem to="/restaurant/sms" label="SMS Inbox" icon="💬" />
         <NavItem to="/restaurant/command-center" label="Command Center" icon="🛰️" />
         <NavItem to="/restaurant/notifications" label="Notifications" icon="🔔" />
-        <NavItem to="/restaurant/intelligence" label="Intelligence" icon="🧠" />
-        <NavItem to="/restaurant/customer-360" label="Customer 360" icon="🪪" />
-        <NavItem to="/restaurant/merge-activity" label="Merge Activity" icon="🔀" />
+        <NavItem
+          to="/restaurant/intelligence"
+          label="Intelligence"
+          icon="🧠"
+          locked={!professionalUnlocked}
+          lockedPath="/restaurant/billing?requiredTier=professional&from=%2Frestaurant%2Fintelligence"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/restaurant/customer-360"
+          label="Customer 360"
+          icon="🪪"
+          locked={!professionalUnlocked}
+          lockedPath="/restaurant/billing?requiredTier=professional&from=%2Frestaurant%2Fcustomer-360"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/restaurant/merge-activity"
+          label="Merge Activity"
+          icon="🔀"
+          locked={!professionalUnlocked}
+          lockedPath="/restaurant/billing?requiredTier=professional&from=%2Frestaurant%2Fmerge-activity"
+          planBadgeLabel="Pro"
+          planBadgeTier="professional"
+        />
+        <NavItem
+          to="/restaurant/reviews"
+          label="Reviews"
+          icon="⭐"
+          locked={!eliteUnlocked}
+          lockedPath="/restaurant/billing?requiredTier=elite&from=%2Frestaurant%2Freviews"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
+        <NavItem
+          to="/restaurant/feedback"
+          label="Feedback"
+          icon="🗣️"
+          locked={!eliteUnlocked}
+          lockedPath="/restaurant/billing?requiredTier=elite&from=%2Frestaurant%2Ffeedback"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
+        <NavItem
+          to="/restaurant/automations"
+          label="Automations"
+          icon="⚡"
+          locked={!eliteUnlocked}
+          lockedPath="/restaurant/billing?requiredTier=elite&from=%2Frestaurant%2Fautomations"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
+        <NavItem
+          to="/restaurant/cx-analytics"
+          label="CX Analytics"
+          icon="📈"
+          locked={!eliteUnlocked}
+          lockedPath="/restaurant/billing?requiredTier=elite&from=%2Frestaurant%2Fcx-analytics"
+          planBadgeLabel="Elite"
+          planBadgeTier="elite"
+        />
         {canManagePortal && <NavItem to="/restaurant/settings" label="Settings" icon="⚙️" />}
         {canManagePortal && <NavItem to="/restaurant/billing" label="Billing" icon="💳" />}
         {isOwner && (
@@ -118,16 +186,33 @@ export default function Sidebar() {
   );
 }
 
-function NavItem({ to, label, icon, attentionCount = 0 }) {
+function NavItem({
+  to,
+  label,
+  icon,
+  attentionCount = 0,
+  locked = false,
+  lockedPath = '',
+  planBadgeLabel = '',
+  planBadgeTier = 'professional',
+}) {
   return (
     <NavLink
-      to={to}
+      to={locked ? lockedPath || to : to}
       className={({ isActive }) => {
         if (attentionCount > 0) {
           return `flex items-center justify-between space-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
             isActive
               ? 'border-l-4 border-amber-500 bg-amber-50 text-amber-800'
               : 'bg-amber-50/80 text-amber-800 hover:bg-amber-100'
+          }`;
+        }
+
+        if (locked) {
+          return `flex items-center justify-between space-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            isActive
+              ? 'border-l-4 border-blue-500 bg-blue-50 text-blue-800'
+              : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700'
           }`;
         }
 
@@ -146,6 +231,8 @@ function NavItem({ to, label, icon, attentionCount = 0 }) {
         <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
           {attentionCount}
         </span>
+      ) : locked && planBadgeLabel ? (
+        <PlanTierBadge tier={planBadgeTier} label={planBadgeLabel} />
       ) : null}
     </NavLink>
   );

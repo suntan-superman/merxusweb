@@ -32,6 +32,9 @@ import RestaurantNotificationsPage from './pages/restaurant/RestaurantNotificati
 import RestaurantIntelligencePage from './pages/restaurant/RestaurantIntelligencePage';
 import RestaurantCustomer360Page from './pages/restaurant/RestaurantCustomer360Page';
 import RestaurantMergeActivityPage from './pages/restaurant/RestaurantMergeActivityPage';
+import RestaurantReviewsPage from './pages/restaurant/RestaurantReviewsPage';
+import RestaurantFeedbackPage from './pages/restaurant/RestaurantFeedbackPage';
+import RestaurantFeedbackIntegrationsPage from './pages/restaurant/RestaurantFeedbackIntegrationsPage';
 import UsersPage from './pages/restaurant/UsersPage';
 import VoiceLayout from './components/layout/VoiceLayout';
 import VoiceDashboardPage from './pages/voice/VoiceDashboardPage';
@@ -46,6 +49,9 @@ import VoiceIntelligencePage from './pages/voice/VoiceIntelligencePage';
 import VoiceWorkItemsPage from './pages/voice/VoiceWorkItemsPage';
 import VoiceCustomer360Page from './pages/voice/VoiceCustomer360Page';
 import VoiceMergeActivityPage from './pages/voice/VoiceMergeActivityPage';
+import VoiceReviewsPage from './pages/voice/VoiceReviewsPage';
+import VoiceFeedbackPage from './pages/voice/VoiceFeedbackPage';
+import VoiceFeedbackIntegrationsPage from './pages/voice/VoiceFeedbackIntegrationsPage';
 import VoiceUsersPage from './pages/voice/VoiceUsersPage';
 import MerxusLayout from './components/layout/MerxusLayout';
 import MerxusDashboardPage from './pages/merxus/MerxusDashboardPage';
@@ -74,6 +80,9 @@ import EstateNotificationsPage from './pages/estate/EstateNotificationsPage';
 import EstateIntelligencePage from './pages/estate/EstateIntelligencePage';
 import EstateCustomer360Page from './pages/estate/EstateCustomer360Page';
 import EstateMergeActivityPage from './pages/estate/EstateMergeActivityPage';
+import EstateReviewsPage from './pages/estate/EstateReviewsPage';
+import EstateFeedbackPage from './pages/estate/EstateFeedbackPage';
+import EstateFeedbackIntegrationsPage from './pages/estate/EstateFeedbackIntegrationsPage';
 import EstateUsersPage from './pages/estate/EstateUsersPage';
 import FlyerApprovalsPage from './pages/estate/FlyerApprovalsPage';
 import FlyerMetricsPage from './pages/estate/FlyerMetricsPage';
@@ -89,6 +98,7 @@ import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import OfficeLandingPage from './pages/OfficeLandingPage';
 import RealEstateLandingPage from './pages/RealEstateLandingPage';
 import RestaurantLandingPage from './pages/RestaurantLandingPage';
+import EliteFeatureWorkspace from './components/premium/EliteFeatureWorkspace';
 
 // Register Syncfusion license from environment variable
 const syncfusionKey = import.meta.env.VITE_SYNCFUSION_KEY;
@@ -169,10 +179,78 @@ function App() {
                     <Route path="sms" element={<RestaurantSmsPage />} />
                     <Route path="command-center" element={<RestaurantCommandCenterPage />} />
                     <Route path="notifications" element={<RestaurantNotificationsPage />} />
-                    <Route path="intelligence" element={<RestaurantIntelligencePage />} />
-                    <Route path="customer-360" element={<RestaurantCustomer360Page />} />
-                    <Route path="customer-360/:customerId" element={<RestaurantCustomer360Page />} />
-                    <Route path="merge-activity" element={<RestaurantMergeActivityPage />} />
+                    <Route
+                      path="intelligence"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <RestaurantIntelligencePage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="customer-360"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <RestaurantCustomer360Page />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="customer-360/:customerId"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <RestaurantCustomer360Page />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="merge-activity"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <RestaurantMergeActivityPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="reviews"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <RestaurantReviewsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="feedback"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <RestaurantFeedbackPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="feedback/integrations"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <RestaurantFeedbackIntegrationsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="automations"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <EliteFeatureWorkspace tenantType="restaurant" featureKey="automations" />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="cx-analytics"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <EliteFeatureWorkspace tenantType="restaurant" featureKey="cx-analytics" />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route
                       path="settings"
                       element={(
@@ -216,11 +294,86 @@ function App() {
                     <Route path="sms" element={<VoiceSmsPage />} />
                     <Route path="command-center" element={<VoiceCommandCenterPage />} />
                     <Route path="notifications" element={<VoiceNotificationsPage />} />
-                    <Route path="intelligence" element={<VoiceIntelligencePage />} />
-                    <Route path="work-items" element={<VoiceWorkItemsPage />} />
-                    <Route path="customer-360" element={<VoiceCustomer360Page />} />
-                    <Route path="customer-360/:customerId" element={<VoiceCustomer360Page />} />
-                    <Route path="merge-activity" element={<VoiceMergeActivityPage />} />
+                    <Route
+                      path="intelligence"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <VoiceIntelligencePage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="work-items"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <VoiceWorkItemsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="customer-360"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <VoiceCustomer360Page />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="customer-360/:customerId"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <VoiceCustomer360Page />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="merge-activity"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <VoiceMergeActivityPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="reviews"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <VoiceReviewsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="feedback"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <VoiceFeedbackPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="feedback/integrations"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <VoiceFeedbackIntegrationsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="automations"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <EliteFeatureWorkspace tenantType="voice" featureKey="automations" />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="cx-analytics"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <EliteFeatureWorkspace tenantType="voice" featureKey="cx-analytics" />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route
                       path="settings"
                       element={(
@@ -262,10 +415,78 @@ function App() {
                     <Route path="sms" element={<EstateSmsPage />} />
                     <Route path="command-center" element={<EstateCommandCenterPage />} />
                     <Route path="notifications" element={<EstateNotificationsPage />} />
-                    <Route path="intelligence" element={<EstateIntelligencePage />} />
-                    <Route path="customer-360" element={<EstateCustomer360Page />} />
-                    <Route path="customer-360/:customerId" element={<EstateCustomer360Page />} />
-                    <Route path="merge-activity" element={<EstateMergeActivityPage />} />
+                    <Route
+                      path="intelligence"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <EstateIntelligencePage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="customer-360"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <EstateCustomer360Page />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="customer-360/:customerId"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <EstateCustomer360Page />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="merge-activity"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="professional">
+                          <EstateMergeActivityPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="reviews"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <EstateReviewsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="feedback"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <EstateFeedbackPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="feedback/integrations"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <EstateFeedbackIntegrationsPage />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="automations"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <EliteFeatureWorkspace tenantType="real_estate" featureKey="automations" />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="cx-analytics"
+                      element={(
+                        <ProtectedRoute requireAuth requiredPlanTier="elite">
+                          <EliteFeatureWorkspace tenantType="real_estate" featureKey="cx-analytics" />
+                        </ProtectedRoute>
+                      )}
+                    />
                     <Route
                       path="settings"
                       element={(

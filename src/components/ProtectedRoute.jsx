@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import useSubscriptionPlan, { meetsPlanRequirement } from '../hooks/useSubscriptionPlan';
 
 function getFallbackPath(pathname = '/') {
   if (pathname.startsWith('/voice')) return '/voice';
@@ -8,6 +9,14 @@ function getFallbackPath(pathname = '/') {
   if (pathname.startsWith('/restaurant')) return '/restaurant';
   if (pathname.startsWith('/merxus')) return '/merxus';
   return '/';
+}
+
+function getBillingPath(pathname = '/') {
+  const fallback = getFallbackPath(pathname);
+  if (fallback === '/' || fallback === '/merxus') {
+    return '/pricing';
+  }
+  return `${fallback}/billing`;
 }
 
 export default function ProtectedRoute({ 
@@ -20,10 +29,13 @@ export default function ProtectedRoute({
   requireOwner = false,
   requireManager = false,
   requireAdmin = false,
+  requiredPlanTier = null,
 }) {
   const { user, loading, userClaims, needsOnboarding, isRestaurantUser, isVoiceUser, isRealEstateUser, isMerxusAdmin, isOwner, isManager, isMerxusAdminRole } = useAuth();
+  const { tier, loading: subscriptionLoading } = useSubscriptionPlan({
+    enabled: requireAuth && Boolean(requiredPlanTier) && Boolean(user),
+  });
   const location = useLocation();
-
   // Debug logging - use useEffect to avoid logging on every render
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -107,6 +119,17 @@ export default function ProtectedRoute({
     );
   }
 
+  if (requireAuth && requiredPlanTier && subscriptionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-primary-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking plan access...</p>
+        </div>
+      </div>
+    );
+  }
+
   // If user is signed in but needs onboarding, send to onboarding wizard
   if (requireAuth && user && needsOnboarding) {
     console.warn('User needs onboarding. Redirecting to onboarding wizard.');
@@ -171,6 +194,18 @@ export default function ProtectedRoute({
 
   if (requireAdmin && !isMerxusAdminRole) {
     return <Navigate to="/merxus" replace />;
+  }
+
+  if (
+    requiredPlanTier &&
+    !meetsPlanRequirement(tier, requiredPlanTier)
+  ) {
+    return (
+      <Navigate
+        to={`${getBillingPath(location.pathname)}?requiredTier=${encodeURIComponent(requiredPlanTier)}&from=${encodeURIComponent(location.pathname)}`}
+        replace
+      />
+    );
   }
 
   return children;
