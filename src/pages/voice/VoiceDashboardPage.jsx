@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -8,6 +9,10 @@ import VoiceFlyover from '../../components/voice/VoiceFlyover';
 import FirstPortalChecklist from '../../components/onboarding/FirstPortalChecklist';
 import { useVoiceSettings } from '../../hooks/useVoiceQueries';
 import { CallVolumeChart, PeakHoursChart, ConversionChart } from '../../components/analytics';
+import { fetchTenantAnalytics } from '../../api/merxus';
+import AnalyticsSummaryPanel from '../../components/dashboard/AnalyticsSummaryPanel';
+import AnalyticsActivityFeedPanel from '../../components/dashboard/AnalyticsActivityFeedPanel';
+import TenantFeedbackTrendPanel from '../../components/dashboard/TenantFeedbackTrendPanel';
 
 export default function VoiceDashboardPage() {
   const { user, userClaims, officeId } = useAuth();
@@ -15,6 +20,7 @@ export default function VoiceDashboardPage() {
   
   // Flyover state
   const [flyoverOpen, setFlyoverOpen] = useState(false);
+  const [tenantAnalytics, setTenantAnalytics] = useState(null);
 
   // Use React Query for voice settings (API call with caching)
   const { 
@@ -157,6 +163,26 @@ export default function VoiceDashboardPage() {
 
   const isLoading = callsLoading;
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadTenantAnalytics() {
+      try {
+        const data = await fetchTenantAnalytics();
+        if (mounted) {
+          setTenantAnalytics(data);
+        }
+      } catch (error) {
+        console.warn('Unable to load tenant analytics for dashboard:', error);
+      }
+    }
+
+    loadTenantAnalytics();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Handle flyover completion
   const handleFlyoverComplete = () => {
     markVoiceFlyoverComplete();
@@ -191,6 +217,23 @@ export default function VoiceDashboardPage() {
         tenantType={userClaims?.type || 'voice'}
         tenantId={officeId}
         userId={user?.uid}
+      />
+
+      <AnalyticsSummaryPanel
+        analytics={tenantAnalytics}
+        title="Reputation & Operations"
+        subtitle="Owner-grade review, recovery, push, and automation health layered into your office operations dashboard."
+        emptyCopy="Tenant analytics are still loading for this dashboard."
+      />
+
+      <TenantFeedbackTrendPanel analytics={tenantAnalytics} />
+
+      <AnalyticsActivityFeedPanel
+        analytics={tenantAnalytics}
+        title="Operational Activity"
+        subtitle="The latest sync, alert, and recovery events flowing into the office operations dashboard."
+        emptyCopy="No recent tenant activity has been recorded yet."
+        limit={6}
       />
 
       {/* Stats Grid */}

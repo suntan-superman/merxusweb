@@ -2,6 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchSystemAnalytics } from '../../api/merxus';
 import { useAuth } from '../../context/AuthContext';
+import AnalyticsSummaryPanel from '../../components/dashboard/AnalyticsSummaryPanel';
+import AnalyticsActivityFeedPanel from '../../components/dashboard/AnalyticsActivityFeedPanel';
+import SystemOperationsConsolePanel from '../../components/dashboard/SystemOperationsConsolePanel';
+import {
+  SystemExecutiveSummaryPanel,
+  SystemHistoryBucketsPanel,
+  SystemTenantPressureHistoryPanel,
+  SystemReportingNarrativesPanel,
+  SystemRemediationQueuePanel,
+} from '../../components/dashboard/SystemCrossTenantPanel';
 
 export default function MerxusDashboardPage() {
   const navigate = useNavigate();
@@ -67,30 +77,49 @@ export default function MerxusDashboardPage() {
         </p>
       </div>
 
+      <AnalyticsSummaryPanel
+        analytics={analytics}
+        title="System Operations"
+        subtitle="Cleaned-up platform health signals for admin triage, pulled from the live Merxus analytics payload."
+        emptyCopy="System analytics summary is not available yet."
+      />
+
+      <SystemExecutiveSummaryPanel crossTenant={analytics?.crossTenant} />
+
+      <SystemOperationsConsolePanel analytics={analytics} />
+
+      <SystemRemediationQueuePanel crossTenant={analytics?.crossTenant} />
+
+      <SystemTenantPressureHistoryPanel crossTenant={analytics?.crossTenant} />
+
+      <SystemReportingNarrativesPanel reporting={analytics?.reporting} />
+
+      <SystemHistoryBucketsPanel reporting={analytics?.reporting} windowDays={30} />
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Restaurants"
-          value={analytics?.totalRestaurants || 0}
-          subtitle="Active accounts"
+          title="Tenant Accounts"
+          value={analytics?.crossTenant?.executive?.totalAccounts || 0}
+          subtitle="Restaurant, voice, and real-estate accounts"
           icon="🏪"
         />
         <StatCard
-          title="Total Orders"
-          value={analytics?.totalOrders || 0}
-          subtitle="All time"
+          title="Attention Signals"
+          value={analytics?.crossTenant?.executive?.totalAttentionSignals || 0}
+          subtitle="Combined sync, push, scheduler, and alert pressure"
           icon="📦"
         />
         <StatCard
-          title="Total Calls"
-          value={analytics?.totalCalls || 0}
-          subtitle="This month"
+          title="Largest Segment"
+          value={analytics?.crossTenant?.executive?.largestTenantType?.label || '—'}
+          subtitle={analytics?.crossTenant?.executive?.largestTenantType ? `${analytics.crossTenant.executive.largestTenantType.accounts || 0} accounts` : 'Awaiting tenant mix data'}
           icon="📞"
         />
         <StatCard
-          title="Active Users"
-          value={analytics?.activeUsers || 0}
-          subtitle="Across all restaurants"
+          title="Recommended Focus"
+          value={analytics?.crossTenant?.executive?.recommendedFocus?.label || 'Stable'}
+          subtitle={analytics?.crossTenant?.executive?.recommendedFocus ? `${analytics.crossTenant.executive.recommendedFocus.attentionSignals || 0} signals need follow-up` : 'No urgent segment pressure'}
           icon="👥"
         />
       </div>
@@ -115,6 +144,18 @@ export default function MerxusDashboardPage() {
           link="/merxus/analytics"
           icon="📈"
         />
+        <QuickActionCard
+          title="Production Readiness"
+          description="Review deploy blockers, env gaps, and live validation tasks"
+          link="/merxus/production-readiness"
+          icon="🧪"
+        />
+        <QuickActionCard
+          title="Ops Audit"
+          description="Open the consolidated cross-tenant operational audit workspace"
+          link="/merxus/ops-audit"
+          icon="🛠️"
+        />
         {userClaims?.role === 'merxus_admin' && (
           <>
             <QuickActionCard
@@ -133,13 +174,12 @@ export default function MerxusDashboardPage() {
         )}
       </div>
 
-      {/* Recent Activity */}
-      <div className="card">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-        <div className="text-sm text-gray-600">
-          Activity feed coming soon...
-        </div>
-      </div>
+      <AnalyticsActivityFeedPanel
+        analytics={analytics}
+        title="Recent Activity"
+        subtitle="The latest tenant, scheduler, sync, and remediation events flowing into the admin console."
+        emptyCopy="No recent system activity has been recorded yet."
+      />
     </div>
   );
 }

@@ -10,6 +10,11 @@ export async function fetchReviewDetail(reviewId) {
   return res.data;
 }
 
+export async function createTestReview(payload = {}) {
+  const res = await apiClient.post('/reviews/test/review', payload);
+  return res.data;
+}
+
 export async function generateReviewResponse(reviewId) {
   const res = await apiClient.post(`/reviews/${reviewId}/generate-response`);
   return res.data;
@@ -20,8 +25,50 @@ export async function approveReviewDraft(reviewId, draftId) {
   return res.data;
 }
 
+export async function updateReviewDetail(reviewId, payload = {}) {
+  const res = await apiClient.patch(`/reviews/${reviewId}`, payload);
+  return res.data;
+}
+
 export async function fetchReviewIntegrations() {
   const res = await apiClient.get('/reviews/integrations');
+  return res.data;
+}
+
+export async function startReviewIntegrationOAuth(platform, params = {}) {
+  const res = await apiClient.get(`/reviews/integrations/${platform}/oauth/start`, {
+    params,
+  });
+  return res.data;
+}
+
+export async function validateReviewIntegrationOAuth(platform) {
+  const res = await apiClient.get(`/reviews/integrations/${platform}/oauth/validate`);
+  return res.data;
+}
+
+export async function syncReviewIntegration(platform) {
+  const res = await apiClient.post(`/reviews/integrations/${platform}/sync`);
+  return res.data;
+}
+
+export async function disconnectReviewIntegrationOAuth(platform) {
+  const res = await apiClient.post(`/reviews/integrations/${platform}/disconnect`);
+  return res.data;
+}
+
+export async function fetchReviewSyncRuns(params = {}) {
+  const res = await apiClient.get('/reviews/sync-runs', { params });
+  return res.data;
+}
+
+export async function fetchReviewSyncRunAnalytics(params = {}) {
+  const res = await apiClient.get('/reviews/sync-runs/analytics', { params });
+  return res.data;
+}
+
+export async function fetchReviewSyncRunDetail(runId) {
+  const res = await apiClient.get(`/reviews/sync-runs/${runId}`);
   return res.data;
 }
 

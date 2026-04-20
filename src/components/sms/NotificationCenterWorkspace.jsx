@@ -12,6 +12,7 @@ import {
   fetchSmsNotificationJobRuns,
   fetchSmsNotificationRunAlertAnalytics,
   fetchSmsNotificationRunAlerts,
+  fetchSmsPushHealth,
   resumeSmsNotificationRunAlert,
   releaseSmsNotificationRunAlert,
   runSmsSpeechHealthMonitor,
@@ -20,247 +21,34 @@ import {
   retrySmsNotificationEventsBatch,
   snoozeSmsNotificationRunAlert,
 } from '../../api/sms';
-import { getNativeObjectRoute, getPortalBasePath } from '../../utils/objectRouting';
+import { getNativeObjectRoute } from '../../utils/objectRouting';
+import {
+  buildAlertRemediationPath,
+  buildNotificationAlertInspectTarget,
+  buildNotificationCustomer360Path,
+  buildNotificationCustomer360Target,
+  buildNotificationEventActionModel,
+  buildNotificationSourceSurfaceTarget,
+  buildNotificationSpeechRuntimePath,
+  buildFeedbackIntegrationsPath,
+  buildFeedbackRecoveryPath,
+  buildReviewDetailPath,
+  getReviewRemediationSummary,
+  labelizeNotificationCenterValue,
+} from '../../utils/notificationCenterRouting';
+import {
+  formatNotificationCenterReasonLabel,
+  formatNotificationCenterTimestamp,
+  getNotificationCenterAlertIssueSummary,
+  getNotificationCenterAlertTone,
+  getNotificationCenterPushHealthTone,
+  getNotificationCenterSpeechProviderCounts,
+  getNotificationCenterSpeechProviderTone,
+  getNotificationCenterStatusTone,
+  isRetryableNotificationCenterEvent,
+  labelForNotificationCenterJobType,
+} from '../../utils/notificationCenterPresentation';
 import SelectField from '../common/SelectField';
-
-function formatTimestamp(value) {
-  if (!value) return '—';
-
-  if (typeof value?.toDate === 'function') {
-    return value.toDate().toLocaleString();
-  }
-
-  const seconds = value?._seconds ?? value?.seconds ?? null;
-  if (seconds) {
-    return new Date(seconds * 1000).toLocaleString();
-  }
-
-  const parsed = new Date(value);
-  if (!Number.isNaN(parsed.getTime())) {
-    return parsed.toLocaleString();
-  }
-
-  return '—';
-}
-
-function toneForStatus(status) {
-  const normalized = String(status || '').toLowerCase();
-  if (normalized === 'failed' || normalized === 'undelivered' || normalized === 'error') {
-    return 'bg-red-100 text-red-700';
-  }
-  if (normalized === 'attention_required' || normalized === 'needs_attention') {
-    return 'bg-rose-100 text-rose-700';
-  }
-  if (normalized === 'queued' || normalized === 'pending') {
-    return 'bg-amber-100 text-amber-700';
-  }
-  if (normalized === 'sent' || normalized === 'delivered') {
-    return 'bg-green-100 text-green-700';
-  }
-  return 'bg-slate-100 text-slate-700';
-}
-
-function getAlertTone(severity) {
-  if (severity === 'critical') {
-    return 'border-red-200 bg-red-50 text-red-800';
-  }
-  if (severity === 'warning') {
-    return 'border-amber-200 bg-amber-50 text-amber-800';
-  }
-  return 'border-blue-200 bg-blue-50 text-blue-800';
-}
-
-function labelForJobType(jobType) {
-  if (jobType === 'daily_digest') return 'Daily Digest';
-  if (jobType === 'retry_failed_notifications') return 'Retry Sweep';
-  if (jobType === 'alert_escalation') return 'Alert Escalation';
-  if (jobType === 'speech_provider_health') return 'Speech Health';
-  return String(jobType || 'unknown').replace(/_/g, ' ');
-}
-
-function formatReasonLabel(value) {
-  if (!value) return '—';
-  return String(value).replace(/_/g, ' ');
-}
-
-const REVIEW_ALERT_EVENT_TYPES = ['negative_review', 'review_spike', 'feedback_low_rating'];
-
-function isReviewAlertEvent(event = {}) {
-  return REVIEW_ALERT_EVENT_TYPES.includes(String(event?.eventType || '').toLowerCase());
-}
-
-function getSpeechProviders(run) {
-  return Array.isArray(run?.speech?.providers) ? run.speech.providers : [];
-}
-
-function getSpeechProviderCounts(run) {
-  const providers = getSpeechProviders(run);
-  const selected = providers.filter((provider) => provider.selected);
-  const unhealthy = providers.filter((provider) => provider.ok === false);
-  const unhealthySelected = selected.filter((provider) => provider.ok === false);
-
-  return {
-    providers,
-    selected,
-    unhealthy,
-    unhealthySelected,
-  };
-}
-
-function getSpeechProviderTone(provider) {
-  if (provider?.ok === false) {
-    return 'bg-red-100 text-red-700';
-  }
-
-  if (provider?.ok === true) {
-    return 'bg-green-100 text-green-700';
-  }
-
-  return 'bg-slate-100 text-slate-700';
-}
-
-function isRetryableEvent(event) {
-  return (
-    ['failed', 'undelivered', 'error'].includes(String(event?.latestRetryStatus || event?.status || '').toLowerCase()) &&
-    !event?.retryOfEventId
-  );
-}
-
-function getAlertInspectTarget(alert) {
-  if (alert?.lastObservedEventId) {
-    return {
-      type: 'event',
-      id: alert.lastObservedEventId,
-      label: 'Open Event',
-    };
-  }
-
-  if (alert?.lastObservedRunId) {
-    return {
-      type: 'run',
-      id: alert.lastObservedRunId,
-      label: 'Open Run',
-    };
-  }
-
-  return null;
-}
-
-function buildReviewDetailPath(tenantType, event = {}) {
-  const portalBasePath = getPortalBasePath(tenantType);
-  if (!portalBasePath) {
-    return null;
-  }
-
-  const reviewId =
-    event?.reviewId ||
-    event?.rootEvent?.reviewId ||
-    event?.event?.reviewId ||
-    null;
-
-  if (!reviewId) {
-    return null;
-  }
-
-  return `${portalBasePath}/reviews?reviewId=${encodeURIComponent(reviewId)}`;
-}
-
-function resolveFeedbackRecoveryId(event = {}) {
-  return (
-    event?.feedbackRecovery?.id ||
-    event?.rootEvent?.structuredData?.internalFeedbackId ||
-    event?.event?.structuredData?.internalFeedbackId ||
-    event?.structuredData?.internalFeedbackId ||
-    null
-  );
-}
-
-function buildFeedbackRecoveryPath(tenantType, event = {}) {
-  const portalBasePath = getPortalBasePath(tenantType);
-  const feedbackId = resolveFeedbackRecoveryId(event);
-  if (!portalBasePath || !feedbackId) {
-    return null;
-  }
-  return `${portalBasePath}/feedback?feedbackId=${encodeURIComponent(feedbackId)}`;
-}
-
-function buildSpeechRuntimePath(tenantType, jobType) {
-  if (jobType !== 'speech_provider_health') {
-    return null;
-  }
-
-  if (tenantType === 'restaurant') {
-    return '/settings?tab=ai&panel=speech-runtime';
-  }
-
-  if (tenantType === 'real_estate') {
-    return '/estate/settings?tab=ai&panel=speech-runtime';
-  }
-
-  if (tenantType === 'voice') {
-    return '/voice/settings?tab=ai&panel=speech-runtime';
-  }
-
-  return null;
-}
-
-function buildCustomer360Path(tenantType, customerId, options = {}) {
-  if (!customerId) return null;
-  let basePath = null;
-  if (tenantType === 'restaurant') basePath = `/restaurant/customer-360/${customerId}`;
-  if (tenantType === 'real_estate') basePath = `/estate/customer-360/${customerId}`;
-  if (tenantType === 'voice') basePath = `/voice/customer-360/${customerId}`;
-  if (!basePath) return null;
-
-  const searchParams = new URLSearchParams();
-  if (options.section) {
-    searchParams.set('section', options.section);
-  }
-  if (options.focusId) {
-    searchParams.set('focusId', options.focusId);
-  }
-
-  const query = searchParams.toString();
-  return query ? `${basePath}?${query}` : basePath;
-}
-
-function resolveCustomer360ObjectTarget(graphRefs = {}) {
-  const candidates = [
-    { key: 'showingId', section: 'showings', label: 'Open Showing' },
-    { key: 'reservationId', section: 'reservations', label: 'Open Reservation' },
-    { key: 'orderId', section: 'orders', label: 'Open Order' },
-    { key: 'appointmentId', section: 'appointments', label: 'Open Appointment' },
-    { key: 'quoteId', section: 'quotes', label: 'Open Quote' },
-    { key: 'serviceRequestId', section: 'serviceRequests', label: 'Open Service Request' },
-    { key: 'propertyId', section: 'properties', label: 'Open Property' },
-  ];
-
-  const match = candidates.find((candidate) => graphRefs?.[candidate.key]);
-  if (!match) {
-    return null;
-  }
-
-  return {
-    section: match.section,
-    focusId: graphRefs[match.key],
-    label: match.label,
-  };
-}
-
-function getCustomer360Target(tenantType, graphRefs = {}) {
-  const customerId = graphRefs?.customerId;
-  if (!customerId) {
-    return null;
-  }
-
-  const linkedObject = resolveCustomer360ObjectTarget(graphRefs);
-  return {
-    customerId,
-    linkedObject,
-    label: linkedObject?.label || 'Open Customer 360',
-    path: buildCustomer360Path(tenantType, customerId, linkedObject || {}),
-  };
-}
 
 function formatGraphRefs(graphRefs = {}) {
   const entries = Object.entries(graphRefs).filter(([, value]) => value);
@@ -319,6 +107,7 @@ const EVENT_TYPE_OPTIONS = [
   { value: 'daily_digest', label: 'Daily digest' },
   { value: 'negative_review', label: 'Negative review' },
   { value: 'review_spike', label: 'Review spike' },
+  { value: 'review_sync_failed', label: 'Review sync failed' },
   { value: 'feedback_low_rating', label: 'Feedback low rating' },
   { value: 'reservation_confirmed', label: 'Reservation confirmed' },
   { value: 'order_confirmed', label: 'Order confirmed' },
@@ -332,6 +121,15 @@ const EVENT_TYPE_OPTIONS = [
   { value: 'property_question', label: 'Property question' },
   { value: 'automation_run_failure', label: 'Automation run failure' },
   { value: 'automation_run_failure_escalation', label: 'Automation alert escalation' },
+];
+
+const PUSH_DELIVERY_CATEGORY_OPTIONS = [
+  { value: 'general', label: 'General' },
+  { value: 'leads', label: 'Leads' },
+  { value: 'showings', label: 'Showings' },
+  { value: 'callbacks', label: 'Callbacks' },
+  { value: 'reviews', label: 'Reviews & Reputation' },
+  { value: 'operations', label: 'Operations & Alerts' },
 ];
 
 export default function NotificationCenterWorkspace({ tenantType }) {
@@ -348,12 +146,14 @@ export default function NotificationCenterWorkspace({ tenantType }) {
   const [runAlerts, setRunAlerts] = useState([]);
   const [runAlertAnalytics, setRunAlertAnalytics] = useState(null);
   const [digestSummary, setDigestSummary] = useState(null);
+  const [pushHealth, setPushHealth] = useState(null);
   const [filters, setFilters] = useState({
     days: 30,
     channel: '',
     recipientRole: '',
     eventType: '',
     status: '',
+    pushDeliveryCategory: '',
     search: '',
   });
   const [error, setError] = useState('');
@@ -384,7 +184,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
       else setLoading(true);
       setError('');
 
-      const [eventsData, jobRunsData, runAlertsData, runAlertAnalyticsData, digestData] = await Promise.all([
+      const [eventsData, jobRunsData, runAlertsData, runAlertAnalyticsData, digestData, pushHealthData] = await Promise.all([
         fetchSmsNotificationEvents({
           limit: 250,
           days: filters.days,
@@ -405,6 +205,11 @@ export default function NotificationCenterWorkspace({ tenantType }) {
         }),
         fetchSmsNotificationRunAlertAnalytics(filters.days, 200),
         fetchSmsDailyDigest(1),
+        fetchSmsPushHealth({
+          days: filters.days,
+          limit: 300,
+          deliveryCategory: filters.pushDeliveryCategory || undefined,
+        }),
       ]);
 
       setEvents(eventsData.events || []);
@@ -412,6 +217,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
       setRunAlerts(runAlertsData.alerts || []);
       setRunAlertAnalytics(runAlertAnalyticsData.analytics || null);
       setDigestSummary(digestData.summary || null);
+      setPushHealth(pushHealthData.health || null);
     } catch (loadError) {
       setError(loadError?.response?.data?.error || 'Failed to load notification events.');
     } finally {
@@ -422,7 +228,15 @@ export default function NotificationCenterWorkspace({ tenantType }) {
 
   useEffect(() => {
     loadData();
-  }, [filters.days, filters.channel, filters.recipientRole, filters.eventType, filters.status, requestedInteractionEventId]);
+  }, [
+    filters.days,
+    filters.channel,
+    filters.recipientRole,
+    filters.eventType,
+    filters.status,
+    filters.pushDeliveryCategory,
+    requestedInteractionEventId,
+  ]);
 
   const visibleEvents = useMemo(() => {
     const needle = filters.search.trim().toLowerCase();
@@ -465,6 +279,18 @@ export default function NotificationCenterWorkspace({ tenantType }) {
     ];
   }, [visibleEvents, jobRuns, runAlerts]);
 
+  const activePushCategoryLabel = useMemo(() => {
+    if (!filters.pushDeliveryCategory) {
+      return 'All categories';
+    }
+
+    return (
+      PUSH_DELIVERY_CATEGORY_OPTIONS.find(
+        (option) => option.value === filters.pushDeliveryCategory
+      )?.label || labelizeNotificationCenterValue(filters.pushDeliveryCategory)
+    );
+  }, [filters.pushDeliveryCategory]);
+
   const latestJobRuns = useMemo(() => {
     const latestDigest = jobRuns.find((run) => run.jobType === 'daily_digest') || null;
     const latestRetry = jobRuns.find((run) => run.jobType === 'retry_failed_notifications') || null;
@@ -476,16 +302,32 @@ export default function NotificationCenterWorkspace({ tenantType }) {
   const selectedJobRun = selectedJobRunDetail?.run || null;
   const selectedJobRunIsSpeechHealth = selectedJobRun?.jobType === 'speech_provider_health';
   const selectedSpeechProviderCounts = useMemo(
-    () => getSpeechProviderCounts(selectedJobRun),
+    () => getNotificationCenterSpeechProviderCounts(selectedJobRun),
     [selectedJobRun]
   );
   const selectedEventCustomerTarget = useMemo(
-    () => getCustomer360Target(tenantType, selectedEventDetail?.interactionEvent?.graphRefs || {}),
+    () =>
+      buildNotificationCustomer360Target(
+        tenantType,
+        selectedEventDetail?.interactionEvent?.graphRefs || {}
+      ),
     [selectedEventDetail?.interactionEvent?.graphRefs, tenantType]
   );
   const selectedEventNativeObjectTarget = useMemo(
     () => getNativeObjectRoute(tenantType, selectedEventDetail?.interactionEvent?.graphRefs || {}),
     [selectedEventDetail?.interactionEvent?.graphRefs, tenantType]
+  );
+  const selectedEventSourceSurfaceTarget = useMemo(
+    () =>
+      buildNotificationSourceSurfaceTarget(
+        tenantType,
+        selectedEventDetail?.interactionEvent || {}
+      ),
+    [selectedEventDetail?.interactionEvent, tenantType]
+  );
+  const selectedEventActions = useMemo(
+    () => buildNotificationEventActionModel(tenantType, selectedEventDetail || {}),
+    [selectedEventDetail, tenantType]
   );
 
   useEffect(() => {
@@ -639,7 +481,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
 
   async function handleRetryJobRunEvents() {
     const retryableEventIds = (selectedJobRunDetail?.relatedEvents || [])
-      .filter((event) => isRetryableEvent(event))
+      .filter((event) => isRetryableNotificationCenterEvent(event))
       .map((event) => event.id);
 
     if (!retryableEventIds.length) {
@@ -694,7 +536,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
   }
 
   async function handleInspectAlert(alert) {
-    const target = getAlertInspectTarget(alert);
+    const target = buildNotificationAlertInspectTarget(alert);
     if (!target?.id) {
       return;
     }
@@ -707,8 +549,16 @@ export default function NotificationCenterWorkspace({ tenantType }) {
     await handleInspectJobRun(target.id);
   }
 
+  function handleOpenAlertRemediation(alert) {
+    const targetPath = buildAlertRemediationPath(alert);
+    if (!targetPath) {
+      return;
+    }
+    navigate(targetPath);
+  }
+
   function handleOpenVoiceRuntime(jobType) {
-    const targetPath = buildSpeechRuntimePath(tenantType, jobType);
+    const targetPath = buildNotificationSpeechRuntimePath(tenantType, jobType);
     if (!targetPath) {
       return;
     }
@@ -716,7 +566,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
   }
 
   function handleOpenCustomer360(customerId, options = {}) {
-    const targetPath = buildCustomer360Path(tenantType, customerId, options);
+    const targetPath = buildNotificationCustomer360Path(tenantType, customerId, options);
     if (!targetPath) return;
     navigate(targetPath);
   }
@@ -745,40 +595,37 @@ export default function NotificationCenterWorkspace({ tenantType }) {
     navigate(targetPath);
   }
 
+  function handleOpenFeedbackIntegrations(event) {
+    const targetPath = buildFeedbackIntegrationsPath(tenantType, event);
+    if (!targetPath) {
+      return;
+    }
+    navigate(targetPath);
+  }
+
+  function applyPushEventFilter(status = '', deliveryCategory = undefined) {
+    setFilters((current) => ({
+      ...current,
+      channel: 'push',
+      status,
+      pushDeliveryCategory:
+        deliveryCategory === undefined ? current.pushDeliveryCategory : deliveryCategory,
+    }));
+  }
+
+  function handlePushDeliveryCategoryChange(nextCategory) {
+    setFilters((current) => ({
+      ...current,
+      pushDeliveryCategory: nextCategory,
+    }));
+  }
+
   function handleOpenSourceSurface(interactionEvent) {
-    if (!interactionEvent?.sourceType) {
+    const target = buildNotificationSourceSurfaceTarget(tenantType, interactionEvent);
+    if (!target?.path) {
       return;
     }
-
-    const portalBasePath = getPortalBasePath(tenantType);
-    if (!portalBasePath) {
-      return;
-    }
-
-    if (interactionEvent.sourceType === 'call_session') {
-      const callId = interactionEvent.sourceRefId;
-      if (!callId) {
-        return;
-      }
-      navigate(`${portalBasePath}/calls?callId=${encodeURIComponent(callId)}`);
-      return;
-    }
-
-    if (interactionEvent.sourceType === 'sms_message') {
-      const contactPhone =
-        interactionEvent.customer?.phone ||
-        interactionEvent.customer?.mobile ||
-        interactionEvent.customer?.contactPhone;
-      if (!contactPhone) {
-        return;
-      }
-      const nextParams = new URLSearchParams();
-      nextParams.set('contactPhone', contactPhone);
-      if (interactionEvent.sourceRefId) {
-        nextParams.set('messageSid', interactionEvent.sourceRefId);
-      }
-      navigate(`${portalBasePath}/sms?${nextParams.toString()}`);
-    }
+    navigate(target.path);
   }
 
   async function handleAcknowledgeAlert(alertId) {
@@ -967,6 +814,157 @@ export default function NotificationCenterWorkspace({ tenantType }) {
         ))}
       </div>
 
+      {pushHealth ? (
+        <div className={`mt-6 rounded-xl border p-4 ${getNotificationCenterPushHealthTone(pushHealth.health?.status)}`}>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide">Push Health</p>
+              <h3 className="mt-1 text-base font-semibold">
+                {pushHealth.health?.headline || 'Push delivery monitoring'}
+              </h3>
+              <p className="mt-1 text-sm opacity-90">
+                {pushHealth.health?.remediationHint || 'Review receipt failures, invalid tokens, and recent push categories.'}
+              </p>
+              <p className="mt-2 text-xs font-medium opacity-75">
+                Category focus: {activePushCategoryLabel}
+              </p>
+            </div>
+            <div className="flex w-full flex-col gap-2 lg:w-[360px]">
+              <SelectField
+                label="Push category"
+                value={filters.pushDeliveryCategory}
+                onChange={handlePushDeliveryCategoryChange}
+                options={PUSH_DELIVERY_CATEGORY_OPTIONS}
+                placeholder="All push categories"
+                labelClassName="text-xs font-semibold uppercase tracking-wide opacity-75"
+                buttonClassName="border-current/20 bg-white/70"
+                menuClassName="text-slate-700"
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => applyPushEventFilter('failed')}
+                  className="rounded-md border border-current/20 bg-white/70 px-3 py-1.5 text-xs font-medium hover:bg-white"
+                >
+                  Filter Push Failures
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPushEventFilter('')}
+                  className="rounded-md border border-current/20 bg-white/70 px-3 py-1.5 text-xs font-medium hover:bg-white"
+                >
+                  Show All Push Events
+                </button>
+                {filters.pushDeliveryCategory ? (
+                  <button
+                    type="button"
+                    onClick={() => handlePushDeliveryCategoryChange('')}
+                    className="rounded-md border border-current/20 bg-white/70 px-3 py-1.5 text-xs font-medium hover:bg-white"
+                  >
+                    Clear Category Focus
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+            <div className="rounded-lg border border-current/10 bg-white/70 p-3">
+              <p className="text-xs uppercase tracking-wide opacity-70">Resolved Delivery</p>
+              <p className="mt-2 text-2xl font-semibold">{pushHealth.totals?.deliveryRate || 0}%</p>
+            </div>
+            <div className="rounded-lg border border-current/10 bg-white/70 p-3">
+              <p className="text-xs uppercase tracking-wide opacity-70">Delivered</p>
+              <p className="mt-2 text-2xl font-semibold">{pushHealth.totals?.delivered || 0}</p>
+            </div>
+            <div className="rounded-lg border border-current/10 bg-white/70 p-3">
+              <p className="text-xs uppercase tracking-wide opacity-70">Pending</p>
+              <p className="mt-2 text-2xl font-semibold">{pushHealth.totals?.pending || 0}</p>
+            </div>
+            <div className="rounded-lg border border-current/10 bg-white/70 p-3">
+              <p className="text-xs uppercase tracking-wide opacity-70">Failed</p>
+              <p className="mt-2 text-2xl font-semibold">{pushHealth.totals?.failed || 0}</p>
+            </div>
+            <div className="rounded-lg border border-current/10 bg-white/70 p-3">
+              <p className="text-xs uppercase tracking-wide opacity-70">Invalid Tokens</p>
+              <p className="mt-2 text-2xl font-semibold">{pushHealth.totals?.invalidTokens || 0}</p>
+            </div>
+            <div className="rounded-lg border border-current/10 bg-white/70 p-3">
+              <p className="text-xs uppercase tracking-wide opacity-70">Stale Pending</p>
+              <p className="mt-2 text-2xl font-semibold">{pushHealth.totals?.stalePendingCount || 0}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 xl:grid-cols-3">
+            <div className="rounded-lg border border-current/10 bg-white/70 p-3 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Top Error</p>
+              <p className="mt-2">
+                {pushHealth.topErrors?.[0]
+                  ? `${pushHealth.topErrors[0].error} (${pushHealth.topErrors[0].count})`
+                  : 'None'}
+              </p>
+            </div>
+            <div className="rounded-lg border border-current/10 bg-white/70 p-3 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Pressure Categories</p>
+              {(pushHealth.monitoring?.categoriesWithPressure || []).length ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {pushHealth.monitoring.categoriesWithPressure.map((item) => (
+                    <button
+                      key={`pressure-${item}`}
+                      type="button"
+                      onClick={() => applyPushEventFilter('failed', item)}
+                      className="rounded-full border border-current/20 bg-white/80 px-2.5 py-1 text-xs font-medium hover:bg-white"
+                    >
+                      {labelizeNotificationCenterValue(item)}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2">None</p>
+              )}
+            </div>
+            <div className="rounded-lg border border-current/10 bg-white/70 p-3 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Failure Categories</p>
+              {(pushHealth.health?.categoriesWithFailures || []).length ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {pushHealth.health.categoriesWithFailures.map((item) => (
+                    <button
+                      key={`failure-${item}`}
+                      type="button"
+                      onClick={() => applyPushEventFilter('failed', item)}
+                      className="rounded-full border border-current/20 bg-white/80 px-2.5 py-1 text-xs font-medium hover:bg-white"
+                    >
+                      {labelizeNotificationCenterValue(item)}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2">None</p>
+              )}
+            </div>
+          </div>
+
+          {(pushHealth.recentFailures || []).length ? (
+            <div className="mt-4 grid gap-3 xl:grid-cols-3">
+              {pushHealth.recentFailures.slice(0, 3).map((failure) => (
+                <button
+                  key={failure.id}
+                  type="button"
+                  onClick={() => applyPushEventFilter('failed', failure.deliveryCategory || '')}
+                  className="rounded-lg border border-current/10 bg-white/70 p-3 text-left text-sm transition hover:bg-white"
+                >
+                  <p className="font-semibold">
+                    {labelizeNotificationCenterValue(failure.deliveryCategory)} • {labelizeNotificationCenterValue(failure.deliveryEventType || 'push_event')}
+                  </p>
+                  <p className="mt-2">{failure.error || 'Push receipt failed.'}</p>
+                  <p className="mt-2 text-xs opacity-70">{formatNotificationCenterTimestamp(failure.checkedAt)}</p>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
           <div>
@@ -998,13 +996,19 @@ export default function NotificationCenterWorkspace({ tenantType }) {
 
         {runAlerts.length > 0 ? (
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            {runAlerts.map((alert) => (
-              <div key={alert.id} className={`rounded-lg border p-3 ${getAlertTone(alert.severity)}`}>
+            {runAlerts.map((alert) => {
+              const remediationSummary = getReviewRemediationSummary(alert);
+              const reviewPath = buildReviewDetailPath(tenantType, alert);
+              const inspectTarget = buildNotificationAlertInspectTarget(alert);
+              const speechRuntimePath = buildNotificationSpeechRuntimePath(tenantType, alert.jobType);
+
+              return (
+              <div key={alert.id} className={`rounded-lg border p-3 ${getNotificationCenterAlertTone(alert.severity)}`}>
                 <p className="text-xs font-semibold uppercase tracking-wide">{alert.severity}</p>
                 <p className="mt-1 text-sm font-semibold">{alert.title}</p>
                 <p className="mt-1 text-sm">{alert.message}</p>
                 <p className="mt-2 text-xs opacity-80">
-                  Job: {labelForJobType(alert.jobType)} • Consecutive failures: {alert.consecutiveFailures || 0}
+                  Job: {labelForNotificationCenterJobType(alert.jobType)} • {getNotificationCenterAlertIssueSummary(alert)}
                 </p>
                 {alert.isAcknowledged ? (
                   <p className="mt-2 text-xs opacity-80">
@@ -1018,7 +1022,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 ) : null}
                 {alert.isSnoozed ? (
                   <p className="mt-1 text-xs opacity-80">
-                    Snoozed until {formatTimestamp(alert.snoozedUntil)}
+                    Snoozed until {formatNotificationCenterTimestamp(alert.snoozedUntil)}
                   </p>
                 ) : null}
                 {alert.latestNote?.text ? (
@@ -1027,8 +1031,25 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                     <p className="mt-1">{alert.latestNote.text}</p>
                   </div>
                 ) : null}
+                {remediationSummary ? (
+                  <div className="mt-2 rounded-md border border-current/20 bg-white/50 p-2 text-xs">
+                    <p className="font-medium">Remediation Context</p>
+                    {remediationSummary.platform ? (
+                      <p className="mt-1">Platform: {labelizeNotificationCenterValue(remediationSummary.platform)}</p>
+                    ) : null}
+                    {remediationSummary.reason ? (
+                      <p className="mt-1">Reason: {formatNotificationCenterReasonLabel(remediationSummary.reason)}</p>
+                    ) : null}
+                    {remediationSummary.nextRetryAt ? (
+                      <p className="mt-1">Next retry: {formatNotificationCenterTimestamp(remediationSummary.nextRetryAt)}</p>
+                    ) : null}
+                    {remediationSummary.message ? (
+                      <p className="mt-1">Note: {remediationSummary.message}</p>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div className="mt-3 flex flex-wrap gap-2">
-                {buildReviewDetailPath(tenantType, alert) ? (
+                {reviewPath ? (
                   <button
                     type="button"
                     onClick={() => handleOpenReviewDetail(alert)}
@@ -1037,16 +1058,25 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                     Open Review
                   </button>
                 ) : null}
-                {getAlertInspectTarget(alert) ? (
+                {inspectTarget ? (
                   <button
                     type="button"
                     onClick={() => handleInspectAlert(alert)}
                     className="mt-3 rounded-md border border-current px-3 py-1.5 text-xs font-medium hover:bg-white/70"
                   >
-                    {getAlertInspectTarget(alert)?.label}
+                    {inspectTarget.label}
                   </button>
                 ) : null}
-                  {buildSpeechRuntimePath(tenantType, alert.jobType) ? (
+                  {alert.remediationPath ? (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAlertRemediation(alert)}
+                      className="rounded-md border border-current px-3 py-1.5 text-xs font-medium hover:bg-white/70"
+                    >
+                      Open remediation
+                    </button>
+                  ) : null}
+                  {speechRuntimePath ? (
                     <button
                       type="button"
                       onClick={() => handleOpenVoiceRuntime(alert.jobType)}
@@ -1127,7 +1157,8 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                   </button>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         ) : null}
 
@@ -1157,7 +1188,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 <div className="mt-2 space-y-1 text-xs text-gray-600">
                   {(runAlertAnalytics.jobTypeCounts || []).slice(0, 3).map((item) => (
                     <p key={item.jobType}>
-                      {labelForJobType(item.jobType)}: {item.count}
+                      {labelForNotificationCenterJobType(item.jobType)}: {item.count}
                     </p>
                   ))}
                 </div>
@@ -1183,22 +1214,28 @@ export default function NotificationCenterWorkspace({ tenantType }) {
           <>
             {latestJobRuns.length ? (
               <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {latestJobRuns.map((run) => (
+                {latestJobRuns.map((run) => {
+                  const speechRuntimePath = buildNotificationSpeechRuntimePath(
+                    tenantType,
+                    run.jobType
+                  );
+
+                  return (
                   <div key={`${run.jobType}-${run.id}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-900">{labelForJobType(run.jobType)}</p>
-                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${toneForStatus(run.status)}`}>
+                      <p className="text-sm font-semibold text-slate-900">{labelForNotificationCenterJobType(run.jobType)}</p>
+                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getNotificationCenterStatusTone(run.status)}`}>
                         {run.status || 'unknown'}
                       </span>
                     </div>
                     <div className="mt-3 space-y-1 text-xs text-slate-600">
-                      <p>Ran: {formatTimestamp(run.createdAt)}</p>
+                      <p>Ran: {formatNotificationCenterTimestamp(run.createdAt)}</p>
                       <p>Triggered by: {run.triggeredBy || '—'}</p>
                       <p>Processed: {run.processed ?? run.resultCount ?? 0}</p>
                       <p>Candidates / recipients: {run.candidates ?? run.recipientCount ?? 0}</p>
                       {run.jobType === 'speech_provider_health' ? (
                         <>
-                          <p>Reason: {formatReasonLabel(run.reason)}</p>
+                          <p>Reason: {formatNotificationCenterReasonLabel(run.reason)}</p>
                           <p>
                             Selected unhealthy: {run.unhealthySelectedProviderCount || 0} / {run.selectedProviderCount || 0}
                           </p>
@@ -1213,7 +1250,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                     >
                       {loadingJobRunDetail && selectedJobRunId === run.id ? 'Loading...' : 'Inspect'}
                     </button>
-                    {buildSpeechRuntimePath(tenantType, run.jobType) ? (
+                    {speechRuntimePath ? (
                       <button
                         type="button"
                         onClick={() => handleOpenVoiceRuntime(run.jobType)}
@@ -1223,7 +1260,8 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                       </button>
                     ) : null}
                   </div>
-                ))}
+                );
+                })}
               </div>
             ) : null}
 
@@ -1244,10 +1282,10 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 <tbody className="divide-y divide-gray-100">
                   {jobRuns.slice(0, 12).map((run) => (
                     <tr key={run.id}>
-                      <td className="px-4 py-3 text-gray-600">{formatTimestamp(run.createdAt)}</td>
-                      <td className="px-4 py-3 text-gray-900">{labelForJobType(run.jobType)}</td>
+                      <td className="px-4 py-3 text-gray-600">{formatNotificationCenterTimestamp(run.createdAt)}</td>
+                      <td className="px-4 py-3 text-gray-900">{labelForNotificationCenterJobType(run.jobType)}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${toneForStatus(run.status)}`}>
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getNotificationCenterStatusTone(run.status)}`}>
                           {run.status || 'unknown'}
                         </span>
                       </td>
@@ -1284,7 +1322,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Run Drilldown</h3>
               <p className="mt-1 text-xs text-gray-600">
-                {labelForJobType(selectedJobRunDetail.run?.jobType)} from {formatTimestamp(selectedJobRunDetail.run?.createdAt)}
+                {labelForNotificationCenterJobType(selectedJobRunDetail.run?.jobType)} from {formatNotificationCenterTimestamp(selectedJobRunDetail.run?.createdAt)}
               </p>
             </div>
             <button
@@ -1305,7 +1343,8 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 ? 'Inspect the selected speech providers, fallback readiness, and cached health probe results for this tenant voice runtime.'
                 : 'Retry eligible related failures directly from this run to remediate a broken digest or retry pass without leaving the drilldown.'}
             </p>
-            {selectedJobRunIsSpeechHealth && buildSpeechRuntimePath(tenantType, selectedJobRun?.jobType) ? (
+            {selectedJobRunIsSpeechHealth &&
+            buildNotificationSpeechRuntimePath(tenantType, selectedJobRun?.jobType) ? (
               <button
                 type="button"
                 onClick={() => handleOpenVoiceRuntime(selectedJobRun?.jobType)}
@@ -1366,7 +1405,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 <div className="rounded-lg border border-primary-100 bg-white p-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Health Outcome</p>
                   <div className="mt-2 space-y-1 text-xs text-gray-600">
-                    <p>Reason: {formatReasonLabel(selectedJobRun?.reason)}</p>
+                    <p>Reason: {formatNotificationCenterReasonLabel(selectedJobRun?.reason)}</p>
                     <p>Health gating: {selectedJobRun?.speech?.healthGatingEnabled ? 'Enabled' : 'Disabled'}</p>
                     <p>Fallback allowed: {selectedJobRun?.speech?.allowFallback === false ? 'No' : 'Yes'}</p>
                     <p>Run status: {selectedJobRun?.status || '—'}</p>
@@ -1412,7 +1451,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                         <td className="px-4 py-3 text-gray-900">{provider.name || '—'}</td>
                         <td className="px-4 py-3 text-gray-600 uppercase">{provider.type || '—'}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getSpeechProviderTone(provider)}`}>
+                          <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getNotificationCenterSpeechProviderTone(provider)}`}>
                             {provider.ok === false ? 'unhealthy' : provider.ok === true ? 'healthy' : 'unknown'}
                           </span>
                         </td>
@@ -1420,7 +1459,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                           {provider.selected ? 'Selected' : provider.gatingRelevant ? 'Gating only' : 'Fallback'}
                         </td>
                         <td className="px-4 py-3 text-gray-600">{provider.source || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600">{formatTimestamp(provider.checkedAt)}</td>
+                        <td className="px-4 py-3 text-gray-600">{formatNotificationCenterTimestamp(provider.checkedAt)}</td>
                         <td className="px-4 py-3 text-gray-600">{provider.detail || '—'}</td>
                       </tr>
                     ))}
@@ -1447,9 +1486,9 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 <tbody className="divide-y divide-gray-100">
                   {selectedJobRunDetail.relatedEvents.map((event) => (
                     <tr key={event.id}>
-                      <td className="px-4 py-3 text-gray-600">{formatTimestamp(event.createdAt)}</td>
+                      <td className="px-4 py-3 text-gray-600">{formatNotificationCenterTimestamp(event.createdAt)}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${toneForStatus(event.status)}`}>
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getNotificationCenterStatusTone(event.status)}`}>
                           {event.status || 'unknown'}
                         </span>
                       </td>
@@ -1458,7 +1497,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                       <td className="px-4 py-3 text-gray-600">{event.to || event.toUserId || '—'}</td>
                       <td className="px-4 py-3 text-gray-600 font-mono text-xs">{event.retryOfEventId || '—'}</td>
                       <td className="px-4 py-3">
-                        {isRetryableEvent(event) ? (
+                        {isRetryableNotificationCenterEvent(event) ? (
                           <button
                             type="button"
                             onClick={() => handleRetry(event.id)}
@@ -1530,9 +1569,9 @@ export default function NotificationCenterWorkspace({ tenantType }) {
             </div>
           </div>
 
-          {buildReviewDetailPath(tenantType, selectedEventDetail) || buildFeedbackRecoveryPath(tenantType, selectedEventDetail) ? (
+          {selectedEventActions.hasAnyAction ? (
             <div className="mt-4 flex flex-wrap gap-2">
-              {buildReviewDetailPath(tenantType, selectedEventDetail) ? (
+              {selectedEventActions.reviewPath ? (
                 <button
                   type="button"
                   onClick={() => handleOpenReviewDetail(selectedEventDetail)}
@@ -1541,7 +1580,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                   Open Review Detail
                 </button>
               ) : null}
-              {buildFeedbackRecoveryPath(tenantType, selectedEventDetail) ? (
+              {selectedEventActions.feedbackRecoveryPath ? (
                 <button
                   type="button"
                   onClick={() => handleOpenFeedbackRecovery(selectedEventDetail)}
@@ -1549,6 +1588,32 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 >
                   Open Recovery Detail
                 </button>
+              ) : null}
+              {selectedEventActions.feedbackIntegrationsPath ? (
+                <button
+                  type="button"
+                  onClick={() => handleOpenFeedbackIntegrations(selectedEventDetail)}
+                  className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100"
+                >
+                  Open Integrations
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          {selectedEventActions.remediationSummary ? (
+            <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800">
+              <p className="text-xs font-semibold uppercase tracking-wide">Review Remediation Context</p>
+              {selectedEventActions.remediationSummary.platform ? (
+                <p className="mt-2">Platform: {labelizeNotificationCenterValue(selectedEventActions.remediationSummary.platform)}</p>
+              ) : null}
+              {selectedEventActions.remediationSummary.reason ? (
+                <p className="mt-1">Reason: {formatNotificationCenterReasonLabel(selectedEventActions.remediationSummary.reason)}</p>
+              ) : null}
+              {selectedEventActions.remediationSummary.nextRetryAt ? (
+                <p className="mt-1">Next retry: {formatNotificationCenterTimestamp(selectedEventActions.remediationSummary.nextRetryAt)}</p>
+              ) : null}
+              {selectedEventActions.remediationSummary.message ? (
+                <p className="mt-2">{selectedEventActions.remediationSummary.message}</p>
               ) : null}
             </div>
           ) : null}
@@ -1560,7 +1625,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 <div className="mt-2 space-y-1 text-xs text-gray-600">
                   <p>Interaction event: {selectedEventDetail.interactionEvent.id}</p>
                   <p>Channel: {String(selectedEventDetail.interactionEvent.channel || '—').toUpperCase()}</p>
-                  <p>Review status: {formatReasonLabel(selectedEventDetail.interactionEvent.reviewStatus)}</p>
+                  <p>Review status: {formatNotificationCenterReasonLabel(selectedEventDetail.interactionEvent.reviewStatus)}</p>
                   <p>Customer: {selectedEventDetail.interactionEvent.customer?.name || selectedEventDetail.interactionEvent.customer?.phone || '—'}</p>
                   {selectedEventDetail.rootEvent?.reviewId ? (
                     <p>Review ID: {selectedEventDetail.rootEvent.reviewId}</p>
@@ -1577,9 +1642,9 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                     Graph refs:{' '}
                     {formatGraphRefs(selectedEventDetail.interactionEvent.graphRefs)}
                   </p>
-                  {buildReviewDetailPath(tenantType, selectedEventDetail) || buildFeedbackRecoveryPath(tenantType, selectedEventDetail) ? (
+                  {selectedEventActions.hasAnyAction ? (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {buildReviewDetailPath(tenantType, selectedEventDetail) ? (
+                      {selectedEventActions.reviewPath ? (
                         <button
                           type="button"
                           onClick={() => handleOpenReviewDetail(selectedEventDetail)}
@@ -1588,13 +1653,22 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                           Open Review Detail
                         </button>
                       ) : null}
-                      {buildFeedbackRecoveryPath(tenantType, selectedEventDetail) ? (
+                      {selectedEventActions.feedbackRecoveryPath ? (
                         <button
                           type="button"
                           onClick={() => handleOpenFeedbackRecovery(selectedEventDetail)}
                           className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
                         >
                           Open Recovery Detail
+                        </button>
+                      ) : null}
+                      {selectedEventActions.feedbackIntegrationsPath ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenFeedbackIntegrations(selectedEventDetail)}
+                          className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100"
+                        >
+                          Open Integrations
                         </button>
                       ) : null}
                     </div>
@@ -1610,13 +1684,15 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                           {selectedEventNativeObjectTarget.label}
                         </button>
                       ) : null}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenSourceSurface(selectedEventDetail.interactionEvent)}
-                        className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
-                      >
-                        {selectedEventDetail.interactionEvent.sourceType === 'sms_message' ? 'Open SMS Inbox' : 'Open Calls & Messages'}
-                      </button>
+                      {selectedEventSourceSurfaceTarget ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenSourceSurface(selectedEventDetail.interactionEvent)}
+                          className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                        >
+                          {selectedEventSourceSurfaceTarget.label}
+                        </button>
+                      ) : null}
                       {selectedEventCustomerTarget.linkedObject ? (
                         <button
                           type="button"
@@ -1649,13 +1725,15 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                           {selectedEventNativeObjectTarget.label}
                         </button>
                       ) : null}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenSourceSurface(selectedEventDetail.interactionEvent)}
-                        className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
-                      >
-                        {selectedEventDetail.interactionEvent.sourceType === 'sms_message' ? 'Open SMS Inbox' : 'Open Calls & Messages'}
-                      </button>
+                      {selectedEventSourceSurfaceTarget ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenSourceSurface(selectedEventDetail.interactionEvent)}
+                          className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                        >
+                          {selectedEventSourceSurfaceTarget.label}
+                        </button>
+                      ) : null}
                     </div>
                   ) : null}
                   {!selectedEventCustomerTarget && !selectedEventDetail.interactionEvent?.sourceType && selectedEventNativeObjectTarget ? (
@@ -1713,10 +1791,10 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 <tbody className="divide-y divide-gray-100">
                   {(selectedEventDetail.retryTimeline || []).map((event) => (
                     <tr key={event.id}>
-                      <td className="px-4 py-3 text-gray-600">{formatTimestamp(event.createdAt)}</td>
+                      <td className="px-4 py-3 text-gray-600">{formatNotificationCenterTimestamp(event.createdAt)}</td>
                       <td className="px-4 py-3 text-gray-600">{event.retryAttempt || 0}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${toneForStatus(event.latestRetryStatus || event.status)}`}>
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getNotificationCenterStatusTone(event.latestRetryStatus || event.status)}`}>
                           {event.latestRetryStatus || event.status || 'unknown'}
                         </span>
                       </td>
@@ -1724,7 +1802,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                       <td className="px-4 py-3 text-gray-600">{event.to || event.toUserId || '—'}</td>
                       <td className="px-4 py-3 text-gray-600 font-mono text-xs">{event.retryOfEventId || '—'}</td>
                       <td className="px-4 py-3">
-                        {isRetryableEvent(event) ? (
+                        {isRetryableNotificationCenterEvent(event) ? (
                           <button
                             type="button"
                             onClick={() => handleRetry(event.id)}
@@ -1845,11 +1923,14 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {visibleEvents.map((event) => (
+                {visibleEvents.map((event) => {
+                  const eventActions = buildNotificationEventActionModel(tenantType, event);
+
+                  return (
                   <tr key={event.id}>
-                    <td className="px-4 py-3 text-gray-600">{formatTimestamp(event.createdAt)}</td>
+                    <td className="px-4 py-3 text-gray-600">{formatNotificationCenterTimestamp(event.createdAt)}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${toneForStatus(event.status)}`}>
+                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getNotificationCenterStatusTone(event.status)}`}>
                         {event.status || 'unknown'}
                       </span>
                     </td>
@@ -1868,7 +1949,7 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
-                        {isReviewAlertEvent(event) && buildReviewDetailPath(tenantType, event) ? (
+                        {eventActions.canOpenReview ? (
                           <button
                             type="button"
                             onClick={() => handleOpenReviewDetail(event)}
@@ -1877,13 +1958,22 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                             Open Review
                           </button>
                         ) : null}
-                        {buildFeedbackRecoveryPath(tenantType, event) ? (
+                        {eventActions.canOpenRecovery ? (
                           <button
                             type="button"
                             onClick={() => handleOpenFeedbackRecovery(event)}
                             className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100"
                           >
                             Open Recovery
+                          </button>
+                        ) : null}
+                        {eventActions.canOpenIntegrations ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenFeedbackIntegrations(event)}
+                            className="rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100"
+                          >
+                            {eventActions.integrationsLabel}
                           </button>
                         ) : null}
                         <button
@@ -1907,7 +1997,8 @@ export default function NotificationCenterWorkspace({ tenantType }) {
                       </div>
                     </td>
                   </tr>
-                ))}
+                );
+                })}
               </tbody>
             </table>
           </div>

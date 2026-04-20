@@ -60,6 +60,8 @@ import CreateRestaurantPage from './pages/merxus/CreateRestaurantPage';
 import VoicesPage from './pages/merxus/VoicesPage';
 import RealEstateCompaniesPage from './pages/merxus/RealEstateCompaniesPage';
 import AnalyticsPage from './pages/merxus/AnalyticsPage';
+import MerxusOpsAuditPage from './pages/merxus/MerxusOpsAuditPage';
+import MerxusProductionReadinessPage from './pages/merxus/MerxusProductionReadinessPage';
 import SystemSettingsPage from './pages/merxus/SystemSettingsPage';
 import TenantSelectorPage from './pages/merxus/TenantSelectorPage';
 import VoiceAdminPage from './pages/merxus/VoiceAdminPage';
@@ -534,6 +536,8 @@ function App() {
                     <Route path="restaurants/new" element={<CreateRestaurantPage />} />
                     <Route path="real-estate" element={<RealEstateCompaniesPage />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
+                    <Route path="ops-audit" element={<MerxusOpsAuditPage />} />
+                    <Route path="production-readiness" element={<MerxusProductionReadinessPage />} />
                     <Route path="settings" element={<SystemSettingsPage />} />
                     <Route path="users" element={<SuperAdminUsersPage />} />
                     <Route path="setup-wizard" element={<SetupWizardPage />} />

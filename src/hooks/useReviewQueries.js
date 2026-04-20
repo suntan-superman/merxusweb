@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   approveReviewDraft,
+  createTestReview,
   fetchFeedbackSettings,
   fetchInternalFeedbackDetail,
   fetchInternalFeedbackQueue,
@@ -9,6 +10,7 @@ import {
   fetchReviewIntegrations,
   fetchReviewsWorkspace,
   generateReviewResponse,
+  updateReviewDetail,
   updateInternalFeedback,
   updateFeedbackSettings,
   updateReviewIntegration,
@@ -17,12 +19,15 @@ import { fetchSmsNotificationEvents } from '../api/sms';
 
 export const reviewKeys = {
   all: ['reviews'],
+  workspaceRoot: () => [...reviewKeys.all, 'workspace'],
   workspace: (filters = {}) => [...reviewKeys.all, 'workspace', filters],
   detail: (reviewId) => [...reviewKeys.all, 'detail', reviewId],
   integrations: () => [...reviewKeys.all, 'integrations'],
   feedbackSettings: () => [...reviewKeys.all, 'feedback-settings'],
+  internalFeedbackQueueRoot: () => [...reviewKeys.all, 'internal-feedback-queue'],
   internalFeedbackQueue: (filters = {}) => [...reviewKeys.all, 'internal-feedback-queue', filters],
   internalFeedbackDetail: (feedbackId) => [...reviewKeys.all, 'internal-feedback-detail', feedbackId],
+  alertsRoot: () => [...reviewKeys.all, 'alerts'],
   alerts: (filters = {}) => [...reviewKeys.all, 'alerts', filters],
 };
 
@@ -54,7 +59,8 @@ export function useGenerateReviewResponse() {
     mutationFn: (reviewId) => generateReviewResponse(reviewId),
     onSuccess: (data, reviewId) => {
       queryClient.invalidateQueries({ queryKey: reviewKeys.detail(reviewId) });
-      queryClient.invalidateQueries({ queryKey: reviewKeys.all });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.workspaceRoot() });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.alertsRoot() });
       toast.success(data?.alertsCreated?.length ? 'Draft generated and review alerts updated.' : 'Draft response generated.');
     },
     onError: (error) => {
@@ -67,6 +73,28 @@ export function useGenerateResponse() {
   return useGenerateReviewResponse();
 }
 
+export function useCreateTestReview() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload) => createTestReview(payload),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: reviewKeys.workspaceRoot() });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.feedbackSettings() });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.integrations() });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.alertsRoot() });
+      toast.success(
+        data?.alertsCreated?.length
+          ? 'Test review injected and alert flow updated.'
+          : 'Test review injected.'
+      );
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.error || 'Failed to inject test review');
+    },
+  });
+}
+
 export function useApproveReviewDraft() {
   const queryClient = useQueryClient();
 
@@ -74,11 +102,28 @@ export function useApproveReviewDraft() {
     mutationFn: ({ reviewId, draftId }) => approveReviewDraft(reviewId, draftId),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: reviewKeys.detail(variables.reviewId) });
-      queryClient.invalidateQueries({ queryKey: reviewKeys.all });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.workspaceRoot() });
       toast.success('Review draft approved.');
     },
     onError: (error) => {
       toast.error(error?.response?.data?.error || 'Failed to approve review draft');
+    },
+  });
+}
+
+export function useUpdateReviewDetail() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ reviewId, payload }) => updateReviewDetail(reviewId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: reviewKeys.detail(variables.reviewId) });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.workspaceRoot() });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.alertsRoot() });
+      toast.success('Review workflow updated.');
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.error || 'Failed to update review workflow');
     },
   });
 }
@@ -155,11 +200,10 @@ export function useUpdateInternalFeedback() {
   return useMutation({
     mutationFn: ({ feedbackId, payload }) => updateInternalFeedback(feedbackId, payload),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: reviewKeys.internalFeedbackQueue() });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.internalFeedbackQueueRoot() });
       queryClient.invalidateQueries({ queryKey: reviewKeys.internalFeedbackDetail(variables.feedbackId) });
       queryClient.invalidateQueries({ queryKey: reviewKeys.feedbackSettings() });
-      queryClient.invalidateQueries({ queryKey: reviewKeys.alerts() });
-      queryClient.invalidateQueries({ queryKey: reviewKeys.all });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.alertsRoot() });
       toast.success('Internal feedback updated.');
     },
     onError: (error) => {

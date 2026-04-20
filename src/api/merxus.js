@@ -1,5 +1,12 @@
 import { apiClient } from './client';
 
+function buildAnalyticsParams(options = {}) {
+  const params = {};
+  if (options.days != null) params.days = options.days;
+  if (options.trendDays != null) params.trendDays = options.trendDays;
+  return params;
+}
+
 // Restaurants
 export async function fetchAllRestaurants() {
   const res = await apiClient.get('/merxus/restaurants');
@@ -89,13 +96,35 @@ export async function resendVoiceInvitation(voiceId) {
 }
 
 // Analytics
-export async function fetchSystemAnalytics() {
-  const res = await apiClient.get('/merxus/analytics');
+export async function fetchSystemAnalytics(options = {}) {
+  const res = await apiClient.get('/merxus/analytics', {
+    params: buildAnalyticsParams(options),
+  });
   return res.data;
 }
 
-export async function fetchTenantAnalytics() {
-  const res = await apiClient.get('/merxus/analytics/tenant');
+export async function fetchTenantAnalytics(options = {}) {
+  const res = await apiClient.get('/merxus/analytics/tenant', {
+    params: buildAnalyticsParams(options),
+  });
+  return res.data;
+}
+
+export async function fetchSystemOperationsAudit(options = {}) {
+  const params = {};
+  if (options.days != null) params.days = options.days;
+  if (options.maxTenants != null) params.maxTenants = options.maxTenants;
+  if (options.limitPerTenant != null) params.limitPerTenant = options.limitPerTenant;
+  if (options.tenantType) params.tenantType = options.tenantType;
+  if (options.tenantId) params.tenantId = options.tenantId;
+  if (options.attentionOnly != null) params.attentionOnly = options.attentionOnly;
+
+  const res = await apiClient.get('/merxus/ops-audit', { params });
+  return res.data;
+}
+
+export async function fetchSystemProductionReadiness() {
+  const res = await apiClient.get('/merxus/production-readiness');
   return res.data;
 }
 

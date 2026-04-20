@@ -48,6 +48,14 @@ export async function createListing(listing) {
   return res.data;
 }
 
+export async function deleteAllListings(payload = {}) {
+  const res = await apiClient.post('/estate/listings/bulk-delete', {
+    confirm: true,
+    ...payload,
+  });
+  return res.data;
+}
+
 export async function updateListing(listingId, listing) {
   const res = await apiClient.patch(`/estate/listings/${listingId}`, listing);
   return res.data;

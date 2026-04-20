@@ -387,7 +387,7 @@ export default function CommandCenterWorkspace({ tenantType }) {
                         onClick={() => navigate(item.primaryActionPath)}
                         className="rounded-md border border-current px-3 py-1.5 text-xs font-medium hover:bg-white/70"
                       >
-                        Open alert queue
+                        {item.primaryActionLabel || 'Open alert queue'}
                       </button>
                     ) : null}
                     {item.secondaryActionPath ? (
@@ -396,7 +396,7 @@ export default function CommandCenterWorkspace({ tenantType }) {
                         onClick={() => navigate(item.secondaryActionPath)}
                         className="rounded-md border border-current px-3 py-1.5 text-xs font-medium hover:bg-white/70"
                       >
-                        Open speech runtime
+                        {item.secondaryActionLabel || 'Open related workflow'}
                       </button>
                     ) : null}
                   </div>

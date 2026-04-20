@@ -34,6 +34,8 @@ export default function MerxusSidebar() {
         <NavItem to="/merxus/voices" label="Voice Services" icon="📞" />
         <NavItem to="/merxus/real-estate" label="Real Estate" icon="🏠" />
         <NavItem to="/merxus/analytics" label="Analytics" icon="📈" />
+        <NavItem to="/merxus/ops-audit" label="Ops Audit" icon="🛠️" />
+        <NavItem to="/merxus/production-readiness" label="Readiness" icon="🧪" />
         {userClaims?.role === 'super_admin' && (
           <NavItem to="/merxus/users" label="Teams & Access" icon="🔐" />
         )}

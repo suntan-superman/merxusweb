@@ -4,6 +4,10 @@ import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import FirstPortalChecklist from '../../components/onboarding/FirstPortalChecklist';
 import { CallVolumeChart, PeakHoursChart, ConversionChart, PopularItemsChart, RevenueChart } from '../../components/analytics';
+import { fetchTenantAnalytics } from '../../api/merxus';
+import AnalyticsSummaryPanel from '../../components/dashboard/AnalyticsSummaryPanel';
+import AnalyticsActivityFeedPanel from '../../components/dashboard/AnalyticsActivityFeedPanel';
+import TenantFeedbackTrendPanel from '../../components/dashboard/TenantFeedbackTrendPanel';
 
 const RESERVATIONS_VIEW_KEY = 'merxus_dashboard_reservations_view';
 
@@ -21,6 +25,7 @@ export default function DashboardPage() {
       return 'today';
     }
   });
+  const [tenantAnalytics, setTenantAnalytics] = useState(null);
   
   // Save preference when it changes
   useEffect(() => {
@@ -30,6 +35,26 @@ export default function DashboardPage() {
       console.error('Failed to save reservations view preference:', err);
     }
   }, [reservationsView]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadTenantAnalytics() {
+      try {
+        const data = await fetchTenantAnalytics();
+        if (mounted) {
+          setTenantAnalytics(data);
+        }
+      } catch (error) {
+        console.warn('Unable to load tenant analytics for dashboard:', error);
+      }
+    }
+
+    loadTenantAnalytics();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Calculate current year and month for comparison
   const currentYearMonth = useMemo(() => {
@@ -250,6 +275,23 @@ export default function DashboardPage() {
         tenantId={restaurantId}
         userId={user?.uid}
         className="mb-6"
+      />
+
+      <AnalyticsSummaryPanel
+        analytics={tenantAnalytics}
+        title="Reputation & Operations"
+        subtitle="Owner-grade review, recovery, push, and automation health from the live tenant analytics payload."
+        emptyCopy="Tenant analytics are still loading for this dashboard."
+      />
+
+      <TenantFeedbackTrendPanel analytics={tenantAnalytics} />
+
+      <AnalyticsActivityFeedPanel
+        analytics={tenantAnalytics}
+        title="Operational Activity"
+        subtitle="The most recent review-sync, automation, and recovery events that matter to owner-grade dashboard decisions."
+        emptyCopy="No recent tenant activity has been recorded yet."
+        limit={6}
       />
 
       {/* Restaurant-specific stats */}

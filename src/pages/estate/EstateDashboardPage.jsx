@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -9,6 +10,10 @@ import EstateFlyover from '../../components/estate/EstateFlyover';
 import FirstPortalChecklist from '../../components/onboarding/FirstPortalChecklist';
 import { useEstateSettings } from '../../hooks/useEstateQueries';
 import { CallVolumeChart, PeakHoursChart, LeadSourceChart, ShowingConversionChart } from '../../components/analytics';
+import { fetchTenantAnalytics } from '../../api/merxus';
+import AnalyticsSummaryPanel from '../../components/dashboard/AnalyticsSummaryPanel';
+import AnalyticsActivityFeedPanel from '../../components/dashboard/AnalyticsActivityFeedPanel';
+import TenantFeedbackTrendPanel from '../../components/dashboard/TenantFeedbackTrendPanel';
 
 export default function EstateDashboardPage() {
   const { user, userClaims, agentId } = useAuth();
@@ -16,6 +21,7 @@ export default function EstateDashboardPage() {
   
   // Flyover state
   const [flyoverOpen, setFlyoverOpen] = useState(false);
+  const [tenantAnalytics, setTenantAnalytics] = useState(null);
 
   // Use React Query for estate settings (API call with caching)
   const { 
@@ -165,6 +171,26 @@ export default function EstateDashboardPage() {
 
   const recentCalls = calls.slice(0, 5);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadTenantAnalytics() {
+      try {
+        const data = await fetchTenantAnalytics();
+        if (mounted) {
+          setTenantAnalytics(data);
+        }
+      } catch (error) {
+        console.warn('Unable to load tenant analytics for dashboard:', error);
+      }
+    }
+
+    loadTenantAnalytics();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Handle flyover completion
   const handleFlyoverComplete = () => {
     markFlyoverComplete();
@@ -196,6 +222,23 @@ export default function EstateDashboardPage() {
         tenantType={userClaims?.type || 'real_estate'}
         tenantId={agentId}
         userId={user?.uid}
+      />
+
+      <AnalyticsSummaryPanel
+        analytics={tenantAnalytics}
+        title="Reputation & Operations"
+        subtitle="Owner-grade review, recovery, push, and automation health alongside your lead and showing activity."
+        emptyCopy="Tenant analytics are still loading for this dashboard."
+      />
+
+      <TenantFeedbackTrendPanel analytics={tenantAnalytics} />
+
+      <AnalyticsActivityFeedPanel
+        analytics={tenantAnalytics}
+        title="Operational Activity"
+        subtitle="Live review-sync, automation, and recovery events layered into the brokerage dashboard."
+        emptyCopy="No recent tenant activity has been recorded yet."
+        limit={6}
       />
 
       {/* Stats Grid */}

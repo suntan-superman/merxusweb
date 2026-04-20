@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createListing } from '../../api/estate';
+import { createListing, deleteAllListings } from '../../api/estate';
 import * as XLSX from 'xlsx';
 
 export default function ListingImport({ onImportComplete, onClose }) {
@@ -459,6 +459,7 @@ export default function ListingImport({ onImportComplete, onClose }) {
   async function performImport(listings, mode) {
     let successCount = 0;
     let errorCount = 0;
+    let deletedCount = 0;
     const errors = [];
     const totalListings = listings.length;
 
@@ -468,9 +469,11 @@ export default function ListingImport({ onImportComplete, onClose }) {
     try {
       // If replace mode, delete existing listings first
       if (mode === 'replace') {
-        // Note: This would require a deleteAllListings endpoint
-        // For now, we'll just proceed with adding
-        // TODO: Implement backend support for bulk delete
+        const deleteResult = await deleteAllListings({
+          reason: 'replace_import',
+          source: 'listing_import',
+        });
+        deletedCount = Number(deleteResult?.deletedCount || 0);
       }
 
       // Import listings one by one with progress
@@ -495,7 +498,11 @@ export default function ListingImport({ onImportComplete, onClose }) {
       }
 
       if (successCount > 0) {
-        setSuccess(`Successfully imported ${successCount} listing${successCount !== 1 ? 's' : ''}${errorCount > 0 ? ` (${errorCount} failed)` : ''}`);
+        const replacePrefix =
+          mode === 'replace'
+            ? `Removed ${deletedCount} existing listing${deletedCount === 1 ? '' : 's'} and `
+            : '';
+        setSuccess(`${replacePrefix}successfully imported ${successCount} listing${successCount !== 1 ? 's' : ''}${errorCount > 0 ? ` (${errorCount} failed)` : ''}`);
         if (onImportComplete) {
           onImportComplete();
         }

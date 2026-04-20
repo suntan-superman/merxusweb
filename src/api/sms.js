@@ -86,6 +86,11 @@ export async function fetchSmsNotificationRunAlertAnalytics(days = 30, limit = 2
   return res.data;
 }
 
+export async function fetchSmsPushHealth(params = {}) {
+  const res = await apiClient.get('/sms/push-health', { params });
+  return res.data;
+}
+
 export async function acknowledgeSmsNotificationRunAlert(alertId) {
   const res = await apiClient.post(`/sms/notification-run-alerts/${alertId}/acknowledge`);
   return res.data;
