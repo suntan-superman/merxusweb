@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 /**
  * Phone Number Formatting Utilities
  * Provides consistent phone number formatting across the entire app
@@ -96,13 +98,13 @@ export function toE164(phone) {
   if (numbers.length === 11 && numbers.startsWith('1')) {
     return `+${numbers}`;
   }
-  
+
   // International or already formatted
-  if (phone.startsWith('+')) {
-    return phone;
+  if (numbers.length > 10) {
+    return `+${numbers}`;
   }
-  
-  return `+${numbers}`;
+
+  return '';
 }
 
 /**
@@ -113,7 +115,7 @@ export function toE164(phone) {
  * @returns {object} - { value, onChange, rawValue, isValid }
  */
 export function usePhoneInput(initialValue = '', onChangeCallback) {
-  const [value, setValue] = React.useState(formatPhoneInput(initialValue));
+  const [value, setValue] = useState(formatPhoneInput(initialValue));
   
   const onChange = (e) => {
     const formatted = formatPhoneInput(e.target.value);

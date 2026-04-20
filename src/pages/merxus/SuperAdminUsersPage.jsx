@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, Plus, RefreshCw, Trash2, Edit } from 'lucide-react';
+import '../../utils/syncfusionRuntime';
 import { GridComponent, ColumnsDirective, ColumnDirective, Inject, Page, Sort, Filter, Toolbar, Edit as GridEdit } from '@syncfusion/ej2-react-grids';
 import toast from 'react-hot-toast';
 import CreateUserModal from '../../components/superAdmin/CreateUserModal';

@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useRef } from 'react';
+import '../../utils/syncfusionRuntime';
 import {
   GridComponent,
   ColumnsDirective,

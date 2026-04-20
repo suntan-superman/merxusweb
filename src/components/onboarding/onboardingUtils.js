@@ -1,3 +1,6 @@
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../../firebase/config';
+
 /**
  * Onboarding utilities and constants
  */
@@ -126,8 +129,6 @@ export function parseMarkets(markets) {
  */
 export async function sendFirebasePasswordReset(email, redirectUrl) {
   try {
-    const { sendPasswordResetEmail } = await import('firebase/auth');
-    const { auth } = await import('../../firebase/config');
     await sendPasswordResetEmail(auth, email, {
       url: redirectUrl,
       handleCodeInApp: true,

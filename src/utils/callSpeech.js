@@ -169,7 +169,12 @@ export function buildSpeechOperationsSummary(calls = []) {
 
   summary.providerBreakdown = Array.from(providerCounts.entries())
     .map(([provider, count]) => ({ provider, count }))
-    .sort((left, right) => right.count - left.count);
+    .sort((left, right) => {
+      if (right.count !== left.count) {
+        return right.count - left.count;
+      }
+      return left.provider.localeCompare(right.provider);
+    });
 
   return summary;
 }

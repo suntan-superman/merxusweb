@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import { registerLicense } from '@syncfusion/ej2-base';
+import { Suspense, lazy } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { APP_INFO } from './constants/appInfo';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -18,80 +18,15 @@ import LoginPage from './pages/LoginPage';
 import PhoneVerificationPage from './pages/PhoneVerificationPage';
 import PhoneVerificationLinkPage from './pages/PhoneVerificationLinkPage';
 import InviteAcceptPage from './pages/InviteAcceptPage';
-import DashboardPage from './pages/restaurant/DashboardPage';
-import RestaurantDashboard from './components/restaurant/RestaurantDashboard';
-import OrdersPage from './pages/restaurant/OrdersPage';
-import ReservationsPage from './pages/restaurant/ReservationsPage';
-import CallsPage from './pages/restaurant/CallsPage';
-import CustomersPage from './pages/restaurant/CustomersPage';
-import MenuPage from './pages/restaurant/MenuPage';
-import SettingsPage from './pages/restaurant/SettingsPage';
-import RestaurantSmsPage from './pages/restaurant/RestaurantSmsPage';
-import RestaurantCommandCenterPage from './pages/restaurant/RestaurantCommandCenterPage';
-import RestaurantNotificationsPage from './pages/restaurant/RestaurantNotificationsPage';
-import RestaurantIntelligencePage from './pages/restaurant/RestaurantIntelligencePage';
-import RestaurantCustomer360Page from './pages/restaurant/RestaurantCustomer360Page';
-import RestaurantMergeActivityPage from './pages/restaurant/RestaurantMergeActivityPage';
-import RestaurantReviewsPage from './pages/restaurant/RestaurantReviewsPage';
-import RestaurantFeedbackPage from './pages/restaurant/RestaurantFeedbackPage';
-import RestaurantFeedbackIntegrationsPage from './pages/restaurant/RestaurantFeedbackIntegrationsPage';
 import UsersPage from './pages/restaurant/UsersPage';
 import VoiceLayout from './components/layout/VoiceLayout';
-import VoiceDashboardPage from './pages/voice/VoiceDashboardPage';
-import VoiceCallsPage from './pages/voice/VoiceCallsPage';
-import CallRoutingPage from './pages/voice/CallRoutingPage';
-import VoicemailPage from './pages/voice/VoicemailPage';
-import VoiceSettingsPage from './pages/voice/VoiceSettingsPage';
-import VoiceSmsPage from './pages/voice/VoiceSmsPage';
-import VoiceCommandCenterPage from './pages/voice/VoiceCommandCenterPage';
-import VoiceNotificationsPage from './pages/voice/VoiceNotificationsPage';
-import VoiceIntelligencePage from './pages/voice/VoiceIntelligencePage';
-import VoiceWorkItemsPage from './pages/voice/VoiceWorkItemsPage';
-import VoiceCustomer360Page from './pages/voice/VoiceCustomer360Page';
-import VoiceMergeActivityPage from './pages/voice/VoiceMergeActivityPage';
-import VoiceReviewsPage from './pages/voice/VoiceReviewsPage';
-import VoiceFeedbackPage from './pages/voice/VoiceFeedbackPage';
-import VoiceFeedbackIntegrationsPage from './pages/voice/VoiceFeedbackIntegrationsPage';
 import VoiceUsersPage from './pages/voice/VoiceUsersPage';
 import MerxusLayout from './components/layout/MerxusLayout';
-import MerxusDashboardPage from './pages/merxus/MerxusDashboardPage';
-import RestaurantsPage from './pages/merxus/RestaurantsPage';
-import CreateRestaurantPage from './pages/merxus/CreateRestaurantPage';
-import VoicesPage from './pages/merxus/VoicesPage';
-import RealEstateCompaniesPage from './pages/merxus/RealEstateCompaniesPage';
-import AnalyticsPage from './pages/merxus/AnalyticsPage';
-import MerxusOpsAuditPage from './pages/merxus/MerxusOpsAuditPage';
-import MerxusProductionReadinessPage from './pages/merxus/MerxusProductionReadinessPage';
-import SystemSettingsPage from './pages/merxus/SystemSettingsPage';
-import TenantSelectorPage from './pages/merxus/TenantSelectorPage';
-import VoiceAdminPage from './pages/merxus/VoiceAdminPage';
-import SuperAdminUsersPage from './pages/merxus/SuperAdminUsersPage';
-import SetupWizardPage from './pages/merxus/SetupWizardPage';
-import TenantsManagementPage from './pages/merxus/TenantsManagementPage';
 import EstateLayout from './components/layout/EstateLayout';
-import EstateDashboardPage from './pages/estate/EstateDashboardPage';
-import EstateListingsPage from './pages/estate/EstateListingsPage';
-import ListingDetailPage from './pages/estate/ListingDetailPage';
-import EstateLeadsPage from './pages/estate/EstateLeadsPage';
-import EstateShowingsPage from './pages/estate/EstateShowingsPage';
-import EstateCallsPage from './pages/estate/EstateCallsPage';
-import EstateSettingsPage from './pages/estate/EstateSettingsPage';
-import EstateSmsPage from './pages/estate/EstateSmsPage';
-import EstateCommandCenterPage from './pages/estate/EstateCommandCenterPage';
-import EstateNotificationsPage from './pages/estate/EstateNotificationsPage';
-import EstateIntelligencePage from './pages/estate/EstateIntelligencePage';
-import EstateCustomer360Page from './pages/estate/EstateCustomer360Page';
-import EstateMergeActivityPage from './pages/estate/EstateMergeActivityPage';
-import EstateReviewsPage from './pages/estate/EstateReviewsPage';
-import EstateFeedbackPage from './pages/estate/EstateFeedbackPage';
-import EstateFeedbackIntegrationsPage from './pages/estate/EstateFeedbackIntegrationsPage';
 import EstateUsersPage from './pages/estate/EstateUsersPage';
-import FlyerApprovalsPage from './pages/estate/FlyerApprovalsPage';
-import FlyerMetricsPage from './pages/estate/FlyerMetricsPage';
 import SupportPage from './pages/SupportPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
-import BillingPage from './pages/BillingPage';
 import CheckoutReturnPage from './pages/CheckoutReturnPage';
 import CheckoutHandoffPage from './pages/CheckoutHandoffPage';
 import InstagramLandingPage from './pages/InstagramLandingPage';
@@ -102,20 +37,85 @@ import RealEstateLandingPage from './pages/RealEstateLandingPage';
 import RestaurantLandingPage from './pages/RestaurantLandingPage';
 import EliteFeatureWorkspace from './components/premium/EliteFeatureWorkspace';
 
-// Register Syncfusion license from environment variable
-const syncfusionKey = import.meta.env.VITE_SYNCFUSION_KEY;
-if (syncfusionKey) {
-  registerLicense(syncfusionKey);
+const OrdersPage = lazy(() => import('./pages/restaurant/OrdersPage'));
+const ReservationsPage = lazy(() => import('./pages/restaurant/ReservationsPage'));
+const DashboardPage = lazy(() => import('./pages/restaurant/DashboardPage'));
+const RestaurantDashboard = lazy(() => import('./components/restaurant/RestaurantDashboard'));
+const CallsPage = lazy(() => import('./pages/restaurant/CallsPage'));
+const CustomersPage = lazy(() => import('./pages/restaurant/CustomersPage'));
+const MenuPage = lazy(() => import('./pages/restaurant/MenuPage'));
+const SettingsPage = lazy(() => import('./pages/restaurant/SettingsPage'));
+const RestaurantSmsPage = lazy(() => import('./pages/restaurant/RestaurantSmsPage'));
+const RestaurantCommandCenterPage = lazy(() => import('./pages/restaurant/RestaurantCommandCenterPage'));
+const RestaurantNotificationsPage = lazy(() => import('./pages/restaurant/RestaurantNotificationsPage'));
+const RestaurantIntelligencePage = lazy(() => import('./pages/restaurant/RestaurantIntelligencePage'));
+const RestaurantCustomer360Page = lazy(() => import('./pages/restaurant/RestaurantCustomer360Page'));
+const RestaurantMergeActivityPage = lazy(() => import('./pages/restaurant/RestaurantMergeActivityPage'));
+const RestaurantReviewsPage = lazy(() => import('./pages/restaurant/RestaurantReviewsPage'));
+const RestaurantFeedbackPage = lazy(() => import('./pages/restaurant/RestaurantFeedbackPage'));
+const RestaurantFeedbackIntegrationsPage = lazy(() => import('./pages/restaurant/RestaurantFeedbackIntegrationsPage'));
+
+const VoiceDashboardPage = lazy(() => import('./pages/voice/VoiceDashboardPage'));
+const VoiceCallsPage = lazy(() => import('./pages/voice/VoiceCallsPage'));
+const CallRoutingPage = lazy(() => import('./pages/voice/CallRoutingPage'));
+const VoicemailPage = lazy(() => import('./pages/voice/VoicemailPage'));
+const VoiceSettingsPage = lazy(() => import('./pages/voice/VoiceSettingsPage'));
+const VoiceSmsPage = lazy(() => import('./pages/voice/VoiceSmsPage'));
+const VoiceCommandCenterPage = lazy(() => import('./pages/voice/VoiceCommandCenterPage'));
+const VoiceNotificationsPage = lazy(() => import('./pages/voice/VoiceNotificationsPage'));
+const VoiceIntelligencePage = lazy(() => import('./pages/voice/VoiceIntelligencePage'));
+const VoiceWorkItemsPage = lazy(() => import('./pages/voice/VoiceWorkItemsPage'));
+const VoiceCustomer360Page = lazy(() => import('./pages/voice/VoiceCustomer360Page'));
+const VoiceMergeActivityPage = lazy(() => import('./pages/voice/VoiceMergeActivityPage'));
+const VoiceReviewsPage = lazy(() => import('./pages/voice/VoiceReviewsPage'));
+const VoiceFeedbackPage = lazy(() => import('./pages/voice/VoiceFeedbackPage'));
+const VoiceFeedbackIntegrationsPage = lazy(() => import('./pages/voice/VoiceFeedbackIntegrationsPage'));
+
+const MerxusDashboardPage = lazy(() => import('./pages/merxus/MerxusDashboardPage'));
+const RestaurantsPage = lazy(() => import('./pages/merxus/RestaurantsPage'));
+const CreateRestaurantPage = lazy(() => import('./pages/merxus/CreateRestaurantPage'));
+const VoicesPage = lazy(() => import('./pages/merxus/VoicesPage'));
+const RealEstateCompaniesPage = lazy(() => import('./pages/merxus/RealEstateCompaniesPage'));
+const AnalyticsPage = lazy(() => import('./pages/merxus/AnalyticsPage'));
+const MerxusOpsAuditPage = lazy(() => import('./pages/merxus/MerxusOpsAuditPage'));
+const MerxusProductionReadinessPage = lazy(() => import('./pages/merxus/MerxusProductionReadinessPage'));
+const SystemSettingsPage = lazy(() => import('./pages/merxus/SystemSettingsPage'));
+const TenantSelectorPage = lazy(() => import('./pages/merxus/TenantSelectorPage'));
+const VoiceAdminPage = lazy(() => import('./pages/merxus/VoiceAdminPage'));
+const SuperAdminUsersPage = lazy(() => import('./pages/merxus/SuperAdminUsersPage'));
+const SetupWizardPage = lazy(() => import('./pages/merxus/SetupWizardPage'));
+const TenantsManagementPage = lazy(() => import('./pages/merxus/TenantsManagementPage'));
+
+const EstateDashboardPage = lazy(() => import('./pages/estate/EstateDashboardPage'));
+const EstateListingsPage = lazy(() => import('./pages/estate/EstateListingsPage'));
+const EstateLeadsPage = lazy(() => import('./pages/estate/EstateLeadsPage'));
+const EstateShowingsPage = lazy(() => import('./pages/estate/EstateShowingsPage'));
+const EstateCallsPage = lazy(() => import('./pages/estate/EstateCallsPage'));
+const ListingDetailPage = lazy(() => import('./pages/estate/ListingDetailPage'));
+const EstateSettingsPage = lazy(() => import('./pages/estate/EstateSettingsPage'));
+const EstateSmsPage = lazy(() => import('./pages/estate/EstateSmsPage'));
+const EstateCommandCenterPage = lazy(() => import('./pages/estate/EstateCommandCenterPage'));
+const EstateNotificationsPage = lazy(() => import('./pages/estate/EstateNotificationsPage'));
+const EstateIntelligencePage = lazy(() => import('./pages/estate/EstateIntelligencePage'));
+const EstateCustomer360Page = lazy(() => import('./pages/estate/EstateCustomer360Page'));
+const EstateMergeActivityPage = lazy(() => import('./pages/estate/EstateMergeActivityPage'));
+const EstateReviewsPage = lazy(() => import('./pages/estate/EstateReviewsPage'));
+const EstateFeedbackPage = lazy(() => import('./pages/estate/EstateFeedbackPage'));
+const EstateFeedbackIntegrationsPage = lazy(() => import('./pages/estate/EstateFeedbackIntegrationsPage'));
+const FlyerApprovalsPage = lazy(() => import('./pages/estate/FlyerApprovalsPage'));
+const FlyerMetricsPage = lazy(() => import('./pages/estate/FlyerMetricsPage'));
+const BillingPage = lazy(() => import('./pages/BillingPage'));
+
+function RouteLoadingState() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center px-6 text-sm font-medium text-slate-500">
+      Loading workspace...
+    </div>
+  );
 }
-else {
-  console.error('Syncfusion license key is not set');
-  console.error('Please set the VITE_SYNCFUSION_KEY environment variable');
-  console.error('You can get a free trial license from https://www.syncfusion.com/account/manage-subscriptions');
-  console.error('Once you have a license, set the VITE_SYNCFUSION_KEY environment variable in your .env file');
-  console.error('For example: VITE_SYNCFUSION_KEY=YOUR_LICENSE_KEY');
-  console.error('You can also get a free trial license from https://www.syncfusion.com/account/manage-subscriptions');
-  console.error('Once you have a license, set the VITE_SYNCFUSION_KEY environment variable in your .env file');
-  console.error('For example: VITE_SYNCFUSION_KEY=YOUR_LICENSE_KEY');
+
+function LazyRoute({ children }) {
+  return <Suspense fallback={<RouteLoadingState />}>{children}</Suspense>;
 }
 
 function App() {
@@ -171,21 +171,21 @@ function App() {
                       </ProtectedRoute>
                     }
                   >
-                    <Route index element={<DashboardPage />} />
-                    <Route path="active-dashboard" element={<RestaurantDashboard />} />
-                    <Route path="orders" element={<OrdersPage />} />
-                    <Route path="reservations" element={<ReservationsPage />} />
-                    <Route path="calls" element={<CallsPage />} />
-                    <Route path="customers" element={<CustomersPage />} />
-                    <Route path="menu" element={<MenuPage />} />
-                    <Route path="sms" element={<RestaurantSmsPage />} />
-                    <Route path="command-center" element={<RestaurantCommandCenterPage />} />
-                    <Route path="notifications" element={<RestaurantNotificationsPage />} />
+                    <Route index element={<LazyRoute><DashboardPage /></LazyRoute>} />
+                    <Route path="active-dashboard" element={<LazyRoute><RestaurantDashboard /></LazyRoute>} />
+                    <Route path="orders" element={<LazyRoute><OrdersPage /></LazyRoute>} />
+                    <Route path="reservations" element={<LazyRoute><ReservationsPage /></LazyRoute>} />
+                    <Route path="calls" element={<LazyRoute><CallsPage /></LazyRoute>} />
+                    <Route path="customers" element={<LazyRoute><CustomersPage /></LazyRoute>} />
+                    <Route path="menu" element={<LazyRoute><MenuPage /></LazyRoute>} />
+                    <Route path="sms" element={<LazyRoute><RestaurantSmsPage /></LazyRoute>} />
+                    <Route path="command-center" element={<LazyRoute><RestaurantCommandCenterPage /></LazyRoute>} />
+                    <Route path="notifications" element={<LazyRoute><RestaurantNotificationsPage /></LazyRoute>} />
                     <Route
                       path="intelligence"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <RestaurantIntelligencePage />
+                          <LazyRoute><RestaurantIntelligencePage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -193,7 +193,7 @@ function App() {
                       path="customer-360"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <RestaurantCustomer360Page />
+                          <LazyRoute><RestaurantCustomer360Page /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -201,7 +201,7 @@ function App() {
                       path="customer-360/:customerId"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <RestaurantCustomer360Page />
+                          <LazyRoute><RestaurantCustomer360Page /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -209,7 +209,7 @@ function App() {
                       path="merge-activity"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <RestaurantMergeActivityPage />
+                          <LazyRoute><RestaurantMergeActivityPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -217,7 +217,7 @@ function App() {
                       path="reviews"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
-                          <RestaurantReviewsPage />
+                          <LazyRoute><RestaurantReviewsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -225,7 +225,7 @@ function App() {
                       path="feedback"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
-                          <RestaurantFeedbackPage />
+                          <LazyRoute><RestaurantFeedbackPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -233,7 +233,7 @@ function App() {
                       path="feedback/integrations"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
-                          <RestaurantFeedbackIntegrationsPage />
+                          <LazyRoute><RestaurantFeedbackIntegrationsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -257,7 +257,7 @@ function App() {
                       path="settings"
                       element={(
                         <ProtectedRoute requireAuth requireManager>
-                          <SettingsPage />
+                          <LazyRoute><SettingsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -266,7 +266,7 @@ function App() {
                       path="billing"
                       element={(
                         <ProtectedRoute requireAuth requireManager>
-                          <BillingPage />
+                          <LazyRoute><BillingPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -282,25 +282,25 @@ function App() {
                       </ProtectedRoute>
                     }
                   >
-                    <Route index element={<VoiceDashboardPage />} />
-                    <Route path="calls" element={<VoiceCallsPage />} />
+                    <Route index element={<LazyRoute><VoiceDashboardPage /></LazyRoute>} />
+                    <Route path="calls" element={<LazyRoute><VoiceCallsPage /></LazyRoute>} />
                     <Route
                       path="routing"
                       element={(
                         <ProtectedRoute requireAuth requireManager>
-                          <CallRoutingPage />
+                          <LazyRoute><CallRoutingPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
-                    <Route path="voicemail" element={<VoicemailPage />} />
-                    <Route path="sms" element={<VoiceSmsPage />} />
-                    <Route path="command-center" element={<VoiceCommandCenterPage />} />
-                    <Route path="notifications" element={<VoiceNotificationsPage />} />
+                    <Route path="voicemail" element={<LazyRoute><VoicemailPage /></LazyRoute>} />
+                    <Route path="sms" element={<LazyRoute><VoiceSmsPage /></LazyRoute>} />
+                    <Route path="command-center" element={<LazyRoute><VoiceCommandCenterPage /></LazyRoute>} />
+                    <Route path="notifications" element={<LazyRoute><VoiceNotificationsPage /></LazyRoute>} />
                     <Route
                       path="intelligence"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <VoiceIntelligencePage />
+                          <LazyRoute><VoiceIntelligencePage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -308,7 +308,7 @@ function App() {
                       path="work-items"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <VoiceWorkItemsPage />
+                          <LazyRoute><VoiceWorkItemsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -316,7 +316,7 @@ function App() {
                       path="customer-360"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <VoiceCustomer360Page />
+                          <LazyRoute><VoiceCustomer360Page /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -324,7 +324,7 @@ function App() {
                       path="customer-360/:customerId"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <VoiceCustomer360Page />
+                          <LazyRoute><VoiceCustomer360Page /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -332,7 +332,7 @@ function App() {
                       path="merge-activity"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <VoiceMergeActivityPage />
+                          <LazyRoute><VoiceMergeActivityPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -340,7 +340,7 @@ function App() {
                       path="reviews"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
-                          <VoiceReviewsPage />
+                          <LazyRoute><VoiceReviewsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -348,7 +348,7 @@ function App() {
                       path="feedback"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
-                          <VoiceFeedbackPage />
+                          <LazyRoute><VoiceFeedbackPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -356,7 +356,7 @@ function App() {
                       path="feedback/integrations"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
-                          <VoiceFeedbackIntegrationsPage />
+                          <LazyRoute><VoiceFeedbackIntegrationsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -380,7 +380,7 @@ function App() {
                       path="settings"
                       element={(
                         <ProtectedRoute requireAuth requireManager>
-                          <VoiceSettingsPage />
+                          <LazyRoute><VoiceSettingsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -389,7 +389,7 @@ function App() {
                       path="billing"
                       element={(
                         <ProtectedRoute requireAuth requireManager>
-                          <BillingPage />
+                          <LazyRoute><BillingPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -405,23 +405,23 @@ function App() {
                       </ProtectedRoute>
                     }
                   >
-                    <Route index element={<EstateDashboardPage />} />
-                    <Route path="dashboard" element={<EstateDashboardPage />} />
-                    <Route path="listings" element={<EstateListingsPage />} />
-                    <Route path="listings/:id" element={<ListingDetailPage />} />
-                    <Route path="leads" element={<EstateLeadsPage />} />
-                    <Route path="showings" element={<EstateShowingsPage />} />
-                    <Route path="calls" element={<EstateCallsPage />} />
-                    <Route path="flyers/approvals" element={<FlyerApprovalsPage />} />
-                    <Route path="flyers/metrics" element={<FlyerMetricsPage />} />
-                    <Route path="sms" element={<EstateSmsPage />} />
-                    <Route path="command-center" element={<EstateCommandCenterPage />} />
-                    <Route path="notifications" element={<EstateNotificationsPage />} />
+                    <Route index element={<LazyRoute><EstateDashboardPage /></LazyRoute>} />
+                    <Route path="dashboard" element={<LazyRoute><EstateDashboardPage /></LazyRoute>} />
+                    <Route path="listings" element={<LazyRoute><EstateListingsPage /></LazyRoute>} />
+                    <Route path="listings/:id" element={<LazyRoute><ListingDetailPage /></LazyRoute>} />
+                    <Route path="leads" element={<LazyRoute><EstateLeadsPage /></LazyRoute>} />
+                    <Route path="showings" element={<LazyRoute><EstateShowingsPage /></LazyRoute>} />
+                    <Route path="calls" element={<LazyRoute><EstateCallsPage /></LazyRoute>} />
+                    <Route path="flyers/approvals" element={<LazyRoute><FlyerApprovalsPage /></LazyRoute>} />
+                    <Route path="flyers/metrics" element={<LazyRoute><FlyerMetricsPage /></LazyRoute>} />
+                    <Route path="sms" element={<LazyRoute><EstateSmsPage /></LazyRoute>} />
+                    <Route path="command-center" element={<LazyRoute><EstateCommandCenterPage /></LazyRoute>} />
+                    <Route path="notifications" element={<LazyRoute><EstateNotificationsPage /></LazyRoute>} />
                     <Route
                       path="intelligence"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <EstateIntelligencePage />
+                          <LazyRoute><EstateIntelligencePage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -429,7 +429,7 @@ function App() {
                       path="customer-360"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <EstateCustomer360Page />
+                          <LazyRoute><EstateCustomer360Page /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -437,7 +437,7 @@ function App() {
                       path="customer-360/:customerId"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <EstateCustomer360Page />
+                          <LazyRoute><EstateCustomer360Page /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -445,7 +445,7 @@ function App() {
                       path="merge-activity"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="professional">
-                          <EstateMergeActivityPage />
+                          <LazyRoute><EstateMergeActivityPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -453,7 +453,7 @@ function App() {
                       path="reviews"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
-                          <EstateReviewsPage />
+                          <LazyRoute><EstateReviewsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -461,7 +461,7 @@ function App() {
                       path="feedback"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
-                          <EstateFeedbackPage />
+                          <LazyRoute><EstateFeedbackPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -469,7 +469,7 @@ function App() {
                       path="feedback/integrations"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
-                          <EstateFeedbackIntegrationsPage />
+                          <LazyRoute><EstateFeedbackIntegrationsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -493,7 +493,7 @@ function App() {
                       path="settings"
                       element={(
                         <ProtectedRoute requireAuth requireManager>
-                          <EstateSettingsPage />
+                          <LazyRoute><EstateSettingsPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -502,7 +502,7 @@ function App() {
                       path="billing"
                       element={(
                         <ProtectedRoute requireAuth requireManager>
-                          <BillingPage />
+                          <LazyRoute><BillingPage /></LazyRoute>
                         </ProtectedRoute>
                       )}
                     />
@@ -514,7 +514,7 @@ function App() {
                     path="/merxus/select-tenant"
                     element={
                       <ProtectedRoute requireAuth requireMerxus>
-                        <TenantSelectorPage />
+                        <LazyRoute><TenantSelectorPage /></LazyRoute>
                       </ProtectedRoute>
                     }
                   />
@@ -528,19 +528,19 @@ function App() {
                       </ProtectedRoute>
                     }
                   >
-                    <Route index element={<MerxusDashboardPage />} />
-                    <Route path="tenants" element={<TenantsManagementPage />} />
-                    <Route path="voice-admin" element={<VoiceAdminPage />} />
-                    <Route path="voices" element={<VoicesPage />} />
-                    <Route path="restaurants" element={<RestaurantsPage />} />
-                    <Route path="restaurants/new" element={<CreateRestaurantPage />} />
-                    <Route path="real-estate" element={<RealEstateCompaniesPage />} />
-                    <Route path="analytics" element={<AnalyticsPage />} />
-                    <Route path="ops-audit" element={<MerxusOpsAuditPage />} />
-                    <Route path="production-readiness" element={<MerxusProductionReadinessPage />} />
-                    <Route path="settings" element={<SystemSettingsPage />} />
-                    <Route path="users" element={<SuperAdminUsersPage />} />
-                    <Route path="setup-wizard" element={<SetupWizardPage />} />
+                    <Route index element={<LazyRoute><MerxusDashboardPage /></LazyRoute>} />
+                    <Route path="tenants" element={<LazyRoute><TenantsManagementPage /></LazyRoute>} />
+                    <Route path="voice-admin" element={<LazyRoute><VoiceAdminPage /></LazyRoute>} />
+                    <Route path="voices" element={<LazyRoute><VoicesPage /></LazyRoute>} />
+                    <Route path="restaurants" element={<LazyRoute><RestaurantsPage /></LazyRoute>} />
+                    <Route path="restaurants/new" element={<LazyRoute><CreateRestaurantPage /></LazyRoute>} />
+                    <Route path="real-estate" element={<LazyRoute><RealEstateCompaniesPage /></LazyRoute>} />
+                    <Route path="analytics" element={<LazyRoute><AnalyticsPage /></LazyRoute>} />
+                    <Route path="ops-audit" element={<LazyRoute><MerxusOpsAuditPage /></LazyRoute>} />
+                    <Route path="production-readiness" element={<LazyRoute><MerxusProductionReadinessPage /></LazyRoute>} />
+                    <Route path="settings" element={<LazyRoute><SystemSettingsPage /></LazyRoute>} />
+                    <Route path="users" element={<LazyRoute><SuperAdminUsersPage /></LazyRoute>} />
+                    <Route path="setup-wizard" element={<LazyRoute><SetupWizardPage /></LazyRoute>} />
                     <Route path="*" element={<Navigate to="/merxus" replace />} />
                   </Route>
                   

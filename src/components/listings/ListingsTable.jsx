@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import '../../utils/syncfusionRuntime';
 import {
   GridComponent,
   ColumnsDirective,

@@ -3,6 +3,7 @@ import { Users, Building, Home, Phone, AlertCircle, CheckCircle, XCircle, Edit2,
 import { collection, query, where, getDocs, doc, updateDoc, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { toast } from 'react-toastify';
+import '../../utils/syncfusionRuntime';
 import { GridComponent, ColumnsDirective, ColumnDirective, Page, Sort, Filter, Toolbar, ExcelExport, Inject } from '@syncfusion/ej2-react-grids';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 import SelectField from '../../components/common/SelectField';

@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// Syncfusion CSS - only imported where needed
-import '@syncfusion/ej2-base/styles/material.css';
-import '@syncfusion/ej2-buttons/styles/material.css';
-import '@syncfusion/ej2-calendars/styles/material.css';
-import '@syncfusion/ej2-popups/styles/material.css';
-import '@syncfusion/ej2-schedule/styles/material.css';
+import '../../utils/syncfusionScheduleRuntime';
 import { ScheduleComponent, ViewsDirective, ViewDirective, Day, Week, Month, Agenda, Inject } from '@syncfusion/ej2-react-schedule';
 import { db } from '../../firebase/config';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
