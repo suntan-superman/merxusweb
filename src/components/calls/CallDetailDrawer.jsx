@@ -27,6 +27,23 @@ function getSpeechSessionSummary(call) {
   };
 }
 
+function getTranscriptPayload(source = {}) {
+  return {
+    transcript: source.transcript || source.callerTranscript || source.assistantTranscript || null,
+    translatedTranscript: source.translatedTranscript || null,
+    detectedLanguage: source.detectedLanguage || null,
+  };
+}
+
+function getApiErrorMessage(error, fallbackMessage) {
+  return (
+    error?.response?.data?.error ||
+    error?.response?.data?.message ||
+    error?.message ||
+    fallbackMessage
+  );
+}
+
 export default function CallDetailDrawer({ open, onClose, call }) {
   const [loading, setLoading] = useState(false);
   const [transcript, setTranscript] = useState(null);
@@ -45,17 +62,27 @@ export default function CallDetailDrawer({ open, onClose, call }) {
         setError(null);
 
         const data = await fetchCallTranscript(call.id);
-        setTranscript(data.transcript || data.callerTranscript || data.assistantTranscript);
-        setTranslatedTranscript(data.translatedTranscript);
-        setDetectedLanguage(data.detectedLanguage);
+        const payload = getTranscriptPayload(data);
+        setTranscript(payload.transcript);
+        setTranslatedTranscript(payload.translatedTranscript);
+        setDetectedLanguage(payload.detectedLanguage);
         
         // Auto-show translation if available
-        if (data.translatedTranscript) {
+        if (payload.translatedTranscript) {
           setShowTranslation(true);
         }
       } catch (err) {
         console.error(err);
-        setError('Failed to load transcript.');
+        const fallbackPayload = getTranscriptPayload(call);
+        if (fallbackPayload.transcript || fallbackPayload.translatedTranscript) {
+          setTranscript(fallbackPayload.transcript);
+          setTranslatedTranscript(fallbackPayload.translatedTranscript);
+          setDetectedLanguage(fallbackPayload.detectedLanguage);
+          setShowTranslation(Boolean(fallbackPayload.translatedTranscript));
+          setError('Transcript API unavailable. Showing stored call transcript.');
+        } else {
+          setError(getApiErrorMessage(err, 'Failed to load transcript.'));
+        }
       } finally {
         setLoading(false);
       }
@@ -75,7 +102,7 @@ export default function CallDetailDrawer({ open, onClose, call }) {
       setShowTranslation(true);
     } catch (err) {
       console.error(err);
-      setError('Failed to translate transcript.');
+      setError(getApiErrorMessage(err, 'Failed to translate transcript.'));
     } finally {
       setTranslating(false);
     }
