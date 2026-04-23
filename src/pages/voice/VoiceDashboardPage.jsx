@@ -164,6 +164,10 @@ export default function VoiceDashboardPage() {
   const isLoading = callsLoading;
 
   useEffect(() => {
+    if (!officeId) {
+      return undefined;
+    }
+
     let mounted = true;
 
     async function loadTenantAnalytics() {
@@ -181,7 +185,7 @@ export default function VoiceDashboardPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [officeId]);
 
   // Handle flyover completion
   const handleFlyoverComplete = () => {
