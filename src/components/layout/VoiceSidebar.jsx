@@ -8,6 +8,9 @@ import useTeamAccessPending from '../../hooks/useTeamAccessPending';
 import useSubscriptionPlan, { meetsPlanRequirement } from '../../hooks/useSubscriptionPlan';
 import PlanTierBadge from '../billing/PlanTierBadge';
 
+const PRO_SECTION_STORAGE_KEY = 'voiceSidebar.proExpanded';
+const ELITE_SECTION_STORAGE_KEY = 'voiceSidebar.eliteExpanded';
+
 export default function VoiceSidebar() {
   const { user, userClaims } = useAuth();
   const navigate = useNavigate();
@@ -52,8 +55,26 @@ export default function VoiceSidebar() {
   });
   const professionalUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'professional');
   const eliteUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'elite');
-  const [proExpanded, setProExpanded] = useState(true);
-  const [eliteExpanded, setEliteExpanded] = useState(true);
+  const [proExpanded, setProExpanded] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const stored = window.localStorage.getItem(PRO_SECTION_STORAGE_KEY);
+    return stored === null ? true : stored === 'true';
+  });
+  const [eliteExpanded, setEliteExpanded] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const stored = window.localStorage.getItem(ELITE_SECTION_STORAGE_KEY);
+    return stored === null ? true : stored === 'true';
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(PRO_SECTION_STORAGE_KEY, String(proExpanded));
+  }, [proExpanded]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(ELITE_SECTION_STORAGE_KEY, String(eliteExpanded));
+  }, [eliteExpanded]);
 
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen">
@@ -82,6 +103,16 @@ export default function VoiceSidebar() {
         <NavItem to="/voice/command-center" label="Command Center" icon="🛰️" />
         <NavItem to="/voice/notifications" label="Notifications" icon="🔔" />
         {canManagePortal && <NavItem to="/voice/routing" label="Call Routing" icon="🔄" />}
+        {canManagePortal && <NavItem to="/voice/settings" label="Settings" icon="⚙️" />}
+        {canManagePortal && <NavItem to="/voice/billing" label="Billing" icon="💳" />}
+        {isOwner && (
+          <NavItem
+            to="/voice/users"
+            label="Team & Access"
+            icon="👤"
+            attentionCount={teamPendingCount}
+          />
+        )}
         <PlanSection
           title="Pro Features"
           tier="professional"
@@ -170,16 +201,6 @@ export default function VoiceSidebar() {
             planBadgeTier="elite"
           />
         </PlanSection>
-        {canManagePortal && <NavItem to="/voice/settings" label="Settings" icon="⚙️" />}
-        {canManagePortal && <NavItem to="/voice/billing" label="Billing" icon="💳" />}
-        {isOwner && (
-          <NavItem
-            to="/voice/users"
-            label="Team & Access"
-            icon="👤"
-            attentionCount={teamPendingCount}
-          />
-        )}
       </nav>
 
       {/* User Info - Sticky at Bottom */}
