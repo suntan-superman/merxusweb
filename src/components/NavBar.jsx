@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import CallHQModal from './CallHQModal';
+import ThemeToggleButton from './common/ThemeToggleButton';
 
 const NavBar = () => {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ const NavBar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6">
+            <ThemeToggleButton compact />
             {!user && (
               <>
                 <Link to="/features" className="text-gray-700 hover:text-primary-600 transition-colors">
@@ -67,6 +69,7 @@ const NavBar = () => {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center space-x-2">
+            <ThemeToggleButton compact />
             <CallHQModal />
             <button
               className="text-gray-700 focus:outline-none"

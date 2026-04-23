@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { fetchSettings } from '../../api/settings';
 import { fetchVoiceSettings } from '../../api/voice';
 import CallHQModal from '../CallHQModal';
+import ThemeToggleButton from '../common/ThemeToggleButton';
 
 export default function Topbar({ onMenuClick }) {
   const { userClaims } = useAuth();
@@ -74,6 +75,8 @@ export default function Topbar({ onMenuClick }) {
           </div>
         </div>
         <div className="flex items-center space-x-2 md:space-x-4">
+          <ThemeToggleButton compact />
+
           {/* HQ Phone Button */}
           <CallHQModal />
           
