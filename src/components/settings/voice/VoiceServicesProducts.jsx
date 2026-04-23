@@ -253,7 +253,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
       <div className="flex flex-col">
         <span className="font-medium">{displayName}</span>
         {service.name_es && service.name_es !== displayName && (
-          <span className="text-xs italic text-gray-500">{service.name_es}</span>
+          <span className="text-xs italic text-gray-500 dark:text-slate-400">{service.name_es}</span>
         )}
         {hasSynonyms && allSynonyms.length > 0 && (
           <span className="mt-1 text-xs text-gray-400" title={allSynonyms.join(', ')}>
@@ -359,8 +359,8 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
       <section className="card">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Services</h3>
-            <p className="mt-1 text-sm text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Services</h3>
+            <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
               Manage the services your business offers. The AI will use this information to answer caller questions accurately.
             </p>
           </div>
@@ -374,7 +374,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
         </div>
 
         {services.length === 0 ? (
-          <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
             {businessType?.category && businessType?.industry ? (
               <div>
                 <p className="mb-2">No services configured yet.</p>
@@ -399,7 +399,7 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
             )}
           </div>
         ) : (
-          <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900">
             <GridComponent
               dataSource={services}
               allowPaging={true}
@@ -459,8 +459,8 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
       <section className="card">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Products</h3>
-            <p className="mt-1 text-sm text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Products</h3>
+            <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
               Manage the products your business sells. Optional but helpful for retail businesses.
             </p>
           </div>
@@ -474,11 +474,11 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
         </div>
 
         {products.length === 0 ? (
-          <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
+          <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
             <p>No products configured. Add products if your business sells physical items.</p>
           </div>
         ) : (
-          <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900">
             <GridComponent
               dataSource={products}
               allowPaging={true}
@@ -734,4 +734,5 @@ export default function VoiceServicesProducts({ settings, onSave, saving, busine
     </div>
   );
 }
+
 

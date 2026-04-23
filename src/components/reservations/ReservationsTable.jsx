@@ -39,7 +39,7 @@ export default function ReservationsTable({
 
   if (!reservations || reservations.length === 0) {
     return (
-      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
+      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
         No reservations to display.
       </div>
     );
@@ -116,19 +116,19 @@ export default function ReservationsTable({
   // Custom cell templates
   const guestTemplate = (props) => (
     <div className="py-1 leading-tight">
-      <div className="text-sm font-medium text-gray-900 truncate">
+      <div className="truncate text-sm font-medium text-gray-900 dark:text-slate-100">
         {props.customerName || 'Unknown Guest'}
       </div>
-      <div className="text-[11px] text-gray-400 mt-1">{props.formattedPhone}</div>
+      <div className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">{props.formattedPhone}</div>
     </div>
   );
 
   const dateTimeTemplate = (props) => (
     <div className="py-1 leading-tight">
-      <div className="text-sm font-medium text-gray-900">
+      <div className="text-sm font-medium text-gray-900 dark:text-slate-100">
         📅 {props.date || 'Date TBD'}
       </div>
-      <div className="text-[11px] text-gray-400 mt-1">
+      <div className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">
         🕐 {props.time || 'Time TBD'}
       </div>
     </div>
@@ -137,7 +137,7 @@ export default function ReservationsTable({
   const partySizeTemplate = (props) => (
     <div className="flex items-center gap-1.5 py-1">
       <span className="text-base">👥</span>
-      <span className="text-sm font-medium text-gray-900">
+      <span className="text-sm font-medium text-gray-900 dark:text-slate-100">
         {props.partySize || '–'}
       </span>
     </div>
@@ -145,8 +145,8 @@ export default function ReservationsTable({
 
   const sourceTemplate = (props) => (
     <div className="py-1 leading-tight">
-      <div className="text-xs text-gray-700">{props.sourceLabel}</div>
-      <div className="text-[10px] text-gray-400 mt-1">
+      <div className="text-xs text-gray-700 dark:text-slate-300">{props.sourceLabel}</div>
+      <div className="mt-1 text-[10px] text-gray-400 dark:text-slate-500">
         {props.createdAtFormatted}
       </div>
     </div>
@@ -174,7 +174,7 @@ export default function ReservationsTable({
   );
 
   return (
-    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900">
       <GridComponent
         ref={gridRef}
         dataSource={gridData}
@@ -314,10 +314,10 @@ function StatusButtonGroup({ reservation, isUpdating, onStatusChange, reservatio
           onClick={() => onStatusChange?.(originalReservation, action.status)}
           className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
             isUpdating
-              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              ? 'cursor-not-allowed bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
               : action.primary
               ? 'bg-primary-600 text-white hover:bg-primary-700'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
           }`}
         >
           {isUpdating ? '…' : action.label}

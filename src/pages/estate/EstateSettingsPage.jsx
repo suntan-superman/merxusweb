@@ -51,7 +51,7 @@ export default function EstateSettingsPage() {
   if (loadError || !settings) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Failed to load settings.</p>
+        <p className="text-gray-600 dark:text-slate-300">Failed to load settings.</p>
         <button onClick={() => refetch()} className="btn-primary mt-4">
           Retry
         </button>
@@ -63,14 +63,14 @@ export default function EstateSettingsPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Settings</h2>
+        <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
           Configure your agent profile, business hours, and AI assistant settings
         </p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="mb-6 border-b border-gray-200 dark:border-slate-700">
         <nav className="-mb-px flex space-x-2 overflow-x-auto">
           {TABS.map((tab) => (
             <button
@@ -81,8 +81,8 @@ export default function EstateSettingsPage() {
                 flex items-center gap-2
                 ${
                   activeTab === tab.id
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:border-slate-600'
                 }
               `}
             >

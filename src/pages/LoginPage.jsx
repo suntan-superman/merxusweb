@@ -530,10 +530,10 @@ export default function LoginPage() {
   // Show loading while checking auth state or redirecting
   if (authLoading || (user && !userClaims)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-primary-50">
+      <div className="min-h-screen flex items-center justify-center bg-primary-50 dark:bg-slate-950">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600 dark:text-slate-300">Loading...</p>
         </div>
       </div>
     );
@@ -544,36 +544,36 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary-50 via-white to-emerald-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary-50 via-white to-emerald-50 px-4 py-12 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-300/40 blur-3xl" />
-        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-primary-300/35 blur-3xl" />
-        <div className="absolute left-1/2 top-1/3 h-56 w-56 -translate-x-1/2 rounded-full bg-sky-300/30 blur-[90px]" />
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-300/40 blur-3xl dark:bg-emerald-900/30" />
+        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-primary-300/35 blur-3xl dark:bg-primary-900/35" />
+        <div className="absolute left-1/2 top-1/3 h-56 w-56 -translate-x-1/2 rounded-full bg-sky-300/30 blur-[90px] dark:bg-sky-900/25" />
       </div>
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-4xl font-bold text-gray-900">
+          <h2 className="mt-6 text-center text-4xl font-bold text-gray-900 dark:text-slate-100">
             Sign in to Merxus
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-slate-300">
             Sign in to access your portal
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="rounded-lg bg-white p-8 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
           {showAccountNotFoundCard && (
-            <div className="relative mb-6 overflow-hidden rounded-2xl border border-white/70 bg-white/45 px-5 py-5 shadow-[0_18px_45px_-24px_rgba(16,185,129,0.7)] backdrop-blur-xl">
+            <div className="relative mb-6 overflow-hidden rounded-2xl border border-white/70 bg-white/45 px-5 py-5 shadow-[0_18px_45px_-24px_rgba(16,185,129,0.7)] backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70">
               <div className="pointer-events-none absolute -right-7 -top-8 h-24 w-24 rounded-full bg-emerald-300/50 blur-2xl" />
               <div className="pointer-events-none absolute -left-8 -bottom-8 h-28 w-28 rounded-full bg-primary-300/45 blur-2xl" />
 
-              <h3 className="relative text-lg font-semibold text-gray-900">Account Not Found</h3>
-              <p className="relative mt-2 text-sm text-gray-700">
+              <h3 className="relative text-lg font-semibold text-gray-900 dark:text-slate-100">Account Not Found</h3>
+              <p className="relative mt-2 text-sm text-gray-700 dark:text-slate-300">
                 We couldn&apos;t find an authorized {accountNotFoundProvider === 'apple' ? 'Apple Sign-In' : 'email'} account for:
               </p>
               <p className="relative mt-1 break-all text-sm font-semibold text-primary-800">
                 {accountNotFoundEmail || (email || '').trim().toLowerCase() || 'No email provided'}
               </p>
-              <p className="relative mt-3 text-xs font-medium text-gray-600">
+              <p className="relative mt-3 text-xs font-medium text-gray-600 dark:text-slate-400">
                 Redirecting to onboarding in {accountNotFoundCountdown}s...
               </p>
 
@@ -588,7 +588,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={dismissAccountNotFoundPrompt}
-                  className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white/70 px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-white"
+                  className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white/70 px-4 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-white dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                 >
                   Stay on Login
                 </button>
@@ -694,7 +694,7 @@ export default function LoginPage() {
               
               <form onSubmit={handlePasswordSetup} className="space-y-4">
                 <div>
-                  <label htmlFor="setup-email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="setup-email" className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                     Email address
                   </label>
                   <input
@@ -702,12 +702,12 @@ export default function LoginPage() {
                     type="email"
                     value={passwordSetupEmail}
                     disabled
-                    className="input-field bg-gray-50"
+                    className="input-field bg-gray-50 dark:bg-slate-800"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="new-password" className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                     New Password
                   </label>
                   <input
@@ -720,11 +720,11 @@ export default function LoginPage() {
                     placeholder="Enter your new password"
                     minLength={6}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">Must be at least 6 characters</p>
                 </div>
 
                 <div>
-                  <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="confirm-password" className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                     Confirm Password
                   </label>
                   <input
@@ -784,7 +784,7 @@ export default function LoginPage() {
           ) : showResetForm ? (
             <form onSubmit={handlePasswordReset} className="space-y-4">
               <div>
-                <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="reset-email" className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                   Email address
                 </label>
                 <input
@@ -815,7 +815,7 @@ export default function LoginPage() {
                     setShowResetForm(false);
                     setError('');
                   }}
-                  className="text-sm text-gray-600 hover:text-gray-500"
+                  className="text-sm text-gray-600 hover:text-gray-500 dark:text-slate-300 dark:hover:text-slate-200"
                 >
                   Back to login
                 </button>
@@ -838,7 +838,7 @@ export default function LoginPage() {
                 </div>
               )}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                   Email address
                 </label>
                 <input
@@ -866,7 +866,7 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
                   Password
                 </label>
                 <div className="relative">
@@ -885,7 +885,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none dark:text-slate-400 dark:hover:text-slate-200"
                     tabIndex={-1}
                     disabled={isAppleOnly}
                   >
@@ -905,7 +905,7 @@ export default function LoginPage() {
 
               <div className="flex items-center justify-between">
                 {isAppleOnly ? (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-500 dark:text-slate-400">
                     Password reset isn’t available for Apple Sign-In.
                   </span>
                 ) : (
@@ -931,9 +931,9 @@ export default function LoginPage() {
               </button>
 
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs text-gray-500">or</span>
-                <div className="flex-1 h-px bg-gray-200" />
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
+                <span className="text-xs text-gray-500 dark:text-slate-400">or</span>
+                <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
               </div>
 
                 <button
@@ -968,7 +968,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-slate-300">
             Don't have an account?{' '}
             <Link to={signupPath} className="text-primary-600 hover:text-primary-500 font-medium">
               Get started

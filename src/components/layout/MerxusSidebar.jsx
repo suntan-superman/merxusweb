@@ -17,12 +17,12 @@ export default function MerxusSidebar() {
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen">
+    <aside className="w-64 bg-white border-r border-gray-200 dark:bg-slate-900 dark:border-slate-700 flex flex-col h-screen">
       {/* Logo */}
-      <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
         <NavLink to="/merxus" className="flex items-center space-x-2">
-          <span className="text-2xl font-bold text-primary-600">Merxus</span>
-          <span className="text-xs text-gray-500 bg-primary-100 px-2 py-1 rounded">Admin</span>
+          <span className="text-2xl font-bold text-primary-600">Merxus AI</span>
+          <span className="text-xs text-gray-500 dark:text-slate-300 bg-primary-100 dark:bg-slate-800 px-2 py-1 rounded">Admin</span>
         </NavLink>
       </div>
 
@@ -48,7 +48,7 @@ export default function MerxusSidebar() {
       </nav>
 
       {/* User Info - Sticky at Bottom */}
-      <div className="px-3 py-4 border-t border-gray-200 flex-shrink-0 bg-white">
+      <div className="px-3 py-4 border-t border-gray-200 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900">
         <div className="flex items-center space-x-3 mb-3">
           <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
             <span className="text-primary-600 font-semibold text-sm">
@@ -56,17 +56,17 @@ export default function MerxusSidebar() {
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate">
               {user?.displayName || user?.email || 'Admin'}
             </p>
-            <p className="text-xs text-gray-500 capitalize">
+            <p className="text-xs text-gray-500 dark:text-slate-400 capitalize">
               {userClaims?.role || 'Admin'}
             </p>
           </div>
         </div>
         <button
           onClick={handleSignOut}
-          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800 rounded-md transition-colors"
         >
           Sign Out
         </button>
@@ -82,8 +82,8 @@ function NavItem({ to, label, icon }) {
       className={({ isActive }) =>
         `flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
           isActive
-            ? 'bg-green-50 text-green-700 border-l-4 border-green-600'
-            : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+            ? 'bg-green-50 text-green-700 border-l-4 border-green-600 dark:bg-emerald-900/30 dark:text-emerald-200'
+            : 'text-gray-700 hover:bg-green-50 hover:text-green-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-200'
         }`
       }
     >

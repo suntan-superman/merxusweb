@@ -144,29 +144,32 @@ export default function PaymentSuccessPage() {
 
   if (!loading && !user) {
     return (
-      <div className="mx-auto mt-12 max-w-xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900">Sign in required</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Payment verification requires the same authenticated Firebase account used to checkout.
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate("/login", { state: { returnTo: window.location.pathname + window.location.search } })}
-          className="mt-6 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
-        >
-          Go to Login
-        </button>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 py-10">
+        <div className="mx-auto mt-12 max-w-xl rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Sign in required</h1>
+          <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">
+            Payment verification requires the same authenticated Firebase account used to checkout.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/login", { state: { returnTo: window.location.pathname + window.location.search } })}
+            className="mt-6 rounded-lg bg-gray-900 dark:bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 dark:hover:bg-slate-700"
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto mt-10 max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h1 className="text-2xl font-bold text-gray-900">Payment Success</h1>
-      {state.loading && <p className="mt-3 text-sm text-gray-600">Verifying your checkout session...</p>}
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 px-4 py-10">
+      <div className="mx-auto mt-10 max-w-2xl rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Payment Success</h1>
+      {state.loading && <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">Verifying your checkout session...</p>}
       {!state.loading && state.error && <p className="mt-3 text-sm text-red-600">{state.error}</p>}
       {!state.loading && state.result && (
-        <div className="mt-4 space-y-2 text-sm text-gray-700">
+        <div className="mt-4 space-y-2 text-sm text-gray-700 dark:text-slate-300">
           <p>Paid: {state.result.paid ? "yes" : "no"}</p>
           <p>Session status: {state.result.status || "n/a"}</p>
           <p>Payment status: {state.result.paymentStatus || "n/a"}</p>
@@ -176,16 +179,16 @@ export default function PaymentSuccessPage() {
           <p>Subscription status: {state.result.subscriptionStatus || "n/a"}</p>
 
           {state.result.paid && state.result.reservationId && (
-            <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="font-semibold text-gray-900">Number Provisioning</p>
-              {provisioning.loading && <p className="mt-2 text-sm text-gray-600">Assigning your Twilio number...</p>}
+            <div className="mt-4 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/60 p-4">
+              <p className="font-semibold text-gray-900 dark:text-slate-100">Number Provisioning</p>
+              {provisioning.loading && <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Assigning your Twilio number...</p>}
               {!provisioning.loading && provisioning.error && (
                 <div className="mt-2">
                   <p className="text-sm text-red-600">{provisioning.error}</p>
                   <button
                     type="button"
                     onClick={handleFinalizeProvisioning}
-                    className="mt-3 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-900"
+                    className="mt-3 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-semibold text-gray-900 dark:text-slate-100"
                   >
                     Retry Provisioning
                   </button>
@@ -199,7 +202,7 @@ export default function PaymentSuccessPage() {
                     type="button"
                     onClick={handleVerifyTestCall}
                     disabled={testCall.loading}
-                    className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-semibold text-white disabled:bg-gray-300"
+                    className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-semibold text-white disabled:bg-gray-300 dark:disabled:bg-slate-600"
                   >
                     {testCall.loading ? "Checking..." : mobileDevice ? "Test My Number (Call Now)" : "Test My Number"}
                   </button>
@@ -221,8 +224,8 @@ export default function PaymentSuccessPage() {
           )}
 
           {mobileDevice && (
-            <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="text-sm font-semibold text-gray-900">You're all set. Choose your next step:</p>
+            <div className="mt-4 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/60 p-4">
+              <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">You're all set. Choose your next step:</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <button
                   type="button"
@@ -233,7 +236,7 @@ export default function PaymentSuccessPage() {
                 </button>
                 <a
                   href={iosAppStoreUrl}
-                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-900"
+                  className="rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 text-center text-sm font-semibold text-gray-900 dark:text-slate-100"
                 >
                   Download iOS App
                 </a>
@@ -242,6 +245,7 @@ export default function PaymentSuccessPage() {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

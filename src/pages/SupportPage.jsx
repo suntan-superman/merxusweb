@@ -90,7 +90,7 @@ export default function SupportPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       <div className="max-w-4xl px-4 py-12 mx-auto sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -100,31 +100,31 @@ export default function SupportPage() {
           >
             ← Back to Login
           </Link>
-          <h1 className="mb-2 text-4xl font-bold text-gray-900">
+          <h1 className="mb-2 text-4xl font-bold text-gray-900 dark:text-slate-100">
             Support & Help Center
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-slate-400">
             Get help with Merxus AI Phone Assistant Platform
           </p>
         </div>
 
         {/* Contact Methods */}
-        <div className="p-8 mb-8 bg-white rounded-lg shadow-sm">
-          <h2 className="mb-6 text-2xl font-semibold text-gray-900">
+        <div className="p-8 mb-8 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+          <h2 className="mb-6 text-2xl font-semibold text-gray-900 dark:text-slate-100">
             Contact Us
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="flex items-start">
               <EnvelopeIcon className="flex-shrink-0 w-6 h-6 mt-1 mr-3 text-green-600" />
               <div>
-                <h3 className="mb-1 font-medium text-gray-900">Email Support</h3>
+                <h3 className="mb-1 font-medium text-gray-900 dark:text-slate-100">Email Support</h3>
                 <a 
                   href="mailto:support@merxusllc.com" 
                   className="text-green-600 hover:text-green-700"
                 >
                   support@merxusllc.com
                 </a>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-gray-600 dark:text-slate-400">
                   We typically respond within 24 hours
                 </p>
               </div>
@@ -132,14 +132,14 @@ export default function SupportPage() {
             <div className="flex items-start">
               <DocumentTextIcon className="flex-shrink-0 w-6 h-6 mt-1 mr-3 text-green-600" />
               <div>
-                <h3 className="mb-1 font-medium text-gray-900">Documentation</h3>
+                <h3 className="mb-1 font-medium text-gray-900 dark:text-slate-100">Documentation</h3>
                 <Link 
                   to="/privacy-policy" 
                   className="text-green-600 hover:text-green-700"
                 >
                   Privacy Policy
                 </Link>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-gray-600 dark:text-slate-400">
                   Review our privacy policy and terms
                 </p>
               </div>
@@ -148,15 +148,15 @@ export default function SupportPage() {
         </div>
 
         {/* Contact Form */}
-        <div className="p-8 mb-8 bg-white rounded-lg shadow-sm">
-          <h2 className="flex items-center mb-6 text-2xl font-semibold text-gray-900">
+        <div className="p-8 mb-8 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+          <h2 className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-slate-100">
             <ChatBubbleLeftRightIcon className="w-6 h-6 mr-2 text-green-600" />
             Send Us a Message
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-700">
+                <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-700 dark:text-slate-300">
                   Your Name *
                 </label>
                 <input
@@ -165,11 +165,11 @@ export default function SupportPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                 />
               </div>
               <div>
-                <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700 dark:text-slate-300">
                   Your Email *
                 </label>
                 <input
@@ -178,12 +178,12 @@ export default function SupportPage() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                 />
               </div>
             </div>
             <div>
-              <label htmlFor="subject" className="block mb-1 text-sm font-medium text-gray-700">
+              <label htmlFor="subject" className="block mb-1 text-sm font-medium text-gray-700 dark:text-slate-300">
                 Subject *
               </label>
               <input
@@ -193,11 +193,11 @@ export default function SupportPage() {
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 placeholder="e.g., Password Reset, Feature Request, Bug Report"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
               />
             </div>
             <div>
-              <label htmlFor="message" className="block mb-1 text-sm font-medium text-gray-700">
+              <label htmlFor="message" className="block mb-1 text-sm font-medium text-gray-700 dark:text-slate-300">
                 Message *
               </label>
               <textarea
@@ -207,16 +207,16 @@ export default function SupportPage() {
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 placeholder="Please describe your issue or question in detail..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
               />
             </div>
             {submitStatus === 'success' && (
-              <div className="p-3 text-sm text-green-800 border border-green-200 rounded-md bg-green-50">
+              <div className="p-3 text-sm text-green-800 border border-green-200 dark:border-green-700 rounded-md bg-green-50 dark:bg-green-950/30">
                 ✓ Your support request has been submitted successfully! We've sent a confirmation email and will respond within 24 hours.
               </div>
             )}
             {submitStatus === 'error' && (
-              <div className="p-3 text-sm text-red-800 border border-red-200 rounded-md bg-red-50">
+              <div className="p-3 text-sm text-red-800 border border-red-200 dark:border-red-700 rounded-md bg-red-50 dark:bg-red-950/30">
                 ✗ There was an error submitting your request. Please try again or email us directly at support@merxusllc.com
               </div>
             )}
@@ -231,18 +231,18 @@ export default function SupportPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="p-8 bg-white rounded-lg shadow-sm">
-          <h2 className="flex items-center mb-6 text-2xl font-semibold text-gray-900">
+        <div className="p-8 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+          <h2 className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-slate-100">
             <QuestionMarkCircleIcon className="w-6 h-6 mr-2 text-green-600" />
             Frequently Asked Questions
           </h2>
           <div className="space-y-6">
             {faqs.map((faq, index) => (
-              <div key={index} className="pb-4 border-b border-gray-200 last:border-b-0">
-                <h3 className="mb-2 text-lg font-medium text-gray-900">
+              <div key={index} className="pb-4 border-b border-gray-200 dark:border-slate-700 last:border-b-0">
+                <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-slate-100">
                   {faq.question}
                 </h3>
-                <p className="leading-relaxed text-gray-700">
+                <p className="leading-relaxed text-gray-700 dark:text-slate-300">
                   {faq.answer}
                 </p>
               </div>
@@ -251,48 +251,49 @@ export default function SupportPage() {
         </div>
 
         {/* Quick Links */}
-        <div className="p-8 mt-8 bg-white rounded-lg shadow-sm">
-          <h2 className="mb-4 text-2xl font-semibold text-gray-900">
+        <div className="p-8 mt-8 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+          <h2 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-slate-100">
             Quick Links
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Link 
               to="/login" 
-              className="p-4 transition-colors border border-gray-200 rounded-md hover:border-green-500 hover:bg-green-50"
+              className="p-4 transition-colors border border-gray-200 dark:border-slate-700 rounded-md hover:border-green-500 hover:bg-green-50"
             >
-              <h3 className="mb-1 font-medium text-gray-900">Login to Your Account</h3>
-              <p className="text-sm text-gray-600">Access your dashboard and manage your business</p>
+              <h3 className="mb-1 font-medium text-gray-900 dark:text-slate-100">Login to Your Account</h3>
+              <p className="text-sm text-gray-600 dark:text-slate-400">Access your dashboard and manage your business</p>
             </Link>
             <Link 
               to="/signup" 
-              className="p-4 transition-colors border border-gray-200 rounded-md hover:border-green-500 hover:bg-green-50"
+              className="p-4 transition-colors border border-gray-200 dark:border-slate-700 rounded-md hover:border-green-500 hover:bg-green-50"
             >
-              <h3 className="mb-1 font-medium text-gray-900">Create an Account</h3>
-              <p className="text-sm text-gray-600">Sign up for Merxus AI phone assistant</p>
+              <h3 className="mb-1 font-medium text-gray-900 dark:text-slate-100">Create an Account</h3>
+              <p className="text-sm text-gray-600 dark:text-slate-400">Sign up for Merxus AI phone assistant</p>
             </Link>
             <Link 
               to="/privacy-policy" 
-              className="p-4 transition-colors border border-gray-200 rounded-md hover:border-green-500 hover:bg-green-50"
+              className="p-4 transition-colors border border-gray-200 dark:border-slate-700 rounded-md hover:border-green-500 hover:bg-green-50"
             >
-              <h3 className="mb-1 font-medium text-gray-900">Privacy Policy</h3>
-              <p className="text-sm text-gray-600">Learn how we protect your data and privacy</p>
+              <h3 className="mb-1 font-medium text-gray-900 dark:text-slate-100">Privacy Policy</h3>
+              <p className="text-sm text-gray-600 dark:text-slate-400">Learn how we protect your data and privacy</p>
             </Link>
             <a 
               href="mailto:support@merxusllc.com" 
-              className="p-4 transition-colors border border-gray-200 rounded-md hover:border-green-500 hover:bg-green-50"
+              className="p-4 transition-colors border border-gray-200 dark:border-slate-700 rounded-md hover:border-green-500 hover:bg-green-50"
             >
-              <h3 className="mb-1 font-medium text-gray-900">Email Support</h3>
-              <p className="text-sm text-gray-600">Get help from our support team</p>
+              <h3 className="mb-1 font-medium text-gray-900 dark:text-slate-100">Email Support</h3>
+              <p className="text-sm text-gray-600 dark:text-slate-400">Get help from our support team</p>
             </a>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-sm text-center text-gray-600">
+        <div className="mt-8 text-sm text-center text-gray-600 dark:text-slate-400">
           <p>© {new Date().getFullYear()} Workside Software LLC. All rights reserved.</p>
         </div>
       </div>
     </div>
   );
 }
+
 

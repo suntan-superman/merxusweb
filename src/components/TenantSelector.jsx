@@ -80,7 +80,7 @@ export default function TenantSelector({ queryParams = {} }) {
   );
 
   return (
-    <div className="pt-10 pb-16 px-4">
+    <div className="px-4 pb-16 pt-10">
       <div className="container mx-auto max-w-5xl">
         <div className="flex flex-wrap justify-center gap-3 mb-8">
           {TENANT_OPTIONS.map((option) => {
@@ -93,7 +93,7 @@ export default function TenantSelector({ queryParams = {} }) {
                 className={`min-w-[150px] rounded-full border px-5 py-3 text-sm font-semibold transition-all ${
                   active
                     ? 'border-primary-600 bg-primary-600 text-white shadow-md'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-primary-300 hover:text-primary-700'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-primary-300 hover:text-primary-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-primary-500 dark:hover:text-primary-300'
                 }`}
               >
                 <span className="mr-2" aria-hidden="true">{option.icon}</span>
@@ -103,7 +103,7 @@ export default function TenantSelector({ queryParams = {} }) {
           })}
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-primary-100 bg-white shadow-[0_30px_70px_-45px_rgba(22,163,74,0.45)]">
+        <div className="overflow-hidden rounded-3xl border border-primary-100 bg-white shadow-[0_30px_70px_-45px_rgba(22,163,74,0.45)] dark:border-slate-700 dark:bg-slate-900">
           <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="p-8 lg:p-10">
               <div className="inline-flex items-center rounded-full bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700">
@@ -111,26 +111,26 @@ export default function TenantSelector({ queryParams = {} }) {
                 {selectedOption.label}
               </div>
 
-              <h3 className="mt-5 text-3xl font-bold text-gray-900">
+              <h3 className="mt-5 text-3xl font-bold text-gray-900 dark:text-slate-100">
                 {selectedOption.headline}
               </h3>
 
-              <p className="mt-4 text-lg text-gray-700">
+              <p className="mt-4 text-lg text-gray-700 dark:text-slate-300">
                 {selectedOption.intro}
               </p>
 
-              <div className="mt-6 rounded-2xl bg-gray-50 px-5 py-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
+              <div className="mt-6 rounded-2xl bg-gray-50 px-5 py-4 dark:bg-slate-950">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400">
                   Ideal for
                 </p>
-                <p className="mt-2 text-sm text-gray-700">
+                <p className="mt-2 text-sm text-gray-700 dark:text-slate-300">
                   {selectedOption.audience}
                 </p>
               </div>
 
               <ul className="mt-8 space-y-3">
                 {selectedOption.bullets.map((bullet) => (
-                  <li key={bullet} className="flex items-start text-sm text-gray-700">
+                  <li key={bullet} className="flex items-start text-sm text-gray-700 dark:text-slate-300">
                     <span className="mr-3 mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-primary-700">
                       ✓
                     </span>
@@ -140,14 +140,14 @@ export default function TenantSelector({ queryParams = {} }) {
               </ul>
             </div>
 
-            <div className="border-t border-primary-100 bg-gradient-to-br from-primary-50 via-white to-primary-100/60 p-8 lg:border-l lg:border-t-0 lg:p-10">
+            <div className="border-t border-primary-100 bg-gradient-to-br from-primary-50 via-white to-primary-100/60 p-8 dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 lg:border-l lg:border-t-0 lg:p-10">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">
                 Plan Snapshot
               </p>
-              <p className="mt-4 text-3xl font-bold text-gray-900">
+              <p className="mt-4 text-3xl font-bold text-gray-900 dark:text-slate-100">
                 {selectedOption.price}
               </p>
-              <p className="mt-3 text-sm text-gray-600">
+              <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">
                 You can review exact features and pricing before checkout, and you can compare all plans if you need more detail.
               </p>
 
@@ -160,17 +160,17 @@ export default function TenantSelector({ queryParams = {} }) {
                 </Link>
                 <Link
                   to={`/pricing${selectedOption.type ? `?type=${encodeURIComponent(selectedOption.type)}` : ''}`}
-                  className="inline-flex w-full items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary-300 hover:text-primary-700"
+                  className="inline-flex w-full items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary-300 hover:text-primary-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-primary-500 dark:hover:text-primary-300"
                 >
                   Compare plans
                 </Link>
               </div>
 
-              <div className="mt-8 rounded-2xl border border-white/80 bg-white/80 px-5 py-4">
-                <p className="text-sm font-semibold text-gray-900">
+              <div className="mt-8 rounded-2xl border border-white/80 bg-white/80 px-5 py-4 dark:border-slate-700 dark:bg-slate-900/80">
+                <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
                   What happens next?
                 </p>
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">
                   We’ll route you into the correct onboarding path, pre-load the right labels and plan defaults, and keep the rest of the setup specific to your tenant type.
                 </p>
               </div>

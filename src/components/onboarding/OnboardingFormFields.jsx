@@ -42,7 +42,7 @@ export function FormInput({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+      <label htmlFor={id} className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
         {label} {required && '*'}
       </label>
       <input
@@ -57,7 +57,7 @@ export function FormInput({
         {...props}
       />
       {helpText && (
-        <p className="mt-1 text-xs text-gray-500">{helpText}</p>
+        <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{helpText}</p>
       )}
     </div>
   );
@@ -80,7 +80,7 @@ export function FormTextarea({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+      <label htmlFor={id} className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
         {label} {required && '*'}
       </label>
       <textarea
@@ -95,7 +95,7 @@ export function FormTextarea({
         {...props}
       />
       {helpText && (
-        <p className="mt-1 text-xs text-gray-500">{helpText}</p>
+        <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{helpText}</p>
       )}
     </div>
   );
@@ -107,12 +107,12 @@ export function FormTextarea({
 export function PlanDisplay({ pricingInfo, selectedPlan }) {
   if (selectedPlan) {
     return (
-      <div className="inline-block px-6 py-3 mb-4 bg-primary-50 border-2 border-primary-200 rounded-lg">
-        <p className="text-sm text-gray-600 mb-1">Selected Plan</p>
+      <div className="mb-4 inline-block rounded-lg border-2 border-primary-200 bg-primary-50 px-6 py-3 dark:border-slate-600 dark:bg-slate-800">
+        <p className="mb-1 text-sm text-gray-600 dark:text-slate-300">Selected Plan</p>
         <p className="text-lg font-semibold text-primary-700">
           {pricingInfo.planName} - ${pricingInfo.monthly}/month
         </p>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-slate-300">
           Setup Fee: ${pricingInfo.setup} one-time
         </p>
         <Link 
@@ -126,10 +126,10 @@ export function PlanDisplay({ pricingInfo, selectedPlan }) {
   }
 
   return (
-    <div className="inline-block px-6 py-3 mb-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
-      <p className="text-sm text-gray-700 mb-2">
-        <span className="font-semibold">No plan selected.</span> You can choose a plan after your trial.
-      </p>
+      <div className="mb-4 inline-block rounded-lg border-2 border-yellow-200 bg-yellow-50 px-6 py-3 dark:border-yellow-700/50 dark:bg-slate-800">
+        <p className="mb-2 text-sm text-gray-700 dark:text-slate-300">
+          <span className="font-semibold">No plan selected.</span> You can choose a plan after your trial.
+        </p>
       <Link 
         to="/pricing" 
         className="text-sm text-primary-600 hover:text-primary-700 underline font-semibold"
@@ -155,8 +155,8 @@ export function AccountMethodSelector({
   const isAppleAuth = authMethod === 'apple';
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <p className="text-sm font-semibold text-gray-900 mb-3">Account Sign-In Method</p>
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+      <p className="mb-3 text-sm font-semibold text-gray-900 dark:text-slate-100">Account Sign-In Method</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <button
           type="button"
@@ -165,7 +165,7 @@ export function AccountMethodSelector({
           className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
             !isAppleAuth
               ? 'border-primary-600 bg-primary-600 text-white'
-              : 'border-gray-300 bg-white text-gray-700 hover:border-primary-300'
+              : 'border-gray-300 bg-white text-gray-700 hover:border-primary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
           } ${disableEmailOption ? 'cursor-not-allowed opacity-50' : ''}`}
         >
           Email
@@ -176,7 +176,7 @@ export function AccountMethodSelector({
           className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
             isAppleAuth
               ? 'border-primary-600 bg-primary-600 text-white'
-              : 'border-gray-300 bg-white text-gray-700 hover:border-primary-300'
+              : 'border-gray-300 bg-white text-gray-700 hover:border-primary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
           }`}
         >
           Apple
@@ -184,7 +184,7 @@ export function AccountMethodSelector({
       </div>
 
       {isAppleAuth && (
-        <div className="mt-3 rounded-md border border-primary-100 bg-primary-50 px-3 py-3 text-sm">
+        <div className="mt-3 rounded-md border border-primary-100 bg-primary-50 px-3 py-3 text-sm dark:border-slate-600 dark:bg-slate-900">
           {isAppleConnected ? (
             <p className="text-primary-800">
               Apple connected as <span className="font-semibold">{appleEmail}</span>
@@ -222,11 +222,11 @@ export function OwnerInfoSection({
   if (!showSection) return null;
 
   return (
-    <div className="border-t border-gray-200 pt-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="border-t border-gray-200 pt-6 dark:border-slate-700">
+      <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-slate-100">
         Owner/Manager Information
       </h3>
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="mb-4 text-sm text-gray-600 dark:text-slate-300">
         {introText}
       </p>
       
@@ -291,7 +291,7 @@ export function RestaurantFields({ formData, onChange }) {
 export function VoiceFields({ formData, onChange }) {
   return (
     <div>
-      <label htmlFor="businessType" className="block text-sm font-medium text-gray-700 mb-2">
+      <label htmlFor="businessType" className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
         Business Type *
       </label>
       <SelectField
@@ -303,7 +303,7 @@ export function VoiceFields({ formData, onChange }) {
         placeholder="Select business type..."
         required
       />
-      <p className="mt-1 text-xs text-gray-500">This helps the AI match your business context.</p>
+      <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">This helps the AI match your business context.</p>
     </div>
   );
 }

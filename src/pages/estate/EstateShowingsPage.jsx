@@ -134,8 +134,8 @@ export default function EstateShowingsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Showings</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Showings</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
             Schedule and manage property showings
           </p>
         </div>
@@ -145,7 +145,7 @@ export default function EstateShowingsPage() {
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/50 dark:bg-red-900/30 dark:text-red-200">
           {error}
         </div>
       )}

@@ -145,8 +145,8 @@ export default function VoiceCallsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Calls & Messages</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Calls & Messages</h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
             View call history, transcripts, and customer communications
           </p>
         </div>
@@ -159,7 +159,7 @@ export default function VoiceCallsPage() {
               className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                 dateFilter === filter
                   ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600'
               }`}
             >
               {filter === 'today' && 'Today'}
@@ -182,7 +182,7 @@ export default function VoiceCallsPage() {
       <EscalatedCallsAlert calls={calls} />
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/50 dark:bg-red-900/30 dark:text-red-200">
           {error}
         </div>
       )}

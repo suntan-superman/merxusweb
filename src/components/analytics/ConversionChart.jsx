@@ -37,6 +37,21 @@ export default function ConversionChart({
   context = 'voice' // 'voice', 'restaurant', 'estate'
 }) {
   const [view, setView] = useState('outcomes'); // outcomes, conversions
+  const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const tooltipStyle = isDarkMode
+    ? {
+        backgroundColor: '#0f172a',
+        border: '1px solid #334155',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.35)',
+        color: '#e2e8f0',
+      }
+    : {
+        backgroundColor: '#fff',
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+      };
 
   // Parse date from Firestore
   const parseDate = (dateField) => {
@@ -166,7 +181,7 @@ export default function ConversionChart({
               className="w-3 h-3 rounded-full" 
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-slate-300">
               {entry.value} ({displayData.find(d => d.name === entry.value)?.value || 0})
             </span>
           </div>
@@ -176,24 +191,24 @@ export default function ConversionChart({
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
+    <div className={`rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:shadow-none ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h3>
           {view === 'conversions' && (
-            <p className="text-sm text-gray-500 mt-1">{conversionData.primary.description}</p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">{conversionData.primary.description}</p>
           )}
         </div>
         
         {/* View Selector */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-slate-800">
           <button
             onClick={() => setView('outcomes')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
               view === 'outcomes'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:shadow-none'
+                : 'text-gray-600 hover:text-gray-900 dark:text-slate-300 dark:hover:text-slate-100'
             }`}
           >
             Outcomes
@@ -202,8 +217,8 @@ export default function ConversionChart({
             onClick={() => setView('conversions')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
               view === 'conversions'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:shadow-none'
+                : 'text-gray-600 hover:text-gray-900 dark:text-slate-300 dark:hover:text-slate-100'
             }`}
           >
             Conversion
@@ -217,7 +232,7 @@ export default function ConversionChart({
           <div className="text-5xl font-bold text-blue-600">
             {conversionData.primary.value}%
           </div>
-          <p className="text-sm text-gray-500 mt-1">{conversionData.primary.label}</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">{conversionData.primary.label}</p>
         </div>
       )}
 
@@ -240,12 +255,7 @@ export default function ConversionChart({
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                }}
+                contentStyle={tooltipStyle}
                 formatter={(value, name) => {
                   const pct = totalValue > 0 ? Math.round((value / totalValue) * 100) : 0;
                   return [`${value} (${pct}%)`, name];
@@ -255,7 +265,7 @@ export default function ConversionChart({
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-full flex items-center justify-center text-gray-400">
+          <div className="flex h-full items-center justify-center text-gray-400 dark:text-slate-500">
             No data available
           </div>
         )}
@@ -263,25 +273,25 @@ export default function ConversionChart({
 
       {/* Quick Stats */}
       {view === 'outcomes' && (
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-4 grid grid-cols-3 gap-4 border-t border-gray-100 pt-4 dark:border-slate-700">
           <div className="text-center">
             <p className="text-2xl font-semibold text-green-600">
               {outcomesData.find(d => d.name.toLowerCase().includes('complet'))?.value || 
                outcomesData.find(d => d.name.toLowerCase().includes('answer'))?.value || 0}
             </p>
-            <p className="text-xs text-gray-500">Completed</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Completed</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-semibold text-red-600">
               {outcomesData.find(d => d.name.toLowerCase().includes('miss'))?.value || 0}
             </p>
-            <p className="text-xs text-gray-500">Missed</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Missed</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-semibold text-blue-600">
               {outcomesData.find(d => d.name.toLowerCase().includes('voicemail'))?.value || 0}
             </p>
-            <p className="text-xs text-gray-500">Voicemail</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Voicemail</p>
           </div>
         </div>
       )}

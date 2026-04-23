@@ -25,7 +25,7 @@ const NavBar = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-primary-600">Merxus</span>
+            <span className="text-2xl font-bold text-primary-600">Merxus AI</span>
           </Link>
 
           {/* Desktop Menu */}

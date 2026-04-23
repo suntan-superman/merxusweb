@@ -54,18 +54,18 @@ export default function EstateSidebar() {
   const eliteUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'elite');
 
   return (
-    <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen">
+    <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 dark:bg-slate-900 dark:border-slate-700 flex-col h-screen">
       {/* Agent Name */}
-      <div className="px-5 py-5 border-b border-gray-200 flex-shrink-0">
+      <div className="px-5 py-5 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
         <NavLink to="/estate" className="block">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🏡</span>
-            <h1 className="text-xl font-bold text-gray-900 truncate">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100 truncate">
               {agentName || 'Agent'}
             </h1>
           </div>
           <div className="mt-1 ml-9 flex flex-wrap items-center gap-2">
-            <p className="text-xs text-gray-500">Powered by Merxus Real Estate</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">Powered by Merxus Real Estate</p>
             {!subscriptionLoading ? <PlanTierBadge tier={tier} label={tierLabel} /> : null}
           </div>
         </NavLink>
@@ -158,7 +158,7 @@ export default function EstateSidebar() {
       </nav>
 
       {/* User Info - Sticky at Bottom */}
-      <div className="px-3 py-4 border-t border-gray-200 flex-shrink-0 bg-white">
+      <div className="px-3 py-4 border-t border-gray-200 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-900">
         <div className="flex items-center space-x-3 mb-3">
           <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
             <span className="text-primary-600 font-semibold text-sm">
@@ -166,17 +166,17 @@ export default function EstateSidebar() {
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate">
               {user?.displayName || user?.email || 'User'}
             </p>
-            <p className="text-xs text-gray-500 capitalize">
+            <p className="text-xs text-gray-500 dark:text-slate-400 capitalize">
               {userClaims?.role || 'User'}
             </p>
           </div>
         </div>
         <button
           onClick={handleSignOut}
-          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800 rounded-md transition-colors"
         >
           Sign Out
         </button>
@@ -202,23 +202,23 @@ function NavItem({
         if (attentionCount > 0) {
           return `flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
             isActive
-              ? 'border-l-4 border-amber-500 bg-amber-50 text-amber-800'
-              : 'bg-amber-50/80 text-amber-800 hover:bg-amber-100'
+              ? 'border-l-4 border-amber-500 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
+              : 'bg-amber-50/80 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/40'
           }`;
         }
 
         if (locked) {
           return `flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
             isActive
-              ? 'border-l-4 border-blue-500 bg-blue-50 text-blue-800'
-              : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700'
+              ? 'border-l-4 border-blue-500 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+              : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-blue-900/30 dark:hover:text-blue-200'
           }`;
         }
 
         return `flex items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
           isActive
-            ? 'border-l-4 border-green-600 bg-green-50 text-green-700'
-            : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+            ? 'border-l-4 border-green-600 bg-green-50 text-green-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+            : 'text-gray-700 hover:bg-green-50 hover:text-green-700 dark:text-slate-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-200'
         }`;
       }}
     >

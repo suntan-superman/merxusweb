@@ -15,6 +15,23 @@ const COLORS = {
 
 export default function PeakHoursChart({ calls = [], title = 'Peak Hours', className = '' }) {
   const [viewType, setViewType] = useState('hourly'); // hourly, dayOfWeek
+  const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const gridColor = isDarkMode ? '#334155' : COLORS.grid;
+  const axisTextColor = isDarkMode ? '#cbd5e1' : COLORS.text;
+  const tooltipStyle = isDarkMode
+    ? {
+        backgroundColor: '#0f172a',
+        border: '1px solid #334155',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.35)',
+        color: '#e2e8f0',
+      }
+    : {
+        backgroundColor: '#fff',
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+      };
 
   // Parse date from Firestore formats
   const parseDate = (dateField) => {
@@ -148,24 +165,24 @@ export default function PeakHoursChart({ calls = [], title = 'Peak Hours', class
   }, [calls]);
 
   return (
-    <div className={`w-full min-w-0 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
+    <div className={`w-full min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:shadow-none ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
             Peak: {peakInfo.label} ({peakInfo.value} calls)
           </p>
         </div>
         
         {/* View Type Selector */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-slate-800">
           <button
             onClick={() => setViewType('hourly')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
               viewType === 'hourly'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:shadow-none'
+                : 'text-gray-600 hover:text-gray-900 dark:text-slate-300 dark:hover:text-slate-100'
             }`}
           >
             By Hour
@@ -174,8 +191,8 @@ export default function PeakHoursChart({ calls = [], title = 'Peak Hours', class
             onClick={() => setViewType('dayOfWeek')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
               viewType === 'dayOfWeek'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:shadow-none'
+                : 'text-gray-600 hover:text-gray-900 dark:text-slate-300 dark:hover:text-slate-100'
             }`}
           >
             By Day
@@ -190,28 +207,23 @@ export default function PeakHoursChart({ calls = [], title = 'Peak Hours', class
             data={currentData} 
             margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
             <XAxis 
               dataKey={dataKey}
-              stroke={COLORS.text}
+              stroke={axisTextColor}
               tick={{ fontSize: 11 }}
               tickLine={false}
               axisLine={false}
               interval={viewType === 'hourly' ? 2 : 0}
             />
             <YAxis 
-              stroke={COLORS.text}
+              stroke={axisTextColor}
               tick={{ fontSize: 12 }}
               tickLine={false}
               axisLine={false}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-              }}
+              contentStyle={tooltipStyle}
               formatter={(value) => [value, 'Calls']}
               labelFormatter={(label) => viewType === 'hourly' ? `${label}` : label}
             />
@@ -225,18 +237,18 @@ export default function PeakHoursChart({ calls = [], title = 'Peak Hours', class
       </div>
 
       {/* Business Hours Summary */}
-      <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+      <div className="mt-6 grid grid-cols-3 gap-4 border-t border-gray-100 pt-6 dark:border-slate-700">
         <div>
-          <p className="text-sm text-gray-500">Business Hours</p>
-          <p className="text-lg font-semibold text-gray-900">{businessHoursStats.businessHours}</p>
-          <p className="text-xs text-gray-400">9 AM - 5 PM, Mon-Fri</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">Business Hours</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">{businessHoursStats.businessHours}</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500">9 AM - 5 PM, Mon-Fri</p>
         </div>
         <div>
-          <p className="text-sm text-gray-500">After Hours</p>
-          <p className="text-lg font-semibold text-gray-900">{businessHoursStats.afterHours}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">After Hours</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">{businessHoursStats.afterHours}</p>
         </div>
         <div>
-          <p className="text-sm text-gray-500">During Hours</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">During Hours</p>
           <p className="text-lg font-semibold text-blue-600">{businessHoursStats.businessPct}%</p>
         </div>
       </div>

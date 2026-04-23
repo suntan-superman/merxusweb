@@ -37,6 +37,21 @@ export default function LeadSourceChart({
   className = '' 
 }) {
   const [view, setView] = useState('sources'); // sources, priority, conversion
+  const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const tooltipStyle = isDarkMode
+    ? {
+        backgroundColor: '#0f172a',
+        border: '1px solid #334155',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.35)',
+        color: '#e2e8f0',
+      }
+    : {
+        backgroundColor: '#fff',
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+      };
 
   // Parse date from Firestore
   const parseDate = (dateField) => {
@@ -127,24 +142,24 @@ export default function LeadSourceChart({
   const totalValue = displayData.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className={`w-full min-w-0 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
+    <div className={`w-full min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:shadow-none ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
             {leads.length} total leads
           </p>
         </div>
         
         {/* View Selector */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-slate-800">
           <button
             onClick={() => setView('sources')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
               view === 'sources'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:shadow-none'
+                : 'text-gray-600 hover:text-gray-900 dark:text-slate-300 dark:hover:text-slate-100'
             }`}
           >
             Sources
@@ -153,8 +168,8 @@ export default function LeadSourceChart({
             onClick={() => setView('priority')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
               view === 'priority'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:shadow-none'
+                : 'text-gray-600 hover:text-gray-900 dark:text-slate-300 dark:hover:text-slate-100'
             }`}
           >
             Priority
@@ -163,8 +178,8 @@ export default function LeadSourceChart({
             onClick={() => setView('conversion')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
               view === 'conversion'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:shadow-none'
+                : 'text-gray-600 hover:text-gray-900 dark:text-slate-300 dark:hover:text-slate-100'
             }`}
           >
             Conversion
@@ -178,18 +193,18 @@ export default function LeadSourceChart({
           <div className="text-5xl font-bold text-green-600 mb-2">
             {conversionData.rate}%
           </div>
-          <p className="text-gray-600">Lead → Showing Conversion</p>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-gray-600 dark:text-slate-300">Lead → Showing Conversion</p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
             {conversionData.converted} of {conversionData.total} leads scheduled showings
           </p>
           
           {/* Simple progress bar */}
           <div className="mt-6 mx-auto max-w-xs">
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <div className="mb-1 flex justify-between text-xs text-gray-500 dark:text-slate-400">
               <span>Converted</span>
               <span>Pending</span>
             </div>
-            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
               <div 
                 className="h-full bg-green-500 rounded-full transition-all"
                 style={{ width: `${conversionData.rate}%` }}
@@ -197,7 +212,7 @@ export default function LeadSourceChart({
             </div>
             <div className="flex justify-between text-sm mt-1">
               <span className="text-green-600 font-medium">{conversionData.converted}</span>
-              <span className="text-gray-600">{conversionData.pending}</span>
+              <span className="text-gray-600 dark:text-slate-300">{conversionData.pending}</span>
             </div>
           </div>
         </div>
@@ -225,12 +240,7 @@ export default function LeadSourceChart({
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                  }}
+                  contentStyle={tooltipStyle}
                   formatter={(value, name) => {
                     const pct = totalValue > 0 ? Math.round((value / totalValue) * 100) : 0;
                     return [`${value} (${pct}%)`, name];
@@ -239,7 +249,7 @@ export default function LeadSourceChart({
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-400">
+            <div className="flex h-full items-center justify-center text-gray-400 dark:text-slate-500">
               No lead data available
             </div>
           )}
@@ -248,39 +258,39 @@ export default function LeadSourceChart({
 
       {/* Legend / Stats */}
       {view === 'sources' && sourceData.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-gray-100 pt-4 dark:border-slate-700">
           {sourceData.slice(0, 6).map((source) => (
             <div key={source.name} className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-full flex-shrink-0" 
                 style={{ backgroundColor: source.color }}
               />
-              <span className="text-sm text-gray-600 truncate">{source.name}</span>
-              <span className="text-sm font-medium text-gray-900 ml-auto">{source.value}</span>
+              <span className="truncate text-sm text-gray-600 dark:text-slate-300">{source.name}</span>
+              <span className="ml-auto text-sm font-medium text-gray-900 dark:text-slate-100">{source.value}</span>
             </div>
           ))}
         </div>
       )}
 
       {view === 'priority' && (
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100 text-center">
+        <div className="mt-4 grid grid-cols-3 gap-4 border-t border-gray-100 pt-4 text-center dark:border-slate-700">
           <div>
             <p className="text-2xl font-semibold text-red-600">
               {priorityData.find(p => p.name === 'Hot')?.value || 0}
             </p>
-            <p className="text-xs text-gray-500">🔥 Hot</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">🔥 Hot</p>
           </div>
           <div>
             <p className="text-2xl font-semibold text-amber-600">
               {priorityData.find(p => p.name === 'Warm')?.value || 0}
             </p>
-            <p className="text-xs text-gray-500">☀️ Warm</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">☀️ Warm</p>
           </div>
           <div>
             <p className="text-2xl font-semibold text-blue-600">
               {priorityData.find(p => p.name === 'Cold')?.value || 0}
             </p>
-            <p className="text-xs text-gray-500">❄️ Cold</p>
+            <p className="text-xs text-gray-500 dark:text-slate-400">❄️ Cold</p>
           </div>
         </div>
       )}

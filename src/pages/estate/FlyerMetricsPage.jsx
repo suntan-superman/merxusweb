@@ -101,6 +101,10 @@ export default function FlyerMetricsPage() {
 
   // Failed flyers for alerts
   const failedFlyers = filteredFlyers.filter((f) => f.status === 'failed').slice(0, 5);
+  const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const tooltipStyle = isDarkMode
+    ? { backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#e2e8f0' }
+    : { backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' };
 
   const handleRetryFailed = async (flyerId) => {
     try {
@@ -115,11 +119,11 @@ export default function FlyerMetricsPage() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Flyer Metrics</h1>
-        <p className="text-gray-600 mt-2">Track your flyer campaigns and performance</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Flyer Metrics</h1>
+        <p className="mt-2 text-gray-600 dark:text-slate-300">Track your flyer campaigns and performance</p>
       </div>
 
       {/* Time Range Selector */}
@@ -131,7 +135,7 @@ export default function FlyerMetricsPage() {
             className={`px-4 py-2 rounded-lg font-medium transition ${
               timeRange === range
                 ? 'bg-green-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
             }`}
           >
             {range === '7days' ? 'Last 7 Days' : range === '30days' ? 'Last 30 Days' : 'Last 90 Days'}
@@ -141,57 +145,51 @@ export default function FlyerMetricsPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
-          <p className="text-gray-600 text-sm font-medium">Total Sent</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{metrics.sent}</p>
+        <div className="rounded-lg border-l-4 border-blue-500 bg-white p-6 shadow-sm dark:bg-slate-900 dark:shadow-none">
+          <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Total Sent</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">{metrics.sent}</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-yellow-500">
-          <p className="text-gray-600 text-sm font-medium">Pending</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{metrics.pending}</p>
+        <div className="rounded-lg border-l-4 border-yellow-500 bg-white p-6 shadow-sm dark:bg-slate-900 dark:shadow-none">
+          <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Pending</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">{metrics.pending}</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-red-500">
-          <p className="text-gray-600 text-sm font-medium">Failed</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{metrics.failed}</p>
+        <div className="rounded-lg border-l-4 border-red-500 bg-white p-6 shadow-sm dark:bg-slate-900 dark:shadow-none">
+          <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Failed</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">{metrics.failed}</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
-          <p className="text-gray-600 text-sm font-medium">Approved</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{metrics.approved}</p>
+        <div className="rounded-lg border-l-4 border-green-500 bg-white p-6 shadow-sm dark:bg-slate-900 dark:shadow-none">
+          <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Approved</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">{metrics.approved}</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
-          <p className="text-gray-600 text-sm font-medium">Success Rate</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{metrics.successRate}%</p>
+        <div className="rounded-lg border-l-4 border-purple-500 bg-white p-6 shadow-sm dark:bg-slate-900 dark:shadow-none">
+          <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Success Rate</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-slate-100">{metrics.successRate}%</p>
         </div>
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Line Chart - Flyers Over Time */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Flyers Sent Trend</h3>
+        <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-slate-900 dark:shadow-none">
+          <h3 className="mb-6 text-lg font-semibold text-gray-900 dark:text-slate-100">Flyers Sent Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={timeSeriesData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="date" stroke="#6b7280" />
               <YAxis stroke="#6b7280" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                }}
-              />
+              <Tooltip contentStyle={tooltipStyle} />
               <Line type="monotone" dataKey="flyers" stroke="#10b981" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         {/* Status Pie Chart */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Delivery Status</h3>
+        <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-slate-900 dark:shadow-none">
+          <h3 className="mb-6 text-lg font-semibold text-gray-900 dark:text-slate-100">Delivery Status</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -215,20 +213,14 @@ export default function FlyerMetricsPage() {
       </div>
 
       {/* Approval Status Chart */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Approval Status</h3>
+      <div className="mb-8 rounded-lg bg-white p-6 shadow-sm dark:bg-slate-900 dark:shadow-none">
+        <h3 className="mb-6 text-lg font-semibold text-gray-900 dark:text-slate-100">Approval Status</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={[approvalData.reduce((acc, curr) => ({ ...acc, [curr.name]: curr.value }), {})]}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis dataKey="name" stroke="#6b7280" />
             <YAxis stroke="#6b7280" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-              }}
-            />
+            <Tooltip contentStyle={tooltipStyle} />
             {approvalData.map((entry, index) => (
               <Bar key={index} dataKey={entry.name} fill={entry.color} />
             ))}
@@ -238,14 +230,14 @@ export default function FlyerMetricsPage() {
 
       {/* Failed Flyers Alert */}
       {failedFlyers.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-semibold text-red-900 mb-4">Failed Sends Requiring Attention</h3>
+        <div className="mb-8 rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-500/50 dark:bg-red-900/30">
+          <h3 className="mb-4 text-lg font-semibold text-red-900 dark:text-red-200">Failed Sends Requiring Attention</h3>
           <div className="space-y-3">
             {failedFlyers.map((flyer) => (
-              <div key={flyer.id} className="flex items-center justify-between bg-white p-4 rounded-lg">
+              <div key={flyer.id} className="flex items-center justify-between rounded-lg bg-white p-4 dark:bg-slate-800">
                 <div>
-                  <p className="font-medium text-gray-900">{flyer.property_address}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-gray-900 dark:text-slate-100">{flyer.property_address}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">
                     Failed on {new Date(flyer.createdAt?.toDate?.() || flyer.createdAt).toLocaleDateString()}
                   </p>
                 </div>
@@ -262,34 +254,34 @@ export default function FlyerMetricsPage() {
       )}
 
       {/* Recent Flyers Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Flyers</h3>
+      <div className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-slate-900 dark:shadow-none">
+        <div className="border-b border-gray-200 p-6 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Recent Flyers</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="border-b border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-800/70">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Property</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date Sent</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Delivery Status</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Approval</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-200">Property</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-200">Date Sent</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-200">Delivery Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-200">Approval</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="dark:divide-y dark:divide-slate-700">
               {filteredFlyers.slice(0, 10).map((flyer) => (
-                <tr key={flyer.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 text-sm text-gray-900">{flyer.property_address || 'Unknown'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                <tr key={flyer.id} className="border-b border-gray-100 transition hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-800/70">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-100">{flyer.property_address || 'Unknown'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-300">
                     {new Date(flyer.createdAt?.toDate?.() || flyer.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       flyer.status === 'sent' || flyer.status === 'delivered'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/35 dark:text-green-200'
                         : flyer.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/35 dark:text-yellow-200'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900/35 dark:text-red-200'
                     }`}>
                       {(flyer.status || 'pending').charAt(0).toUpperCase() + (flyer.status || 'pending').slice(1)}
                     </span>
@@ -297,10 +289,10 @@ export default function FlyerMetricsPage() {
                   <td className="px-6 py-4 text-sm">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       flyer.approval_status === 'approved'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/35 dark:text-green-200'
                         : flyer.approval_status === 'declined'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900/35 dark:text-red-200'
+                        : 'bg-gray-100 text-gray-800 dark:bg-slate-700 dark:text-slate-200'
                     }`}>
                       {(flyer.approval_status || 'pending').charAt(0).toUpperCase() + (flyer.approval_status || 'pending').slice(1)}
                     </span>

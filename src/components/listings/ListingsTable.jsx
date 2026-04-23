@@ -61,7 +61,7 @@ export default function ListingsTable({
 
   if (!listings || listings.length === 0) {
     return (
-      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
+      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
         No listings to display.
       </div>
     );
@@ -115,21 +115,21 @@ export default function ListingsTable({
   // Custom cell templates
   const addressTemplate = (props) => (
     <div className="py-1 leading-tight">
-      <div className="text-sm font-medium text-gray-900">{props.formattedAddress}</div>
+      <div className="text-sm font-medium text-gray-900 dark:text-slate-100">{props.formattedAddress}</div>
       {props.mls_id && (
-        <div className="text-[11px] text-gray-400 mt-1">MLS: {props.mls_id}</div>
+        <div className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">MLS: {props.mls_id}</div>
       )}
     </div>
   );
 
   const priceTemplate = (props) => (
-    <div className="text-sm font-semibold text-gray-900">
+    <div className="text-sm font-semibold text-gray-900 dark:text-slate-100">
       {props.formattedPrice}
     </div>
   );
 
   const detailsTemplate = (props) => (
-    <div className="text-xs text-gray-600">
+    <div className="text-xs text-gray-600 dark:text-slate-300">
       {props.beds || 'N/A'} bed • {props.baths || 'N/A'} bath • {props.sq_ft ? `${props.sq_ft.toLocaleString()} sq ft` : 'N/A'}
     </div>
   );
@@ -155,13 +155,13 @@ export default function ListingsTable({
       <div className="flex items-center gap-2">
         <Link
           to={`/estate/listings/${props.id}`}
-          className="text-sm font-medium text-blue-600 hover:text-blue-700"
+          className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
         >
           View
         </Link>
         <button
           onClick={() => onEdit && onEdit(props)}
-          className="text-sm font-medium text-primary-600 hover:text-primary-700"
+          className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-200"
         >
           Edit
         </button>
@@ -169,7 +169,7 @@ export default function ListingsTable({
       <div className="flex items-center gap-2">
         <button
           onClick={() => onTestSend && onTestSend(props)}
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+          className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
         >
           Test send
         </button>
@@ -185,20 +185,20 @@ export default function ListingsTable({
 
   const flyerTemplate = (props) => {
     if (!props.flyerStatus) {
-      return <span className="text-xs text-gray-500">No sends</span>;
+      return <span className="text-xs text-gray-500 dark:text-slate-400">No sends</span>;
     }
     const badgeClass =
       props.flyerStatus === 'sent'
         ? 'inline-flex items-center rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs font-medium'
         : 'inline-flex items-center rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-xs font-medium';
     return (
-      <div className="flex flex-col gap-1 text-xs text-gray-700">
+      <div className="flex flex-col gap-1 text-xs text-gray-700 dark:text-slate-300">
         <span className={badgeClass}>
           {props.flyerStatus}
           {props.flyerIsTest ? ' (test)' : ''}
         </span>
         {props.flyerSentAt?.toDate && (
-          <span className="text-[11px] text-gray-500">
+          <span className="text-[11px] text-gray-500 dark:text-slate-400">
             {formatDate(props.flyerSentAt)}
           </span>
         )}
@@ -213,7 +213,7 @@ export default function ListingsTable({
   );
 
   return (
-    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900">
       <GridComponent
         ref={gridRef}
         dataSource={gridData}

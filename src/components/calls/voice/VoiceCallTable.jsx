@@ -129,7 +129,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
 
   if (!calls || calls.length === 0) {
     return (
-      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
+      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
         No calls to display.
       </div>
     );
@@ -207,14 +207,14 @@ export default function VoiceCallTable({ calls, onCallClick }) {
   // Custom cell templates
   const callerTemplate = (props) => (
     <div className="py-1 leading-tight">
-      <div className="text-sm text-gray-900 truncate">{props.callerInfo?.name || 'Unknown'}</div>
-      <div className="text-[11px] text-gray-400 mt-1">{formatPhoneDisplay(props.callerInfo?.phone)}</div>
+      <div className="truncate text-sm text-gray-900 dark:text-slate-100">{props.callerInfo?.name || 'Unknown'}</div>
+      <div className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">{formatPhoneDisplay(props.callerInfo?.phone)}</div>
     </div>
   );
 
   const typeTemplate = (props) => (
     <div className="leading-tight">
-      <div className="text-sm text-gray-700 capitalize">{props.type || 'call'}</div>
+      <div className="text-sm capitalize text-gray-700 dark:text-slate-300">{props.type || 'call'}</div>
     </div>
   );
 
@@ -233,7 +233,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
   };
 
   const summaryTemplate = (props) => (
-    <div className="max-w-md text-xs text-gray-700 truncate">
+    <div className="max-w-md truncate text-xs text-gray-700 dark:text-slate-300">
       {props.transcriptSummary || props.summary || 'No summary available'}
     </div>
   );
@@ -243,7 +243,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${props.speechBadge?.tone || 'bg-slate-100 text-slate-600'}`}>
         {props.speechBadge?.label || '—'}
       </span>
-      <div className="mt-1 text-[11px] text-gray-500 truncate">{props.speechBadge?.detail || 'No telemetry'}</div>
+      <div className="mt-1 truncate text-[11px] text-gray-500 dark:text-slate-400">{props.speechBadge?.detail || 'No telemetry'}</div>
     </div>
   );
 
@@ -254,7 +254,7 @@ export default function VoiceCallTable({ calls, onCallClick }) {
   );
 
   return (
-    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900">
       <style>{`
         .voice-call-grid .e-headercell {
           font-size: 16px !important;

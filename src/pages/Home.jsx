@@ -28,9 +28,9 @@ const Home = () => {
       </section>
 
       {/* Demo Video Section */}
-      <section className="px-4 py-8 bg-white">
+      <section className="bg-white px-4 py-8 dark:bg-slate-900">
         <div className="container max-w-4xl mx-auto">
-          <h2 className="mb-6 text-2xl font-bold text-center text-gray-900 md:text-3xl">
+          <h2 className="mb-6 text-center text-2xl font-bold text-gray-900 md:text-3xl dark:text-slate-100">
             What Is Merxus AI?
           </h2>
           <div className="relative overflow-hidden rounded-lg shadow-xl">
@@ -67,7 +67,7 @@ const Home = () => {
             )}
           </div>
           {!showDemoVideo && (
-            <p className="mt-2 text-center text-xs text-gray-500">
+            <p className="mt-2 text-center text-xs text-gray-500 dark:text-slate-400">
               Video loads on demand to keep page load fast.
             </p>
           )}
@@ -75,38 +75,38 @@ const Home = () => {
       </section>
 
       {/* Tenant Selection Section */}
-      <section id="choose-service" className="bg-white">
+      <section id="choose-service" className="bg-white dark:bg-slate-900">
         <TenantSelector />
       </section>
 
       {/* Problem Section */}
-      <section className="px-4 pt-8 pb-8 bg-white">
+      <section className="bg-white px-4 pb-8 pt-8 dark:bg-slate-900">
         <div className="container max-w-4xl mx-auto">
-          <h2 className="mb-6 text-3xl font-bold text-center text-gray-900 md:text-4xl">
+          <h2 className="mb-6 text-center text-3xl font-bold text-gray-900 md:text-4xl dark:text-slate-100">
             The Problem
           </h2>
-          <p className="max-w-2xl mx-auto text-lg text-center text-gray-700">
+          <p className="mx-auto max-w-2xl text-center text-lg text-gray-700 dark:text-slate-300">
             Businesses lose customers every day due to missed calls, long hold times, and overwhelmed staff. Every unanswered call is a lost opportunity.
           </p>
         </div>
       </section>
 
       {/* Solution Section */}
-      <section className="px-4 py-8 bg-primary-50">
+      <section className="bg-primary-50 px-4 py-8 dark:bg-slate-800">
         <div className="container max-w-4xl mx-auto">
-          <h2 className="mb-6 text-3xl font-bold text-center text-gray-900 md:text-4xl">
+          <h2 className="mb-6 text-center text-3xl font-bold text-gray-900 md:text-4xl dark:text-slate-100">
             The Solution
           </h2>
-          <p className="max-w-2xl mx-auto mb-8 text-lg text-center text-gray-700">
+          <p className="mx-auto mb-8 max-w-2xl text-center text-lg text-gray-700 dark:text-slate-300">
             An AI phone receptionist that answers every call instantly, handles common requests, and only involves staff when needed.
           </p>
         </div>
       </section>
 
       {/* Key Features */}
-      <section className="px-4 py-8 bg-white">
+      <section className="bg-white px-4 py-8 dark:bg-slate-900">
         <div className="container max-w-6xl mx-auto">
-          <h2 className="mb-12 text-3xl font-bold text-center text-gray-900 md:text-4xl">
+          <h2 className="mb-12 text-center text-3xl font-bold text-gray-900 md:text-4xl dark:text-slate-100">
             Key Features
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -128,7 +128,7 @@ const Home = () => {
                       </svg>
                     </div>
                   </div>
-                  <p className="ml-3 text-gray-700">{feature}</p>
+                  <p className="ml-3 text-gray-700 dark:text-slate-300">{feature}</p>
                 </div>
               </div>
             ))}
@@ -137,9 +137,9 @@ const Home = () => {
       </section>
 
       {/* Benefits */}
-      <section className="px-4 py-8 bg-primary-50">
+      <section className="bg-primary-50 px-4 py-8 dark:bg-slate-800">
         <div className="container max-w-4xl mx-auto">
-          <h2 className="mb-12 text-3xl font-bold text-center text-gray-900 md:text-4xl">
+          <h2 className="mb-12 text-center text-3xl font-bold text-gray-900 md:text-4xl dark:text-slate-100">
             Benefits
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -157,7 +157,7 @@ const Home = () => {
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                 </div>
-                <p className="ml-3 text-lg text-gray-700">{benefit}</p>
+                <p className="ml-3 text-lg text-gray-700 dark:text-slate-300">{benefit}</p>
               </div>
             ))}
           </div>
@@ -165,9 +165,9 @@ const Home = () => {
       </section>
 
       {/* How It Works */}
-      <section className="px-4 py-8 bg-white">
+      <section className="bg-white px-4 py-8 dark:bg-slate-900">
         <div className="container max-w-4xl mx-auto">
-          <h2 className="mb-12 text-3xl font-bold text-center text-gray-900 md:text-4xl">
+          <h2 className="mb-12 text-center text-3xl font-bold text-gray-900 md:text-4xl dark:text-slate-100">
             How It Works
           </h2>
           <div className="space-y-8">
@@ -184,7 +184,7 @@ const Home = () => {
                     {item.step}
                   </div>
                 </div>
-                <p className="pt-2 ml-4 text-lg text-gray-700">{item.text}</p>
+                <p className="pt-2 ml-4 text-lg text-gray-700 dark:text-slate-300">{item.text}</p>
               </div>
             ))}
           </div>

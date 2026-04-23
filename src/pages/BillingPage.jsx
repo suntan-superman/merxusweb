@@ -248,10 +248,10 @@ const BillingPage = () => {
 
   if (loading && !showClaimsError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading billing information...</p>
+          <p className="mt-4 text-gray-600 dark:text-slate-300">Loading billing information...</p>
         </div>
       </div>
     );
@@ -262,27 +262,27 @@ const BillingPage = () => {
   const currentPlan = subscription?.plan;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Billing & Subscription</h1>
-          <p className="mt-2 text-gray-600">Manage your subscription and billing information</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Billing & Subscription</h1>
+          <p className="mt-2 text-gray-600 dark:text-slate-300">Manage your subscription and billing information</p>
         </div>
 
         {upgradeContext ? (
-          <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <div className="mb-6 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30 p-4">
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-blue-900">
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
                 {upgradeContext.requiredTierLabel} plan required
               </p>
-              <p className="text-sm text-blue-800">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
                 {upgradeContext.prettyFrom
                   ? `${upgradeContext.prettyFrom} is available on the ${upgradeContext.requiredTierLabel} tier or higher.`
                   : `This feature is available on the ${upgradeContext.requiredTierLabel} tier or higher.`}
               </p>
               {upgradeContext.from ? (
-                <p className="text-xs text-blue-700">
+                <p className="text-xs text-blue-700 dark:text-blue-300">
                   Requested route: <span className="font-medium">{upgradeContext.from}</span>
                 </p>
               ) : null}
@@ -291,11 +291,11 @@ const BillingPage = () => {
         ) : null}
 
         {deeplinkUrl && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-700 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h3 className="text-sm font-semibold text-green-900">Return to the Merxus app</h3>
-                <p className="text-sm text-green-700">
+                <h3 className="text-sm font-semibold text-green-900 dark:text-green-200">Return to the Merxus app</h3>
+                <p className="text-sm text-green-700 dark:text-green-300">
                   If the app didn’t reopen automatically, tap the button below.
                 </p>
               </div>
@@ -313,19 +313,19 @@ const BillingPage = () => {
 
         {/* Current Status */}
         {subscription && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+          <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700 p-6 mb-8">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Current Status</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">Current Status</h2>
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center">
-                    <CreditCard className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-gray-700">
+                    <CreditCard className="h-5 w-5 text-gray-400 dark:text-slate-500 mr-2" />
+                    <span className="text-gray-700 dark:text-slate-300">
                       {isTrialing ? (
                         <>
                           <span className="font-medium text-green-600">Free Trial</span>
                           {subscription.trialEndsAt && (
-                            <span className="text-sm text-gray-500 ml-2">
+                            <span className="text-sm text-gray-500 dark:text-slate-400 ml-2">
                               Ends {new Date(subscription.trialEndsAt).toLocaleDateString()}
                             </span>
                           )}
@@ -333,19 +333,19 @@ const BillingPage = () => {
                       ) : isActive ? (
                         <>
                           <span className="font-medium text-green-600 capitalize">{currentPlan} Plan</span>
-                          <span className="text-sm text-gray-500 ml-2">
+                          <span className="text-sm text-gray-500 dark:text-slate-400 ml-2">
                             ${plans[currentPlan]?.price}/month
                           </span>
                         </>
                       ) : (
-                        <span className="font-medium text-gray-600 capitalize">{subscription.status}</span>
+                        <span className="font-medium text-gray-600 dark:text-slate-300 capitalize">{subscription.status}</span>
                       )}
                     </span>
                   </div>
                   {subscription.currentPeriodEnd && (
                     <div className="flex items-center">
-                      <Calendar className="h-5 w-5 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-600">
+                      <Calendar className="h-5 w-5 text-gray-400 dark:text-slate-500 mr-2" />
+                      <span className="text-sm text-gray-600 dark:text-slate-300">
                         {subscription.cancelAtPeriodEnd ? 'Cancels' : 'Renews'} on{' '}
                         {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
                       </span>
@@ -356,7 +356,7 @@ const BillingPage = () => {
               {isActive && !subscription.cancelAtPeriodEnd && (
                 <button
                   onClick={() => setShowCancelDialog(true)}
-                  className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-300 hover:border-red-400 rounded-md transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-300 dark:border-red-700 hover:border-red-400 dark:hover:border-red-600 rounded-md transition-colors"
                 >
                   Cancel Subscription
                 </button>
@@ -416,7 +416,7 @@ const BillingPage = () => {
 
         {/* Pricing Plans */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Choose Your Plan</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-6">Choose Your Plan</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(plans).map(([planKey, plan]) => {
               const isCurrentPlan = currentPlan === planKey && isActive;
@@ -424,12 +424,12 @@ const BillingPage = () => {
               return (
                 <div
                   key={planKey}
-                  className={`bg-white rounded-lg shadow-sm border-2 ${
+                  className={`bg-white dark:bg-slate-900 rounded-lg shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700 border-2 ${
                     plan.popular 
                       ? 'border-green-500 relative' 
                       : isCurrentPlan 
                       ? 'border-green-500' 
-                      : 'border-gray-200'
+                      : 'border-gray-200 dark:border-slate-700'
                   } p-6 flex flex-col`}
                 >
                   {plan.popular && (
@@ -443,13 +443,13 @@ const BillingPage = () => {
                     </div>
                   )}
                   
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">{plan.name}</h3>
                   <div className="mb-4">
-                    <span className="text-4xl font-bold text-gray-900">
+                    <span className="text-4xl font-bold text-gray-900 dark:text-slate-100">
                       {formatMoney(pricing?.subscription?.unitAmount, pricing?.subscription?.currency) || `$${plan.price}`}
                     </span>
-                    <span className="text-gray-600">/month</span>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <span className="text-gray-600 dark:text-slate-300">/month</span>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                       {formatMoney(pricing?.onboarding?.unitAmount, pricing?.onboarding?.currency) || `$${plan.setup}`} one-time setup fee
                     </p>
                   </div>
@@ -458,7 +458,7 @@ const BillingPage = () => {
                     {plan.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start">
                         <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700">{feature}</span>
+                        <span className="text-sm text-gray-700 dark:text-slate-300">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -468,16 +468,16 @@ const BillingPage = () => {
                     disabled={isCurrentPlan || processingCheckout}
                     className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${
                       isCurrentPlan
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500 cursor-not-allowed'
                         : plan.popular
                         ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-gray-900 text-white hover:bg-gray-800'
+                        : 'bg-gray-900 dark:bg-slate-800 text-white hover:bg-gray-800 dark:hover:bg-slate-700'
                     }`}
                   >
                     {isCurrentPlan ? 'Current Plan' : processingCheckout ? 'Processing...' : 'Get Started'}
                   </button>
                   
-                  <p className="text-xs text-gray-500 text-center mt-3">
+                  <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-3">
                     Setup fee charged today • 30 days free trial
                   </p>
                 </div>
@@ -487,24 +487,24 @@ const BillingPage = () => {
         </div>
 
         {/* FAQ */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Frequently Asked Questions</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Frequently Asked Questions</h2>
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium text-gray-900">When will I be charged?</h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <h3 className="font-medium text-gray-900 dark:text-slate-100">When will I be charged?</h3>
+              <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
                 The one-time setup fee is charged immediately when you sign up. Your monthly subscription starts with a 30-day free trial. After the trial ends, you'll be charged the monthly subscription fee.
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Can I cancel anytime?</h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <h3 className="font-medium text-gray-900 dark:text-slate-100">Can I cancel anytime?</h3>
+              <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
                 Yes! You can cancel your subscription at any time. You'll continue to have access until the end of your current billing period.
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Can I upgrade or downgrade my plan?</h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <h3 className="font-medium text-gray-900 dark:text-slate-100">Can I upgrade or downgrade my plan?</h3>
+              <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
                 Yes, you can change your plan at any time. Changes will be prorated based on your billing cycle.
               </p>
             </div>

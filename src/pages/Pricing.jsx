@@ -212,14 +212,14 @@ export default function Pricing() {
   const plans = getPlans();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br to-white from-primary-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
       <div className="container px-4 py-16 mx-auto">
         {/* Header */}
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-gray-900 md:text-5xl">
+          <h1 className="mb-4 text-4xl font-bold text-gray-900 md:text-5xl dark:text-slate-100">
             Simple, Transparent Pricing
           </h1>
-          <p className="mx-auto max-w-2xl text-xl text-gray-600">
+          <p className="mx-auto max-w-2xl text-xl text-gray-600 dark:text-slate-300">
             Choose the plan that fits your business. All plans include our AI phone assistant.
           </p>
         </div>
@@ -231,7 +231,7 @@ export default function Pricing() {
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
               selectedTenantType === 'restaurant'
                 ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-primary-300'
+                : 'border-2 border-gray-200 bg-white text-gray-700 hover:border-primary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
             }`}
           >
             Restaurants
@@ -241,7 +241,7 @@ export default function Pricing() {
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
               selectedTenantType === 'voice'
                 ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-primary-300'
+                : 'border-2 border-gray-200 bg-white text-gray-700 hover:border-primary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
             }`}
           >
             Small Business
@@ -251,7 +251,7 @@ export default function Pricing() {
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
               selectedTenantType === 'real_estate'
                 ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-primary-300'
+                : 'border-2 border-gray-200 bg-white text-gray-700 hover:border-primary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
             }`}
           >
             Real Estate
@@ -267,10 +267,10 @@ export default function Pricing() {
           {plans.map((plan, idx) => (
             <div
               key={`${plan.tenantType}-${plan.name}-${idx}`}
-              className={`bg-white rounded-lg shadow-lg p-8 border-2 ${
+              className={`rounded-lg border-2 bg-white p-8 shadow-lg dark:bg-slate-900 ${
                 plan.popular
                   ? 'border-primary-600 transform scale-105 relative'
-                  : 'border-gray-200'
+                  : 'border-gray-200 dark:border-slate-700'
               }`}
             >
               {/* Tenant Type Badge */}
@@ -291,27 +291,27 @@ export default function Pricing() {
               )}
               
               <div className="mb-6 text-center">
-                <h3 className="mb-2 text-2xl font-bold text-gray-900">{plan.name}</h3>
+                <h3 className="mb-2 text-2xl font-bold text-gray-900 dark:text-slate-100">{plan.name}</h3>
                 <div className="flex flex-col items-center justify-center mb-2">
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-bold text-gray-900">{getDynamicPrice(plan)}</span>
+                    <span className="text-4xl font-bold text-gray-900 dark:text-slate-100">{getDynamicPrice(plan)}</span>
                     {plan.period && (
-                      <span className="ml-2 text-gray-600">{plan.period}</span>
+                      <span className="ml-2 text-gray-600 dark:text-slate-300">{plan.period}</span>
                     )}
                   </div>
-                  <div className="mt-2 text-sm text-gray-600">
+                  <div className="mt-2 text-sm text-gray-600 dark:text-slate-300">
                     <span className="font-semibold">Setup Fee: </span>
                     <span>{getDynamicSetupFee(plan)} one-time</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600">{plan.description}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-300">{plan.description}</p>
               </div>
               
               <ul className="mb-8 space-y-3 min-h-[200px]">
                 {plan.features.map((feature, fIdx) => (
                   <li key={fIdx} className="flex items-start">
                     <span className="mr-2 text-primary-600">✓</span>
-                    <span className="text-gray-700">{feature}</span>
+                    <span className="text-gray-700 dark:text-slate-300">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -329,7 +329,7 @@ export default function Pricing() {
                   className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${
                     plan.popular
                       ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                      : 'bg-primary-50 hover:bg-primary-100 text-primary-700'
+                      : 'bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-slate-800 dark:text-primary-300 dark:hover:bg-slate-700'
                   }`}
                 >
                   Go to Dashboard
@@ -340,7 +340,7 @@ export default function Pricing() {
                   className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${
                     plan.popular
                       ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                      : 'bg-primary-50 hover:bg-primary-100 text-primary-700'
+                      : 'bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-slate-800 dark:text-primary-300 dark:hover:bg-slate-700'
                   }`}
                 >
                   Get Started
@@ -352,7 +352,7 @@ export default function Pricing() {
 
         {/* Setup Fee Information */}
         <div className="mx-auto mb-12 max-w-4xl">
-          <div className="p-8 bg-white rounded-lg border-2 shadow-lg border-primary-200">
+          <div className="rounded-lg border-2 border-primary-200 bg-white p-8 shadow-lg dark:border-slate-700 dark:bg-slate-900">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0">
                 <div className="flex justify-center items-center w-12 h-12 rounded-full bg-primary-100">
@@ -360,11 +360,11 @@ export default function Pricing() {
                 </div>
               </div>
               <div className="flex-1">
-                <h2 className="mb-2 text-2xl font-bold text-gray-900">One-Time Setup Fee</h2>
-                <p className="mb-4 text-gray-700">
+                <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-slate-100">One-Time Setup Fee</h2>
+                <p className="mb-4 text-gray-700 dark:text-slate-300">
                   All plans include a one-time setup fee that covers comprehensive onboarding and configuration to get you started quickly.
                 </p>
-                <ul className="mb-6 space-y-2 text-gray-700">
+                <ul className="mb-6 space-y-2 text-gray-700 dark:text-slate-300">
                   <li className="flex items-start">
                     <span className="mr-2 text-primary-600">✓</span>
                     <span>Complete account setup and configuration</span>
@@ -406,7 +406,7 @@ export default function Pricing() {
                     </>
                   )}
                 </ul>
-                <p className="text-sm italic text-gray-600">
+                <p className="text-sm italic text-gray-600 dark:text-slate-400">
                   * Setup fee varies by plan. See pricing above for specific amounts.
                 </p>
               </div>
@@ -416,39 +416,39 @@ export default function Pricing() {
 
         {/* FAQ Section */}
         <div className="mx-auto mb-12 max-w-4xl">
-          <h2 className="mb-6 text-2xl font-bold text-center text-gray-900">Frequently Asked Questions</h2>
+          <h2 className="mb-6 text-center text-2xl font-bold text-gray-900 dark:text-slate-100">Frequently Asked Questions</h2>
           <div className="space-y-4">
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="mb-2 font-semibold text-gray-900">Is the setup fee required?</h3>
-              <p className="text-gray-700">
+            <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
+              <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Is the setup fee required?</h3>
+              <p className="text-gray-700 dark:text-slate-300">
                 Yes, the setup fee is required for all plans and covers comprehensive onboarding, configuration, 
                 and training to get you started quickly. Setup fees vary by plan type and tier.
               </p>
             </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="mb-2 font-semibold text-gray-900">Can I change plans later?</h3>
-              <p className="text-gray-700">
+            <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
+              <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Can I change plans later?</h3>
+              <p className="text-gray-700 dark:text-slate-300">
                 Yes! You can upgrade or downgrade your plan at any time. Changes take effect on your next billing cycle. 
                 Setup fees may apply when upgrading to a higher tier.
               </p>
             </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="mb-2 font-semibold text-gray-900">What's included in POS integration?</h3>
-              <p className="text-gray-700">
+            <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
+              <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">What's included in POS integration?</h3>
+              <p className="text-gray-700 dark:text-slate-300">
                 POS integration (Restaurant Enterprise plan) includes automatic menu synchronization, 
                 order import/export, and real-time inventory updates. We support Toast, Square, Clover, and other major POS systems.
               </p>
             </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="mb-2 font-semibold text-gray-900">Do you offer a free trial?</h3>
-              <p className="text-gray-700">
+            <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
+              <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Do you offer a free trial?</h3>
+              <p className="text-gray-700 dark:text-slate-300">
                 Yes! All plans include a 30-day free trial. The one-time setup fee is charged upfront, then you have 30 days to try the service before monthly billing begins. 
                 You can explore all features and cancel anytime during the trial.
               </p>
             </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="mb-2 font-semibold text-gray-900">What happens after my trial ends?</h3>
-              <p className="text-gray-700">
+            <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
+              <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">What happens after my trial ends?</h3>
+              <p className="text-gray-700 dark:text-slate-300">
                 After your 30-day trial, your monthly subscription will automatically begin. Your card on file will be charged the monthly subscription fee. 
                 You can cancel anytime before the trial ends to avoid being charged. We'll send you reminders before your trial ends.
               </p>
@@ -458,8 +458,8 @@ export default function Pricing() {
 
         {/* CTA Section */}
         <div className="text-center">
-          <h2 className="mb-4 text-3xl font-bold text-gray-900">Ready to Get Started?</h2>
-          <p className="mb-8 text-gray-600">
+          <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-slate-100">Ready to Get Started?</h2>
+          <p className="mb-8 text-gray-600 dark:text-slate-300">
             Start your 30-day free trial today. Setup fee charged upfront, monthly billing starts after trial.
           </p>
           <div className="flex flex-col gap-4 justify-center sm:flex-row">
@@ -487,7 +487,7 @@ export default function Pricing() {
                 </Link>
                 <Link 
                   to="/" 
-                  className="inline-block px-8 py-3 text-lg font-semibold text-primary-700 bg-white border-2 border-primary-300 rounded-lg hover:bg-primary-50 transition-colors text-center"
+                  className="inline-block rounded-lg border-2 border-primary-300 bg-white px-8 py-3 text-center text-lg font-semibold text-primary-700 transition-colors hover:bg-primary-50 dark:border-slate-600 dark:bg-slate-900 dark:text-primary-300 dark:hover:bg-slate-800"
                 >
                   Learn More
                 </Link>

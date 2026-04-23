@@ -39,7 +39,7 @@ export default function OrdersTable({
 
   if (!orders || orders.length === 0) {
     return (
-      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
+      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
         No orders to display.
       </div>
     );
@@ -117,8 +117,8 @@ export default function OrdersTable({
   // Custom cell templates
   const orderTemplate = (props) => (
     <div className="py-1 leading-tight">
-      <div className="text-sm font-medium text-gray-900">{props.orderId}</div>
-      <div className="text-[11px] text-gray-400 mt-1 max-w-xs truncate">
+      <div className="text-sm font-medium text-gray-900 dark:text-slate-100">{props.orderId}</div>
+      <div className="mt-1 max-w-xs truncate text-[11px] text-gray-400 dark:text-slate-500">
         {props.itemsSummary}
       </div>
     </div>
@@ -126,15 +126,15 @@ export default function OrdersTable({
 
   const customerTemplate = (props) => (
     <div className="py-1 leading-tight">
-      <div className="text-sm text-gray-900 truncate">{props.customerName || 'Unknown'}</div>
-      <div className="text-[11px] text-gray-400 mt-1">{formatPhone(props.customerPhone)}</div>
+      <div className="truncate text-sm text-gray-900 dark:text-slate-100">{props.customerName || 'Unknown'}</div>
+      <div className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">{formatPhone(props.customerPhone)}</div>
     </div>
   );
 
   const typeTemplate = (props) => (
     <div className="leading-tight">
-      <div className="text-sm text-gray-700 capitalize">{props.orderType}</div>
-      <div className="text-[10px] text-gray-400 mt-0.5">{props.sourceLabel}</div>
+      <div className="text-sm capitalize text-gray-700 dark:text-slate-300">{props.orderType}</div>
+      <div className="mt-0.5 text-[10px] text-gray-400 dark:text-slate-500">{props.sourceLabel}</div>
     </div>
   );
 
@@ -160,7 +160,7 @@ export default function OrdersTable({
   );
 
   return (
-    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900">
       <GridComponent
         ref={gridRef}
         dataSource={gridData}
@@ -323,7 +323,7 @@ function StatusButtonGroup({ order, isUpdating, onStatusChange, orders }) {
       onClick={() => onStatusChange?.(originalOrder, nextStatus)}
       className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
         isUpdating
-          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+          ? 'cursor-not-allowed bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
           : 'bg-primary-600 text-white hover:bg-primary-700'
       }`}
     >

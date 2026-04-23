@@ -92,22 +92,22 @@ export default function PhoneVerificationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-emerald-600" />
-          <p className="mt-4 text-sm text-slate-500">Loading verification status…</p>
+          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Loading verification status…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-10">
+      <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-600">Team Invite Verification</p>
-        <h1 className="mt-3 text-3xl font-semibold text-slate-900">Verify your mobile phone</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          Your account is almost ready. Use the link or code sent to <span className="font-semibold text-slate-900">{status?.maskedPhone || 'your phone'}</span> to activate alerts and complete your team invitation.
+        <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">Verify your mobile phone</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+          Your account is almost ready. Use the link or code sent to <span className="font-semibold text-slate-900 dark:text-slate-100">{status?.maskedPhone || 'your phone'}</span> to activate alerts and complete your team invitation.
         </p>
 
         {error ? (
@@ -130,15 +130,15 @@ export default function PhoneVerificationPage() {
 
         <form onSubmit={handleVerify} className="mt-8 space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Verification code</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Verification code</label>
             <input
               value={code}
               onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-center text-2xl tracking-[0.35em] text-slate-900"
+              className="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-center text-2xl tracking-[0.35em] text-slate-900 dark:text-slate-100"
               placeholder="123456"
               inputMode="numeric"
             />
-            <p className="mt-2 text-xs text-slate-500">Codes expire after 5 minutes and you have up to 5 attempts.</p>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Codes expire after 5 minutes and you have up to 5 attempts.</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -149,22 +149,22 @@ export default function PhoneVerificationPage() {
               type="button"
               onClick={handleSendCode}
               disabled={sending}
-              className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+              className="rounded-full border border-slate-200 dark:border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-200 dark:hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300"
             >
               {sending ? 'Sending…' : 'Resend Code'}
             </button>
             <button
               type="button"
               onClick={() => signOut()}
-              className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-900"
+              className="rounded-full border border-slate-200 dark:border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
             >
               Sign Out
             </button>
           </div>
         </form>
 
-        <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          <p className="font-semibold text-slate-900">Why this step exists</p>
+        <div className="mt-8 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4 text-sm text-slate-600 dark:text-slate-300">
+          <p className="font-semibold text-slate-900 dark:text-slate-100">Why this step exists</p>
           <p className="mt-2">
             Merxus requires verified mobile numbers before team members can receive SMS alerts, call notifications, lead notifications, or routing-based staff escalations.
           </p>
@@ -176,9 +176,9 @@ export default function PhoneVerificationPage() {
 
 function StatusCard({ label, value }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-      <p className="mt-2 text-lg font-semibold capitalize text-slate-900">{value}</p>
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">{label}</p>
+      <p className="mt-2 text-lg font-semibold capitalize text-slate-900 dark:text-slate-100">{value}</p>
     </div>
   );
 }

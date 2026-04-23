@@ -14,6 +14,23 @@ const COLORS = {
 
 export default function CallVolumeChart({ calls = [], title = 'Call Volume', className = '' }) {
   const [range, setRange] = useState('7days'); // 7days, 30days, 90days
+  const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const gridColor = isDarkMode ? '#334155' : COLORS.grid;
+  const axisTextColor = isDarkMode ? '#cbd5e1' : COLORS.text;
+  const tooltipStyle = isDarkMode
+    ? {
+        backgroundColor: '#0f172a',
+        border: '1px solid #334155',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.35)',
+        color: '#e2e8f0',
+      }
+    : {
+        backgroundColor: '#fff',
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+      };
 
   // Parse date from Firestore formats
   const parseDate = (dateField) => {
@@ -103,26 +120,26 @@ export default function CallVolumeChart({ calls = [], title = 'Call Volume', cla
   };
 
   return (
-    <div className={`w-full min-w-0 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}>
+    <div className={`w-full min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:shadow-none ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
             {stats.totalCalls} calls · Avg {stats.avgPerDay}/day
           </p>
         </div>
         
         {/* Range Selector */}
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-slate-800">
           {['7days', '30days', '90days'].map((r) => (
             <button
               key={r}
               onClick={() => setRange(r)}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
                 range === r
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-slate-100 dark:shadow-none'
+                  : 'text-gray-600 hover:text-gray-900 dark:text-slate-300 dark:hover:text-slate-100'
               }`}
             >
               {r === '7days' ? '7D' : r === '30days' ? '30D' : '90D'}
@@ -141,28 +158,23 @@ export default function CallVolumeChart({ calls = [], title = 'Call Volume', cla
                 <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={COLORS.grid} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
             <XAxis 
               dataKey="date" 
-              stroke={COLORS.text}
+              stroke={axisTextColor}
               tick={{ fontSize: 12 }}
               tickLine={false}
               axisLine={false}
               interval={range === '7days' ? 0 : range === '30days' ? 4 : 13}
             />
             <YAxis 
-              stroke={COLORS.text}
+              stroke={axisTextColor}
               tick={{ fontSize: 12 }}
               tickLine={false}
               axisLine={false}
             />
             <Tooltip
-              contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-              }}
+              contentStyle={tooltipStyle}
               formatter={(value, name) => [value, name === 'calls' ? 'Calls' : name]}
               labelFormatter={(label) => `${label}`}
             />
@@ -178,20 +190,20 @@ export default function CallVolumeChart({ calls = [], title = 'Call Volume', cla
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+      <div className="mt-6 grid grid-cols-3 gap-4 border-t border-gray-100 pt-6 dark:border-slate-700">
         <div>
-          <p className="text-sm text-gray-500">Total Duration</p>
-          <p className="text-lg font-semibold text-gray-900">{formatDuration(stats.totalDuration)}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">Total Duration</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">{formatDuration(stats.totalDuration)}</p>
         </div>
         <div>
-          <p className="text-sm text-gray-500">Peak Day</p>
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-sm text-gray-500 dark:text-slate-400">Peak Day</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">
             {stats.peakDay.calls > 0 ? stats.peakDay.date : '--'}
           </p>
         </div>
         <div>
-          <p className="text-sm text-gray-500">Peak Calls</p>
-          <p className="text-lg font-semibold text-gray-900">{stats.peakDay.calls || 0}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">Peak Calls</p>
+          <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">{stats.peakDay.calls || 0}</p>
         </div>
       </div>
     </div>

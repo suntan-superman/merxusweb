@@ -309,7 +309,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
                   group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm
                   ${activeTab === tab.id
                     ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-100 hover:border-gray-300 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:border-slate-600'
                   }
                 `}
               >
@@ -578,7 +578,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
                     <button
                       type="button"
                       onClick={() => handleRemoveFeature(index)}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-100"
                     >
                       ×
                     </button>
@@ -651,7 +651,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
                 className="input-field"
                 placeholder="Beautiful 4-bed, 3-bath home in Northwest Bakersfield with modern finishes..."
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                 Enter highlights in English. The AI assistant will translate for Spanish-speaking callers automatically.
               </p>
             </div>
@@ -708,11 +708,11 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
         {activeTab === 'media' && (
         <div>
         {/* Flyer Upload */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-md font-semibold text-gray-900">Flyer</h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-slate-300">
                 Upload a PDF or image to include in flyer emails.
               </p>
             </div>
@@ -760,7 +760,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
               className="input-field"
               placeholder="https://your-storage.com/flyers/listing.pdf"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
               You can paste a URL or upload to generate one. Remember to save after changes.
             </p>
             {form.flyerUrl && (
@@ -818,7 +818,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
                 <div className="space-y-1">
                   {form.photos.map((photo, index) => (
                     <div key={index} className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600 truncate flex-1">{photo}</span>
+                      <span className="text-gray-600 truncate flex-1 dark:text-slate-300">{photo}</span>
                       <button
                         type="button"
                         onClick={() => handleRemovePhoto(index)}
@@ -903,4 +903,5 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
     </>
   );
 }
+
 

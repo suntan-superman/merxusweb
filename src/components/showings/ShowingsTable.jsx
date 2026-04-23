@@ -31,7 +31,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
 
   if (!showings || showings.length === 0) {
     return (
-      <div className="px-4 py-6 text-sm text-center text-gray-500 border border-gray-200 border-dashed rounded-lg bg-gray-50">
+      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
         No showings scheduled.
       </div>
     );
@@ -82,22 +82,22 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
   };
 
   const addressTemplate = (props) => (
-    <div className="text-sm font-medium text-gray-900">
+    <div className="text-sm font-medium text-gray-900 dark:text-slate-100">
       {props.formattedAddress}
     </div>
   );
 
   const dateTimeTemplate = (props) => (
     <div className="leading-tight">
-      <div className="text-sm font-medium text-gray-900">{props.formattedDate}</div>
-      <div className="text-xs text-gray-500">{props.formattedTime}</div>
+      <div className="text-sm font-medium text-gray-900 dark:text-slate-100">{props.formattedDate}</div>
+      <div className="text-xs text-gray-500 dark:text-slate-400">{props.formattedTime}</div>
     </div>
   );
 
   const contactTemplate = (props) => (
     <div className="leading-tight">
-      <div className="text-sm text-gray-900">{props.contact_name || 'N/A'}</div>
-      <div className="text-xs text-gray-500">{props.contact_phone || ''}</div>
+      <div className="text-sm text-gray-900 dark:text-slate-100">{props.contact_name || 'N/A'}</div>
+      <div className="text-xs text-gray-500 dark:text-slate-400">{props.contact_phone || ''}</div>
     </div>
   );
 
@@ -120,7 +120,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
       <button
         onClick={() => onEdit && onEdit(props)}
-        className="text-sm font-medium text-primary-600 hover:text-primary-700"
+        className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-200"
       >
         Edit
       </button>
@@ -140,7 +140,7 @@ export default function ShowingsTable({ showings, onEdit, onDelete, onStatusChan
   );
 
   return (
-    <div className="overflow-hidden bg-white border border-gray-200 rounded-lg">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900">
       <GridComponent
         ref={gridRef}
         dataSource={gridData}

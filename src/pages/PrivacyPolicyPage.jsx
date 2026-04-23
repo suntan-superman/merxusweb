@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-8">
@@ -13,21 +13,21 @@ export default function PrivacyPolicyPage() {
           >
             ← Back to Login
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-slate-100 mb-2">
             Privacy Policy
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-slate-400">
             Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
 
         {/* Content */}
-        <div className="bg-white rounded-lg shadow-sm p-8 space-y-8">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-8 space-y-8">
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               1. Introduction
             </h2>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
               Merxus ("we," "our," or "us"), operated by Workside Software LLC, is committed to protecting your privacy. 
               This Privacy Policy explains how we collect, use, disclose, and safeguard your 
               information when you use our AI-powered phone assistant mobile application and web platform (collectively, 
@@ -37,18 +37,18 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               2. Information We Collect
             </h2>
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">
+                <h3 className="text-xl font-medium text-gray-900 dark:text-slate-100 mb-2">
                   2.1 Personal Information
                 </h3>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                   We may collect personal information that you voluntarily provide to us when you:
                 </p>
-                <ul className="list-disc list-inside text-gray-700 ml-4 mt-2 space-y-1">
+                <ul className="list-disc list-inside text-gray-700 dark:text-slate-300 ml-4 mt-2 space-y-1">
                   <li>Register for an account (name, email address, phone number)</li>
                   <li>Create or update your profile</li>
                   <li>Submit service requests or job information</li>
@@ -58,30 +58,30 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">
+                <h3 className="text-xl font-medium text-gray-900 dark:text-slate-100 mb-2">
                   2.2 Call and Voice Data
                 </h3>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                   When using our AI phone assistant service, we collect:
                 </p>
-                <ul className="list-disc list-inside text-gray-700 ml-4 mt-2 space-y-1">
+                <ul className="list-disc list-inside text-gray-700 dark:text-slate-300 ml-4 mt-2 space-y-1">
                   <li>Call transcripts and recordings for service improvement</li>
                   <li>Caller information (phone number, name when provided)</li>
                   <li>Call metadata (duration, time, status)</li>
                 </ul>
-                <p className="text-gray-700 leading-relaxed mt-2">
+                <p className="text-gray-700 dark:text-slate-300 leading-relaxed mt-2">
                   Call data is processed securely and used only for providing and improving our services.
                 </p>
               </div>
 
               <div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">
+                <h3 className="text-xl font-medium text-gray-900 dark:text-slate-100 mb-2">
                   2.3 Business Data
                 </h3>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                   Depending on your tenant type (Restaurant, Real Estate, or Voice), we may collect:
                 </p>
-                <ul className="list-disc list-inside text-gray-700 ml-4 mt-2 space-y-1">
+                <ul className="list-disc list-inside text-gray-700 dark:text-slate-300 ml-4 mt-2 space-y-1">
                   <li>Restaurant menus, hours, and reservation details</li>
                   <li>Real estate listings, leads, and showing information</li>
                   <li>Office hours, FAQs, and appointment schedules</li>
@@ -89,13 +89,13 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">
+                <h3 className="text-xl font-medium text-gray-900 dark:text-slate-100 mb-2">
                   2.4 Usage Data
                 </h3>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                   We automatically collect certain information when you access and use the Service, including:
                 </p>
-                <ul className="list-disc list-inside text-gray-700 ml-4 mt-2 space-y-1">
+                <ul className="list-disc list-inside text-gray-700 dark:text-slate-300 ml-4 mt-2 space-y-1">
                   <li>Device information (device type, operating system, unique device identifiers)</li>
                   <li>Log data (IP address, browser type, access times, pages viewed)</li>
                   <li>App usage statistics</li>
@@ -105,13 +105,13 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               3. How We Use Your Information
             </h2>
-            <p className="text-gray-700 leading-relaxed mb-2">
+            <p className="text-gray-700 dark:text-slate-300 leading-relaxed mb-2">
               We use the information we collect to:
             </p>
-            <ul className="list-disc list-inside text-gray-700 ml-4 space-y-1">
+            <ul className="list-disc list-inside text-gray-700 dark:text-slate-300 ml-4 space-y-1">
               <li>Provide, maintain, and improve the Service</li>
               <li>Process and manage service requests and job assignments</li>
               <li>Send you notifications, updates, and administrative messages</li>
@@ -124,15 +124,15 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               4. Data Storage and Security
             </h2>
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">
+                <h3 className="text-xl font-medium text-gray-900 dark:text-slate-100 mb-2">
                   4.1 Data Storage
                 </h3>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                   Your data is stored securely using Firebase, a Google Cloud Platform service. 
                   Data is stored in the United States and is subject to Firebase's security measures 
                   and privacy policies. We implement appropriate technical and organizational measures 
@@ -141,10 +141,10 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">
+                <h3 className="text-xl font-medium text-gray-900 dark:text-slate-100 mb-2">
                   4.2 Security Measures
                 </h3>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                   We use industry-standard security technologies and procedures to help protect your 
                   personal information from unauthorized access, use, or disclosure. However, no method 
                   of transmission over the Internet or electronic storage is 100% secure, and we cannot 
@@ -155,13 +155,13 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               5. Third-Party Services
             </h2>
-            <p className="text-gray-700 leading-relaxed mb-2">
+            <p className="text-gray-700 dark:text-slate-300 leading-relaxed mb-2">
               We use third-party services that may collect information used to identify you:
             </p>
-            <ul className="list-disc list-inside text-gray-700 ml-4 space-y-2">
+            <ul className="list-disc list-inside text-gray-700 dark:text-slate-300 ml-4 space-y-2">
               <li>
                 <strong>Firebase (Google)</strong>: Authentication, database, storage, and analytics services. 
                 See Google's Privacy Policy: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700">https://policies.google.com/privacy</a>
@@ -174,14 +174,14 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               6. Data Sharing and Disclosure
             </h2>
-            <p className="text-gray-700 leading-relaxed mb-2">
+            <p className="text-gray-700 dark:text-slate-300 leading-relaxed mb-2">
               We do not sell, trade, or rent your personal information to third parties. We may share 
               your information only in the following circumstances:
             </p>
-            <ul className="list-disc list-inside text-gray-700 ml-4 space-y-1">
+            <ul className="list-disc list-inside text-gray-700 dark:text-slate-300 ml-4 space-y-1">
               <li>With your consent</li>
               <li>To comply with legal obligations or respond to lawful requests</li>
               <li>To protect our rights, privacy, safety, or property</li>
@@ -191,13 +191,13 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               7. Your Rights and Choices
             </h2>
-            <p className="text-gray-700 leading-relaxed mb-2">
+            <p className="text-gray-700 dark:text-slate-300 leading-relaxed mb-2">
               You have the right to:
             </p>
-            <ul className="list-disc list-inside text-gray-700 ml-4 space-y-1">
+            <ul className="list-disc list-inside text-gray-700 dark:text-slate-300 ml-4 space-y-1">
               <li>Access and receive a copy of your personal information</li>
               <li>Correct inaccurate or incomplete information</li>
               <li>Request deletion of your personal information</li>
@@ -206,16 +206,16 @@ export default function PrivacyPolicyPage() {
               <li>Disable location tracking through your device settings</li>
               <li>Opt out of certain communications</li>
             </ul>
-            <p className="text-gray-700 leading-relaxed mt-4">
+            <p className="text-gray-700 dark:text-slate-300 leading-relaxed mt-4">
               To exercise these rights, please contact us at the email address provided below.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               8. Children's Privacy
             </h2>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
               The Service is not intended for individuals under the age of 18. We do not knowingly 
               collect personal information from children. If you become aware that a child has provided 
               us with personal information, please contact us, and we will take steps to delete such 
@@ -224,10 +224,10 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               9. Changes to This Privacy Policy
             </h2>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
               We may update this Privacy Policy from time to time. We will notify you of any changes 
               by posting the new Privacy Policy on this page and updating the "Last updated" date. 
               You are advised to review this Privacy Policy periodically for any changes.
@@ -235,20 +235,20 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">
               10. Contact Us
             </h2>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
               If you have any questions about this Privacy Policy or our data practices, please contact us:
             </p>
             <div className="mt-4 space-y-2">
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-slate-300">
                 <strong>Email:</strong> <a href="mailto:support@merxusllc.com" className="text-green-600 hover:text-green-700">support@merxusllc.com</a>
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-slate-300">
                 <strong>Service:</strong> Merxus AI Phone Assistant Platform
               </p>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-slate-300">
                 <strong>Company:</strong> Workside Software LLC
               </p>
             </div>
@@ -256,11 +256,12 @@ export default function PrivacyPolicyPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-gray-600 text-sm">
+        <div className="mt-8 text-center text-gray-600 dark:text-slate-400 text-sm">
           <p>© {new Date().getFullYear()} Workside Software LLC. All rights reserved.</p>
         </div>
       </div>
     </div>
   );
 }
+
 

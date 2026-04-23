@@ -407,16 +407,16 @@ const Onboarding = () => {
 
   if (!hasExplicitTenantType) {
     return (
-      <div className="w-full py-16 px-4 bg-gradient-to-br from-primary-50 to-white min-h-screen">
+      <div className="min-h-screen w-full bg-gradient-to-br from-primary-50 to-white px-4 py-16 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="mb-4 text-4xl font-bold text-gray-900 md:text-5xl dark:text-slate-100">
               Get Started with Merxus
             </h1>
-            <p className="text-xl text-gray-700 mb-2">
+            <p className="mb-2 text-xl text-gray-700 dark:text-slate-300">
               First, choose your tenant type.
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-slate-400">
               You&apos;ll continue with the right onboarding wizard for your business.
             </p>
           </div>
@@ -434,21 +434,21 @@ const Onboarding = () => {
   }
 
   return (
-    <div className="w-full py-16 px-4 bg-gradient-to-br from-primary-50 to-white min-h-screen">
+    <div className="min-h-screen w-full bg-gradient-to-br from-primary-50 to-white px-4 py-16 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
       <div className="container mx-auto max-w-3xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h1 className="mb-4 text-4xl font-bold text-gray-900 md:text-5xl dark:text-slate-100">
             Get Started with {labels.title}
           </h1>
-          <p className="text-xl text-gray-700 mb-4">
+          <p className="mb-4 text-xl text-gray-700 dark:text-slate-300">
             Fill out your {isRealEstate ? 'agent' : isVoice ? 'business' : 'restaurant'} information to begin
           </p>
           
           <PlanDisplay pricingInfo={pricingInfo} selectedPlan={selectedPlan} />
           
           <div className="mt-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-slate-400">
               <span className="font-semibold text-primary-600">30-day free trial</span> • Setup fee charged upfront
             </p>
           </div>

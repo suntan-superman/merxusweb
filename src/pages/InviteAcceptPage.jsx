@@ -142,10 +142,10 @@ export default function InviteAcceptPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-emerald-600" />
-          <p className="mt-4 text-sm text-slate-500">Loading your invitation…</p>
+          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Loading your invitation…</p>
         </div>
       </div>
     );
@@ -153,18 +153,18 @@ export default function InviteAcceptPage() {
 
   if (!invite || !email) {
     return (
-      <div className="min-h-screen bg-slate-50 px-4 py-10">
-        <div className="mx-auto max-w-lg rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-10">
+        <div className="mx-auto max-w-lg rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-600">Team Invitation</p>
-          <h1 className="mt-3 text-3xl font-semibold text-slate-900">This invite can&apos;t be used</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
+          <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">This invite can&apos;t be used</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
             {error || 'The invite link is invalid, expired, or has already been completed.'}
           </p>
           <div className="mt-6">
             <button
               type="button"
               onClick={() => navigate('/login', { replace: true })}
-              className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+              className="rounded-full border border-slate-200 dark:border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-200 dark:hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300"
             >
               Back to login
             </button>
@@ -175,11 +175,11 @@ export default function InviteAcceptPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-10">
+      <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-600">Team Invitation</p>
-        <h1 className="mt-3 text-3xl font-semibold text-slate-900">Accept your Merxus invite</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
+        <h1 className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">Accept your Merxus invite</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
           Set your password, confirm your name, and then we&apos;ll move you into SMS phone verification so alerts can be enabled safely.
         </p>
 
@@ -190,8 +190,8 @@ export default function InviteAcceptPage() {
         </div>
 
         {invite?.phoneValidation?.lineType ? (
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Phone validated as <span className="font-semibold text-slate-900">{invite.phoneValidation.lineType.replace(/_/g, ' ')}</span>
+          <div className="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+            Phone validated as <span className="font-semibold text-slate-900 dark:text-slate-100">{invite.phoneValidation.lineType.replace(/_/g, ' ')}</span>
             {invite.phoneValidation.carrierName ? ` via ${invite.phoneValidation.carrierName}` : ''}.
           </div>
         ) : null}
@@ -210,42 +210,42 @@ export default function InviteAcceptPage() {
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Confirm your name</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Confirm your name</label>
             <input
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900"
+              className="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-slate-100"
               placeholder="Your full name"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
             <input
               value={email}
               disabled
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-500"
+              className="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-slate-500 dark:text-slate-400"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Create password</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Create password</label>
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900"
+              className="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-slate-100"
               placeholder="At least 6 characters"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Confirm password</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Confirm password</label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900"
+              className="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-slate-100"
               placeholder="Repeat your password"
             />
           </div>
@@ -257,7 +257,7 @@ export default function InviteAcceptPage() {
             <button
               type="button"
               onClick={() => navigate('/login', { replace: true })}
-              className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+              className="rounded-full border border-slate-200 dark:border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-200 dark:hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300"
             >
               Back to login
             </button>
@@ -270,9 +270,9 @@ export default function InviteAcceptPage() {
 
 function InviteInfoCard({ label, value }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-      <p className="mt-2 text-sm font-semibold capitalize text-slate-900 break-all">{value}</p>
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">{label}</p>
+      <p className="mt-2 text-sm font-semibold capitalize text-slate-900 dark:text-slate-100 break-all">{value}</p>
     </div>
   );
 }

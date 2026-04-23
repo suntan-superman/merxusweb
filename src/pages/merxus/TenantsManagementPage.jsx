@@ -307,14 +307,14 @@ export default function TenantsManagementPage() {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      active: { color: 'bg-green-100 text-green-800 border-green-300', icon: CheckCircle, label: 'Active' },
-      trialing: { color: 'bg-blue-100 text-blue-800 border-blue-300', icon: AlertCircle, label: 'Trial' },
-      past_due: { color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: AlertCircle, label: 'Past Due' },
-      paused: { color: 'bg-orange-100 text-orange-800 border-orange-300', icon: PauseCircle, label: 'Paused' },
-      canceling: { color: 'bg-amber-100 text-amber-800 border-amber-300', icon: AlertCircle, label: 'Ending' },
-      canceled: { color: 'bg-red-100 text-red-800 border-red-300', icon: XCircle, label: 'Canceled' },
-      'No Subscription': { color: 'bg-gray-100 text-gray-800 border-gray-300', icon: AlertCircle, label: 'No Sub' },
-      Unknown: { color: 'bg-gray-100 text-gray-600 border-gray-300', icon: AlertCircle, label: 'Unknown' },
+      active: { color: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/35 dark:text-green-200 dark:border-green-500/50', icon: CheckCircle, label: 'Active' },
+      trialing: { color: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/35 dark:text-blue-200 dark:border-blue-500/50', icon: AlertCircle, label: 'Trial' },
+      past_due: { color: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/35 dark:text-yellow-200 dark:border-yellow-500/50', icon: AlertCircle, label: 'Past Due' },
+      paused: { color: 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/35 dark:text-orange-200 dark:border-orange-500/50', icon: PauseCircle, label: 'Paused' },
+      canceling: { color: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/35 dark:text-amber-200 dark:border-amber-500/50', icon: AlertCircle, label: 'Ending' },
+      canceled: { color: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/35 dark:text-red-200 dark:border-red-500/50', icon: XCircle, label: 'Canceled' },
+      'No Subscription': { color: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600', icon: AlertCircle, label: 'No Sub' },
+      Unknown: { color: 'bg-gray-100 text-gray-600 border-gray-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600', icon: AlertCircle, label: 'Unknown' },
     };
 
     const config = statusConfig[status] || statusConfig.Unknown;
@@ -332,13 +332,13 @@ export default function TenantsManagementPage() {
     return (
       <div className="flex items-center gap-2">
         {props.disabled && (
-          <span className="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 rounded">
+          <span className="rounded border border-red-300 bg-red-100 px-2 py-1 text-xs font-semibold text-red-700 dark:border-red-500/50 dark:bg-red-900/35 dark:text-red-200">
             DISABLED
           </span>
         )}
         {getStatusBadge(props.subscriptionStatus)}
         {props.noRecurringChargesOverride && (
-          <span className="px-2 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded">
+          <span className="rounded border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 dark:border-indigo-500/50 dark:bg-indigo-900/35 dark:text-indigo-200">
             No Renew
           </span>
         )}
@@ -354,7 +354,7 @@ export default function TenantsManagementPage() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => handleEditTenant(props)}
-          className="p-2 text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
+          className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/30"
           title="Edit Tenant"
         >
           <Edit2 size={16} />
@@ -365,8 +365,8 @@ export default function TenantsManagementPage() {
             disabled={processingActionId === props.id}
             className={`p-2 rounded-lg transition-colors ${
               isPaused
-                ? 'text-green-600 hover:bg-green-50'
-                : 'text-orange-600 hover:bg-orange-50'
+                ? 'text-green-600 hover:bg-green-50 dark:text-green-300 dark:hover:bg-green-900/30'
+                : 'text-orange-600 hover:bg-orange-50 dark:text-orange-300 dark:hover:bg-orange-900/30'
             } ${processingActionId === props.id ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={isPaused ? 'Resume Billing' : 'Pause Billing'}
           >
@@ -380,7 +380,7 @@ export default function TenantsManagementPage() {
               setRefundAmount('');
               setRefundReason('requested_by_customer');
             }}
-            className="p-2 text-purple-600 transition-colors rounded-lg hover:bg-purple-50"
+            className="rounded-lg p-2 text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/30"
             title="Issue Refund"
           >
             <DollarSign size={16} />
@@ -393,7 +393,7 @@ export default function TenantsManagementPage() {
               setCancelImmediately(false);
               setCancelReason('admin_request');
             }}
-            className="p-2 text-red-700 transition-colors rounded-lg hover:bg-red-50"
+            className="rounded-lg p-2 text-red-700 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/30"
             title="Cancel Subscription"
           >
             <XCircle size={16} />
@@ -402,7 +402,7 @@ export default function TenantsManagementPage() {
         {hasSubscription && (
           <button
             onClick={() => handleViewRefundHistory(props)}
-            className="p-2 text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+            className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"
             title="View Refund History"
           >
             <History size={16} />
@@ -412,8 +412,8 @@ export default function TenantsManagementPage() {
           onClick={() => handleDisableTenant(props)}
           className={`p-2 rounded-lg transition-colors ${
             props.disabled 
-              ? 'text-green-600 hover:bg-green-50' 
-              : 'text-red-600 hover:bg-red-50'
+              ? 'text-green-600 hover:bg-green-50 dark:text-green-300 dark:hover:bg-green-900/30' 
+              : 'text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/30'
           }`}
           title={props.disabled ? 'Enable Account' : 'Disable Account'}
         >
@@ -436,11 +436,11 @@ export default function TenantsManagementPage() {
 
   const noRecurringTemplate = (props) => {
     return props.noRecurringChargesOverride ? (
-      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md">
+      <span className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 dark:border-indigo-500/50 dark:bg-indigo-900/35 dark:text-indigo-200">
         Enabled
       </span>
     ) : (
-      <span className="text-xs text-gray-400">-</span>
+      <span className="text-xs text-gray-400 dark:text-slate-500">-</span>
     );
   };
 
@@ -596,12 +596,12 @@ export default function TenantsManagementPage() {
     <div className="p-6 max-w-[1600px] mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900">Tenant Management</h1>
-        <p className="text-gray-600">Manage all customer accounts across all platforms</p>
+        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-slate-100">Tenant Management</h1>
+        <p className="text-gray-600 dark:text-slate-300">Manage all customer accounts across all platforms</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200">
+      <div className="mb-6 flex gap-2 border-b border-gray-200 dark:border-slate-700">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -611,8 +611,8 @@ export default function TenantsManagementPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 font-medium transition-all border-b-2 ${
                 isActive
-                  ? 'text-green-600 border-green-600'
-                  : 'text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-300'
+                  ? 'text-green-600 border-green-600 dark:border-green-400 dark:text-green-300'
+                  : 'text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-300 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:text-slate-100'
               }`}
             >
               <Icon size={20} />
@@ -624,68 +624,68 @@ export default function TenantsManagementPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-2 lg:grid-cols-5">
-        <div className="p-4 bg-white border border-gray-200 rounded-lg">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-100 rounded-lg">
               <Users className="text-blue-600" size={24} />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Accounts</p>
-              <p className="text-2xl font-bold text-gray-900">{tenants.length}</p>
+              <p className="text-sm text-gray-600 dark:text-slate-300">Total Accounts</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{tenants.length}</p>
             </div>
           </div>
         </div>
 
-        <div className="p-4 bg-white border border-gray-200 rounded-lg">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-green-100 rounded-lg">
               <CheckCircle className="text-green-600" size={24} />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-600 dark:text-slate-300">Active</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                 {tenants.filter(t => !t.disabled && t.subscriptionStatus === 'active').length}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="p-4 bg-white border border-gray-200 rounded-lg">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-yellow-100 rounded-lg">
               <AlertCircle className="text-yellow-600" size={24} />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Trial</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-600 dark:text-slate-300">Trial</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                 {tenants.filter(t => t.subscriptionStatus === 'trialing').length}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="p-4 bg-white border border-gray-200 rounded-lg">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-orange-100 rounded-lg">
               <PauseCircle className="text-orange-600" size={24} />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Paused</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-600 dark:text-slate-300">Paused</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                 {tenants.filter(t => t.subscriptionStatus === 'paused' || t.billingPaused).length}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="p-4 bg-white border border-gray-200 rounded-lg">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-red-100 rounded-lg">
               <XCircle className="text-red-600" size={24} />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Disabled</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-600 dark:text-slate-300">Disabled</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                 {tenants.filter(t => t.disabled).length}
               </p>
             </div>
@@ -694,7 +694,7 @@ export default function TenantsManagementPage() {
       </div>
 
       {/* Data Grid */}
-      <div className="p-4 bg-white border border-gray-200 rounded-lg">
+      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="w-12 h-12 border-b-2 border-green-600 rounded-full animate-spin"></div>
@@ -762,16 +762,16 @@ export default function TenantsManagementPage() {
       {/* Edit Modal */}
       {editingTenant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-2xl p-6 mx-4 bg-white rounded-lg">
+          <div className="mx-4 w-full max-w-2xl rounded-lg bg-white p-6 dark:bg-slate-900 dark:text-slate-100">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Edit Tenant: {editingTenant.name}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Edit Tenant: {editingTenant.name}</h2>
               <button
                 onClick={() => {
                   setEditingTenant(null);
                   setEditFormData({});
                   setEditErrors({});
                 }}
-                className="text-gray-400 hover:text-gray-600 p-1"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-200"
                 title="Close"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -779,13 +779,13 @@ export default function TenantsManagementPage() {
                 </svg>
               </button>
             </div>
-            <p className="mb-6 text-gray-600">
-              Tenant ID: <code className="px-2 py-1 bg-gray-100 rounded">{editingTenant.id}</code>
+            <p className="mb-6 text-gray-600 dark:text-slate-300">
+              Tenant ID: <code className="rounded bg-gray-100 px-2 py-1 dark:bg-slate-800 dark:text-slate-100">{editingTenant.id}</code>
             </p>
             
             <div className="mb-6 space-y-4">
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                   Business Name
                 </label>
                 <input
@@ -795,8 +795,8 @@ export default function TenantsManagementPage() {
                     setEditFormData({ ...editFormData, name: e.target.value });
                     if (editErrors.name) setEditErrors((current) => ({ ...current, name: '' }));
                   }}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                    editErrors.name ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  className={`w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-green-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400 ${
+                    editErrors.name ? 'border-red-400 bg-red-50 dark:border-red-500/50 dark:bg-red-900/30' : 'border-gray-300 dark:border-slate-600'
                   }`}
                 />
                 {editErrors.name && (
@@ -805,7 +805,7 @@ export default function TenantsManagementPage() {
               </div>
 
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                   Email
                 </label>
                 <input
@@ -817,11 +817,11 @@ export default function TenantsManagementPage() {
                     setEditFormData({ ...editFormData, email: e.target.value });
                     if (editErrors.email) setEditErrors((current) => ({ ...current, email: '' }));
                   }}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                    editErrors.email ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  className={`w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-green-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400 ${
+                    editErrors.email ? 'border-red-400 bg-red-50 dark:border-red-500/50 dark:bg-red-900/30' : 'border-gray-300 dark:border-slate-600'
                   }`}
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
                   Expected format: owner@example.com
                 </p>
                 {editErrors.email && (
@@ -830,7 +830,7 @@ export default function TenantsManagementPage() {
               </div>
 
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                   Business Phone Number
                 </label>
                 <input
@@ -842,11 +842,11 @@ export default function TenantsManagementPage() {
                     setEditFormData({ ...editFormData, phoneNumber: e.target.value });
                     if (editErrors.phoneNumber) setEditErrors((current) => ({ ...current, phoneNumber: '' }));
                   }}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                    editErrors.phoneNumber ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  className={`w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-green-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400 ${
+                    editErrors.phoneNumber ? 'border-red-400 bg-red-50 dark:border-red-500/50 dark:bg-red-900/30' : 'border-gray-300 dark:border-slate-600'
                   }`}
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
                   Main contact number for the business. Expected format: +16615551234
                 </p>
                 {editErrors.phoneNumber && (
@@ -855,7 +855,7 @@ export default function TenantsManagementPage() {
               </div>
 
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                   AI Assistant Phone (Twilio)
                 </label>
                 <input
@@ -867,11 +867,11 @@ export default function TenantsManagementPage() {
                     setEditFormData({ ...editFormData, twilioPhoneNumber: e.target.value });
                     if (editErrors.twilioPhoneNumber) setEditErrors((current) => ({ ...current, twilioPhoneNumber: '' }));
                   }}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                    editErrors.twilioPhoneNumber ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                  className={`w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-green-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400 ${
+                    editErrors.twilioPhoneNumber ? 'border-red-400 bg-red-50 dark:border-red-500/50 dark:bg-red-900/30' : 'border-gray-300 dark:border-slate-600'
                   }`}
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
                   Phone number used for AI Assistant calls and voice interactions. Expected format: +16615551234
                 </p>
                 {editErrors.twilioPhoneNumber && (
@@ -879,7 +879,7 @@ export default function TenantsManagementPage() {
                 )}
               </div>
 
-              <div className="p-4 border border-indigo-200 rounded-lg bg-indigo-50">
+              <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-500/50 dark:bg-indigo-900/30">
                 <label className="flex items-start gap-3">
                   <input
                     type="checkbox"
@@ -890,13 +890,13 @@ export default function TenantsManagementPage() {
                         noRecurringChargesOverride: e.target.checked,
                       });
                     }}
-                    className="w-4 h-4 mt-1 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-900"
                   />
                   <div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 dark:text-slate-100">
                       No recurring charges override
                     </div>
-                    <p className="mt-1 text-xs text-gray-600">
+                    <p className="mt-1 text-xs text-gray-600 dark:text-slate-300">
                       Intended for internal admin and testing tenants. If this tenant already has an active Stripe
                       subscription, saving with this enabled will stop future renewals at the end of the current billing
                       period.
@@ -913,7 +913,7 @@ export default function TenantsManagementPage() {
                   setEditFormData({});
                   setEditErrors({});
                 }}
-                className="flex-1 px-4 py-2 text-gray-800 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
+                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 transition-colors hover:bg-gray-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
               >
                 Cancel
               </button>
@@ -932,16 +932,16 @@ export default function TenantsManagementPage() {
       {/* Cancel Subscription Modal */}
       {cancelTenant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-xl p-6 mx-4 bg-white rounded-lg">
+          <div className="mx-4 w-full max-w-xl rounded-lg bg-white p-6 dark:bg-slate-900 dark:text-slate-100">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Cancel Subscription</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Cancel Subscription</h2>
               <button
                 onClick={() => {
                   setCancelTenant(null);
                   setCancelImmediately(false);
                   setCancelReason('admin_request');
                 }}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-200"
                 title="Close"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -959,19 +959,19 @@ export default function TenantsManagementPage() {
               </div>
 
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
                   Cancellation Reason
                 </label>
                 <input
                   type="text"
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-red-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
                   placeholder="admin_request"
                 />
               </div>
 
-              <label className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer">
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-slate-700">
                 <input
                   type="checkbox"
                   checked={cancelImmediately}
@@ -979,8 +979,8 @@ export default function TenantsManagementPage() {
                   className="mt-1"
                 />
                 <div>
-                  <p className="font-medium text-gray-900">Cancel immediately</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="font-medium text-gray-900 dark:text-slate-100">Cancel immediately</p>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">
                     Leave this unchecked to stop renewal only at the end of the current billing period.
                   </p>
                 </div>
@@ -994,7 +994,7 @@ export default function TenantsManagementPage() {
                   setCancelImmediately(false);
                   setCancelReason('admin_request');
                 }}
-                className="flex-1 px-4 py-2 text-gray-800 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
+                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 transition-colors hover:bg-gray-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
               >
                 Close
               </button>
@@ -1015,16 +1015,16 @@ export default function TenantsManagementPage() {
       {/* Refund Modal */}
       {refundTenant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-xl p-6 mx-4 bg-white rounded-lg">
+          <div className="mx-4 w-full max-w-xl rounded-lg bg-white p-6 dark:bg-slate-900 dark:text-slate-100">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Issue Refund</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Issue Refund</h2>
               <button
                 onClick={() => {
                   setRefundTenant(null);
                   setRefundAmount('');
                   setRefundReason('requested_by_customer');
                 }}
-                className="text-gray-400 hover:text-gray-600 p-1"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-200"
                 title="Close"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1032,20 +1032,20 @@ export default function TenantsManagementPage() {
                 </svg>
               </button>
             </div>
-            <p className="mb-6 text-gray-600">
+            <p className="mb-6 text-gray-600 dark:text-slate-300">
               Tenant: <span className="font-semibold">{refundTenant.name}</span>
             </p>
 
             <div className="space-y-4">
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">Amount (USD)</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">Amount (USD)</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={refundAmount}
                   onChange={(e) => setRefundAmount(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
                   placeholder="0.00"
                 />
               </div>
@@ -1068,7 +1068,7 @@ export default function TenantsManagementPage() {
                   setRefundAmount('');
                   setRefundReason('requested_by_customer');
                 }}
-                className="flex-1 px-4 py-2 text-gray-800 transition-colors bg-gray-200 rounded-lg hover:bg-gray-300"
+                className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 transition-colors hover:bg-gray-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
               >
                 Cancel
               </button>
@@ -1087,15 +1087,15 @@ export default function TenantsManagementPage() {
       {/* Refund History Modal */}
       {refundHistoryTenant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-3xl p-6 mx-4 bg-white rounded-lg">
+          <div className="mx-4 w-full max-w-3xl rounded-lg bg-white p-6 dark:bg-slate-900 dark:text-slate-100">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Refund History</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Refund History</h2>
               <button
                 onClick={() => {
                   setRefundHistoryTenant(null);
                   setRefundHistory([]);
                 }}
-                className="text-gray-400 hover:text-gray-600 p-1"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-200"
                 title="Close"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1103,25 +1103,25 @@ export default function TenantsManagementPage() {
                 </svg>
               </button>
             </div>
-            <p className="mb-4 text-gray-600">
+            <p className="mb-4 text-gray-600 dark:text-slate-300">
               Tenant: <span className="font-semibold">{refundHistoryTenant.name}</span>
             </p>
 
             {loadingRefundHistory ? (
-              <div className="py-8 text-center text-gray-500">Loading refunds...</div>
+              <div className="py-8 text-center text-gray-500 dark:text-slate-400">Loading refunds...</div>
             ) : refundHistory.length === 0 ? (
-              <div className="py-8 text-center text-gray-500">No refunds found.</div>
+              <div className="py-8 text-center text-gray-500 dark:text-slate-400">No refunds found.</div>
             ) : (
               <div className="space-y-3 max-h-[420px] overflow-y-auto">
                 {refundHistory.map((refund) => {
                   const createdAt = refund.createdAt?.toDate?.() || null;
                   const amount = (refund.amountCents || 0) / 100;
                   return (
-                    <div key={refund.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={refund.id} className="rounded-lg border border-gray-200 p-4 dark:border-slate-700 dark:bg-slate-800/60">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-semibold text-gray-900">${amount.toFixed(2)}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="font-semibold text-gray-900 dark:text-slate-100">${amount.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-400">
                             {createdAt ? createdAt.toLocaleString() : 'Unknown date'}
                           </p>
                         </div>
@@ -1129,7 +1129,7 @@ export default function TenantsManagementPage() {
                           {refund.reason || 'requested_by_customer'}
                         </span>
                       </div>
-                      <div className="mt-2 text-xs text-gray-500 space-y-1">
+                      <div className="mt-2 text-xs text-gray-500 dark:text-slate-400 space-y-1">
                         <div>Refund ID: {refund.stripeRefundId || '—'}</div>
                         <div>Invoice ID: {refund.stripeInvoiceId || '—'}</div>
                         <div>Payment Intent: {refund.stripePaymentIntentId || '—'}</div>
@@ -1164,3 +1164,5 @@ export default function TenantsManagementPage() {
     </div>
   );
 }
+
+

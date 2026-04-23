@@ -190,7 +190,7 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
   return (
     <section className="card">
       <h3 className="text-lg font-semibold text-gray-900 mb-1">{getLabel('title')}</h3>
-      <p className="text-sm text-gray-600 mb-6">{getLabel('subtitle')}</p>
+      <p className="text-sm text-gray-600 dark:text-slate-300 mb-6">{getLabel('subtitle')}</p>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Annual Holidays Section */}
@@ -209,7 +209,7 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
           {/* Quick Add Common Holidays */}
           {availableCommonHolidays.length > 0 && !showAddHoliday && (
             <div className="mb-4">
-              <p className="text-xs text-gray-500 mb-2">Quick add:</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">Quick add:</p>
               <div className="flex flex-wrap gap-2">
                 {availableCommonHolidays.slice(0, 6).map((holiday) => (
                   <button
@@ -277,7 +277,7 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
 
               {!newHolidayClosed && (
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-sm text-gray-600">Modified hours:</span>
+                  <span className="text-sm text-gray-600 dark:text-slate-300">Modified hours:</span>
                   <TimePickerField
                     value={newHolidayOpenTime}
                     onChange={(e) => setNewHolidayOpenTime(e.target.value)}
@@ -296,7 +296,7 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
                 <button
                   type="button"
                   onClick={resetHolidayForm}
-                  className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
+                  className="px-3 py-1.5 text-sm text-gray-600 dark:text-slate-300 hover:text-gray-800 dark:text-slate-300 dark:hover:text-slate-100"
                 >
                   Cancel
                 </button>
@@ -318,15 +318,15 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
               {holidays.map((holiday) => (
                 <div
                   key={holiday.id}
-                  className="flex items-center justify-between py-2 px-3 bg-white border border-gray-200 rounded-lg"
+                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">
                       {holiday.closed ? '🔴' : '🟡'}
                     </span>
                     <div>
-                      <div className="font-medium text-gray-900">{holiday.name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="font-medium text-gray-900 dark:text-slate-100">{holiday.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400">
                         {formatDate(holiday.date)}
                         {holiday.recurring && ' • Recurring'}
                         {!holiday.closed && holiday.modifiedHours && (
@@ -339,7 +339,7 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
                     <button
                       type="button"
                       onClick={() => toggleHolidayClosed(holiday.id)}
-                      className="text-xs px-2 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+                      className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                     >
                       {holiday.closed ? 'Set Modified Hours' : 'Mark Closed'}
                     </button>
@@ -355,7 +355,7 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">No holidays configured yet.</p>
+            <p className="text-sm italic text-gray-500 dark:text-slate-400">No holidays configured yet.</p>
           )}
         </div>
 
@@ -432,7 +432,7 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
                 <button
                   type="button"
                   onClick={resetClosureForm}
-                  className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
+                  className="px-3 py-1.5 text-sm text-gray-600 dark:text-slate-300 hover:text-gray-800 dark:text-slate-300 dark:hover:text-slate-100"
                 >
                   Cancel
                 </button>
@@ -454,13 +454,13 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
               {customClosures.map((closure) => (
                 <div
                   key={closure.id}
-                  className="flex items-center justify-between py-2 px-3 bg-white border border-gray-200 rounded-lg"
+                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">🏖️</span>
                     <div>
-                      <div className="font-medium text-gray-900">{closure.name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="font-medium text-gray-900 dark:text-slate-100">{closure.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-slate-400">
                         {formatDate(closure.startDate)}
                         {closure.endDate !== closure.startDate && (
                           <span> – {formatDate(closure.endDate)}</span>
@@ -480,7 +480,7 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">No custom closures scheduled.</p>
+            <p className="text-sm italic text-gray-500 dark:text-slate-400">No custom closures scheduled.</p>
           )}
         </div>
 
@@ -494,4 +494,5 @@ export default function HolidaySchedule({ settings, onSave, saving, tenantType =
     </section>
   );
 }
+
 

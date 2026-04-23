@@ -114,19 +114,19 @@ export default function OnboardingOTPPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center px-4">
-      <div className="max-w-lg w-full bg-white shadow-lg rounded-2xl p-8 border border-gray-100">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-50 to-white px-4 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+      <div className="w-full max-w-lg rounded-2xl border border-gray-100 bg-white p-8 shadow-lg dark:border-slate-700 dark:bg-slate-900">
         <div className="text-center mb-1">
           <p className="text-2xl font-semibold text-primary-600">Merxus AI</p>
         </div>
-        <h1 className="text-xl font-bold text-gray-900 mb-3 text-center">Verify your email</h1>
-        <p className="text-sm text-gray-600 mb-6">
+        <h1 className="mb-3 text-center text-xl font-bold text-gray-900 dark:text-slate-100">Verify your email</h1>
+        <p className="mb-6 text-sm text-gray-600 dark:text-slate-300">
           We sent a 6-digit code to <span className="font-semibold">{email}</span>. Enter it below, set your password, and you’ll continue to the setup wizard.
         </p>
 
         <form className="space-y-4" onSubmit={handleVerify}>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">OTP Code</label>
+            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-slate-300">OTP Code</label>
             <input
               type="text"
               inputMode="numeric"
@@ -142,7 +142,7 @@ export default function OnboardingOTPPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Set Password</label>
+          <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-slate-300">Set Password</label>
           <div className="relative">
             <input
               type={showPwd ? 'text' : 'password'}
@@ -158,7 +158,7 @@ export default function OnboardingOTPPage() {
             <button
               type="button"
               onClick={() => setShowPwd((v) => !v)}
-              className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700"
+              className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
               tabIndex={-1}
             >
               {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -167,7 +167,7 @@ export default function OnboardingOTPPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Confirm Password</label>
+          <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-slate-300">Confirm Password</label>
           <div className="relative">
             <input
               type={showConfirmPwd ? 'text' : 'password'}
@@ -183,7 +183,7 @@ export default function OnboardingOTPPage() {
             <button
               type="button"
               onClick={() => setShowConfirmPwd((v) => !v)}
-              className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700"
+              className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
               tabIndex={-1}
             >
               {showConfirmPwd ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -230,7 +230,7 @@ export default function OnboardingOTPPage() {
               if (selectedPlan) params.set('plan', selectedPlan);
               navigate(`/onboarding?${params.toString()}`);
             }}
-            className="w-full py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            className="w-full rounded-lg border border-gray-300 py-2.5 text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Back to email
           </button>

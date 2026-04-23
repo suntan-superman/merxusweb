@@ -84,7 +84,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading settings…</p>
+          <p className="mt-4 text-gray-600 dark:text-slate-300">Loading settings…</p>
         </div>
       </div>
     );
@@ -93,7 +93,7 @@ export default function SettingsPage() {
   if (!settings) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Failed to load settings.</p>
+        <p className="text-gray-600 dark:text-slate-300">Failed to load settings.</p>
         <button onClick={load} className="btn-primary mt-4">
           Retry
         </button>
@@ -105,26 +105,26 @@ export default function SettingsPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Settings</h2>
+        <p className="mt-1 text-sm text-gray-600 dark:text-slate-300">
           Configure your restaurant profile, hours, notifications, and integrations
         </p>
       </div>
 
       {/* Status Messages */}
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/50 dark:bg-red-900/30 dark:text-red-200">
           {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 rounded-md bg-primary-50 border border-primary-200 px-4 py-3 text-sm text-primary-700">
+        <div className="mb-4 rounded-md border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-700 dark:border-primary-500/50 dark:bg-primary-900/30 dark:text-primary-200">
           {success}
         </div>
       )}
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="mb-6 border-b border-gray-200 dark:border-slate-700">
         <nav className="-mb-px flex space-x-2 overflow-x-auto">
           {TABS.map((tab) => (
             <button
@@ -135,8 +135,8 @@ export default function SettingsPage() {
                 flex items-center gap-2
                 ${
                   activeTab === tab.id
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:border-slate-600'
                 }
               `}
             >

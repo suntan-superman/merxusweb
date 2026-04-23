@@ -8,7 +8,7 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex">
       {/* Desktop Sidebar */}
       <Sidebar />
       
@@ -22,7 +22,7 @@ export default function DashboardLayout() {
       
       {/* Mobile sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 dark:bg-slate-900 dark:border-slate-700 transform transition-transform duration-300 ease-in-out md:hidden ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

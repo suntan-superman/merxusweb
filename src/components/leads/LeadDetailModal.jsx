@@ -177,7 +177,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
                   ${
                     activeTab === tab
                       ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:border-slate-600'
                   }
                 `}
               >
@@ -198,7 +198,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* Contact Info */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
                 <h3 className="text-md font-semibold text-gray-900 mb-4">Contact Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -242,7 +242,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
               </div>
 
               {/* Lead Details */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
                 <h3 className="text-md font-semibold text-gray-900 mb-4">Lead Details</h3>
                 <div className="space-y-4">
                   {/* Priority */}
@@ -328,7 +328,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
 
               {/* Property Interest */}
               {(lead.property_address || lead.propertyAddress || lead.interested_in) && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
                   <h3 className="text-md font-semibold text-gray-900 mb-4">Property Interest</h3>
                   <div className="space-y-2">
                     <div>
@@ -346,7 +346,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
           {/* Activity Tab */}
           {activeTab === 'activity' && (
             <div className="space-y-4">
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
                 <h3 className="text-md font-semibold text-gray-900 mb-4">Activity Timeline</h3>
                 <div className="space-y-4">
                   {/* Captured Event */}
@@ -388,7 +388,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
               {leadFlyerLogs.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-4xl mb-3">📧</div>
-                  <p className="text-gray-500">No flyers sent to this lead yet</p>
+                  <p className="text-gray-500 dark:text-slate-400">No flyers sent to this lead yet</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -396,7 +396,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
                   {leadFlyerLogs.map((log) => (
                     <div
                       key={log.id}
-                      className="bg-white border border-gray-200 rounded-lg p-4"
+                      className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -445,7 +445,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
           {activeTab === 'transcript' && (
             <div className="space-y-4">
               {lead.transcript || lead.transcriptSummary ? (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
                   <h3 className="text-md font-semibold text-gray-900 mb-4">Call Transcript</h3>
                   
                   {/* Audio Player Placeholder */}
@@ -469,7 +469,7 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
               ) : (
                 <div className="text-center py-12">
                   <div className="text-4xl mb-3">📝</div>
-                  <p className="text-gray-500">No transcript available</p>
+                  <p className="text-gray-500 dark:text-slate-400">No transcript available</p>
                 </div>
               )}
             </div>
@@ -479,3 +479,4 @@ export default function LeadDetailModal({ lead, onClose, onUpdate, flyerLogs = [
     </FormModal>
   );
 }
+
