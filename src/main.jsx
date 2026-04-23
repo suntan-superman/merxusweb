@@ -6,6 +6,77 @@ import './index.css'
 import { Toaster } from 'react-hot-toast'
 import { ThemeProvider, useTheme } from './context/ThemeContext'
 
+const VITE_PRELOAD_RETRY_KEY = 'merxus.vitePreloadRetryTriggered'
+const MODULE_IMPORT_RETRY_KEY = 'merxus.moduleImportRetryTriggered'
+
+function isRecoverableModuleLoadFailure(reason) {
+  const message = String(reason?.message || reason || '').toLowerCase()
+  return (
+    message.includes('failed to fetch dynamically imported module') ||
+    message.includes('importing a module script failed') ||
+    message.includes('failed to load module script') ||
+    message.includes('loading chunk') ||
+    message.includes('mime type')
+  )
+}
+
+function retryWithHardReload({ sessionKey, queryParam }) {
+  if (typeof window === 'undefined') return
+  const alreadyRetried = window.sessionStorage.getItem(sessionKey) === '1'
+  if (alreadyRetried) return
+  window.sessionStorage.setItem(sessionKey, '1')
+  const url = new URL(window.location.href)
+  url.searchParams.set(queryParam, String(Date.now()))
+  window.location.replace(url.toString())
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault()
+    retryWithHardReload({
+      sessionKey: VITE_PRELOAD_RETRY_KEY,
+      queryParam: '__vite_retry',
+    })
+  })
+
+  window.addEventListener('error', (event) => {
+    const message = String(event?.message || '').toLowerCase()
+    const target = event?.target
+    const isModuleScriptTagFailure =
+      target &&
+      target.tagName === 'SCRIPT' &&
+      typeof target.src === 'string' &&
+      target.src.includes('/assets/')
+
+    if (message.includes('failed to load module script') || isModuleScriptTagFailure) {
+      event.preventDefault()
+      retryWithHardReload({
+        sessionKey: MODULE_IMPORT_RETRY_KEY,
+        queryParam: '__module_retry',
+      })
+    }
+  })
+
+  window.addEventListener('unhandledrejection', (event) => {
+    if (!isRecoverableModuleLoadFailure(event?.reason)) return
+    event.preventDefault()
+    retryWithHardReload({
+      sessionKey: MODULE_IMPORT_RETRY_KEY,
+      queryParam: '__module_retry',
+    })
+  })
+
+  const currentUrl = new URL(window.location.href)
+  if (currentUrl.searchParams.has('__vite_retry') || currentUrl.searchParams.has('__module_retry')) {
+    currentUrl.searchParams.delete('__vite_retry')
+    currentUrl.searchParams.delete('__module_retry')
+    window.history.replaceState({}, '', currentUrl.toString())
+  } else {
+    window.sessionStorage.removeItem(VITE_PRELOAD_RETRY_KEY)
+    window.sessionStorage.removeItem(MODULE_IMPORT_RETRY_KEY)
+  }
+}
+
 // Create a client with sensible defaults
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Suspense, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { APP_INFO } from './constants/appInfo';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -36,6 +36,9 @@ import OfficeLandingPage from './pages/OfficeLandingPage';
 import RealEstateLandingPage from './pages/RealEstateLandingPage';
 import RestaurantLandingPage from './pages/RestaurantLandingPage';
 import EliteFeatureWorkspace from './components/premium/EliteFeatureWorkspace';
+import lazyWithRetry from './utils/lazyWithRetry';
+
+const lazy = lazyWithRetry;
 
 const OrdersPage = lazy(() => import('./pages/restaurant/OrdersPage'));
 const ReservationsPage = lazy(() => import('./pages/restaurant/ReservationsPage'));
@@ -119,6 +122,13 @@ function LazyRoute({ children }) {
 }
 
 function App() {
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('__lazy_retry')) return;
+    url.searchParams.delete('__lazy_retry');
+    window.history.replaceState({}, '', url.toString());
+  }, []);
+
   return (
     <ErrorBoundary>
       <AuthProvider>

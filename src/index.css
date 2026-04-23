@@ -153,11 +153,13 @@ html.dark .bg-slate-50 {
   background-color: #020617 !important;
 }
 
-html.dark .bg-gray-100 {
+html.dark .bg-gray-100,
+html.dark .bg-slate-100 {
   background-color: #111827 !important;
 }
 
-html.dark .bg-gray-200 {
+html.dark .bg-gray-200,
+html.dark .bg-slate-200 {
   background-color: #1f2937 !important;
 }
 
@@ -227,9 +229,60 @@ html.dark .bg-rose-200 {
   background-color: #1e293b !important;
 }
 
+/* Opacity utility normalization used by workspace cards (e.g. bg-slate-50/80) */
+html.dark [class*='bg-gray-50/'],
+html.dark [class*='bg-slate-50/'] {
+  background-color: #0b1220 !important;
+}
+
+html.dark [class*='bg-gray-100/'],
+html.dark [class*='bg-slate-100/'] {
+  background-color: #162033 !important;
+}
+
+html.dark [class*='bg-gray-200/'],
+html.dark [class*='bg-slate-200/'] {
+  background-color: #1e293b !important;
+}
+
+html.dark [class*='bg-blue-50/'],
+html.dark [class*='bg-cyan-50/'],
+html.dark [class*='bg-sky-50/'],
+html.dark [class*='bg-indigo-50/'],
+html.dark [class*='bg-violet-50/'],
+html.dark [class*='bg-purple-50/'] {
+  background-color: #10213e !important;
+}
+
+html.dark [class*='bg-green-50/'],
+html.dark [class*='bg-emerald-50/'],
+html.dark [class*='bg-teal-50/'] {
+  background-color: #0f2a25 !important;
+}
+
+html.dark [class*='bg-amber-50/'],
+html.dark [class*='bg-yellow-50/'],
+html.dark [class*='bg-orange-50/'] {
+  background-color: #33210c !important;
+}
+
+html.dark [class*='bg-red-50/'],
+html.dark [class*='bg-pink-50/'],
+html.dark [class*='bg-rose-50/'] {
+  background-color: #3a1418 !important;
+}
+
+html.dark [class*='bg-fuchsia-50/'] {
+  background-color: #31153e !important;
+}
+
 html.dark .text-gray-900,
 html.dark .text-slate-900 {
   color: #e2e8f0 !important;
+}
+
+html.dark .text-slate-950 {
+  color: #f8fafc !important;
 }
 
 html.dark .text-gray-800,
@@ -277,6 +330,15 @@ html.dark .text-purple-900 {
   color: #dbeafe !important;
 }
 
+html.dark .text-blue-950,
+html.dark .text-cyan-950,
+html.dark .text-sky-950,
+html.dark .text-indigo-950,
+html.dark .text-violet-950,
+html.dark .text-purple-950 {
+  color: #eff6ff !important;
+}
+
 html.dark .text-blue-800,
 html.dark .text-cyan-800,
 html.dark .text-sky-800,
@@ -308,6 +370,12 @@ html.dark .text-green-900,
 html.dark .text-emerald-900,
 html.dark .text-teal-900 {
   color: #d1fae5 !important;
+}
+
+html.dark .text-green-950,
+html.dark .text-emerald-950,
+html.dark .text-teal-950 {
+  color: #ecfdf5 !important;
 }
 
 html.dark .text-green-800,
