@@ -8,12 +8,12 @@ const Home = () => {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="px-4 pt-12 pb-2 bg-gradient-to-br from-primary-50 to-white">
+      <section className="bg-gradient-to-br from-primary-50 to-white px-4 pb-2 pt-12 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
         <div className="container max-w-4xl mx-auto text-center">
-          <h1 className="mb-6 text-3xl font-bold text-gray-900 md:text-5xl">
+          <h1 className="mb-6 text-3xl font-bold text-neutral-900 md:text-5xl dark:text-slate-100">
             AI Phone Assistant for Your Business
           </h1>
-          <p className="mb-2 text-xl text-gray-700 md:text-2xl">
+          <p className="mb-2 text-xl text-neutral-700 md:text-2xl dark:text-slate-300">
             24/7 Virtual Receptionist that Answers Calls, Handles Inquiries, and Never Misses a Customer
           </p>
           {/* <div className="flex flex-col justify-center gap-4 mb-4 sm:flex-row">
@@ -60,7 +60,7 @@ const Home = () => {
                   loading="lazy"
                 />
                 <span className="absolute inset-0 bg-black/30 transition group-hover:bg-black/40" />
-                <span className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full bg-white/95 px-5 py-3 text-sm font-semibold text-gray-900">
+                <span className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full bg-white/95 px-5 py-3 text-sm font-semibold text-neutral-900 dark:bg-slate-900/95 dark:text-slate-100 dark:ring-1 dark:ring-slate-700">
                   Load Demo Video
                 </span>
               </button>
