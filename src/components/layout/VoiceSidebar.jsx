@@ -52,6 +52,8 @@ export default function VoiceSidebar() {
   });
   const professionalUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'professional');
   const eliteUnlocked = subscriptionLoading || meetsPlanRequirement(tier, 'elite');
+  const [proExpanded, setProExpanded] = useState(true);
+  const [eliteExpanded, setEliteExpanded] = useState(true);
 
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen">
@@ -79,79 +81,95 @@ export default function VoiceSidebar() {
         <NavItem to="/voice/sms" label="SMS Inbox" icon="💬" />
         <NavItem to="/voice/command-center" label="Command Center" icon="🛰️" />
         <NavItem to="/voice/notifications" label="Notifications" icon="🔔" />
-        <NavItem
-          to="/voice/intelligence"
-          label="Intelligence"
-          icon="🧠"
-          locked={!professionalUnlocked}
-          lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fintelligence"
-          planBadgeLabel="Pro"
-          planBadgeTier="professional"
-        />
-        <NavItem
-          to="/voice/work-items"
-          label="Work Items"
-          icon="🧾"
-          locked={!professionalUnlocked}
-          lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fwork-items"
-          planBadgeLabel="Pro"
-          planBadgeTier="professional"
-        />
-        <NavItem
-          to="/voice/customer-360"
-          label="Customer 360"
-          icon="🪪"
-          locked={!professionalUnlocked}
-          lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fcustomer-360"
-          planBadgeLabel="Pro"
-          planBadgeTier="professional"
-        />
-        <NavItem
-          to="/voice/merge-activity"
-          label="Merge Activity"
-          icon="🔀"
-          locked={!professionalUnlocked}
-          lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fmerge-activity"
-          planBadgeLabel="Pro"
-          planBadgeTier="professional"
-        />
-        <NavItem
-          to="/voice/reviews"
-          label="Reviews"
-          icon="⭐"
-          locked={!eliteUnlocked}
-          lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Freviews"
-          planBadgeLabel="Elite"
-          planBadgeTier="elite"
-        />
-        <NavItem
-          to="/voice/feedback"
-          label="Feedback"
-          icon="🗣️"
-          locked={!eliteUnlocked}
-          lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Ffeedback"
-          planBadgeLabel="Elite"
-          planBadgeTier="elite"
-        />
-        <NavItem
-          to="/voice/automations"
-          label="Automations"
-          icon="⚡"
-          locked={!eliteUnlocked}
-          lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Fautomations"
-          planBadgeLabel="Elite"
-          planBadgeTier="elite"
-        />
-        <NavItem
-          to="/voice/cx-analytics"
-          label="CX Analytics"
-          icon="📈"
-          locked={!eliteUnlocked}
-          lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Fcx-analytics"
-          planBadgeLabel="Elite"
-          planBadgeTier="elite"
-        />
         {canManagePortal && <NavItem to="/voice/routing" label="Call Routing" icon="🔄" />}
+        <PlanSection
+          title="Pro Features"
+          tier="professional"
+          label="Pro"
+          expanded={proExpanded}
+          onToggle={() => setProExpanded((value) => !value)}
+        >
+          <NavItem
+            to="/voice/intelligence"
+            label="Intelligence"
+            icon="🧠"
+            locked={!professionalUnlocked}
+            lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fintelligence"
+            planBadgeLabel="Pro"
+            planBadgeTier="professional"
+          />
+          <NavItem
+            to="/voice/work-items"
+            label="Work Items"
+            icon="🧾"
+            locked={!professionalUnlocked}
+            lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fwork-items"
+            planBadgeLabel="Pro"
+            planBadgeTier="professional"
+          />
+          <NavItem
+            to="/voice/customer-360"
+            label="Customer 360"
+            icon="🪪"
+            locked={!professionalUnlocked}
+            lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fcustomer-360"
+            planBadgeLabel="Pro"
+            planBadgeTier="professional"
+          />
+          <NavItem
+            to="/voice/merge-activity"
+            label="Merge Activity"
+            icon="🔀"
+            locked={!professionalUnlocked}
+            lockedPath="/voice/billing?requiredTier=professional&from=%2Fvoice%2Fmerge-activity"
+            planBadgeLabel="Pro"
+            planBadgeTier="professional"
+          />
+        </PlanSection>
+        <PlanSection
+          title="Elite Features"
+          tier="elite"
+          label="Elite"
+          expanded={eliteExpanded}
+          onToggle={() => setEliteExpanded((value) => !value)}
+        >
+          <NavItem
+            to="/voice/reviews"
+            label="Reviews"
+            icon="⭐"
+            locked={!eliteUnlocked}
+            lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Freviews"
+            planBadgeLabel="Elite"
+            planBadgeTier="elite"
+          />
+          <NavItem
+            to="/voice/feedback"
+            label="Feedback"
+            icon="🗣️"
+            locked={!eliteUnlocked}
+            lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Ffeedback"
+            planBadgeLabel="Elite"
+            planBadgeTier="elite"
+          />
+          <NavItem
+            to="/voice/automations"
+            label="Automations"
+            icon="⚡"
+            locked={!eliteUnlocked}
+            lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Fautomations"
+            planBadgeLabel="Elite"
+            planBadgeTier="elite"
+          />
+          <NavItem
+            to="/voice/cx-analytics"
+            label="CX Analytics"
+            icon="📈"
+            locked={!eliteUnlocked}
+            lockedPath="/voice/billing?requiredTier=elite&from=%2Fvoice%2Fcx-analytics"
+            planBadgeLabel="Elite"
+            planBadgeTier="elite"
+          />
+        </PlanSection>
         {canManagePortal && <NavItem to="/voice/settings" label="Settings" icon="⚙️" />}
         {canManagePortal && <NavItem to="/voice/billing" label="Billing" icon="💳" />}
         {isOwner && (
@@ -189,6 +207,27 @@ export default function VoiceSidebar() {
         </button>
       </div>
     </aside>
+  );
+}
+
+function PlanSection({ title, tier, label, expanded, onToggle, children }) {
+  return (
+    <div className="pt-2">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:bg-gray-100"
+      >
+        <span className="flex items-center gap-2">
+          <span>{title}</span>
+          <PlanTierBadge tier={tier} label={label} />
+        </span>
+        <span className={`text-base text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`}>
+          ›
+        </span>
+      </button>
+      {expanded ? <div className="mt-1 space-y-1">{children}</div> : null}
+    </div>
   );
 }
 
