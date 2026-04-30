@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { Suspense, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { APP_INFO } from './constants/appInfo';
@@ -36,6 +36,7 @@ import OfficeLandingPage from './pages/OfficeLandingPage';
 import RealEstateLandingPage from './pages/RealEstateLandingPage';
 import RestaurantLandingPage from './pages/RestaurantLandingPage';
 import EliteFeatureWorkspace from './components/premium/EliteFeatureWorkspace';
+import WebsiteChatWidget from './components/chat/WebsiteChatWidget';
 import lazyWithRetry from './utils/lazyWithRetry';
 
 const lazy = lazyWithRetry;
@@ -119,6 +120,33 @@ function RouteLoadingState() {
 
 function LazyRoute({ children }) {
   return <Suspense fallback={<RouteLoadingState />}>{children}</Suspense>;
+}
+
+function PublicWebsiteChat() {
+  const { pathname } = useLocation();
+  const hiddenPrefixes = [
+    '/restaurant',
+    '/voice',
+    '/estate',
+    '/merxus',
+    '/login',
+    '/invite',
+    '/verify-phone',
+    '/checkout',
+    '/support',
+  ];
+
+  if (hiddenPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+    return null;
+  }
+
+  return (
+    <WebsiteChatWidget
+      product="merxus"
+      tenantId="merxus-platform"
+      tenantType="platform"
+    />
+  );
 }
 
 function App() {
@@ -597,6 +625,7 @@ function App() {
                     </div>
                   </div>
                 </footer>
+                <PublicWebsiteChat />
               </>
             }
           />
