@@ -1,7 +1,21 @@
 import { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
+import {
+  createPublicChatSession,
+  requestPublicChatHuman,
+} from '../api/publicChat';
+
+function resolveTenantType({ tenantType, restaurantId, agentId, officeId }) {
+  if (tenantType) return tenantType;
+  if (restaurantId) return 'restaurant';
+  if (agentId) return 'agent';
+  if (officeId) return 'office';
+  return 'platform';
+}
+
+function resolveTenantId({ restaurantId, agentId, officeId }) {
+  return restaurantId || agentId || officeId || 'merxus-platform';
+}
 
 export default function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,18 +33,37 @@ export default function FeedbackButton() {
 
     setSubmitting(true);
     try {
-      const tenantId = restaurantId || agentId || officeId;
-      
-      await addDoc(collection(db, 'feedback'), {
-        userId: user.uid,
-        userEmail: user.email,
-        tenantId,
-        tenantType,
-        feedback: feedback.trim(),
-        appVersion: '1.0.0',
-        platform: 'web',
-        createdAt: serverTimestamp(),
+      const tenantContext = {
+        tenantId: resolveTenantId({ restaurantId, agentId, officeId }),
+        tenantType: resolveTenantType({ tenantType, restaurantId, agentId, officeId }),
+      };
+      const created = await createPublicChatSession({
+        product: 'merxus',
+        ...tenantContext,
+        source: 'website_chat',
+        sourceUrl: window.location.href,
+        visitorId: user?.uid || `feedback_${Date.now()}`,
+        initialIntent: 'support',
+        initialMessage: feedback.trim(),
+        leadName: user?.displayName || user?.email || null,
+        leadEmail: user?.email || null,
+        lead: {
+          name: user?.displayName || user?.email || null,
+          email: user?.email || null,
+        },
+        metadata: {
+          entryPoint: 'feedback_button',
+          appVersion: '1.0.0',
+          platform: 'web',
+        },
       });
+
+      if (created?.session?.id) {
+        await requestPublicChatHuman(created.session.id, {
+          visitorId: user?.uid || null,
+          reason: 'feedback_support_request',
+        });
+      }
 
       setSubmitted(true);
       setFeedback('');
@@ -42,7 +75,7 @@ export default function FeedbackButton() {
       }, 2000);
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      alert('Failed to submit feedback. Please try again.');
+      alert(error?.message || 'Failed to submit feedback. Please try again.');
     } finally {
       setSubmitting(false);
     }
