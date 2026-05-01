@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   createPublicChatSession,
+  listPublicChatMessages,
   requestPublicChatHuman,
+  sendPublicChatMessage,
 } from '../api/publicChat';
 
 function resolveTenantType({ tenantType, restaurantId, agentId, officeId }) {
@@ -17,12 +19,59 @@ function resolveTenantId({ restaurantId, agentId, officeId }) {
   return restaurantId || agentId || officeId || 'merxus-platform';
 }
 
+function normalizeConversationMessages(messages = []) {
+  const seen = new Set();
+  return messages
+    .map((message) => {
+      const sender = message.sender || (message.role === 'assistant' ? 'ai' : message.role) || 'system';
+      const body = message.body || message.text || '';
+      return {
+        ...message,
+        sender,
+        body,
+      };
+    })
+    .filter((message) => {
+      const key = message.id || `${message.sender}:${message.body}:${message.createdAt || ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return Boolean(message.body && message.body !== 'undefined');
+    });
+}
+
 export default function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [sessionId, setSessionId] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [error, setError] = useState('');
   const { user, tenantType, restaurantId, agentId, officeId } = useAuth();
+
+  useEffect(() => {
+    if (!isOpen || !sessionId) return undefined;
+    let cancelled = false;
+
+    async function pollConversation() {
+      try {
+        const result = await listPublicChatMessages(sessionId);
+        if (!cancelled) {
+          setMessages(normalizeConversationMessages(result.messages || []));
+          setError('');
+        }
+      } catch (pollError) {
+        if (!cancelled) setError(pollError?.message || 'Unable to refresh this conversation.');
+      }
+    }
+
+    pollConversation();
+    const timer = window.setInterval(pollConversation, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [isOpen, sessionId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,19 +81,20 @@ export default function FeedbackButton() {
     }
 
     setSubmitting(true);
+    setError('');
     try {
       const tenantContext = {
         tenantId: resolveTenantId({ restaurantId, agentId, officeId }),
         tenantType: resolveTenantType({ tenantType, restaurantId, agentId, officeId }),
       };
-      const created = await createPublicChatSession({
+      const basePayload = {
         product: 'merxus',
         ...tenantContext,
         source: 'website_chat',
         sourceUrl: window.location.href,
+        pageUrl: window.location.href,
+        sourceApp: 'website',
         visitorId: user?.uid || `feedback_${Date.now()}`,
-        initialIntent: 'support',
-        initialMessage: feedback.trim(),
         leadName: user?.displayName || user?.email || null,
         leadEmail: user?.email || null,
         lead: {
@@ -56,26 +106,39 @@ export default function FeedbackButton() {
           appVersion: '1.0.0',
           platform: 'web',
         },
-      });
+      };
 
-      if (created?.session?.id) {
-        await requestPublicChatHuman(created.session.id, {
-          visitorId: user?.uid || null,
-          reason: 'feedback_support_request',
+      if (sessionId) {
+        const sent = await sendPublicChatMessage(sessionId, {
+          ...basePayload,
+          message: feedback.trim(),
         });
+        setMessages((current) => normalizeConversationMessages([...current, ...(sent.messages || [])]));
+      } else {
+        const created = await createPublicChatSession({
+          ...basePayload,
+          initialIntent: 'support',
+          initialMessage: feedback.trim(),
+        });
+
+        if (created?.session?.id) {
+          setSessionId(created.session.id);
+          const requested = await requestPublicChatHuman(created.session.id, {
+            visitorId: user?.uid || null,
+            reason: 'feedback_support_request',
+          });
+          setMessages(normalizeConversationMessages([
+            ...(created.messages || []),
+            requested.message,
+          ].filter(Boolean)));
+        }
       }
 
       setSubmitted(true);
       setFeedback('');
-      
-      // Close after 2 seconds
-      setTimeout(() => {
-        setIsOpen(false);
-        setSubmitted(false);
-      }, 2000);
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      alert(error?.message || 'Failed to submit feedback. Please try again.');
+      setError(error?.message || 'Failed to submit feedback. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -129,26 +192,46 @@ export default function FeedbackButton() {
             {/* Body */}
             <form onSubmit={handleSubmit} className="p-6">
               {submitted ? (
-                <div className="text-center py-8">
-                  <svg
-                    className="w-16 h-16 text-green-500 mx-auto mb-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+                    Your request has been sent. This conversation will stay open while our team reviews it.
+                  </div>
+                  <div className="max-h-72 space-y-3 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id || `${message.sender}-${message.body}`}
+                        className={`rounded-lg px-3 py-2 text-sm ${
+                          message.sender === 'visitor'
+                            ? 'ml-8 bg-blue-600 text-white'
+                            : message.sender === 'agent'
+                              ? 'mr-8 border border-teal-200 bg-teal-50 text-teal-950'
+                              : 'mr-8 bg-white text-gray-800'
+                        }`}
+                      >
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wide opacity-75">
+                          {message.sender === 'ai' ? 'AI' : message.sender}
+                        </div>
+                        {message.body}
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <textarea
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                      placeholder="Add another message..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                      rows={3}
+                      maxLength={1000}
                     />
-                  </svg>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Thank You!
-                  </h3>
-                  <p className="text-gray-600">
-                    Your feedback has been submitted successfully.
-                  </p>
+                    <button
+                      type="submit"
+                      disabled={submitting || !feedback.trim()}
+                      className="mt-3 w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                    >
+                      {submitting ? 'Sending...' : 'Send Message'}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -213,6 +296,11 @@ export default function FeedbackButton() {
                   </button>
                 </>
               )}
+              {error ? (
+                <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {error}
+                </div>
+              ) : null}
             </form>
           </div>
         </div>

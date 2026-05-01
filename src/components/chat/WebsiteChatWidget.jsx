@@ -10,8 +10,8 @@ import {
 const STORAGE_PREFIX = 'merxus.publicChat';
 const INITIAL_MESSAGE = {
   id: 'welcome',
-  role: 'assistant',
-  text: 'Hi, I’m the Merxus assistant. Are you looking for help with your account, or are you interested in learning how Merxus AI works?',
+  sender: 'ai',
+  body: 'Hi, I’m the Merxus assistant. Are you looking for help with your account, or are you interested in learning how Merxus AI works?',
 };
 
 function getStoredValue(key) {
@@ -38,11 +38,23 @@ function getVisitorId() {
 
 function normalizeMessages(messages = []) {
   const seen = new Set();
-  return [INITIAL_MESSAGE, ...messages].filter((message) => {
-    const key = message.id || `${message.role}:${message.text}:${message.createdAt || ''}`;
+  return [INITIAL_MESSAGE, ...messages]
+    .map((message) => {
+      const sender = message.sender || (message.role === 'assistant' ? 'ai' : message.role) || 'system';
+      const body = message.body || message.text || '';
+      return {
+        ...message,
+        sender,
+        body,
+        role: sender === 'ai' ? 'assistant' : sender,
+        text: body,
+      };
+    })
+    .filter((message) => {
+    const key = message.id || `${message.sender}:${message.body}:${message.createdAt || ''}`;
     if (seen.has(key)) return false;
     seen.add(key);
-    return Boolean(message.text);
+    return Boolean(message.body && message.body !== 'undefined');
   });
 }
 
@@ -117,8 +129,8 @@ export default function WebsiteChatWidget({
     setDraft('');
     const optimistic = {
       id: `local_${Date.now()}`,
-      role: 'visitor',
-      text,
+      sender: 'visitor',
+      body: text,
       pending: true,
     };
     setMessages((current) => normalizeMessages([...current.filter((item) => item.id !== 'welcome'), optimistic]));
@@ -216,9 +228,9 @@ export default function WebsiteChatWidget({
 
           <div className="website-chat-thread" ref={threadRef}>
             {messages.map((message) => (
-              <div key={message.id || `${message.role}-${message.text}`} className={`website-chat-message ${message.role}`}>
-                {message.role === 'agent' ? <UserRound size={14} /> : null}
-                <span>{message.text}</span>
+              <div key={message.id || `${message.sender}-${message.body}`} className={`website-chat-message ${message.role || message.sender}`}>
+                {message.sender === 'agent' ? <UserRound size={14} /> : null}
+                <span>{message.body}</span>
               </div>
             ))}
           </div>

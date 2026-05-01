@@ -25,7 +25,7 @@ export function createPublicChatSession(body) {
 }
 
 export function sendPublicChatMessage(sessionId, body) {
-  return publicChatRequest(`/chat/public/session/${encodeURIComponent(sessionId)}/message`, {
+  return publicChatRequest(`/chat/public/session/${encodeURIComponent(sessionId)}/messages`, {
     method: 'POST',
     body: JSON.stringify(body),
   });
