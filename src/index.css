@@ -992,6 +992,10 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
   background: #ffffff;
 }
 
+.website-chat-field {
+  min-width: 0;
+}
+
 .website-chat-lead input,
 .website-chat-composer input {
   min-width: 0;
@@ -1002,6 +1006,18 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
   font-size: 14px;
   color: #0f172a;
   outline: none;
+}
+
+.website-chat-lead input[aria-invalid="true"] {
+  border-color: #ef4444;
+}
+
+.website-chat-field span {
+  display: block;
+  margin-top: 4px;
+  color: #991b1b;
+  font-size: 11px;
+  line-height: 1.25;
 }
 
 .website-chat-lead input:focus,
@@ -1018,6 +1034,34 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
   color: #991b1b;
   background: #fef2f2;
   font-size: 13px;
+}
+
+.website-chat-timeout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 14px 0;
+  padding: 10px;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  color: #78350f;
+  background: #fffbeb;
+  font-size: 13px;
+}
+
+.website-chat-timeout div {
+  display: grid;
+  gap: 2px;
+}
+
+.website-chat-timeout button {
+  flex: 0 0 auto;
+  border-radius: 7px;
+  background: #0f766e;
+  color: #ffffff;
+  padding: 8px 10px;
+  font-weight: 700;
 }
 
 .website-chat-actions {
@@ -1041,6 +1085,12 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
 
 .website-chat-human:disabled {
   opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.website-chat-composer input:disabled {
+  color: #64748b;
+  background: #f8fafc;
   cursor: not-allowed;
 }
 

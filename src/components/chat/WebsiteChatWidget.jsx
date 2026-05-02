@@ -5,9 +5,12 @@ import {
   listPublicChatMessages,
   requestPublicChatHuman,
   sendPublicChatMessage,
+  timeoutPublicChatSession,
 } from '../../api/publicChat';
 
 const STORAGE_PREFIX = 'merxus.publicChat';
+const IDLE_WARNING_MS = 5 * 60 * 1000;
+const IDLE_TERMINATE_MS = 60 * 1000;
 const INITIAL_MESSAGE = {
   id: 'welcome',
   sender: 'ai',
@@ -26,6 +29,13 @@ function setStoredValue(key, value) {
     return;
   }
   window.localStorage.setItem(`${STORAGE_PREFIX}.${key}`, value);
+}
+
+function clearStoredChat() {
+  if (typeof window === 'undefined') return;
+  ['sessionId', 'leadName', 'leadEmail'].forEach((key) => {
+    window.localStorage.removeItem(`${STORAGE_PREFIX}.${key}`);
+  });
 }
 
 function getVisitorId() {
@@ -58,6 +68,14 @@ function normalizeMessages(messages = []) {
   });
 }
 
+function isValidLeadName(value) {
+  return value.trim().length >= 3;
+}
+
+function isValidLeadEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(value.trim());
+}
+
 export default function WebsiteChatWidget({
   product = 'merxus',
   tenantId = 'merxus-platform',
@@ -72,12 +90,20 @@ export default function WebsiteChatWidget({
   const [isSending, setIsSending] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState('');
+  const [leadTouched, setLeadTouched] = useState({ name: false, email: false });
   const [humanRequested, setHumanRequested] = useState(false);
+  const [idleWarning, setIdleWarning] = useState(false);
+  const [idleCountdown, setIdleCountdown] = useState(60);
+  const [lastActivityAt, setLastActivityAt] = useState(Date.now());
   const visitorId = useMemo(getVisitorId, []);
   const threadRef = useRef(null);
 
-  const leadCaptured = Boolean(leadName.trim() && leadEmail.trim());
-  const shouldShowLead = messages.length > 2 || !leadCaptured;
+  const leadNameReady = isValidLeadName(leadName);
+  const leadEmailReady = isValidLeadEmail(leadEmail);
+  const leadCaptured = leadNameReady && leadEmailReady;
+  const shouldShowLead = true;
+  const leadNameError = leadTouched.name && !leadNameReady ? 'Name must be at least 3 characters.' : '';
+  const leadEmailError = leadTouched.email && !leadEmailReady ? 'Enter a valid email address.' : '';
 
   useEffect(() => {
     setStoredValue('leadName', leadName.trim());
@@ -119,10 +145,72 @@ export default function WebsiteChatWidget({
     };
   }, [sessionId, isOpen]);
 
+  function recordActivity() {
+    setLastActivityAt(Date.now());
+    setIdleWarning(false);
+    setIdleCountdown(60);
+  }
+
+  function resetConversation() {
+    clearStoredChat();
+    setSessionId('');
+    setMessages([INITIAL_MESSAGE]);
+    setDraft('');
+    setLeadName('');
+    setLeadEmail('');
+    setLeadTouched({ name: false, email: false });
+    setHumanRequested(false);
+    setIdleWarning(false);
+    setIdleCountdown(60);
+    setError('');
+    setLastActivityAt(Date.now());
+  }
+
+  async function endConversation(reason = 'visitor_inactivity_timeout') {
+    const activeSessionId = sessionId;
+    resetConversation();
+    if (!activeSessionId) return;
+    try {
+      await timeoutPublicChatSession(activeSessionId, { visitorId, reason });
+    } catch (_) {
+      // The local timeout still protects the visitor experience if the network is unavailable.
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen || !sessionId) return undefined;
+    const warningTimer = window.setTimeout(() => {
+      setIdleWarning(true);
+      setIdleCountdown(60);
+    }, IDLE_WARNING_MS);
+
+    return () => window.clearTimeout(warningTimer);
+  }, [isOpen, sessionId, lastActivityAt]);
+
+  useEffect(() => {
+    if (!idleWarning) return undefined;
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((IDLE_TERMINATE_MS - (Date.now() - startedAt)) / 1000));
+      setIdleCountdown(remaining);
+      if (remaining <= 0) {
+        window.clearInterval(interval);
+        endConversation('visitor_inactivity_timeout');
+      }
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [idleWarning]);
+
   async function handleSend(event) {
     event.preventDefault();
     const text = draft.trim();
     if (!text || isSending) return;
+    recordActivity();
+    if (!leadCaptured) {
+      setLeadTouched({ name: true, email: true });
+      setError('Please enter your name and a valid email before starting chat.');
+      return;
+    }
 
     setIsSending(true);
     setError('');
@@ -173,6 +261,12 @@ export default function WebsiteChatWidget({
 
   async function handleHumanRequest() {
     if (humanRequested || isSending) return;
+    recordActivity();
+    if (!leadCaptured) {
+      setLeadTouched({ name: true, email: true });
+      setError('Please enter your name and a valid email before we notify the team.');
+      return;
+    }
     setError('');
     setIsSending(true);
     try {
@@ -213,7 +307,7 @@ export default function WebsiteChatWidget({
   return (
     <div className="website-chat-widget" aria-live="polite">
       {isOpen ? (
-        <section className="website-chat-panel" aria-label="Merxus chat">
+        <section className="website-chat-panel" aria-label="Merxus chat" onClick={(event) => event.stopPropagation()}>
           <header className="website-chat-header">
             <div>
               <div className="website-chat-title">Merxus AI</div>
@@ -237,26 +331,56 @@ export default function WebsiteChatWidget({
 
           {shouldShowLead ? (
             <div className="website-chat-lead">
-              <input
-                value={leadName}
-                onChange={(event) => setLeadName(event.target.value)}
-                placeholder="Name"
-                aria-label="Name"
-              />
-              <input
-                value={leadEmail}
-                onChange={(event) => setLeadEmail(event.target.value)}
-                placeholder="Email"
-                aria-label="Email"
-                type="email"
-              />
+              <label className="website-chat-field">
+                <input
+              value={leadName}
+                  onChange={(event) => {
+                    recordActivity();
+                    setLeadName(event.target.value);
+                    if (error) setError('');
+                  }}
+                  onBlur={() => setLeadTouched((current) => ({ ...current, name: true }))}
+                  placeholder="Name"
+                  aria-label="Name"
+                  aria-invalid={Boolean(leadNameError)}
+                />
+                {leadNameError ? <span>{leadNameError}</span> : null}
+              </label>
+              <label className="website-chat-field">
+                <input
+                  value={leadEmail}
+                  onChange={(event) => {
+                    recordActivity();
+                    setLeadEmail(event.target.value);
+                    if (error) setError('');
+                  }}
+                  onBlur={() => setLeadTouched((current) => ({ ...current, email: true }))}
+                  placeholder="Email"
+                  aria-label="Email"
+                  aria-invalid={Boolean(leadEmailError)}
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
+                />
+                {leadEmailError ? <span>{leadEmailError}</span> : null}
+              </label>
             </div>
           ) : null}
 
           {error ? <div className="website-chat-error">{error}</div> : null}
 
+          {idleWarning ? (
+            <div className="website-chat-timeout">
+              <div>
+                <strong>Still there?</strong>
+                <span>This chat will end in {idleCountdown}s.</span>
+              </div>
+              <button type="button" onClick={recordActivity}>Continue</button>
+            </div>
+          ) : null}
+
           <div className="website-chat-actions">
-            <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={isSending || humanRequested}>
+            <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={isSending || humanRequested || !leadCaptured}>
               <UserRound size={16} />
               <span>{humanRequested ? 'Team notified' : 'Talk to a person'}</span>
             </button>
@@ -265,11 +389,15 @@ export default function WebsiteChatWidget({
           <form className="website-chat-composer" onSubmit={handleSend}>
             <input
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Type your message"
+              onChange={(event) => {
+                recordActivity();
+                setDraft(event.target.value);
+              }}
+              placeholder={leadCaptured ? 'Type your message' : 'Enter name and email first'}
               aria-label="Type your message"
+              disabled={!leadCaptured}
             />
-            <button type="submit" disabled={isSending || !draft.trim()} aria-label="Send message">
+            <button type="submit" disabled={isSending || !draft.trim() || !leadCaptured} aria-label="Send message">
               {isSending ? <Loader2 size={18} className="website-chat-spin" /> : <Send size={18} />}
             </button>
           </form>

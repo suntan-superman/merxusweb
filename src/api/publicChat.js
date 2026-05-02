@@ -41,3 +41,10 @@ export function requestPublicChatHuman(sessionId, body = {}) {
     body: JSON.stringify(body),
   });
 }
+
+export function timeoutPublicChatSession(sessionId, body = {}) {
+  return publicChatRequest(`/chat/public/session/${encodeURIComponent(sessionId)}/timeout`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
