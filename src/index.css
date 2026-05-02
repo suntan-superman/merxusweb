@@ -972,6 +972,20 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
   background: #ffffff;
 }
 
+.website-chat-message span {
+  white-space: pre-wrap;
+}
+
+.website-chat-message a {
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.website-chat-message.visitor a {
+  color: #dbeafe;
+}
+
 .website-chat-message.visitor {
   align-self: flex-end;
   color: #ffffff;

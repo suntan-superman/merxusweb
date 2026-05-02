@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 const STORAGE_PREFIX = 'merxus.publicChat';
 const IDLE_WARNING_MS = 5 * 60 * 1000;
 const IDLE_TERMINATE_MS = 60 * 1000;
+const IDLE_CHECK_MS = 5000;
 const INITIAL_MESSAGE = {
   id: 'welcome',
   sender: 'ai',
@@ -34,7 +35,7 @@ function setStoredValue(key, value) {
 
 function clearStoredChat() {
   if (typeof window === 'undefined') return;
-  ['sessionId', 'leadName', 'leadEmail'].forEach((key) => {
+  ['sessionId', 'leadName', 'leadEmail', 'lastActivityAt'].forEach((key) => {
     window.localStorage.removeItem(`${STORAGE_PREFIX}.${key}`);
   });
 }
@@ -77,6 +78,21 @@ function isValidLeadEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(value.trim());
 }
 
+function renderMessageBody(body) {
+  const text = String(body || '');
+  const parts = text.split(/(https?:\/\/[^\s]+|\/(?:voice|restaurant|estate|merxus)\/[^\s]+)/g);
+  return parts.map((part, index) => {
+    if (/^(https?:\/\/|\/)/.test(part)) {
+      return (
+        <a key={`${part}-${index}`} href={part} target={part.startsWith('http') ? '_blank' : undefined} rel={part.startsWith('http') ? 'noreferrer' : undefined}>
+          {part}
+        </a>
+      );
+    }
+    return <span key={`${index}-${part.slice(0, 8)}`}>{part}</span>;
+  });
+}
+
 export default function WebsiteChatWidget({
   product = 'merxus',
   tenantId = 'merxus-platform',
@@ -97,9 +113,10 @@ export default function WebsiteChatWidget({
   const [idleWarning, setIdleWarning] = useState(false);
   const [idleCountdown, setIdleCountdown] = useState(60);
   const [confirmEndChat, setConfirmEndChat] = useState(false);
-  const [lastActivityAt, setLastActivityAt] = useState(Date.now());
+  const [lastActivityAt, setLastActivityAt] = useState(() => Number(getStoredValue('lastActivityAt')) || Date.now());
   const visitorId = useMemo(getVisitorId, []);
   const threadRef = useRef(null);
+  const lastActivityRef = useRef(lastActivityAt);
   const loggedInName = (user?.displayName || user?.email?.split('@')[0] || user?.email || '').trim();
   const loggedInEmail = (user?.email || '').trim();
   const isLoggedIn = Boolean(user?.uid || loggedInEmail);
@@ -160,7 +177,10 @@ export default function WebsiteChatWidget({
   }, [sessionId, isOpen]);
 
   function recordActivity() {
-    setLastActivityAt(Date.now());
+    const next = Date.now();
+    lastActivityRef.current = next;
+    setStoredValue('lastActivityAt', String(next));
+    setLastActivityAt(next);
     setIdleWarning(false);
     setIdleCountdown(60);
   }
@@ -178,7 +198,7 @@ export default function WebsiteChatWidget({
     setIdleCountdown(60);
     setConfirmEndChat(false);
     setError('');
-    setLastActivityAt(Date.now());
+    recordActivity();
   }
 
   async function endConversation(reason = 'visitor_inactivity_timeout') {
@@ -198,16 +218,6 @@ export default function WebsiteChatWidget({
   }
 
   useEffect(() => {
-    if (!isOpen || !sessionId) return undefined;
-    const warningTimer = window.setTimeout(() => {
-      setIdleWarning(true);
-      setIdleCountdown(60);
-    }, IDLE_WARNING_MS);
-
-    return () => window.clearTimeout(warningTimer);
-  }, [isOpen, sessionId, lastActivityAt]);
-
-  useEffect(() => {
     if (!idleWarning) return undefined;
     const startedAt = Date.now();
     const interval = window.setInterval(() => {
@@ -220,6 +230,36 @@ export default function WebsiteChatWidget({
     }, 1000);
     return () => window.clearInterval(interval);
   }, [idleWarning]);
+
+  useEffect(() => {
+    lastActivityRef.current = lastActivityAt;
+  }, [lastActivityAt]);
+
+  useEffect(() => {
+    if (!isOpen || !sessionId) return undefined;
+
+    const checkIdle = () => {
+      const idleFor = Date.now() - lastActivityRef.current;
+      if (idleFor >= IDLE_WARNING_MS + IDLE_TERMINATE_MS) {
+        endConversation('visitor_inactivity_timeout');
+        return;
+      }
+      if (idleFor >= IDLE_WARNING_MS) {
+        setIdleWarning(true);
+        setIdleCountdown(Math.max(0, Math.ceil((IDLE_WARNING_MS + IDLE_TERMINATE_MS - idleFor) / 1000)));
+      }
+    };
+
+    checkIdle();
+    const interval = window.setInterval(checkIdle, IDLE_CHECK_MS);
+    window.addEventListener('focus', checkIdle);
+    document.addEventListener('visibilitychange', checkIdle);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', checkIdle);
+      document.removeEventListener('visibilitychange', checkIdle);
+    };
+  }, [isOpen, sessionId]);
 
   async function handleSend(event) {
     event.preventDefault();
@@ -248,6 +288,8 @@ export default function WebsiteChatWidget({
         visitorId,
         leadName: effectiveLeadName,
         leadEmail: effectiveLeadEmail,
+        authenticated: isLoggedIn,
+        appBaseUrl: window.location.origin,
       };
 
       const result = sessionId
@@ -298,6 +340,8 @@ export default function WebsiteChatWidget({
           initialMessage: 'I would like to talk to a person.',
           leadName: effectiveLeadName,
           leadEmail: effectiveLeadEmail,
+          authenticated: isLoggedIn,
+          appBaseUrl: window.location.origin,
         });
         activeSessionId = result.session?.id;
         setSessionId(activeSessionId);
@@ -309,6 +353,8 @@ export default function WebsiteChatWidget({
         visitorId,
         leadName: effectiveLeadName,
         leadEmail: effectiveLeadEmail,
+        authenticated: isLoggedIn,
+        appBaseUrl: window.location.origin,
       });
       setHumanRequested(true);
       setMessages((current) => normalizeMessages([...current.filter((item) => item.id !== 'welcome'), requested.message].filter(Boolean)));
@@ -339,7 +385,7 @@ export default function WebsiteChatWidget({
             {messages.map((message) => (
               <div key={message.id || `${message.sender}-${message.body}`} className={`website-chat-message ${message.role || message.sender}`}>
                 {message.sender === 'agent' ? <UserRound size={14} /> : null}
-                <span>{message.body}</span>
+                <span>{renderMessageBody(message.body)}</span>
               </div>
             ))}
           </div>
