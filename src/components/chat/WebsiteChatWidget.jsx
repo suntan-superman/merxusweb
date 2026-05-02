@@ -380,6 +380,16 @@ export default function WebsiteChatWidget({
           ) : null}
 
           <div className="website-chat-actions">
+            {sessionId ? (
+              <button
+                type="button"
+                className="website-chat-end"
+                onClick={() => endConversation('visitor_ended_chat')}
+                disabled={isSending}
+              >
+                End chat
+              </button>
+            ) : null}
             <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={isSending || humanRequested || !leadCaptured}>
               <UserRound size={16} />
               <span>{humanRequested ? 'Team notified' : 'Talk to a person'}</span>
