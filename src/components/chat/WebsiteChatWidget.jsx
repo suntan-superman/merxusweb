@@ -7,6 +7,7 @@ import {
   sendPublicChatMessage,
   timeoutPublicChatSession,
 } from '../../api/publicChat';
+import { useAuth } from '../../context/AuthContext';
 
 const STORAGE_PREFIX = 'merxus.publicChat';
 const IDLE_WARNING_MS = 5 * 60 * 1000;
@@ -81,12 +82,13 @@ export default function WebsiteChatWidget({
   tenantId = 'merxus-platform',
   tenantType = 'platform',
 }) {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [sessionId, setSessionId] = useState(() => getStoredValue('sessionId'));
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [draft, setDraft] = useState('');
-  const [leadName, setLeadName] = useState(() => getStoredValue('leadName'));
-  const [leadEmail, setLeadEmail] = useState(() => getStoredValue('leadEmail'));
+  const [leadName, setLeadName] = useState('');
+  const [leadEmail, setLeadEmail] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState('');
@@ -94,24 +96,36 @@ export default function WebsiteChatWidget({
   const [humanRequested, setHumanRequested] = useState(false);
   const [idleWarning, setIdleWarning] = useState(false);
   const [idleCountdown, setIdleCountdown] = useState(60);
+  const [confirmEndChat, setConfirmEndChat] = useState(false);
   const [lastActivityAt, setLastActivityAt] = useState(Date.now());
   const visitorId = useMemo(getVisitorId, []);
   const threadRef = useRef(null);
+  const loggedInName = (user?.displayName || user?.email?.split('@')[0] || user?.email || '').trim();
+  const loggedInEmail = (user?.email || '').trim();
+  const isLoggedIn = Boolean(user?.uid || loggedInEmail);
+  const effectiveLeadName = isLoggedIn ? loggedInName : leadName.trim();
+  const effectiveLeadEmail = isLoggedIn ? loggedInEmail : leadEmail.trim();
 
-  const leadNameReady = isValidLeadName(leadName);
-  const leadEmailReady = isValidLeadEmail(leadEmail);
+  const leadNameReady = isValidLeadName(effectiveLeadName);
+  const leadEmailReady = isValidLeadEmail(effectiveLeadEmail);
   const leadCaptured = leadNameReady && leadEmailReady;
-  const shouldShowLead = true;
-  const leadNameError = leadTouched.name && !leadNameReady ? 'Name must be at least 3 characters.' : '';
-  const leadEmailError = leadTouched.email && !leadEmailReady ? 'Enter a valid email address.' : '';
+  const shouldShowLead = !isLoggedIn;
+  const leadNameError = shouldShowLead && leadTouched.name && !leadNameReady ? 'Name must be at least 3 characters.' : '';
+  const leadEmailError = shouldShowLead && leadTouched.email && !leadEmailReady ? 'Enter a valid email address.' : '';
+  const talkToPersonDisabled = isSending || humanRequested || (!isLoggedIn && !leadCaptured);
 
   useEffect(() => {
-    setStoredValue('leadName', leadName.trim());
-  }, [leadName]);
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem(`${STORAGE_PREFIX}.leadName`);
+    window.localStorage.removeItem(`${STORAGE_PREFIX}.leadEmail`);
+  }, []);
 
   useEffect(() => {
-    setStoredValue('leadEmail', leadEmail.trim());
-  }, [leadEmail]);
+    if (!isLoggedIn) return;
+    setLeadName(loggedInName);
+    setLeadEmail(loggedInEmail);
+    setLeadTouched({ name: false, email: false });
+  }, [isLoggedIn, loggedInName, loggedInEmail]);
 
   useEffect(() => {
     if (!threadRef.current) return;
@@ -156,12 +170,13 @@ export default function WebsiteChatWidget({
     setSessionId('');
     setMessages([INITIAL_MESSAGE]);
     setDraft('');
-    setLeadName('');
-    setLeadEmail('');
+    setLeadName(isLoggedIn ? loggedInName : '');
+    setLeadEmail(isLoggedIn ? loggedInEmail : '');
     setLeadTouched({ name: false, email: false });
     setHumanRequested(false);
     setIdleWarning(false);
     setIdleCountdown(60);
+    setConfirmEndChat(false);
     setError('');
     setLastActivityAt(Date.now());
   }
@@ -175,6 +190,11 @@ export default function WebsiteChatWidget({
     } catch (_) {
       // The local timeout still protects the visitor experience if the network is unavailable.
     }
+  }
+
+  function handleEndChatClick() {
+    recordActivity();
+    setConfirmEndChat(true);
   }
 
   useEffect(() => {
@@ -226,8 +246,8 @@ export default function WebsiteChatWidget({
         source: 'website_chat',
         sourceUrl: window.location.href,
         visitorId,
-        leadName: leadName.trim(),
-        leadEmail: leadEmail.trim(),
+        leadName: effectiveLeadName,
+        leadEmail: effectiveLeadEmail,
       };
 
       const result = sessionId
@@ -257,7 +277,7 @@ export default function WebsiteChatWidget({
   async function handleHumanRequest() {
     if (humanRequested || isSending) return;
     recordActivity();
-    if (!leadCaptured) {
+    if (!isLoggedIn && !leadCaptured) {
       setLeadTouched({ name: true, email: true });
       setError('Please enter your name and a valid email before we notify the team.');
       return;
@@ -276,8 +296,8 @@ export default function WebsiteChatWidget({
           visitorId,
           initialIntent: 'support',
           initialMessage: 'I would like to talk to a person.',
-          leadName: leadName.trim(),
-          leadEmail: leadEmail.trim(),
+          leadName: effectiveLeadName,
+          leadEmail: effectiveLeadEmail,
         });
         activeSessionId = result.session?.id;
         setSessionId(activeSessionId);
@@ -287,8 +307,8 @@ export default function WebsiteChatWidget({
 
       const requested = await requestPublicChatHuman(activeSessionId, {
         visitorId,
-        leadName: leadName.trim(),
-        leadEmail: leadEmail.trim(),
+        leadName: effectiveLeadName,
+        leadEmail: effectiveLeadEmail,
       });
       setHumanRequested(true);
       setMessages((current) => normalizeMessages([...current.filter((item) => item.id !== 'welcome'), requested.message].filter(Boolean)));
@@ -331,6 +351,7 @@ export default function WebsiteChatWidget({
                   value={leadName}
                   onChange={(event) => {
                     recordActivity();
+                    setConfirmEndChat(false);
                     setLeadName(event.target.value);
                     if (error) setError('');
                   }}
@@ -346,6 +367,7 @@ export default function WebsiteChatWidget({
                   value={leadEmail}
                   onChange={(event) => {
                     recordActivity();
+                    setConfirmEndChat(false);
                     setLeadEmail(event.target.value);
                     if (error) setError('');
                   }}
@@ -374,18 +396,35 @@ export default function WebsiteChatWidget({
             </div>
           ) : null}
 
+          {confirmEndChat ? (
+            <div className="website-chat-confirm" role="dialog" aria-label="Confirm end chat">
+              <div>
+                <strong>End this chat?</strong>
+                <span>This clears the conversation and removes it from the queue.</span>
+              </div>
+              <div className="website-chat-confirm-actions">
+                <button type="button" onClick={() => setConfirmEndChat(false)} disabled={isSending}>
+                  Cancel
+                </button>
+                <button type="button" onClick={() => endConversation('visitor_ended_chat')} disabled={isSending}>
+                  End chat
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <div className="website-chat-actions">
             {sessionId ? (
               <button
                 type="button"
                 className="website-chat-end"
-                onClick={() => endConversation('visitor_ended_chat')}
+                onClick={handleEndChatClick}
                 disabled={isSending}
               >
                 End chat
               </button>
             ) : null}
-            <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={isSending || humanRequested}>
+            <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={talkToPersonDisabled}>
               <UserRound size={16} />
               <span>{humanRequested ? 'Team notified' : 'Talk to a person'}</span>
             </button>
@@ -396,6 +435,7 @@ export default function WebsiteChatWidget({
               value={draft}
               onChange={(event) => {
                 recordActivity();
+                setConfirmEndChat(false);
                 setDraft(event.target.value);
               }}
               placeholder="Type your message"
