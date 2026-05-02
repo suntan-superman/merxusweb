@@ -206,11 +206,6 @@ export default function WebsiteChatWidget({
     const text = draft.trim();
     if (!text || isSending) return;
     recordActivity();
-    if (!leadCaptured) {
-      setLeadTouched({ name: true, email: true });
-      setError('Please enter your name and a valid email before starting chat.');
-      return;
-    }
 
     setIsSending(true);
     setError('');
@@ -333,7 +328,7 @@ export default function WebsiteChatWidget({
             <div className="website-chat-lead">
               <label className="website-chat-field">
                 <input
-              value={leadName}
+                  value={leadName}
                   onChange={(event) => {
                     recordActivity();
                     setLeadName(event.target.value);
@@ -390,7 +385,7 @@ export default function WebsiteChatWidget({
                 End chat
               </button>
             ) : null}
-            <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={isSending || humanRequested || !leadCaptured}>
+            <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={isSending || humanRequested}>
               <UserRound size={16} />
               <span>{humanRequested ? 'Team notified' : 'Talk to a person'}</span>
             </button>
@@ -403,11 +398,10 @@ export default function WebsiteChatWidget({
                 recordActivity();
                 setDraft(event.target.value);
               }}
-              placeholder={leadCaptured ? 'Type your message' : 'Enter name and email first'}
+              placeholder="Type your message"
               aria-label="Type your message"
-              disabled={!leadCaptured}
             />
-            <button type="submit" disabled={isSending || !draft.trim() || !leadCaptured} aria-label="Send message">
+            <button type="submit" disabled={isSending || !draft.trim()} aria-label="Send message">
               {isSending ? <Loader2 size={18} className="website-chat-spin" /> : <Send size={18} />}
             </button>
           </form>
