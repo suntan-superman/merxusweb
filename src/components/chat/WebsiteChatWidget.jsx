@@ -6,6 +6,7 @@ import {
   requestPublicChatHuman,
   sendPublicChatMessage,
   timeoutPublicChatSession,
+  publicChatErrorMessage,
 } from '../../api/publicChat';
 import { useAuth } from '../../context/AuthContext';
 
@@ -162,7 +163,7 @@ export default function WebsiteChatWidget({
           setError('');
         }
       } catch (pollError) {
-        if (!cancelled) setError(pollError.message);
+        if (!cancelled) setError(publicChatErrorMessage(pollError));
       } finally {
         if (!cancelled) setIsPolling(false);
       }
@@ -308,7 +309,7 @@ export default function WebsiteChatWidget({
       if (result.session?.leadEmail) setLeadEmail(result.session.leadEmail);
       setMessages((current) => normalizeMessages([...current.filter((item) => !item.pending), ...(result.messages || [])]));
     } catch (sendError) {
-      setError(sendError.message);
+      setError(publicChatErrorMessage(sendError));
       setMessages((current) => current.filter((item) => item.id !== optimistic.id));
       setDraft(text);
     } finally {
@@ -359,7 +360,7 @@ export default function WebsiteChatWidget({
       setHumanRequested(true);
       setMessages((current) => normalizeMessages([...current.filter((item) => item.id !== 'welcome'), requested.message].filter(Boolean)));
     } catch (requestError) {
-      setError(requestError.message);
+      setError(publicChatErrorMessage(requestError));
     } finally {
       setIsSending(false);
     }

@@ -1,4 +1,69 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://api.merxus.ai/api').replace(/\/+$/g, '');
+const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL || 'https://api.merxus.ai/api').replace(/\/+$/g, '');
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function meaningfulText(value) {
+  const text = String(value ?? '').trim();
+  if (!text || ['undefined', 'null', '[object object]'].includes(text.toLowerCase())) return '';
+  return text;
+}
+
+function normalizeErrorCode(code) {
+  return meaningfulText(code).replace(/[\s-]+/g, '_').toUpperCase();
+}
+
+function normalizeRequiredAction(action) {
+  return meaningfulText(action).replace(/[\s-]+/g, '_').toLowerCase();
+}
+
+export class PublicChatError extends Error {
+  constructor(message, { status = null, code = '', requiredAction = '', details = null, payload = null } = {}) {
+    super(meaningfulText(message) || 'Chat is temporarily unavailable.');
+    this.name = 'PublicChatError';
+    this.status = status;
+    this.code = normalizeErrorCode(code);
+    this.requiredAction = normalizeRequiredAction(requiredAction);
+    this.details = details;
+    this.payload = payload;
+  }
+}
+
+export function extractPublicChatError(payload, response = {}) {
+  const data = isPlainObject(payload) ? payload : {};
+  const nested = isPlainObject(data.error) ? data.error : {};
+  const details = isPlainObject(data.details) ? data.details : isPlainObject(nested.details) ? nested.details : null;
+  const message =
+    meaningfulText(nested.message) ||
+    meaningfulText(data.error) ||
+    meaningfulText(data.message) ||
+    meaningfulText(details?.message) ||
+    meaningfulText(response.statusText) ||
+    'Chat is temporarily unavailable.';
+
+  return {
+    message,
+    code: normalizeErrorCode(nested.code || data.code || details?.code),
+    requiredAction: normalizeRequiredAction(nested.requiredAction || data.requiredAction || details?.requiredAction),
+    details,
+    payload,
+  };
+}
+
+export function publicChatErrorMessage(error) {
+  return meaningfulText(error?.message) || 'Chat is temporarily unavailable.';
+}
+
+async function parsePayload(response) {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
+}
 
 async function publicChatRequest(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -9,10 +74,16 @@ async function publicChatRequest(path, options = {}) {
     },
   });
 
-  const payload = await response.json().catch(() => ({}));
+  const payload = await parsePayload(response);
   if (!response.ok) {
-    const message = payload.error || payload.message || 'Chat is temporarily unavailable.';
-    throw new Error(message);
+    const parsed = extractPublicChatError(payload, response);
+    throw new PublicChatError(parsed.message, {
+      status: response.status,
+      code: parsed.code,
+      requiredAction: parsed.requiredAction,
+      details: parsed.details,
+      payload: parsed.payload,
+    });
   }
   return payload;
 }
