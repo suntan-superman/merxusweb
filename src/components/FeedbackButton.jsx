@@ -1,11 +1,60 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   createPublicChatSession,
   listPublicChatMessages,
   requestPublicChatHuman,
   sendPublicChatMessage,
+  timeoutPublicChatSession,
 } from '../api/publicChat';
+
+let supportAudioContext;
+
+function messageKey(message) {
+  return message.id || `${message.sender}:${message.body}:${message.createdAt || ''}`;
+}
+
+function isInboundMessage(message) {
+  const sender = String(message?.sender || message?.role || '').toLowerCase();
+  return Boolean(message?.body) && sender !== 'visitor' && sender !== 'user';
+}
+
+function hasNewInboundMessage(previousMessages = [], nextMessages = []) {
+  if (!previousMessages.length) return false;
+  const previousKeys = new Set(previousMessages.map(messageKey));
+  return nextMessages.some((message) => isInboundMessage(message) && !previousKeys.has(messageKey(message)));
+}
+
+function unlockSupportSound() {
+  if (typeof window === 'undefined') return;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  supportAudioContext = supportAudioContext || new AudioContextClass();
+  if (supportAudioContext.state === 'suspended') {
+    supportAudioContext.resume().catch(() => {});
+  }
+}
+
+function playSupportSound() {
+  try {
+    unlockSupportSound();
+    if (!supportAudioContext) return;
+    const oscillator = supportAudioContext.createOscillator();
+    const gain = supportAudioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, supportAudioContext.currentTime);
+    oscillator.frequency.setValueAtTime(1174, supportAudioContext.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.0001, supportAudioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.08, supportAudioContext.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, supportAudioContext.currentTime + 0.28);
+    oscillator.connect(gain);
+    gain.connect(supportAudioContext.destination);
+    oscillator.start();
+    oscillator.stop(supportAudioContext.currentTime + 0.3);
+  } catch (_) {
+    // Browser audio permission is best-effort; visual messages remain authoritative.
+  }
+}
 
 function resolveTenantType({ tenantType, restaurantId, agentId, officeId }) {
   if (tenantType) return tenantType;
@@ -35,7 +84,8 @@ function normalizeConversationMessages(messages = []) {
       const key = message.id || `${message.sender}:${message.body}:${message.createdAt || ''}`;
       if (seen.has(key)) return false;
       seen.add(key);
-      return Boolean(message.body && message.body !== 'undefined');
+      if (!message.body || message.body === 'undefined') return false;
+      return message.body.trim().toLowerCase() !== 'i would like to talk to a person.';
     });
 }
 
@@ -47,7 +97,14 @@ export default function FeedbackButton() {
   const [sessionId, setSessionId] = useState('');
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState('');
+  const messagesRef = useRef(messages);
   const { user, tenantType, restaurantId, agentId, officeId } = useAuth();
+  const contactName = (user?.displayName || user?.email?.split('@')[0] || '').trim();
+  const greeting = contactName ? `Hi ${contactName}, how can we help?` : 'How can we help?';
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     if (!isOpen || !sessionId) return undefined;
@@ -57,7 +114,11 @@ export default function FeedbackButton() {
       try {
         const result = await listPublicChatMessages(sessionId);
         if (!cancelled) {
-          setMessages(normalizeConversationMessages(result.messages || []));
+          const nextMessages = normalizeConversationMessages(result.messages || []);
+          if (hasNewInboundMessage(messagesRef.current, nextMessages)) {
+            playSupportSound();
+          }
+          setMessages(nextMessages);
           setError('');
         }
       } catch (pollError) {
@@ -81,6 +142,7 @@ export default function FeedbackButton() {
     }
 
     setSubmitting(true);
+    unlockSupportSound();
     setError('');
     try {
       const tenantContext = {
@@ -144,13 +206,39 @@ export default function FeedbackButton() {
     }
   };
 
+  const handleEndConversation = async () => {
+    const activeSessionId = sessionId;
+    setSubmitting(true);
+    setError('');
+    try {
+      if (activeSessionId) {
+        await timeoutPublicChatSession(activeSessionId, {
+          visitorId: user?.uid || null,
+          reason: 'visitor_ended_chat',
+        });
+      }
+      setSessionId('');
+      setMessages([]);
+      setSubmitted(false);
+      setFeedback('');
+      setIsOpen(false);
+    } catch (endError) {
+      setError(endError?.message || 'Unable to end this conversation. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <>
       {/* Floating Feedback Button */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          unlockSupportSound();
+          setIsOpen(true);
+        }}
         className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:shadow-xl z-40 flex items-center gap-2 group"
-        title="Send Feedback"
+        title="Contact support"
       >
         <svg
           className="w-6 h-6"
@@ -166,7 +254,7 @@ export default function FeedbackButton() {
           />
         </svg>
         <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 whitespace-nowrap">
-          Feedback
+          Support
         </span>
       </button>
 
@@ -176,17 +264,34 @@ export default function FeedbackButton() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Send Feedback
-              </h2>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Contact Support
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">{greeting}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                {sessionId ? (
+                  <button
+                    type="button"
+                    onClick={handleEndConversation}
+                    disabled={submitting}
+                    className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    End
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Close support conversation"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Body */}
@@ -194,7 +299,7 @@ export default function FeedbackButton() {
               {submitted ? (
                 <div className="space-y-4">
                   <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-                    Your request has been sent. This conversation will stay open while our team reviews it.
+                    Thanks{contactName ? `, ${contactName}` : ''}. This conversation will stay open while our team reviews it.
                   </div>
                   <div className="max-h-72 space-y-3 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3">
                     {messages.map((message) => (
@@ -237,12 +342,12 @@ export default function FeedbackButton() {
                 <>
                   <div className="mb-4">
                     <p className="text-sm text-gray-600 mb-4">
-                      Help us improve by sharing your thoughts, suggestions, or reporting issues.
+                      {greeting} Send a message and we will keep the conversation open here.
                     </p>
                     <textarea
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
-                      placeholder="Type your feedback here..."
+                      placeholder="Type your message here..."
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                       rows={6}
                       maxLength={1000}
@@ -290,7 +395,7 @@ export default function FeedbackButton() {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
-                        Submit Feedback
+                        Send Message
                       </>
                     )}
                   </button>

@@ -21,6 +21,54 @@ const INITIAL_MESSAGE = {
   body: 'Hi, I’m the Merxus assistant. Are you looking for help with your account, or are you interested in learning how Merxus AI works?',
 };
 
+let chatAudioContext;
+
+function messageKey(message) {
+  return message.id || `${message.sender}:${message.body}:${message.createdAt || ''}`;
+}
+
+function isInboundMessage(message) {
+  const sender = String(message?.sender || message?.role || '').toLowerCase();
+  return Boolean(message?.body) && message.id !== 'welcome' && sender !== 'visitor' && sender !== 'user';
+}
+
+function hasNewInboundMessage(previousMessages = [], nextMessages = []) {
+  if (!previousMessages.length) return false;
+  const previousKeys = new Set(previousMessages.map(messageKey));
+  return nextMessages.some((message) => isInboundMessage(message) && !previousKeys.has(messageKey(message)));
+}
+
+function unlockChatSound() {
+  if (typeof window === 'undefined') return;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  chatAudioContext = chatAudioContext || new AudioContextClass();
+  if (chatAudioContext.state === 'suspended') {
+    chatAudioContext.resume().catch(() => {});
+  }
+}
+
+function playChatSound() {
+  try {
+    unlockChatSound();
+    if (!chatAudioContext) return;
+    const oscillator = chatAudioContext.createOscillator();
+    const gain = chatAudioContext.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, chatAudioContext.currentTime);
+    oscillator.frequency.setValueAtTime(1174, chatAudioContext.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.0001, chatAudioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.08, chatAudioContext.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, chatAudioContext.currentTime + 0.28);
+    oscillator.connect(gain);
+    gain.connect(chatAudioContext.destination);
+    oscillator.start();
+    oscillator.stop(chatAudioContext.currentTime + 0.3);
+  } catch (_) {
+    // Browser audio permission is best-effort; visual messages remain authoritative.
+  }
+}
+
 function getStoredValue(key) {
   if (typeof window === 'undefined') return '';
   return window.localStorage.getItem(`${STORAGE_PREFIX}.${key}`) || '';
@@ -121,6 +169,7 @@ export default function WebsiteChatWidget({
   const [lastActivityAt, setLastActivityAt] = useState(() => Number(getStoredValue('lastActivityAt')) || Date.now());
   const visitorId = useMemo(getVisitorId, []);
   const threadRef = useRef(null);
+  const messagesRef = useRef(messages);
   const lastActivityRef = useRef(lastActivityAt);
   const loggedInName = (user?.displayName || user?.email?.split('@')[0] || user?.email || '').trim();
   const loggedInEmail = (user?.email || '').trim();
@@ -151,6 +200,7 @@ export default function WebsiteChatWidget({
   }, [isLoggedIn, loggedInName, loggedInEmail]);
 
   useEffect(() => {
+    messagesRef.current = messages;
     if (!threadRef.current) return;
     threadRef.current.scrollTop = threadRef.current.scrollHeight;
   }, [messages, isOpen]);
@@ -164,7 +214,11 @@ export default function WebsiteChatWidget({
       try {
         const result = await listPublicChatMessages(sessionId);
         if (!cancelled) {
-          setMessages(normalizeMessages(result.messages || []));
+          const nextMessages = normalizeMessages(result.messages || []);
+          if (hasNewInboundMessage(messagesRef.current, nextMessages)) {
+            playChatSound();
+          }
+          setMessages(nextMessages);
           setError('');
         }
       } catch (pollError) {
@@ -319,6 +373,7 @@ export default function WebsiteChatWidget({
     const text = draft.trim();
     if (!text || isSending) return;
     recordActivity();
+    unlockChatSound();
 
     setIsSending(true);
     setError('');
@@ -372,6 +427,7 @@ export default function WebsiteChatWidget({
   async function handleHumanRequest() {
     if (humanRequested || isSending) return;
     recordActivity();
+    unlockChatSound();
     if (!isLoggedIn && !leadCaptured) {
       setLeadTouched({ name: true, email: true });
       setError('Please enter your name and a valid email before we notify the team.');
@@ -576,7 +632,15 @@ export default function WebsiteChatWidget({
           </form>
         </section>
       ) : (
-        <button type="button" className="website-chat-launcher" onClick={() => setIsOpen(true)} aria-label="Open Merxus chat">
+        <button
+          type="button"
+          className="website-chat-launcher"
+          onClick={() => {
+            unlockChatSound();
+            setIsOpen(true);
+          }}
+          aria-label="Open Merxus chat"
+        >
           <MessageCircle size={24} />
         </button>
       )}
