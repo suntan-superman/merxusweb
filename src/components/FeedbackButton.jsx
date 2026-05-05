@@ -89,6 +89,31 @@ function normalizeConversationMessages(messages = []) {
     });
 }
 
+function firstName(value) {
+  return String(value || '').trim().split(/\s+/)[0] || '';
+}
+
+function renderSupportMessageBody(body) {
+  const text = String(body || '');
+  const parts = text.split(/(https?:\/\/[^\s]+|\/(?:voice|restaurant|estate|merxus|support|notifications|reviews|billing|customers|command-center|integrations|mobile|onboarding)\/?[^\s]*)/g);
+  return parts.map((part, index) => {
+    if (/^(https?:\/\/|\/)/.test(part)) {
+      return (
+        <a
+          key={`${part}-${index}`}
+          href={part}
+          target={part.startsWith('http') ? '_blank' : undefined}
+          rel={part.startsWith('http') ? 'noreferrer' : undefined}
+          className="underline"
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={`${index}-${part.slice(0, 8)}`}>{part}</span>;
+  });
+}
+
 export default function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -97,6 +122,8 @@ export default function FeedbackButton() {
   const [sessionId, setSessionId] = useState('');
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState('');
+  const [humanRequested, setHumanRequested] = useState(false);
+  const [teamNotice, setTeamNotice] = useState(false);
   const messagesRef = useRef(messages);
   const { user, tenantType, restaurantId, agentId, officeId } = useAuth();
   const contactName = (user?.displayName || user?.email?.split('@')[0] || '').trim();
@@ -185,14 +212,7 @@ export default function FeedbackButton() {
 
         if (created?.session?.id) {
           setSessionId(created.session.id);
-          const requested = await requestPublicChatHuman(created.session.id, {
-            visitorId: user?.uid || null,
-            reason: 'feedback_support_request',
-          });
-          setMessages(normalizeConversationMessages([
-            ...(created.messages || []),
-            requested.message,
-          ].filter(Boolean)));
+          setMessages(normalizeConversationMessages(created.messages || []));
         }
       }
 
@@ -201,6 +221,31 @@ export default function FeedbackButton() {
     } catch (error) {
       console.error('Error submitting feedback:', error);
       setError(error?.message || 'Failed to submit feedback. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRequestHuman = async () => {
+    if (!sessionId || humanRequested || submitting) return;
+
+    setSubmitting(true);
+    setError('');
+    try {
+      const requested = await requestPublicChatHuman(sessionId, {
+        visitorId: user?.uid || null,
+        leadName: user?.displayName || user?.email || null,
+        leadEmail: user?.email || null,
+        reason: 'visitor_requested_human',
+      });
+      setHumanRequested(true);
+      setTeamNotice(true);
+      setMessages((current) => normalizeConversationMessages([
+        ...current,
+        requested.message,
+      ].filter(Boolean)));
+    } catch (requestError) {
+      setError(requestError?.message || 'Unable to notify the team. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -221,6 +266,8 @@ export default function FeedbackButton() {
       setMessages([]);
       setSubmitted(false);
       setFeedback('');
+      setHumanRequested(false);
+      setTeamNotice(false);
       setIsOpen(false);
     } catch (endError) {
       setError(endError?.message || 'Unable to end this conversation. Please try again.');
@@ -299,8 +346,13 @@ export default function FeedbackButton() {
               {submitted ? (
                 <div className="space-y-4">
                   <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-                    Thanks{contactName ? `, ${contactName}` : ''}. This conversation will stay open while our team reviews it.
+                    Thanks{contactName ? `, ${contactName}` : ''}. I’ll keep answering here, and you can ask for a person if you need one.
                   </div>
+                  {teamNotice ? (
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+                      Team notified. A person can reply here when they pick up the conversation.
+                    </div>
+                  ) : null}
                   <div className="max-h-72 space-y-3 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3">
                     {messages.map((message) => (
                       <div
@@ -314,12 +366,22 @@ export default function FeedbackButton() {
                         }`}
                       >
                         <div className="mb-1 text-xs font-semibold uppercase tracking-wide opacity-75">
-                          {message.sender === 'ai' ? 'AI' : message.sender}
+                          {message.sender === 'ai' ? 'AI' : message.sender === 'visitor' ? firstName(contactName) || 'You' : message.sender}
                         </div>
-                        {message.body}
+                        <div className="whitespace-pre-wrap">{renderSupportMessageBody(message.body)}</div>
                       </div>
                     ))}
                   </div>
+                  {!humanRequested ? (
+                    <button
+                      type="button"
+                      onClick={handleRequestHuman}
+                      disabled={submitting || !sessionId}
+                      className="w-full rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Talk to a person
+                    </button>
+                  ) : null}
                   <div>
                     <textarea
                       value={feedback}
