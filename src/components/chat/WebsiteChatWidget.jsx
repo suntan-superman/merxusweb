@@ -4,6 +4,7 @@ import {
   createPublicChatSession,
   listPublicChatMessages,
   requestPublicChatHuman,
+  sendPublicChatTranscript,
   sendPublicChatMessage,
   timeoutPublicChatSession,
   publicChatErrorMessage,
@@ -67,7 +68,8 @@ function normalizeMessages(messages = []) {
     const key = message.id || `${message.sender}:${message.body}:${message.createdAt || ''}`;
     if (seen.has(key)) return false;
     seen.add(key);
-    return Boolean(message.body && message.body !== 'undefined');
+    if (!message.body || message.body === 'undefined') return false;
+    return message.body.trim().toLowerCase() !== 'i would like to talk to a person.';
   });
 }
 
@@ -111,9 +113,11 @@ export default function WebsiteChatWidget({
   const [error, setError] = useState('');
   const [leadTouched, setLeadTouched] = useState({ name: false, email: false });
   const [humanRequested, setHumanRequested] = useState(false);
+  const [teamNotice, setTeamNotice] = useState(false);
   const [idleWarning, setIdleWarning] = useState(false);
   const [idleCountdown, setIdleCountdown] = useState(60);
   const [confirmEndChat, setConfirmEndChat] = useState(false);
+  const [emailTranscriptOnEnd, setEmailTranscriptOnEnd] = useState(true);
   const [lastActivityAt, setLastActivityAt] = useState(() => Number(getStoredValue('lastActivityAt')) || Date.now());
   const visitorId = useMemo(getVisitorId, []);
   const threadRef = useRef(null);
@@ -127,7 +131,8 @@ export default function WebsiteChatWidget({
   const leadNameReady = isValidLeadName(effectiveLeadName);
   const leadEmailReady = isValidLeadEmail(effectiveLeadEmail);
   const leadCaptured = leadNameReady && leadEmailReady;
-  const shouldShowLead = !isLoggedIn;
+  const shouldShowLead = !isLoggedIn && !leadCaptured;
+  const showLeadSummary = leadCaptured && Boolean(effectiveLeadName || effectiveLeadEmail);
   const leadNameError = shouldShowLead && leadTouched.name && !leadNameReady ? 'Name must be at least 3 characters.' : '';
   const leadEmailError = shouldShowLead && leadTouched.email && !leadEmailReady ? 'Enter a valid email address.' : '';
   const talkToPersonDisabled = isSending || humanRequested || (!isLoggedIn && !leadCaptured);
@@ -195,14 +200,54 @@ export default function WebsiteChatWidget({
     setLeadEmail(isLoggedIn ? loggedInEmail : '');
     setLeadTouched({ name: false, email: false });
     setHumanRequested(false);
+    setTeamNotice(false);
     setIdleWarning(false);
     setIdleCountdown(60);
     setConfirmEndChat(false);
+    setEmailTranscriptOnEnd(true);
     setError('');
     recordActivity();
   }
 
-  async function endConversation(reason = 'visitor_inactivity_timeout') {
+  async function endConversation(reason = 'visitor_inactivity_timeout', { emailTranscript = false } = {}) {
+    const activeSessionId = sessionId;
+    if (!activeSessionId) return;
+
+    setIsSending(true);
+    setError('');
+    try {
+      if (emailTranscript) {
+        if (!leadEmailReady) {
+          setError('Enter a valid email address before requesting a transcript.');
+          return;
+        }
+        await sendPublicChatTranscript(activeSessionId, {
+          visitorId,
+          email: effectiveLeadEmail,
+          leadName: effectiveLeadName,
+          leadEmail: effectiveLeadEmail,
+          subject: 'Your Merxus chat transcript',
+          includeCustomerMessages: true,
+          includeHumanMessages: true,
+          includeAiMessages: false,
+          includeSystemMessages: false,
+        });
+      }
+      await timeoutPublicChatSession(activeSessionId, {
+        visitorId,
+        reason,
+        emailTranscript,
+        transcriptEmail: emailTranscript ? effectiveLeadEmail : undefined,
+      });
+      resetConversation();
+    } catch (endError) {
+      setError(publicChatErrorMessage(endError));
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  async function endConversationFromIdle(reason = 'visitor_inactivity_timeout') {
     const activeSessionId = sessionId;
     resetConversation();
     if (!activeSessionId) return;
@@ -215,8 +260,15 @@ export default function WebsiteChatWidget({
 
   function handleEndChatClick() {
     recordActivity();
+    setEmailTranscriptOnEnd(Boolean(leadEmailReady));
     setConfirmEndChat(true);
   }
+
+  useEffect(() => {
+    if (!teamNotice) return undefined;
+    const timer = window.setTimeout(() => setTeamNotice(false), 4500);
+    return () => window.clearTimeout(timer);
+  }, [teamNotice]);
 
   useEffect(() => {
     if (!idleWarning) return undefined;
@@ -226,7 +278,7 @@ export default function WebsiteChatWidget({
       setIdleCountdown(remaining);
       if (remaining <= 0) {
         window.clearInterval(interval);
-        endConversation('visitor_inactivity_timeout');
+        endConversationFromIdle('visitor_inactivity_timeout');
       }
     }, 1000);
     return () => window.clearInterval(interval);
@@ -242,7 +294,7 @@ export default function WebsiteChatWidget({
     const checkIdle = () => {
       const idleFor = Date.now() - lastActivityRef.current;
       if (idleFor >= IDLE_WARNING_MS + IDLE_TERMINATE_MS) {
-        endConversation('visitor_inactivity_timeout');
+        endConversationFromIdle('visitor_inactivity_timeout');
         return;
       }
       if (idleFor >= IDLE_WARNING_MS) {
@@ -358,6 +410,7 @@ export default function WebsiteChatWidget({
         appBaseUrl: window.location.origin,
       });
       setHumanRequested(true);
+      setTeamNotice(true);
       setMessages((current) => normalizeMessages([...current.filter((item) => item.id !== 'welcome'), requested.message].filter(Boolean)));
     } catch (requestError) {
       setError(publicChatErrorMessage(requestError));
@@ -374,12 +427,30 @@ export default function WebsiteChatWidget({
             <div>
               <div className="website-chat-title">Merxus AI</div>
               <div className="website-chat-subtitle">
-                {isPolling ? 'Checking for replies' : humanRequested ? 'Team notified' : 'Sales and support'}
+                {isPolling ? 'Checking for replies' : 'Sales and support'}
               </div>
+              {showLeadSummary ? (
+                <div className="website-chat-identity">
+                  <span>{effectiveLeadName}</span>
+                  <small>{effectiveLeadEmail}</small>
+                </div>
+              ) : null}
             </div>
-            <button type="button" className="website-chat-icon-button" onClick={() => setIsOpen(false)} aria-label="Close chat">
-              <X size={18} />
-            </button>
+            <div className="website-chat-header-actions">
+              {sessionId ? (
+                <button
+                  type="button"
+                  className="website-chat-end-header"
+                  onClick={handleEndChatClick}
+                  disabled={isSending}
+                >
+                  End
+                </button>
+              ) : null}
+              <button type="button" className="website-chat-icon-button" onClick={() => setIsOpen(false)} aria-label="Close chat">
+                <X size={18} />
+              </button>
+            </div>
           </header>
 
           <div className="website-chat-thread" ref={threadRef}>
@@ -447,35 +518,46 @@ export default function WebsiteChatWidget({
             <div className="website-chat-confirm" role="dialog" aria-label="Confirm end chat">
               <div>
                 <strong>End this chat?</strong>
-                <span>This clears the conversation and removes it from the queue.</span>
+                <span>You can receive a copy by email before the conversation closes.</span>
               </div>
+              {leadEmailReady ? (
+                <label className="website-chat-transcript-choice">
+                  <input
+                    type="checkbox"
+                    checked={emailTranscriptOnEnd}
+                    onChange={(event) => setEmailTranscriptOnEnd(event.target.checked)}
+                    disabled={isSending}
+                  />
+                  <span>Email transcript to {effectiveLeadEmail}</span>
+                </label>
+              ) : (
+                <p className="website-chat-confirm-note">Add a valid email if you want a transcript.</p>
+              )}
               <div className="website-chat-confirm-actions">
                 <button type="button" onClick={() => setConfirmEndChat(false)} disabled={isSending}>
                   Cancel
                 </button>
-                <button type="button" onClick={() => endConversation('visitor_ended_chat')} disabled={isSending}>
+                <button
+                  type="button"
+                  onClick={() => endConversation('visitor_ended_chat', { emailTranscript: emailTranscriptOnEnd })}
+                  disabled={isSending}
+                >
                   End chat
                 </button>
               </div>
             </div>
           ) : null}
 
-          <div className="website-chat-actions">
-            {sessionId ? (
-              <button
-                type="button"
-                className="website-chat-end"
-                onClick={handleEndChatClick}
-                disabled={isSending}
-              >
-                End chat
+          {teamNotice ? <div className="website-chat-notice"><UserRound size={15} /> Team notified</div> : null}
+
+          {!humanRequested ? (
+            <div className="website-chat-actions">
+              <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={talkToPersonDisabled}>
+                <UserRound size={16} />
+                <span>Talk to a person</span>
               </button>
-            ) : null}
-            <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={talkToPersonDisabled}>
-              <UserRound size={16} />
-              <span>{humanRequested ? 'Team notified' : 'Talk to a person'}</span>
-            </button>
-          </div>
+            </div>
+          ) : null}
 
           <form className="website-chat-composer" onSubmit={handleSend}>
             <input

@@ -113,6 +113,13 @@ export function requestPublicChatHuman(sessionId, body = {}) {
   });
 }
 
+export function sendPublicChatTranscript(sessionId, body = {}) {
+  return publicChatRequest(`/chat/public/session/${encodeURIComponent(sessionId)}/transcript`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
 export function timeoutPublicChatSession(sessionId, body = {}) {
   return publicChatRequest(`/chat/public/session/${encodeURIComponent(sessionId)}/timeout`, {
     method: 'POST',
