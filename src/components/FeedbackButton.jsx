@@ -9,6 +9,12 @@ import {
 } from '../api/publicChat';
 
 let supportAudioContext;
+const SUPPORT_CHAT_GEOMETRY_KEY = 'merxus:support-chat-window';
+const CHAT_WINDOW_MIN_WIDTH = 380;
+const CHAT_WINDOW_MIN_HEIGHT = 480;
+const CHAT_WINDOW_DEFAULT_WIDTH = 520;
+const CHAT_WINDOW_DEFAULT_HEIGHT = 680;
+const CHAT_WINDOW_MARGIN = 12;
 
 function messageKey(message) {
   return message.id || `${message.sender}:${message.body}:${message.createdAt || ''}`;
@@ -114,6 +120,66 @@ function renderSupportMessageBody(body) {
   });
 }
 
+function clamp(value, min, max) {
+  if (max < min) return min;
+  return Math.min(Math.max(value, min), max);
+}
+
+function getViewportSize() {
+  if (typeof window === 'undefined') {
+    return { width: 1024, height: 768 };
+  }
+  return {
+    width: window.innerWidth || 1024,
+    height: window.innerHeight || 768,
+  };
+}
+
+function normalizeChatGeometry(geometry = {}) {
+  const viewport = getViewportSize();
+  const availableWidth = Math.max(320, viewport.width - CHAT_WINDOW_MARGIN * 2);
+  const availableHeight = Math.max(360, viewport.height - CHAT_WINDOW_MARGIN * 2);
+  const minWidth = Math.min(CHAT_WINDOW_MIN_WIDTH, availableWidth);
+  const minHeight = Math.min(CHAT_WINDOW_MIN_HEIGHT, availableHeight);
+  const width = clamp(Number(geometry.width) || CHAT_WINDOW_DEFAULT_WIDTH, minWidth, availableWidth);
+  const height = clamp(Number(geometry.height) || CHAT_WINDOW_DEFAULT_HEIGHT, minHeight, availableHeight);
+  const defaultX = Math.round((viewport.width - width) / 2);
+  const defaultY = Math.round((viewport.height - height) / 2);
+  const maxX = Math.max(CHAT_WINDOW_MARGIN, viewport.width - width - CHAT_WINDOW_MARGIN);
+  const maxY = Math.max(CHAT_WINDOW_MARGIN, viewport.height - height - CHAT_WINDOW_MARGIN);
+
+  return {
+    width,
+    height,
+    x: clamp(Number.isFinite(Number(geometry.x)) ? Number(geometry.x) : defaultX, CHAT_WINDOW_MARGIN, maxX),
+    y: clamp(Number.isFinite(Number(geometry.y)) ? Number(geometry.y) : defaultY, CHAT_WINDOW_MARGIN, maxY),
+  };
+}
+
+function loadChatGeometry(storageKey) {
+  if (typeof window === 'undefined' || !storageKey) {
+    return normalizeChatGeometry();
+  }
+
+  try {
+    const saved = window.localStorage.getItem(storageKey);
+    return normalizeChatGeometry(saved ? JSON.parse(saved) : {});
+  } catch (error) {
+    console.warn('Failed to load support chat window geometry:', error);
+    return normalizeChatGeometry();
+  }
+}
+
+function saveChatGeometry(storageKey, geometry) {
+  if (typeof window === 'undefined' || !storageKey) return;
+
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(normalizeChatGeometry(geometry)));
+  } catch (error) {
+    console.warn('Failed to save support chat window geometry:', error);
+  }
+}
+
 export default function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -125,13 +191,91 @@ export default function FeedbackButton() {
   const [humanRequested, setHumanRequested] = useState(false);
   const [teamNotice, setTeamNotice] = useState(false);
   const messagesRef = useRef(messages);
+  const chatWindowRef = useRef(null);
+  const chatGeometryRef = useRef(null);
+  const chatWindowActionRef = useRef(null);
+  const [chatGeometry, setChatGeometry] = useState(() => normalizeChatGeometry());
+  const [chatWindowAction, setChatWindowAction] = useState(null);
   const { user, tenantType, restaurantId, agentId, officeId } = useAuth();
+  const isLoggedInChatWindow = Boolean(user);
+  const chatGeometryStorageKey = user?.uid
+    ? `${SUPPORT_CHAT_GEOMETRY_KEY}:${user.uid}`
+    : SUPPORT_CHAT_GEOMETRY_KEY;
   const contactName = (user?.displayName || user?.email?.split('@')[0] || '').trim();
   const greeting = contactName ? `Hi ${contactName}, how can we help?` : 'How can we help?';
 
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    chatGeometryRef.current = chatGeometry;
+  }, [chatGeometry]);
+
+  useEffect(() => {
+    if (!isLoggedInChatWindow) return;
+    setChatGeometry(loadChatGeometry(chatGeometryStorageKey));
+  }, [chatGeometryStorageKey, isLoggedInChatWindow]);
+
+  useEffect(() => {
+    if (!isLoggedInChatWindow || typeof window === 'undefined') return undefined;
+
+    function handleWindowResize() {
+      setChatGeometry((current) => normalizeChatGeometry(current));
+    }
+
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, [isLoggedInChatWindow]);
+
+  useEffect(() => {
+    if (!isLoggedInChatWindow || !chatWindowAction) return undefined;
+
+    function handlePointerMove(event) {
+      const action = chatWindowActionRef.current;
+      if (!action) return;
+
+      const deltaX = event.clientX - action.clientX;
+      const deltaY = event.clientY - action.clientY;
+      if (action.type === 'drag') {
+        const nextGeometry = normalizeChatGeometry({
+          ...action.geometry,
+          x: action.geometry.x + deltaX,
+          y: action.geometry.y + deltaY,
+        });
+        chatGeometryRef.current = nextGeometry;
+        setChatGeometry(nextGeometry);
+        return;
+      }
+
+      const nextGeometry = normalizeChatGeometry({
+        ...action.geometry,
+        width: action.geometry.width + deltaX,
+        height: action.geometry.height + deltaY,
+      });
+      chatGeometryRef.current = nextGeometry;
+      setChatGeometry(nextGeometry);
+    }
+
+    function handlePointerUp() {
+      chatWindowActionRef.current = null;
+      setChatWindowAction(null);
+      saveChatGeometry(chatGeometryStorageKey, chatGeometryRef.current);
+    }
+
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerUp);
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerUp);
+      document.body.style.userSelect = previousUserSelect;
+    };
+  }, [chatGeometryStorageKey, chatWindowAction, isLoggedInChatWindow]);
 
   useEffect(() => {
     if (!isOpen || !sessionId) return undefined;
@@ -276,6 +420,57 @@ export default function FeedbackButton() {
     }
   };
 
+  const beginChatWindowAction = (event, type) => {
+    if (!isLoggedInChatWindow) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (type === 'drag' && event.target?.closest?.('button, a, input, textarea, select, [role="button"]')) return;
+
+    const rect = chatWindowRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const geometry = normalizeChatGeometry({
+      width: rect.width,
+      height: rect.height,
+      x: rect.left,
+      y: rect.top,
+    });
+    chatWindowActionRef.current = {
+      type,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      geometry,
+    };
+    chatGeometryRef.current = geometry;
+    setChatGeometry(geometry);
+    setChatWindowAction(type);
+  };
+
+  const chatWindowStyle = isLoggedInChatWindow
+    ? {
+        width: `${chatGeometry.width}px`,
+        height: `${chatGeometry.height}px`,
+        left: `${chatGeometry.x}px`,
+        top: `${chatGeometry.y}px`,
+      }
+    : undefined;
+  const overlayClassName = isLoggedInChatWindow
+    ? 'fixed inset-0 bg-black bg-opacity-50 z-50'
+    : 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+  const dialogClassName = isLoggedInChatWindow
+    ? 'fixed flex flex-col overflow-hidden bg-white rounded-lg shadow-xl'
+    : 'bg-white rounded-lg shadow-xl max-w-md w-full';
+  const formClassName = isLoggedInChatWindow
+    ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-6'
+    : 'p-6';
+  const submittedContentClassName = isLoggedInChatWindow
+    ? 'flex min-h-0 flex-1 flex-col gap-4'
+    : 'space-y-4';
+  const messagesClassName = isLoggedInChatWindow
+    ? 'min-h-40 flex-1 space-y-3 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3'
+    : 'max-h-72 space-y-3 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3';
+
   return (
     <>
       {/* Floating Feedback Button */}
@@ -307,10 +502,18 @@ export default function FeedbackButton() {
 
       {/* Feedback Modal */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className={overlayClassName}>
+          <div
+            ref={chatWindowRef}
+            className={dialogClassName}
+            style={chatWindowStyle}
+          >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div
+              className={`flex items-center justify-between p-6 border-b border-gray-200 ${isLoggedInChatWindow ? 'cursor-move select-none' : ''}`}
+              onPointerDown={(event) => beginChatWindowAction(event, 'drag')}
+              title={isLoggedInChatWindow ? 'Drag to move' : undefined}
+            >
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   Contact Support
@@ -342,9 +545,9 @@ export default function FeedbackButton() {
             </div>
 
             {/* Body */}
-            <form onSubmit={handleSubmit} className="p-6">
+            <form onSubmit={handleSubmit} className={formClassName}>
               {submitted ? (
-                <div className="space-y-4">
+                <div className={submittedContentClassName}>
                   <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
                     Thanks{contactName ? `, ${contactName}` : ''}. I’ll keep answering here, and you can ask for a person if you need one.
                   </div>
@@ -353,7 +556,7 @@ export default function FeedbackButton() {
                       Team notified. A person can reply here when they pick up the conversation.
                     </div>
                   ) : null}
-                  <div className="max-h-72 space-y-3 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <div className={messagesClassName}>
                     {messages.map((message) => (
                       <div
                         key={message.id || `${message.sender}-${message.body}`}
@@ -401,7 +604,7 @@ export default function FeedbackButton() {
                   </div>
                 </div>
               ) : (
-                <>
+                <div className={isLoggedInChatWindow ? 'overflow-y-auto pr-1' : ''}>
                   <div className="mb-4">
                     <p className="text-sm text-gray-600 mb-4">
                       {greeting} Send a message and we will keep the conversation open here.
@@ -461,7 +664,7 @@ export default function FeedbackButton() {
                       </>
                     )}
                   </button>
-                </>
+                </div>
               )}
               {error ? (
                 <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -469,6 +672,18 @@ export default function FeedbackButton() {
                 </div>
               ) : null}
             </form>
+            {isLoggedInChatWindow ? (
+              <button
+                type="button"
+                aria-label="Resize support chat window"
+                title="Drag to resize"
+                className="absolute bottom-0 right-0 h-6 w-6 cursor-se-resize opacity-60 hover:opacity-100"
+                onPointerDown={(event) => beginChatWindowAction(event, 'resize')}
+                style={{
+                  background: 'linear-gradient(135deg, transparent 0%, transparent 50%, #9CA3AF 50%, #9CA3AF 100%)',
+                }}
+              />
+            ) : null}
           </div>
         </div>
       )}
