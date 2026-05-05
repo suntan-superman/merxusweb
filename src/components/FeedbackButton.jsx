@@ -470,6 +470,15 @@ export default function FeedbackButton() {
   const messagesClassName = isLoggedInChatWindow
     ? 'min-h-40 flex-1 space-y-3 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3'
     : 'max-h-72 space-y-3 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3';
+  const initialContentClassName = isLoggedInChatWindow
+    ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
+    : '';
+  const initialMessageBlockClassName = isLoggedInChatWindow
+    ? 'mb-4 flex min-h-0 flex-1 flex-col'
+    : 'mb-4';
+  const initialTextareaClassName = isLoggedInChatWindow
+    ? 'min-h-40 flex-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none'
+    : 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none';
 
   return (
     <>
@@ -604,8 +613,8 @@ export default function FeedbackButton() {
                   </div>
                 </div>
               ) : (
-                <div className={isLoggedInChatWindow ? 'overflow-y-auto pr-1' : ''}>
-                  <div className="mb-4">
+                <div className={initialContentClassName}>
+                  <div className={initialMessageBlockClassName}>
                     <p className="text-sm text-gray-600 mb-4">
                       {greeting} Send a message and we will keep the conversation open here.
                     </p>
@@ -613,7 +622,7 @@ export default function FeedbackButton() {
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
                       placeholder="Type your message here..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                      className={initialTextareaClassName}
                       rows={6}
                       maxLength={1000}
                       required
