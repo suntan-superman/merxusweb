@@ -58,13 +58,23 @@ export default function VoiceSidebar() {
   const [proExpanded, setProExpanded] = useState(() => {
     if (typeof window === 'undefined') return true;
     const stored = window.localStorage.getItem(PRO_SECTION_STORAGE_KEY);
-    return stored === null ? true : stored === 'true';
+    return stored === null ? false : stored === 'true';
   });
   const [eliteExpanded, setEliteExpanded] = useState(() => {
     if (typeof window === 'undefined') return true;
     const stored = window.localStorage.getItem(ELITE_SECTION_STORAGE_KEY);
-    return stored === null ? true : stored === 'true';
+    return stored === null ? false : stored === 'true';
   });
+
+  useEffect(() => {
+    if (subscriptionLoading || typeof window === 'undefined') return;
+    if (window.localStorage.getItem(PRO_SECTION_STORAGE_KEY) === null) {
+      setProExpanded(professionalUnlocked);
+    }
+    if (window.localStorage.getItem(ELITE_SECTION_STORAGE_KEY) === null) {
+      setEliteExpanded(eliteUnlocked);
+    }
+  }, [eliteUnlocked, professionalUnlocked, subscriptionLoading]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -117,6 +127,7 @@ export default function VoiceSidebar() {
           title="Pro Features"
           tier="professional"
           label="Pro"
+          summary="Operations insight"
           expanded={proExpanded}
           onToggle={() => setProExpanded((value) => !value)}
         >
@@ -161,6 +172,7 @@ export default function VoiceSidebar() {
           title="Elite Features"
           tier="elite"
           label="Elite"
+          summary="Includes Pro"
           expanded={eliteExpanded}
           onToggle={() => setEliteExpanded((value) => !value)}
         >
@@ -231,21 +243,24 @@ export default function VoiceSidebar() {
   );
 }
 
-function PlanSection({ title, tier, label, expanded, onToggle, children }) {
+function PlanSection({ title, tier, label, summary = '', expanded, onToggle, children }) {
   return (
     <div className="pt-2">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
+        className="w-full rounded-md px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
       >
-        <span className="flex items-center gap-2">
-          <span>{title}</span>
-          <PlanTierBadge tier={tier} label={label} />
+        <span className="flex items-center justify-between gap-2">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="truncate">{title}</span>
+            <PlanTierBadge tier={tier} label={label} />
+          </span>
+          <span className={`text-base text-gray-400 dark:text-slate-500 transition-transform ${expanded ? 'rotate-90' : ''}`}>
+            ›
+          </span>
         </span>
-        <span className={`text-base text-gray-400 dark:text-slate-500 transition-transform ${expanded ? 'rotate-90' : ''}`}>
-          ›
-        </span>
+        {summary ? <span className="mt-0.5 block normal-case tracking-normal text-slate-400">{summary}</span> : null}
       </button>
       {expanded ? <div className="mt-1 space-y-1">{children}</div> : null}
     </div>

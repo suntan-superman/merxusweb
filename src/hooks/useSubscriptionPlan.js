@@ -13,8 +13,8 @@ function normalizeSubscriptionTier(plan) {
 
   if (!normalized) return 'base';
   if (normalized.includes('elite') || normalized.includes('enterprise')) return 'elite';
-  if (normalized.includes('professional') || normalized.includes('standard')) return 'professional';
-  if (normalized.includes('basic') || normalized.includes('starter') || normalized.includes('base')) return 'base';
+  if (normalized.includes('professional') || /\bpro\b/.test(normalized)) return 'professional';
+  if (normalized.includes('standard') || normalized.includes('basic') || normalized.includes('starter') || normalized.includes('base')) return 'base';
   return 'base';
 }
 
