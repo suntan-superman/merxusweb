@@ -8,6 +8,8 @@ import {
   sendPublicChatMessage,
   timeoutPublicChatSession,
   publicChatErrorMessage,
+  isPublicChatClosedError,
+  isPublicChatClosedPayload,
 } from '../../api/publicChat';
 import { useAuth } from '../../context/AuthContext';
 
@@ -166,6 +168,7 @@ export default function WebsiteChatWidget({
   const [idleCountdown, setIdleCountdown] = useState(60);
   const [confirmEndChat, setConfirmEndChat] = useState(false);
   const [emailTranscriptOnEnd, setEmailTranscriptOnEnd] = useState(true);
+  const [conversationEnded, setConversationEnded] = useState(false);
   const [lastActivityAt, setLastActivityAt] = useState(() => Number(getStoredValue('lastActivityAt')) || Date.now());
   const visitorId = useMemo(getVisitorId, []);
   const threadRef = useRef(null);
@@ -185,6 +188,17 @@ export default function WebsiteChatWidget({
   const leadNameError = shouldShowLead && leadTouched.name && !leadNameReady ? 'Name must be at least 3 characters.' : '';
   const leadEmailError = shouldShowLead && leadTouched.email && !leadEmailReady ? 'Enter a valid email address.' : '';
   const talkToPersonDisabled = isSending || humanRequested || (!isLoggedIn && !leadCaptured);
+
+  function markConversationEnded(nextMessages = messagesRef.current) {
+    setMessages(nextMessages?.length ? nextMessages : messagesRef.current);
+    setConversationEnded(true);
+    setHumanRequested(false);
+    setTeamNotice(false);
+    setConfirmEndChat(false);
+    setError('');
+    setSessionId('');
+    setStoredValue('sessionId', '');
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -219,10 +233,20 @@ export default function WebsiteChatWidget({
             playChatSound();
           }
           setMessages(nextMessages);
+          if (isPublicChatClosedPayload(result)) {
+            markConversationEnded(nextMessages);
+            return;
+          }
           setError('');
         }
       } catch (pollError) {
-        if (!cancelled) setError(publicChatErrorMessage(pollError));
+        if (!cancelled) {
+          if (isPublicChatClosedError(pollError)) {
+            markConversationEnded();
+            return;
+          }
+          setError(publicChatErrorMessage(pollError));
+        }
       } finally {
         if (!cancelled) setIsPolling(false);
       }
@@ -259,6 +283,7 @@ export default function WebsiteChatWidget({
     setIdleCountdown(60);
     setConfirmEndChat(false);
     setEmailTranscriptOnEnd(true);
+    setConversationEnded(false);
     setError('');
     recordActivity();
   }
@@ -371,7 +396,7 @@ export default function WebsiteChatWidget({
   async function handleSend(event) {
     event.preventDefault();
     const text = draft.trim();
-    if (!text || isSending) return;
+    if (!text || isSending || conversationEnded) return;
     recordActivity();
     unlockChatSound();
 
@@ -426,6 +451,7 @@ export default function WebsiteChatWidget({
 
   async function handleHumanRequest() {
     if (humanRequested || isSending) return;
+    if (conversationEnded) return;
     recordActivity();
     unlockChatSound();
     if (!isLoggedIn && !leadCaptured) {
@@ -493,7 +519,7 @@ export default function WebsiteChatWidget({
               ) : null}
             </div>
             <div className="website-chat-header-actions">
-              {sessionId ? (
+              {sessionId && !conversationEnded ? (
                 <button
                   type="button"
                   className="website-chat-end-header"
@@ -560,6 +586,10 @@ export default function WebsiteChatWidget({
 
           {error ? <div className="website-chat-error">{error}</div> : null}
 
+          {conversationEnded ? (
+            <div className="website-chat-notice">This chat has ended.</div>
+          ) : null}
+
           {idleWarning ? (
             <div className="website-chat-timeout">
               <div>
@@ -606,7 +636,7 @@ export default function WebsiteChatWidget({
 
           {teamNotice ? <div className="website-chat-notice"><UserRound size={15} /> Team notified</div> : null}
 
-          {!humanRequested ? (
+          {!humanRequested && !conversationEnded ? (
             <div className="website-chat-actions">
               <button type="button" className="website-chat-human" onClick={handleHumanRequest} disabled={talkToPersonDisabled}>
                 <UserRound size={16} />
@@ -623,10 +653,11 @@ export default function WebsiteChatWidget({
                 setConfirmEndChat(false);
                 setDraft(event.target.value);
               }}
-              placeholder="Type your message"
+              placeholder={conversationEnded ? 'This chat has ended' : 'Type your message'}
               aria-label="Type your message"
+              disabled={conversationEnded}
             />
-            <button type="submit" disabled={isSending || !draft.trim()} aria-label="Send message">
+            <button type="submit" disabled={conversationEnded || isSending || !draft.trim()} aria-label="Send message">
               {isSending ? <Loader2 size={18} className="website-chat-spin" /> : <Send size={18} />}
             </button>
           </form>

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {
   PublicChatError,
   extractPublicChatError,
+  isPublicChatClosedError,
+  isPublicChatClosedPayload,
   publicChatErrorMessage,
 } from './publicChat.js';
 
@@ -52,4 +54,15 @@ test('PublicChatError exposes safe message and metadata', () => {
   assert.equal(error.status, 422);
   assert.equal(error.code, 'LEAD_NAME_REQUIRED');
   assert.equal(error.requiredAction, 'enter_name');
+});
+
+test('isPublicChatClosedPayload detects session close shapes', () => {
+  assert.equal(isPublicChatClosedPayload({ session: { status: 'closed' } }), true);
+  assert.equal(isPublicChatClosedPayload({ details: { sessionStatus: 'agent_closed' } }), true);
+  assert.equal(isPublicChatClosedPayload({ session: { status: 'active_human' } }), false);
+});
+
+test('isPublicChatClosedError detects closed chat errors', () => {
+  assert.equal(isPublicChatClosedError(new PublicChatError('Session is closed', { code: 'SESSION_CLOSED' })), true);
+  assert.equal(isPublicChatClosedError(new PublicChatError('Chat is temporarily unavailable.', { code: 'NETWORK' })), false);
 });

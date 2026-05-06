@@ -55,6 +55,39 @@ export function publicChatErrorMessage(error) {
   return meaningfulText(error?.message) || 'Chat is temporarily unavailable.';
 }
 
+export function isPublicChatClosedPayload(payload = {}) {
+  const data = isPlainObject(payload) ? payload : {};
+  const session = isPlainObject(data.session) ? data.session : {};
+  const details = isPlainObject(data.details) ? data.details : {};
+  const status = meaningfulText(
+    data.status ||
+      data.sessionStatus ||
+      data.state ||
+      details.status ||
+      details.sessionStatus ||
+      session.status ||
+      session.sessionStatus ||
+      session.state,
+  ).toLowerCase();
+
+  return (
+    data.closed === true ||
+    data.ended === true ||
+    details.closed === true ||
+    details.ended === true ||
+    session.closed === true ||
+    session.ended === true ||
+    ['closed', 'ended', 'resolved', 'timeout', 'timed_out', 'visitor_ended_chat', 'agent_closed'].includes(status)
+  );
+}
+
+export function isPublicChatClosedError(error) {
+  if (!error) return false;
+  if (['SESSION_CLOSED', 'CHAT_CLOSED', 'CONVERSATION_CLOSED'].includes(normalizeErrorCode(error.code))) return true;
+  if (isPublicChatClosedPayload(error.payload) || isPublicChatClosedPayload(error.details)) return true;
+  return /(?:session|chat|conversation)\s+(?:is\s+)?(?:closed|ended)/i.test(meaningfulText(error.message));
+}
+
 async function parsePayload(response) {
   const text = await response.text();
   if (!text) return {};

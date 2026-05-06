@@ -6,6 +6,8 @@ import {
   requestPublicChatHuman,
   sendPublicChatMessage,
   timeoutPublicChatSession,
+  isPublicChatClosedError,
+  isPublicChatClosedPayload,
 } from '../api/publicChat';
 
 let supportAudioContext;
@@ -190,6 +192,7 @@ export default function FeedbackButton() {
   const [error, setError] = useState('');
   const [humanRequested, setHumanRequested] = useState(false);
   const [teamNotice, setTeamNotice] = useState(false);
+  const [conversationEnded, setConversationEnded] = useState(false);
   const messagesRef = useRef(messages);
   const chatWindowRef = useRef(null);
   const chatGeometryRef = useRef(null);
@@ -203,6 +206,16 @@ export default function FeedbackButton() {
     : SUPPORT_CHAT_GEOMETRY_KEY;
   const contactName = (user?.displayName || user?.email?.split('@')[0] || '').trim();
   const greeting = contactName ? `Hi ${contactName}, how can we help?` : 'How can we help?';
+
+  function markConversationEnded(nextMessages = messagesRef.current) {
+    setMessages(nextMessages?.length ? nextMessages : messagesRef.current);
+    setSubmitted(true);
+    setConversationEnded(true);
+    setHumanRequested(false);
+    setTeamNotice(false);
+    setSessionId('');
+    setError('');
+  }
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -290,10 +303,20 @@ export default function FeedbackButton() {
             playSupportSound();
           }
           setMessages(nextMessages);
+          if (isPublicChatClosedPayload(result)) {
+            markConversationEnded(nextMessages);
+            return;
+          }
           setError('');
         }
       } catch (pollError) {
-        if (!cancelled) setError(pollError?.message || 'Unable to refresh this conversation.');
+        if (!cancelled) {
+          if (isPublicChatClosedError(pollError)) {
+            markConversationEnded();
+            return;
+          }
+          setError(pollError?.message || 'Unable to refresh this conversation.');
+        }
       }
     }
 
@@ -308,7 +331,7 @@ export default function FeedbackButton() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!feedback.trim()) {
+    if (!feedback.trim() || conversationEnded) {
       return;
     }
 
@@ -357,6 +380,7 @@ export default function FeedbackButton() {
         if (created?.session?.id) {
           setSessionId(created.session.id);
           setMessages(normalizeConversationMessages(created.messages || []));
+          setConversationEnded(false);
         }
       }
 
@@ -371,7 +395,7 @@ export default function FeedbackButton() {
   };
 
   const handleRequestHuman = async () => {
-    if (!sessionId || humanRequested || submitting) return;
+    if (!sessionId || humanRequested || submitting || conversationEnded) return;
 
     setSubmitting(true);
     setError('');
@@ -412,6 +436,7 @@ export default function FeedbackButton() {
       setFeedback('');
       setHumanRequested(false);
       setTeamNotice(false);
+      setConversationEnded(false);
       setIsOpen(false);
     } catch (endError) {
       setError(endError?.message || 'Unable to end this conversation. Please try again.');
@@ -530,7 +555,7 @@ export default function FeedbackButton() {
                 <p className="mt-1 text-sm text-gray-600">{greeting}</p>
               </div>
               <div className="flex items-center gap-3">
-                {sessionId ? (
+                {sessionId && !conversationEnded ? (
                   <button
                     type="button"
                     onClick={handleEndConversation}
@@ -565,6 +590,11 @@ export default function FeedbackButton() {
                       Team notified. A person can reply here when they pick up the conversation.
                     </div>
                   ) : null}
+                  {conversationEnded ? (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+                      This conversation has ended.
+                    </div>
+                  ) : null}
                   <div className={messagesClassName}>
                     {messages.map((message) => (
                       <div
@@ -584,7 +614,7 @@ export default function FeedbackButton() {
                       </div>
                     ))}
                   </div>
-                  {!humanRequested ? (
+                  {!humanRequested && !conversationEnded ? (
                     <button
                       type="button"
                       onClick={handleRequestHuman}
@@ -598,14 +628,15 @@ export default function FeedbackButton() {
                     <textarea
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
-                      placeholder="Add another message..."
+                      placeholder={conversationEnded ? 'This conversation has ended.' : 'Add another message...'}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                       rows={3}
                       maxLength={1000}
+                      disabled={conversationEnded}
                     />
                     <button
                       type="submit"
-                      disabled={submitting || !feedback.trim()}
+                      disabled={conversationEnded || submitting || !feedback.trim()}
                       className="mt-3 w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
                     >
                       {submitting ? 'Sending...' : 'Send Message'}
