@@ -12,6 +12,7 @@ import {
   isPublicChatClosedPayload,
 } from '../../api/publicChat';
 import { useAuth } from '../../context/AuthContext';
+import { getCampaignAttribution, trackMetaCustomEvent } from '../../utils/metaPixel';
 
 const STORAGE_PREFIX = 'merxus.publicChat';
 const IDLE_WARNING_MS = 5 * 60 * 1000;
@@ -669,6 +670,12 @@ export default function WebsiteChatWidget({
           onClick={() => {
             unlockChatSound();
             setIsOpen(true);
+            trackMetaCustomEvent('MerxusChatOpened', {
+              product,
+              tenantType,
+              source: 'website_chat',
+              ...getCampaignAttribution(),
+            });
           }}
           aria-label="Open Merxus chat"
         >

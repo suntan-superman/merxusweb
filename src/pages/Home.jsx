@@ -11,10 +11,10 @@ const Home = () => {
       <section className="bg-gradient-to-br from-primary-50 to-white px-4 pb-2 pt-12 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
         <div className="container max-w-4xl mx-auto text-center">
           <h1 className="mb-6 text-3xl font-bold text-neutral-900 md:text-5xl dark:text-slate-100">
-            AI Phone Assistant for Your Business
+            AI Communication Command Center for Your Business
           </h1>
           <p className="mb-2 text-xl text-neutral-700 md:text-2xl dark:text-slate-300">
-            24/7 Virtual Receptionist that Answers Calls, Handles Inquiries, and Never Misses a Customer
+            Calls, SMS, website chat, routing, reviews, and team alerts in one AI-assisted front desk.
           </p>
           {/* <div className="flex flex-col justify-center gap-4 mb-4 sm:flex-row">
             <Link to="#choose-service" className="px-8 py-3 text-lg btn-primary">
@@ -144,7 +144,7 @@ const Home = () => {
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {[
-              'Never miss a customer call again',
+              'Help more customer calls get a response path',
               'Reduce front-of-house workload',
               'Increase reservations and orders',
               'Deliver consistent, professional phone etiquette',

@@ -38,6 +38,11 @@ import RestaurantLandingPage from './pages/RestaurantLandingPage';
 import EliteFeatureWorkspace from './components/premium/EliteFeatureWorkspace';
 import WebsiteChatWidget from './components/chat/WebsiteChatWidget';
 import lazyWithRetry from './utils/lazyWithRetry';
+import {
+  initMetaPixel,
+  persistCampaignAttribution,
+  trackMetaEvent,
+} from './utils/metaPixel';
 
 const lazy = lazyWithRetry;
 
@@ -149,6 +154,43 @@ function PublicWebsiteChat() {
   );
 }
 
+function MetaRouteTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    persistCampaignAttribution();
+    initMetaPixel();
+  }, []);
+
+  useEffect(() => {
+    persistCampaignAttribution();
+    trackMetaEvent('PageView', {
+      path: location.pathname,
+      search: location.search,
+    });
+
+    const paidSocialRoutes = {
+      '/office-ai-front-desk': 'office',
+      '/ai-front-desk': 'office',
+      '/solutions/office': 'office',
+      '/real-estate-ai': 'real_estate',
+      '/solutions/real-estate': 'real_estate',
+      '/restaurant-ai': 'restaurant',
+      '/solutions/restaurant': 'restaurant',
+    };
+    const industry = paidSocialRoutes[location.pathname];
+    if (industry) {
+      trackMetaEvent('ViewContent', {
+        industry,
+        pageType: 'paid_social_landing',
+        path: location.pathname,
+      });
+    }
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 function App() {
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -161,6 +203,7 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <Router>
+        <MetaRouteTracker />
         <Routes>
           {/* Public routes - no NavBar */}
           <Route path="/login" element={<LoginPage />} />
@@ -180,6 +223,7 @@ function App() {
           <Route path="/support" element={<SupportPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+          <Route path="/terms-and-conditions" element={<Navigate to="/terms-of-service" replace />} />
           <Route
             path="/*"
             element={
@@ -192,6 +236,10 @@ function App() {
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="/never-miss-calls" element={<InstagramLandingPage />} />
+                  <Route path="/ai-front-desk" element={<OfficeLandingPage />} />
+                  <Route path="/office-ai-front-desk" element={<OfficeLandingPage />} />
+                  <Route path="/real-estate-ai" element={<RealEstateLandingPage />} />
+                  <Route path="/restaurant-ai" element={<RestaurantLandingPage />} />
                   <Route path="/solutions/office" element={<OfficeLandingPage />} />
                   <Route path="/solutions/real-estate" element={<RealEstateLandingPage />} />
                   <Route path="/solutions/restaurant" element={<RestaurantLandingPage />} />
@@ -591,7 +639,7 @@ function App() {
                       <div>
                         <h3 className="mb-4 text-xl font-bold text-primary-400">Merxus</h3>
                         <p className="text-gray-400">
-                          Your AI Phone Assistant
+                          AI communication command center for calls, SMS, chat, reviews, and team routing.
                         </p>
                       </div>
                       <div>
@@ -607,6 +655,7 @@ function App() {
                         <ul className="space-y-2 text-gray-400">
                           <li><a href="/support" className="transition-colors hover:text-primary-400">Help Center</a></li>
                           <li><a href="/privacy-policy" className="transition-colors hover:text-primary-400">Privacy Policy</a></li>
+                          <li><a href="/terms-of-service" className="transition-colors hover:text-primary-400">Terms of Service</a></li>
                           <li><a href="mailto:support@merxusllc.com" className="transition-colors hover:text-primary-400">Contact Us</a></li>
                         </ul>
                       </div>

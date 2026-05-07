@@ -2,38 +2,51 @@ import VerticalLandingPage from '../components/marketing/VerticalLandingPage';
 
 const content = {
   theme: 'office',
+  tenantType: 'office',
+  tenantLabel: 'Office',
+  businessTypeValue: 'office',
   eyebrow: 'Merxus AI For Offices',
-  heroTitle: 'Stop losing appointments, quotes, and service requests to missed calls.',
+  heroTitle: 'Your AI front desk, built for the office that never stops receiving requests.',
   heroSubtitle:
-    'Merxus gives your office an AI front desk that answers 24/7, captures caller intent, and routes the work to your team on web and mobile.',
+    'Merxus helps offices handle calls, SMS, website chat, review alerts, Slack notifications, routing, and mobile follow-up, with human takeover whenever your team needs control.',
   primaryCta: 'Start Office Setup',
   secondaryCta: 'Request Office Demo',
   setupHref: '/setup?type=voice',
   demoHref: 'mailto:support@merxusllc.com?subject=Merxus%20Office%20Demo%20Request',
+  formTitle: 'See how Merxus would handle your office front desk.',
+  formIntro: 'Tell us where requests come in today, and we will route you to the right setup path.',
+  formCta: 'Get My Office Demo',
+  primaryNeedPlaceholder: 'Example: after-hours calls, appointment requests, quote requests, review alerts, Slack routing, or staff interruptions',
+  formHighlights: [
+    'No per-call charges',
+    'Mobile app included',
+    'Slack alerts and review monitoring',
+    'Human takeover when needed',
+  ],
   heroBullets: [
-    'Answers every call without sending people to voicemail',
+    'Helps answer calls without forcing every inquiry to voicemail',
     'Captures appointments, quote requests, and service needs',
-    'Supports bilingual callers and translated follow-up',
+    'Supports calls, SMS, website chat, reviews, and Slack alerts',
     'Keeps owners, managers, and staff aligned',
   ],
   valuePoints: [
-    { title: '24/7 AI Front Desk', description: 'Your business stays responsive even when the team is already maxed out.' },
+    { title: 'AI Front Desk', description: 'Your business can stay responsive when the team is already maxed out.' },
     { title: 'Routing + Work Capture', description: 'Appointments, quotes, and service requests become usable follow-up instead of missed opportunities.' },
     { title: 'Web + Mobile Visibility', description: 'Teams can act from the dashboard or on the go.' },
   ],
   metrics: [
-    { value: '24/7', label: 'Answering' },
-    { value: '2', label: 'Surfaces: Web + Mobile' },
-    { value: '3', label: 'Core office workflows' },
+    { value: 'No', label: 'Per-call fees' },
+    { value: '5+', label: 'Response channels' },
+    { value: '1', label: 'Command center' },
   ],
   problemTitle: 'Your team is busy. The phone does not care.',
   problemBody:
-    'When the front desk is helping a client, already on another line, or tied up in admin work, new opportunities still keep coming in. Missed office calls quickly become missed appointments, missed quotes, and lost revenue.',
+    'When the front desk is helping a client, already on another line, or tied up in admin work, new requests still keep coming in. Calls, texts, chats, and reviews need a response path that does not depend on one person catching every interruption.',
   solutionTitle: 'Merxus turns office calls into organized follow-up.',
   solutionBody:
-    'Merxus answers around the clock, captures what the caller needs, and helps route the next step to the right person. Your team stays focused on the work instead of scrambling to catch every ringing phone.',
+    'Merxus handles routine intake, captures what the customer needs, and helps route the next step to the right person. Your team stays focused on the work while still keeping response quality high.',
   solutionSteps: [
-    { title: 'Answer immediately', description: 'Callers get a professional response instead of a missed-call moment or voicemail dead-end.' },
+    { title: 'Respond quickly', description: 'Customers get a professional first response instead of waiting on a callback window.' },
     { title: 'Capture intent', description: 'Appointments, quotes, and service needs are recognized as real work, not just call history.' },
     { title: 'Route the next step', description: 'Owners and staff can review and respond from web or mobile.' },
   ],
@@ -57,7 +70,7 @@ const content = {
     { kicker: 'Pain Point', title: 'Front-desk overload', description: 'Especially useful when the business already has demand but the staff cannot catch every call.' },
     { kicker: 'Why It Wins', title: 'More than voicemail', description: 'Merxus helps capture actual work instead of leaving owners to piece it together later.' },
   ],
-  finalTitle: 'Stop relying on voicemail as your front desk.',
+  finalTitle: 'Stop making voicemail your default front desk.',
   finalBody:
     'If your office loses business when the line goes unanswered, Merxus gives you a better operating model: answer, capture, route, and follow up.',
 };
@@ -65,4 +78,3 @@ const content = {
 export default function OfficeLandingPage() {
   return <VerticalLandingPage content={content} />;
 }
-

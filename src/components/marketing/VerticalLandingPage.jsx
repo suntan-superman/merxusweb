@@ -1,4 +1,53 @@
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  createPublicChatSession,
+  publicChatErrorMessage,
+  requestPublicChatHuman,
+} from '../../api/publicChat';
+import {
+  getCampaignAttribution,
+  trackMetaCustomEvent,
+  trackMetaEvent,
+  trackMetaLeadOnce,
+} from '../../utils/metaPixel';
+
+const BUSINESS_TYPE_OPTIONS = [
+  { value: 'office', label: 'Office / Professional Services' },
+  { value: 'real_estate_agent', label: 'Real Estate Agent' },
+  { value: 'real_estate_team', label: 'Real Estate Broker / Team' },
+  { value: 'restaurant', label: 'Restaurant' },
+  { value: 'home_services', label: 'Home Services' },
+  { value: 'other', label: 'Other' },
+];
+
+const CONTACT_METHOD_OPTIONS = [
+  { value: 'phone', label: 'Phone' },
+  { value: 'email', label: 'Email' },
+  { value: 'sms', label: 'SMS' },
+];
+
+function normalizePhone(value) {
+  return String(value || '').replace(/[^\d+]/g, '');
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(value || '').trim());
+}
+
+function createInitialLead(content) {
+  return {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    companyName: '',
+    businessType: content.businessTypeValue || content.theme || 'office',
+    teamSize: '',
+    primaryNeed: content.defaultPrimaryNeed || '',
+    preferredContactMethod: 'phone',
+  };
+}
 
 function getThemeClasses(theme) {
   switch (theme) {
@@ -53,6 +102,122 @@ function getThemeClasses(theme) {
 
 export default function VerticalLandingPage({ content }) {
   const theme = getThemeClasses(content.theme);
+  const [lead, setLead] = useState(() => createInitialLead(content));
+  const [leadStatus, setLeadStatus] = useState({ state: 'idle', message: '', sessionId: '' });
+  const attribution = useMemo(() => getCampaignAttribution(), []);
+  const leadName = `${lead.firstName} ${lead.lastName}`.trim();
+  const canSubmit =
+    lead.firstName.trim().length >= 2 &&
+    lead.lastName.trim().length >= 2 &&
+    isValidEmail(lead.email) &&
+    normalizePhone(lead.phone).length >= 10 &&
+    lead.companyName.trim().length >= 2;
+
+  function updateLead(field, value) {
+    setLead((current) => ({ ...current, [field]: value }));
+    if (leadStatus.state === 'error') {
+      setLeadStatus({ state: 'idle', message: '', sessionId: '' });
+    }
+  }
+
+  function buildLeadMessage() {
+    return [
+      `Paid social lead for ${content.tenantLabel || content.eyebrow}.`,
+      `Name: ${leadName}`,
+      `Email: ${lead.email.trim()}`,
+      `Phone: ${lead.phone.trim()}`,
+      `Company: ${lead.companyName.trim()}`,
+      `Business type: ${lead.businessType}`,
+      `Team/locations: ${lead.teamSize || 'Not provided'}`,
+      `Primary need: ${lead.primaryNeed || 'Not provided'}`,
+      `Preferred contact: ${lead.preferredContactMethod}`,
+    ].join('\n');
+  }
+
+  async function handleLeadSubmit(event) {
+    event.preventDefault();
+    if (!canSubmit || leadStatus.state === 'submitting') return;
+
+    setLeadStatus({ state: 'submitting', message: 'Sending your request...', sessionId: '' });
+    const payload = {
+      product: 'merxus',
+      tenantId: 'merxus-platform',
+      tenantType: content.tenantType || content.theme || 'office',
+      source: 'meta_ads',
+      sourceUrl: window.location.href,
+      visitorId: attribution.fbclid || `landing_${Date.now()}`,
+      initialIntent: 'sales',
+      initialMessage: buildLeadMessage(),
+      leadName,
+      leadEmail: lead.email.trim(),
+      leadPhone: lead.phone.trim(),
+      leadCompany: lead.companyName.trim(),
+      businessType: lead.businessType,
+      preferredContactMethod: lead.preferredContactMethod,
+      inquiryCaptured: Boolean(lead.primaryNeed),
+      leadCaptured: true,
+      marketingLead: {
+        ...lead,
+        fullName: leadName,
+        source: 'meta_ads',
+        tenantType: content.tenantType || content.theme || 'office',
+      },
+      campaign: attribution,
+      appBaseUrl: window.location.origin,
+    };
+
+    try {
+      const result = await createPublicChatSession(payload);
+      const sessionId = result.session?.id || '';
+      trackMetaLeadOnce(`${content.theme}:${lead.email.trim().toLowerCase()}`, {
+        product: 'merxus',
+        industry: content.tenantType || content.theme,
+        source: 'meta_ads',
+        ...attribution,
+      });
+      setLeadStatus({
+        state: 'submitted',
+        message: 'Thanks. We captured your request and can route you to the next step.',
+        sessionId,
+      });
+    } catch (error) {
+      setLeadStatus({
+        state: 'error',
+        message: publicChatErrorMessage(error),
+        sessionId: '',
+      });
+    }
+  }
+
+  async function handleChatWithPerson() {
+    if (!leadStatus.sessionId) return;
+    setLeadStatus((current) => ({ ...current, state: 'submitting', message: 'Notifying the team...' }));
+    try {
+      await requestPublicChatHuman(leadStatus.sessionId, {
+        visitorId: attribution.fbclid || `landing_${Date.now()}`,
+        leadName,
+        leadEmail: lead.email.trim(),
+        appBaseUrl: window.location.origin,
+      });
+      trackMetaCustomEvent('MerxusChatOpened', {
+        product: 'merxus',
+        industry: content.tenantType || content.theme,
+        source: 'meta_ads_lead_form',
+        ...attribution,
+      });
+      setLeadStatus((current) => ({
+        ...current,
+        state: 'submitted',
+        message: 'The team has been notified. You can also use the chat button on this page.',
+      }));
+    } catch (error) {
+      setLeadStatus((current) => ({
+        ...current,
+        state: 'error',
+        message: publicChatErrorMessage(error),
+      }));
+    }
+  }
 
   return (
     <div className={`min-h-screen ${theme.pageBg}`}>
@@ -74,12 +239,24 @@ export default function VerticalLandingPage({ content }) {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Link
                     to={content.setupHref}
+                    onClick={() => trackMetaCustomEvent('MerxusOnboardingStarted', {
+                      product: 'merxus',
+                      industry: content.tenantType || content.theme,
+                      source: 'paid_social_landing',
+                      ...attribution,
+                    })}
                     className={`inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold shadow-lg transition ${theme.accentButton}`}
                   >
                     {content.primaryCta}
                   </Link>
                   <a
                     href={content.demoHref}
+                    onClick={() => trackMetaEvent('Schedule', {
+                      product: 'merxus',
+                      industry: content.tenantType || content.theme,
+                      source: 'paid_social_landing',
+                      ...attribution,
+                    })}
                     className="inline-flex items-center justify-center rounded-2xl border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
                   >
                     {content.secondaryCta}
@@ -119,6 +296,192 @@ export default function VerticalLandingPage({ content }) {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="lead-form" className="px-4 py-6">
+        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr,1.1fr]">
+          <div className={`rounded-[28px] border px-6 py-8 md:px-8 ${theme.sectionHighlight}`}>
+            <p className={`text-xs font-semibold uppercase tracking-[0.22em] ${theme.accentText}`}>See Merxus In Action</p>
+            <h2 className="mt-3 text-3xl font-black text-gray-900 md:text-4xl">{content.formTitle || 'Get a workflow-specific demo'}</h2>
+            <p className="mt-4 text-base leading-7 text-gray-700">
+              {content.formIntro || 'Tell us how your team handles customer requests today. We will use this to route the right Merxus setup path.'}
+            </p>
+            <div className="mt-6 grid gap-3">
+              {(content.formHighlights || [
+                'No per-call charges',
+                'Fast onboarding path',
+                'Mobile app and team alerts',
+                'Human takeover when needed',
+              ]).map((item) => (
+                <div key={item} className="rounded-2xl bg-white/70 px-4 py-3 text-sm font-medium text-gray-800 ring-1 ring-black/5">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={handleLeadSubmit} className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-gray-200 md:p-8">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="text-sm font-semibold text-gray-800">
+                First name
+                <input
+                  value={lead.firstName}
+                  onChange={(event) => updateLead('firstName', event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm font-normal outline-none transition focus:border-gray-900"
+                  autoComplete="given-name"
+                  required
+                />
+              </label>
+              <label className="text-sm font-semibold text-gray-800">
+                Last name
+                <input
+                  value={lead.lastName}
+                  onChange={(event) => updateLead('lastName', event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm font-normal outline-none transition focus:border-gray-900"
+                  autoComplete="family-name"
+                  required
+                />
+              </label>
+              <label className="text-sm font-semibold text-gray-800">
+                Email
+                <input
+                  value={lead.email}
+                  onChange={(event) => updateLead('email', event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm font-normal outline-none transition focus:border-gray-900"
+                  type="email"
+                  autoComplete="email"
+                  required
+                />
+              </label>
+              <label className="text-sm font-semibold text-gray-800">
+                Phone
+                <input
+                  value={lead.phone}
+                  onChange={(event) => updateLead('phone', event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm font-normal outline-none transition focus:border-gray-900"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="(555) 555-5555"
+                  required
+                />
+              </label>
+              <label className="text-sm font-semibold text-gray-800 sm:col-span-2">
+                Company name
+                <input
+                  value={lead.companyName}
+                  onChange={(event) => updateLead('companyName', event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm font-normal outline-none transition focus:border-gray-900"
+                  autoComplete="organization"
+                  required
+                />
+              </label>
+              <label className="text-sm font-semibold text-gray-800">
+                Business type
+                <select
+                  value={lead.businessType}
+                  onChange={(event) => updateLead('businessType', event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-normal outline-none transition focus:border-gray-900"
+                >
+                  {BUSINESS_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-sm font-semibold text-gray-800">
+                Employees or locations
+                <input
+                  value={lead.teamSize}
+                  onChange={(event) => updateLead('teamSize', event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm font-normal outline-none transition focus:border-gray-900"
+                  placeholder="e.g. 8 employees or 2 locations"
+                />
+              </label>
+              <label className="text-sm font-semibold text-gray-800 sm:col-span-2">
+                Primary need
+                <textarea
+                  value={lead.primaryNeed}
+                  onChange={(event) => updateLead('primaryNeed', event.target.value)}
+                  className="mt-1 min-h-24 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm font-normal outline-none transition focus:border-gray-900"
+                  placeholder={content.primaryNeedPlaceholder || 'What should Merxus help you handle first?'}
+                />
+              </label>
+              <label className="text-sm font-semibold text-gray-800 sm:col-span-2">
+                Preferred contact
+                <select
+                  value={lead.preferredContactMethod}
+                  onChange={(event) => updateLead('preferredContactMethod', event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-normal outline-none transition focus:border-gray-900"
+                >
+                  {CONTACT_METHOD_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <p className="mt-4 text-xs leading-5 text-gray-500">
+              By submitting, you agree Merxus may contact you about your request by phone, email, or SMS.
+              Message and data rates may apply. You can opt out anytime. See our{' '}
+              <Link to="/privacy-policy" className="font-semibold text-gray-700 underline">Privacy Policy</Link>
+              {' '}and{' '}
+              <Link to="/terms-of-service" className="font-semibold text-gray-700 underline">Terms of Service</Link>.
+            </p>
+
+            {leadStatus.message ? (
+              <div className={`mt-4 rounded-2xl px-4 py-3 text-sm ${
+                leadStatus.state === 'error'
+                  ? 'bg-red-50 text-red-700 ring-1 ring-red-100'
+                  : 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100'
+              }`}>
+                {leadStatus.message}
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={!canSubmit || leadStatus.state === 'submitting'}
+              className={`mt-5 w-full rounded-2xl px-6 py-3 text-sm font-semibold shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${theme.accentButton}`}
+            >
+              {leadStatus.state === 'submitting' ? 'Sending...' : content.formCta || 'Get My Demo'}
+            </button>
+
+            {leadStatus.sessionId ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <Link
+                  to={content.setupHref}
+                  onClick={() => trackMetaCustomEvent('MerxusOnboardingStarted', {
+                    product: 'merxus',
+                    industry: content.tenantType || content.theme,
+                    source: 'meta_ads_lead_form',
+                    ...attribution,
+                  })}
+                  className="rounded-xl bg-gray-950 px-4 py-3 text-center text-xs font-semibold text-white transition hover:bg-gray-800"
+                >
+                  Continue onboarding
+                </Link>
+                <a
+                  href={content.demoHref}
+                  onClick={() => trackMetaEvent('Schedule', {
+                    product: 'merxus',
+                    industry: content.tenantType || content.theme,
+                    source: 'meta_ads_lead_form',
+                    ...attribution,
+                  })}
+                  className="rounded-xl border border-gray-300 px-4 py-3 text-center text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
+                >
+                  Book demo
+                </a>
+                <button
+                  type="button"
+                  onClick={handleChatWithPerson}
+                  className="rounded-xl border border-gray-300 px-4 py-3 text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
+                >
+                  Chat with a person
+                </button>
+              </div>
+            ) : null}
+          </form>
         </div>
       </section>
 
@@ -216,12 +579,24 @@ export default function VerticalLandingPage({ content }) {
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 to={content.setupHref}
+                onClick={() => trackMetaCustomEvent('MerxusOnboardingStarted', {
+                  product: 'merxus',
+                  industry: content.tenantType || content.theme,
+                  source: 'paid_social_landing',
+                  ...attribution,
+                })}
                 className={`inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold shadow-lg transition ${theme.accentButton}`}
               >
                 {content.primaryCta}
               </Link>
               <a
                 href={content.demoHref}
+                onClick={() => trackMetaEvent('Schedule', {
+                  product: 'merxus',
+                  industry: content.tenantType || content.theme,
+                  source: 'paid_social_landing',
+                  ...attribution,
+                })}
                 className={`inline-flex items-center justify-center rounded-2xl border px-6 py-3 text-sm font-semibold transition ${theme.secondaryButton}`}
               >
                 {content.secondaryCta}
@@ -235,12 +610,24 @@ export default function VerticalLandingPage({ content }) {
         <div className="mx-auto flex max-w-6xl gap-3">
           <Link
             to={content.setupHref}
+            onClick={() => trackMetaCustomEvent('MerxusOnboardingStarted', {
+              product: 'merxus',
+              industry: content.tenantType || content.theme,
+              source: 'paid_social_landing_mobile_sticky',
+              ...attribution,
+            })}
             className={`flex-1 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg transition ${theme.accentButton}`}
           >
             {content.primaryCta}
           </Link>
           <a
             href={content.demoHref}
+            onClick={() => trackMetaEvent('Schedule', {
+              product: 'merxus',
+              industry: content.tenantType || content.theme,
+              source: 'paid_social_landing_mobile_sticky',
+              ...attribution,
+            })}
             className={`flex-1 rounded-2xl border px-4 py-3 text-center text-sm font-semibold transition ${theme.secondaryButton}`}
           >
             {content.secondaryCta}
@@ -250,4 +637,3 @@ export default function VerticalLandingPage({ content }) {
     </div>
   );
 }
-

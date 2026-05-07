@@ -1,6 +1,6 @@
-# Merxus - AI Assistant for Restaurants
+# Merxus - AI Communication Command Center
 
-A modern web application for Merxus, an AI-powered 24/7 virtual host that answers calls, takes orders, and books reservations for restaurants.
+A modern web application for Merxus, an AI-assisted communication platform for offices, real estate teams, and restaurants.
 
 ## Features
 
@@ -35,6 +35,20 @@ yarn install
    - Create a `.env` file in the root directory
    - Copy the example from `.env.example`
    - Fill in your Firebase project credentials
+   - Optional paid-social tracking: set `VITE_META_PIXEL_ID` to the Meta Pixel ID for `merxusllc.com`
+
+### Meta Paid-Social Tracking
+
+The app initializes Meta Pixel only when `VITE_META_PIXEL_ID` is present. Landing pages collect and persist `utm_*`, `fbclid`, `adVariant`, referrer, and landing page URL, then include that attribution in paid-social lead submissions.
+
+Paid-social routes:
+- `/office-ai-front-desk`
+- `/real-estate-ai`
+- `/restaurant-ai`
+
+Policy links used by landing pages and forms:
+- `/privacy-policy`
+- `/terms-of-service`
 
 3. Start the development server:
 ```bash

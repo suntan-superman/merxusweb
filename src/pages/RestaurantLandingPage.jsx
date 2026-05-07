@@ -2,16 +2,29 @@ import VerticalLandingPage from '../components/marketing/VerticalLandingPage';
 
 const content = {
   theme: 'restaurant',
+  tenantType: 'restaurant',
+  tenantLabel: 'Restaurant',
+  businessTypeValue: 'restaurant',
   eyebrow: 'Merxus AI For Restaurants',
-  heroTitle: 'Stop losing reservations and takeout calls during the rush.',
+  heroTitle: 'Restaurant AI that answers calls without slowing service.',
   heroSubtitle:
-    'Merxus gives your restaurant an AI phone layer that answers 24/7, helps capture reservations and orders, and keeps your team focused on service.',
+    'Merxus helps restaurants handle common questions, reservation requests, after-hours messages, review alerts, manager notifications, and human handoff, with no per-call charges.',
   primaryCta: 'Start Restaurant Setup',
   secondaryCta: 'Request Restaurant Demo',
   setupHref: '/setup?type=restaurant',
   demoHref: 'mailto:support@merxusllc.com?subject=Merxus%20Restaurant%20Demo%20Request',
+  formTitle: 'See how Merxus would handle your restaurant calls.',
+  formIntro: 'Tell us when call volume hits hardest and what requests your team handles most often.',
+  formCta: 'Get My Restaurant Demo',
+  primaryNeedPlaceholder: 'Example: reservation calls, menu questions, catering requests, after-hours messages, review alerts, or manager notifications',
+  formHighlights: [
+    'No per-call charges for busy nights',
+    'Reservation and menu-question workflows',
+    'Review alerts and manager notifications',
+    'Human handoff when needed',
+  ],
   heroBullets: [
-    'Captures reservations when the host stand is overloaded',
+    'Captures reservation intent when the host stand is overloaded',
     'Helps handle takeout demand during rush periods',
     'Supports bilingual callers and after-hours traffic',
     'Keeps staff focused on guests instead of the ringing line',
@@ -28,10 +41,10 @@ const content = {
   ],
   problemTitle: 'The phone should not pull your team off the floor.',
   problemBody:
-    'During lunch, dinner, and late-day rushes, restaurants lose real revenue when no one can reach the phone. A missed reservation or takeout order is not just a missed call. It is money that went somewhere else.',
+    'During lunch, dinner, and late-day rushes, every phone interruption competes with in-person service. Reservation requests, menu questions, and urgent guest issues need a response path that does not add more chaos to the floor.',
   solutionTitle: 'Merxus keeps the line moving when your staff cannot.',
   solutionBody:
-    'Merxus answers restaurant calls, supports reservation and order conversations, and gives your team better operational visibility. Your staff stays focused on guests and service while the phone still gets handled.',
+    'Merxus helps answer restaurant calls, supports reservation and order conversations, and gives your team better operational visibility. Your staff stays focused on guests and service while the phone still has a path.',
   solutionSteps: [
     { title: 'Catch the call', description: 'The business stays responsive even during rush periods and after hours.' },
     { title: 'Handle the request', description: 'Reservation and order-related conversations stay in motion instead of dropping into voicemail.' },
@@ -57,12 +70,11 @@ const content = {
     { kicker: 'Pain Point', title: 'Rush-hour overload', description: 'Perfect when staff regularly have to choose between serving guests and catching the phone.' },
     { kicker: 'Why It Wins', title: 'Revenue capture', description: 'Merxus helps turn phone demand into booked tables and orders instead of dead air and missed opportunity.' },
   ],
-  finalTitle: 'Capture more revenue without adding more phone chaos.',
+  finalTitle: 'Keep service moving while the phone keeps working.',
   finalBody:
-    'If your restaurant loses calls during rushes or after hours, Merxus gives you a better way to keep the phone working while your team stays focused on service.',
+    'If your restaurant gets call spikes during rushes or after hours, Merxus gives you a better way to keep the phone working while your team stays focused on service.',
 };
 
 export default function RestaurantLandingPage() {
   return <VerticalLandingPage content={content} />;
 }
-

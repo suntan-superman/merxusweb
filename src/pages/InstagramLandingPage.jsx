@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const INDUSTRIES = [
-  { id: "voice", label: "Office", description: "Never miss business calls and lead follow-up." },
+  { id: "voice", label: "Office", description: "Help business calls and lead follow-up get routed faster." },
   { id: "real_estate", label: "Real Estate", description: "Capture listing inquiries and schedule showings." },
   { id: "restaurant", label: "Restaurant", description: "Handle orders, reservations, and peak-hour calls." },
 ];

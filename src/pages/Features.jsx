@@ -2,7 +2,7 @@ const Features = () => {
   const features = [
     {
       title: 'Instant Call Answering',
-      description: 'Never miss a call again. Our AI answers every call instantly, 24/7.',
+      description: 'Give inbound calls a faster response path with AI-assisted answering and routing.',
       icon: '📞',
     },
     {
