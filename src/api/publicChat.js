@@ -146,6 +146,13 @@ export function requestPublicChatHuman(sessionId, body = {}) {
   });
 }
 
+export function requestPublicDemo(body = {}) {
+  return publicChatRequest('/chat/public/demo-request', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
 export function sendPublicChatTranscript(sessionId, body = {}) {
   return publicChatRequest(`/chat/public/session/${encodeURIComponent(sessionId)}/transcript`, {
     method: 'POST',

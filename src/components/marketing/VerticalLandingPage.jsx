@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   createPublicChatSession,
   publicChatErrorMessage,
+  requestPublicDemo,
   requestPublicChatHuman,
 } from '../../api/publicChat';
 import {
@@ -197,8 +198,19 @@ export default function VerticalLandingPage({ content }) {
         visitorId: attribution.fbclid || `landing_${Date.now()}`,
         leadName,
         leadEmail: lead.email.trim(),
+        message: 'I would like to chat with a person about booking a demo.',
+        reason: 'demo_chat_requested',
         appBaseUrl: window.location.origin,
       });
+      window.dispatchEvent(new CustomEvent('merxus:open-public-chat', {
+        detail: {
+          action: 'open',
+          sessionId: leadStatus.sessionId,
+          visitorId: attribution.fbclid || `landing_${Date.now()}`,
+          leadName,
+          leadEmail: lead.email.trim(),
+        },
+      }));
       trackMetaCustomEvent('MerxusChatOpened', {
         product: 'merxus',
         industry: content.tenantType || content.theme,
@@ -208,7 +220,49 @@ export default function VerticalLandingPage({ content }) {
       setLeadStatus((current) => ({
         ...current,
         state: 'submitted',
-        message: 'The team has been notified. You can also use the chat button on this page.',
+        message: 'The team has been notified and the chat window is open.',
+      }));
+    } catch (error) {
+      setLeadStatus((current) => ({
+        ...current,
+        state: 'error',
+        message: publicChatErrorMessage(error),
+      }));
+    }
+  }
+
+  async function handleBookDemo() {
+    if (!leadStatus.sessionId || leadStatus.state === 'submitting') return;
+    setLeadStatus((current) => ({ ...current, state: 'submitting', message: 'Sending your demo request...' }));
+    try {
+      await requestPublicDemo({
+        product: 'merxus',
+        tenantType: content.tenantType || content.theme || 'office',
+        vertical: content.tenantLabel || content.eyebrow || content.theme,
+        source: 'meta_ads',
+        sourceUrl: window.location.href,
+        sessionId: leadStatus.sessionId,
+        visitorId: attribution.fbclid || `landing_${Date.now()}`,
+        leadName,
+        leadEmail: lead.email.trim(),
+        leadPhone: lead.phone.trim(),
+        leadCompany: lead.companyName.trim(),
+        businessType: lead.businessType,
+        teamSize: lead.teamSize,
+        primaryNeed: lead.primaryNeed,
+        preferredContactMethod: lead.preferredContactMethod,
+        campaign: attribution,
+      });
+      trackMetaEvent('Schedule', {
+        product: 'merxus',
+        industry: content.tenantType || content.theme,
+        source: 'meta_ads_lead_form',
+        ...attribution,
+      });
+      setLeadStatus((current) => ({
+        ...current,
+        state: 'submitted',
+        message: 'Demo request sent. We will follow up using your preferred contact method.',
       }));
     } catch (error) {
       setLeadStatus((current) => ({
@@ -249,13 +303,13 @@ export default function VerticalLandingPage({ content }) {
                   >
                     {content.primaryCta}
                   </Link>
-                  <a
-                    href={content.demoHref}
-                    onClick={() => trackMetaEvent('Schedule', {
-                      product: 'merxus',
-                      industry: content.tenantType || content.theme,
-                      source: 'paid_social_landing',
-                      ...attribution,
+                <a
+                  href="#lead-form"
+                  onClick={() => trackMetaEvent('Schedule', {
+                    product: 'merxus',
+                    industry: content.tenantType || content.theme,
+                    source: 'paid_social_landing',
+                    ...attribution,
                     })}
                     className="inline-flex items-center justify-center rounded-2xl border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
                   >
@@ -460,21 +514,18 @@ export default function VerticalLandingPage({ content }) {
                 >
                   Continue onboarding
                 </Link>
-                <a
-                  href={content.demoHref}
-                  onClick={() => trackMetaEvent('Schedule', {
-                    product: 'merxus',
-                    industry: content.tenantType || content.theme,
-                    source: 'meta_ads_lead_form',
-                    ...attribution,
-                  })}
+                <button
+                  type="button"
+                  onClick={handleBookDemo}
+                  disabled={leadStatus.state === 'submitting'}
                   className="rounded-xl border border-gray-300 px-4 py-3 text-center text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
                 >
                   Book demo
-                </a>
+                </button>
                 <button
                   type="button"
                   onClick={handleChatWithPerson}
+                  disabled={leadStatus.state === 'submitting'}
                   className="rounded-xl border border-gray-300 px-4 py-3 text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
                 >
                   Chat with a person
@@ -590,7 +641,7 @@ export default function VerticalLandingPage({ content }) {
                 {content.primaryCta}
               </Link>
               <a
-                href={content.demoHref}
+                href="#lead-form"
                 onClick={() => trackMetaEvent('Schedule', {
                   product: 'merxus',
                   industry: content.tenantType || content.theme,
@@ -621,7 +672,7 @@ export default function VerticalLandingPage({ content }) {
             {content.primaryCta}
           </Link>
           <a
-            href={content.demoHref}
+            href="#lead-form"
             onClick={() => trackMetaEvent('Schedule', {
               product: 'merxus',
               industry: content.tenantType || content.theme,

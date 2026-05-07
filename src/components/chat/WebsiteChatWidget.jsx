@@ -208,6 +208,64 @@ export default function WebsiteChatWidget({
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    async function handleExternalOpen(event) {
+      const detail = event.detail || {};
+      const nextLeadName = String(detail.leadName || '').trim();
+      const nextLeadEmail = String(detail.leadEmail || '').trim();
+      const nextSessionId = String(detail.sessionId || '').trim();
+
+      unlockChatSound();
+      setIsOpen(true);
+      setConversationEnded(false);
+      setConfirmEndChat(false);
+      setError('');
+      if (nextLeadName) setLeadName(nextLeadName);
+      if (nextLeadEmail) setLeadEmail(nextLeadEmail);
+      if (nextSessionId) {
+        setSessionId(nextSessionId);
+        setStoredValue('sessionId', nextSessionId);
+      }
+
+      if (detail.action !== 'request-human' || !nextSessionId || isSending || humanRequested) return;
+
+      setIsSending(true);
+      try {
+        const requested = await requestPublicChatHuman(nextSessionId, {
+          visitorId: detail.visitorId || visitorId,
+          leadName: nextLeadName || effectiveLeadName,
+          leadEmail: nextLeadEmail || effectiveLeadEmail,
+          message: detail.message || 'I would like to chat with a person about booking a demo.',
+          reason: detail.reason || 'demo_chat_requested',
+          authenticated: isLoggedIn,
+          appBaseUrl: window.location.origin,
+        });
+        setHumanRequested(true);
+        setTeamNotice(true);
+        setMessages((current) => normalizeMessages([
+          ...current.filter((item) => item.id !== 'welcome'),
+          ...(requested.messages || [requested.message]).filter(Boolean),
+        ]));
+      } catch (requestError) {
+        setError(publicChatErrorMessage(requestError));
+      } finally {
+        setIsSending(false);
+      }
+    }
+
+    window.addEventListener('merxus:open-public-chat', handleExternalOpen);
+    return () => window.removeEventListener('merxus:open-public-chat', handleExternalOpen);
+  }, [
+    effectiveLeadEmail,
+    effectiveLeadName,
+    humanRequested,
+    isLoggedIn,
+    isSending,
+    visitorId,
+  ]);
+
+  useEffect(() => {
     if (!isLoggedIn) return;
     setLeadName(loggedInName);
     setLeadEmail(loggedInEmail);
