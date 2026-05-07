@@ -172,6 +172,7 @@ export default function WebsiteChatWidget({
   const [conversationEnded, setConversationEnded] = useState(false);
   const [lastActivityAt, setLastActivityAt] = useState(() => Number(getStoredValue('lastActivityAt')) || Date.now());
   const visitorId = useMemo(getVisitorId, []);
+  const [activeVisitorId, setActiveVisitorId] = useState(visitorId);
   const threadRef = useRef(null);
   const messagesRef = useRef(messages);
   const lastActivityRef = useRef(lastActivityAt);
@@ -199,6 +200,7 @@ export default function WebsiteChatWidget({
     setError('');
     setSessionId('');
     setStoredValue('sessionId', '');
+    setActiveVisitorId(visitorId);
   }
 
   useEffect(() => {
@@ -223,6 +225,7 @@ export default function WebsiteChatWidget({
       setError('');
       if (nextLeadName) setLeadName(nextLeadName);
       if (nextLeadEmail) setLeadEmail(nextLeadEmail);
+      if (detail.visitorId) setActiveVisitorId(String(detail.visitorId).trim());
       if (nextSessionId) {
         setSessionId(nextSessionId);
         setStoredValue('sessionId', nextSessionId);
@@ -232,8 +235,9 @@ export default function WebsiteChatWidget({
 
       setIsSending(true);
       try {
+        const requestVisitorId = String(detail.visitorId || activeVisitorId || visitorId).trim();
         const requested = await requestPublicChatHuman(nextSessionId, {
-          visitorId: detail.visitorId || visitorId,
+          visitorId: requestVisitorId,
           leadName: nextLeadName || effectiveLeadName,
           leadEmail: nextLeadEmail || effectiveLeadEmail,
           message: detail.message || 'I would like to chat with a person about booking a demo.',
@@ -257,6 +261,7 @@ export default function WebsiteChatWidget({
     window.addEventListener('merxus:open-public-chat', handleExternalOpen);
     return () => window.removeEventListener('merxus:open-public-chat', handleExternalOpen);
   }, [
+    activeVisitorId,
     effectiveLeadEmail,
     effectiveLeadName,
     humanRequested,
@@ -343,6 +348,7 @@ export default function WebsiteChatWidget({
     setConfirmEndChat(false);
     setEmailTranscriptOnEnd(true);
     setConversationEnded(false);
+    setActiveVisitorId(visitorId);
     setError('');
     recordActivity();
   }
@@ -360,7 +366,7 @@ export default function WebsiteChatWidget({
           return;
         }
         await sendPublicChatTranscript(activeSessionId, {
-          visitorId,
+          visitorId: activeVisitorId,
           email: effectiveLeadEmail,
           leadName: effectiveLeadName,
           leadEmail: effectiveLeadEmail,
@@ -372,7 +378,7 @@ export default function WebsiteChatWidget({
         });
       }
       await timeoutPublicChatSession(activeSessionId, {
-        visitorId,
+        visitorId: activeVisitorId,
         reason,
         emailTranscript,
         transcriptEmail: emailTranscript ? effectiveLeadEmail : undefined,
@@ -390,7 +396,7 @@ export default function WebsiteChatWidget({
     resetConversation();
     if (!activeSessionId) return;
     try {
-      await timeoutPublicChatSession(activeSessionId, { visitorId, reason });
+      await timeoutPublicChatSession(activeSessionId, { visitorId: activeVisitorId, reason });
     } catch (_) {
       // The local timeout still protects the visitor experience if the network is unavailable.
     }
@@ -477,7 +483,7 @@ export default function WebsiteChatWidget({
         tenantType,
         source: 'website_chat',
         sourceUrl: window.location.href,
-        visitorId,
+        visitorId: activeVisitorId,
         leadName: effectiveLeadName,
         leadEmail: effectiveLeadEmail,
         authenticated: isLoggedIn,
@@ -529,7 +535,7 @@ export default function WebsiteChatWidget({
           tenantType,
           source: 'website_chat',
           sourceUrl: window.location.href,
-          visitorId,
+          visitorId: activeVisitorId,
           initialIntent: 'support',
           initialMessage: 'I would like to talk to a person.',
           leadName: effectiveLeadName,
@@ -544,7 +550,7 @@ export default function WebsiteChatWidget({
       }
 
       const requested = await requestPublicChatHuman(activeSessionId, {
-        visitorId,
+        visitorId: activeVisitorId,
         leadName: effectiveLeadName,
         leadEmail: effectiveLeadEmail,
         authenticated: isLoggedIn,
