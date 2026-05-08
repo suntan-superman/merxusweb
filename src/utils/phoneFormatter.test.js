@@ -11,6 +11,7 @@ import {
 
 test('web phone formatting helpers normalize input and display values', () => {
   assert.equal(formatPhoneInput('6612345678'), '(661) 234-5678');
+  assert.equal(formatPhoneInput('16612345678'), '(661) 234-5678');
   assert.equal(formatPhoneInput('(661) 234-5678999'), '(661) 234-5678');
   assert.equal(formatPhoneDisplay('6612345678'), '+1 (661) 234-5678');
   assert.equal(formatPhoneDisplay('+16612345678'), '+1 (661) 234-5678');

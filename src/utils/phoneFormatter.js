@@ -15,7 +15,8 @@ export function formatPhoneInput(value) {
   if (!value) return '';
   
   // Remove all non-digits
-  const numbers = value.replace(/\D/g, '');
+  const digits = value.replace(/\D/g, '');
+  const numbers = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits;
   
   // Limit to 10 digits
   const limited = numbers.slice(0, 10);

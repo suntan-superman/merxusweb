@@ -12,6 +12,7 @@ import {
   trackMetaEvent,
   trackMetaLeadOnce,
 } from '../../utils/metaPixel';
+import { formatPhoneInput, getRawPhone } from '../../utils/phoneFormatter';
 
 const BUSINESS_TYPE_OPTIONS = [
   { value: 'office', label: 'Office / Professional Services' },
@@ -29,7 +30,7 @@ const CONTACT_METHOD_OPTIONS = [
 ];
 
 function normalizePhone(value) {
-  return String(value || '').replace(/[^\d+]/g, '');
+  return getRawPhone(value);
 }
 
 function isValidEmail(value) {
@@ -115,7 +116,8 @@ export default function VerticalLandingPage({ content }) {
     lead.companyName.trim().length >= 2;
 
   function updateLead(field, value) {
-    setLead((current) => ({ ...current, [field]: value }));
+    const nextValue = field === 'phone' ? formatPhoneInput(value) : value;
+    setLead((current) => ({ ...current, [field]: nextValue }));
     if (leadStatus.state === 'error') {
       setLeadStatus({ state: 'idle', message: '', sessionId: '' });
     }
