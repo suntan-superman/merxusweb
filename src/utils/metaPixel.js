@@ -1,5 +1,6 @@
 const ATTRIBUTION_KEY = 'merxus.metaAttribution';
 const LEAD_EVENT_KEY_PREFIX = 'merxus.metaLeadEvent.';
+const META_PIXEL_STATUS_KEY = '__MERXUS_META_PIXEL_STATUS__';
 
 const TRACKING_PARAMS = [
   'utm_source',
@@ -16,7 +17,51 @@ function canUseWindow() {
 }
 
 export function getConfiguredMetaPixelId() {
-  return String(import.meta.env?.VITE_META_PIXEL_ID || '').trim();
+  return String(
+    import.meta.env?.VITE_META_PIXEL_ID ||
+    import.meta.env?.VITE_META_PIXELS_ID ||
+    import.meta.env?.VITE_META_DATASET_ID ||
+    ''
+  ).trim();
+}
+
+function getMetaPixelStatus() {
+  if (!canUseWindow()) return null;
+  if (!window[META_PIXEL_STATUS_KEY]) {
+    window[META_PIXEL_STATUS_KEY] = {
+      configuredPixelId: getConfiguredMetaPixelId(),
+      initialized: false,
+      scriptInjected: false,
+      lastError: '',
+      events: [],
+    };
+  }
+  return window[META_PIXEL_STATUS_KEY];
+}
+
+function recordMetaPixelStatus(update = {}) {
+  const status = getMetaPixelStatus();
+  if (!status) return null;
+  Object.assign(status, update, {
+    configuredPixelId: getConfiguredMetaPixelId(),
+    updatedAt: new Date().toISOString(),
+  });
+  return status;
+}
+
+function recordMetaPixelEvent(kind, name, parameters = {}, options = {}, fired = false, reason = '') {
+  const status = getMetaPixelStatus();
+  if (!status) return;
+  status.events.push({
+    kind,
+    name,
+    parameters,
+    options,
+    fired,
+    reason,
+    timestamp: new Date().toISOString(),
+  });
+  status.events = status.events.slice(-25);
 }
 
 export function collectCampaignAttribution({ href, search, referrer } = {}) {
@@ -58,7 +103,32 @@ export function getCampaignAttribution() {
 }
 
 export function initMetaPixel(pixelId = getConfiguredMetaPixelId()) {
-  if (!canUseWindow() || !pixelId || window.fbq) return Boolean(window.fbq);
+  if (!canUseWindow()) return false;
+
+  const normalizedPixelId = String(pixelId || '').trim();
+  recordMetaPixelStatus({
+    requestedPixelId: normalizedPixelId,
+    fbqPresentBeforeInit: Boolean(window.fbq),
+  });
+
+  if (!normalizedPixelId) {
+    recordMetaPixelStatus({
+      initialized: false,
+      lastError: 'Missing VITE_META_PIXEL_ID. Vite env vars are build-time values, so redeploy after setting it.',
+    });
+    return false;
+  }
+
+  if (window.fbq) {
+    window.fbq('init', normalizedPixelId);
+    recordMetaPixelStatus({
+      initialized: true,
+      pixelId: normalizedPixelId,
+      fbqPresentAfterInit: true,
+      lastError: '',
+    });
+    return true;
+  }
 
   /* eslint-disable */
   !function(f,b,e,v,n,t,s)
@@ -71,21 +141,38 @@ export function initMetaPixel(pixelId = getConfiguredMetaPixelId()) {
   'https://connect.facebook.net/en_US/fbevents.js');
   /* eslint-enable */
 
-  window.fbq('init', pixelId);
+  window.fbq('init', normalizedPixelId);
+  recordMetaPixelStatus({
+    initialized: true,
+    scriptInjected: true,
+    pixelId: normalizedPixelId,
+    fbqPresentAfterInit: Boolean(window.fbq),
+    lastError: '',
+  });
   return true;
 }
 
 export function trackMetaEvent(name, parameters = {}, options = {}) {
-  if (!canUseWindow() || !window.fbq || !name) return false;
+  if (!canUseWindow() || !name) return false;
+  if (!window.fbq && !initMetaPixel()) {
+    recordMetaPixelEvent('track', name, parameters, options, false, 'fbq_unavailable');
+    return false;
+  }
   const eventOptions = options.eventID ? { eventID: options.eventID } : undefined;
   window.fbq('track', name, parameters, eventOptions);
+  recordMetaPixelEvent('track', name, parameters, eventOptions, true);
   return true;
 }
 
 export function trackMetaCustomEvent(name, parameters = {}, options = {}) {
-  if (!canUseWindow() || !window.fbq || !name) return false;
+  if (!canUseWindow() || !name) return false;
+  if (!window.fbq && !initMetaPixel()) {
+    recordMetaPixelEvent('trackCustom', name, parameters, options, false, 'fbq_unavailable');
+    return false;
+  }
   const eventOptions = options.eventID ? { eventID: options.eventID } : undefined;
   window.fbq('trackCustom', name, parameters, eventOptions);
+  recordMetaPixelEvent('trackCustom', name, parameters, eventOptions, true);
   return true;
 }
 
@@ -97,4 +184,3 @@ export function trackMetaLeadOnce(key, parameters = {}) {
   window.sessionStorage.setItem(storageKey, 'true');
   return trackMetaEvent('Lead', parameters, { eventID: `lead_${safeKey}` });
 }
-
