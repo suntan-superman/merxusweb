@@ -1,5 +1,32 @@
 import { Component } from 'react';
 
+const ERROR_BOUNDARY_RETRY_KEY = 'merxus.errorBoundaryModuleRetryTriggered';
+const RETRY_WINDOW_MS = 30 * 1000;
+
+function isRecoverableModuleError(error) {
+  const message = String(error?.message || error || '').toLowerCase();
+  return (
+    message.includes('failed to fetch dynamically imported module') ||
+    message.includes('importing a module script failed') ||
+    message.includes('failed to load module script') ||
+    message.includes('loading chunk') ||
+    message.includes('mime type') ||
+    message.includes("reading 'default'") ||
+    message.includes('reading "default"')
+  );
+}
+
+function retryWithCacheBust() {
+  if (typeof window === 'undefined') return false;
+  const lastRetry = Number(window.sessionStorage.getItem(ERROR_BOUNDARY_RETRY_KEY) || 0);
+  if (Number.isFinite(lastRetry) && Date.now() - lastRetry < RETRY_WINDOW_MS) return false;
+  window.sessionStorage.setItem(ERROR_BOUNDARY_RETRY_KEY, String(Date.now()));
+  const url = new URL(window.location.href);
+  url.searchParams.set('__module_boundary_retry', String(Date.now()));
+  window.location.replace(url.toString());
+  return true;
+}
+
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -12,6 +39,9 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    if (isRecoverableModuleError(error) && retryWithCacheBust()) {
+      return;
+    }
   }
 
   render() {

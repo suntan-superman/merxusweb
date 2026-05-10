@@ -1,6 +1,7 @@
 import { lazy as reactLazy } from 'react';
 
 const RETRY_FLAG_KEY = 'merxus.lazyImportRetryTriggered';
+const RETRY_WINDOW_MS = 30 * 1000;
 
 function isRecoverableLazyImportError(error) {
   const message = String(error?.message || '').toLowerCase();
@@ -20,6 +21,13 @@ function forceHardNavigationReload() {
   window.location.replace(url.toString());
 }
 
+function recentlyRetried() {
+  if (typeof window === 'undefined') return true;
+  const value = window.sessionStorage.getItem(RETRY_FLAG_KEY);
+  const timestamp = Number(value || 0);
+  return Number.isFinite(timestamp) && Date.now() - timestamp < RETRY_WINDOW_MS;
+}
+
 export default function lazyWithRetry(importer) {
   return reactLazy(async () => {
     try {
@@ -30,9 +38,8 @@ export default function lazyWithRetry(importer) {
       return module;
     } catch (error) {
       if (typeof window !== 'undefined' && isRecoverableLazyImportError(error)) {
-        const alreadyRetried = window.sessionStorage.getItem(RETRY_FLAG_KEY) === '1';
-        if (!alreadyRetried) {
-          window.sessionStorage.setItem(RETRY_FLAG_KEY, '1');
+        if (!recentlyRetried()) {
+          window.sessionStorage.setItem(RETRY_FLAG_KEY, String(Date.now()));
           forceHardNavigationReload();
           // Keep Suspense pending while the page reloads.
           return new Promise(() => {});

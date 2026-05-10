@@ -8,6 +8,7 @@ import { ThemeProvider, useTheme } from './context/ThemeContext'
 
 const VITE_PRELOAD_RETRY_KEY = 'merxus.vitePreloadRetryTriggered'
 const MODULE_IMPORT_RETRY_KEY = 'merxus.moduleImportRetryTriggered'
+const RETRY_WINDOW_MS = 30 * 1000
 
 function isRecoverableModuleLoadFailure(reason) {
   const message = String(reason?.message || reason || '').toLowerCase()
@@ -22,9 +23,9 @@ function isRecoverableModuleLoadFailure(reason) {
 
 function retryWithHardReload({ sessionKey, queryParam }) {
   if (typeof window === 'undefined') return
-  const alreadyRetried = window.sessionStorage.getItem(sessionKey) === '1'
-  if (alreadyRetried) return
-  window.sessionStorage.setItem(sessionKey, '1')
+  const lastRetry = Number(window.sessionStorage.getItem(sessionKey) || 0)
+  if (Number.isFinite(lastRetry) && Date.now() - lastRetry < RETRY_WINDOW_MS) return
+  window.sessionStorage.setItem(sessionKey, String(Date.now()))
   const url = new URL(window.location.href)
   url.searchParams.set(queryParam, String(Date.now()))
   window.location.replace(url.toString())

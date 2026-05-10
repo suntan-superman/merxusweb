@@ -198,8 +198,10 @@ function MetaRouteTracker() {
 function App() {
   useEffect(() => {
     const url = new URL(window.location.href);
-    if (!url.searchParams.has('__lazy_retry')) return;
+    const hasRetryParam = url.searchParams.has('__lazy_retry') || url.searchParams.has('__module_boundary_retry');
+    if (!hasRetryParam) return;
     url.searchParams.delete('__lazy_retry');
+    url.searchParams.delete('__module_boundary_retry');
     window.history.replaceState({}, '', url.toString());
   }, []);
 
