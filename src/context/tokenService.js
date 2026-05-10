@@ -43,6 +43,11 @@ export function extractUserClaims(decodedClaims) {
     type: decodedClaims.type,
     tenantType: decodedClaims.type, // Alias for clarity
     tenantId: decodedClaims.restaurantId || decodedClaims.officeId || decodedClaims.agentId,
+    supportRole: decodedClaims.supportRole || null,
+    allowedProducts: Array.isArray(decodedClaims.allowedProducts) ? decodedClaims.allowedProducts : [],
+    products: Array.isArray(decodedClaims.products) ? decodedClaims.products : [],
+    supportUser: decodedClaims.supportUser === true,
+    name: decodedClaims.name || null,
     invitedUser: decodedClaims.invitedUser === true,
     phoneVerified: decodedClaims.phoneVerified === true,
     emailVerified: decodedClaims.emailVerified === true,

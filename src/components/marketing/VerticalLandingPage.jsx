@@ -211,6 +211,8 @@ export default function VerticalLandingPage({ content }) {
           visitorId: attribution.fbclid || `landing_${Date.now()}`,
           leadName,
           leadEmail: lead.email.trim(),
+          humanRequested: true,
+          teamNotice: true,
         },
       }));
       trackMetaCustomEvent('MerxusChatOpened', {

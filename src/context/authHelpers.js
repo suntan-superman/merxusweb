@@ -2,6 +2,7 @@
  * Auth helpers - role checks and utility functions
  */
 import { TENANT_TYPES, USER_ROLES } from './authConstants';
+import { isSupportConsoleAccount } from '../utils/accountRouting';
 
 /**
  * Build the auth context value object
@@ -19,6 +20,7 @@ export function buildAuthContextValue({
 }) {
   const providerIds = user?.providerData?.map((p) => p.providerId) || [];
   const isAppleUser = providerIds.includes('apple.com');
+  const isSupportConsoleOnly = isSupportConsoleAccount(userClaims);
 
   return {
     // Core state
@@ -28,6 +30,7 @@ export function buildAuthContextValue({
     userClaims,
     needsOnboarding,
     isAppleUser,
+    isSupportConsoleOnly,
 
     // Tenant IDs (convenience accessors)
     restaurantId: userClaims?.restaurantId,

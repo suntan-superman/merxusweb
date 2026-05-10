@@ -15,6 +15,7 @@ import OnboardingWizardDemo from './pages/OnboardingWizardDemo';
 import OnboardingWizardPage from './pages/OnboardingWizardPage';
 import OnboardingOTPPage from './pages/OnboardingOTPPage';
 import LoginPage from './pages/LoginPage';
+import UnsupportedAccountPage from './pages/UnsupportedAccountPage';
 import PhoneVerificationPage from './pages/PhoneVerificationPage';
 import PhoneVerificationLinkPage from './pages/PhoneVerificationLinkPage';
 import InviteAcceptPage from './pages/InviteAcceptPage';
@@ -207,6 +208,7 @@ function App() {
         <Routes>
           {/* Public routes - no NavBar */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/unsupported-account" element={<UnsupportedAccountPage />} />
           <Route path="/invite/accept" element={<InviteAcceptPage />} />
           <Route path="/verify-phone-link" element={<PhoneVerificationLinkPage />} />
           <Route path="/checkout/start" element={<CheckoutHandoffPage />} />

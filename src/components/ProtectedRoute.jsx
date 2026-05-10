@@ -2,6 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import useSubscriptionPlan, { meetsPlanRequirement } from '../hooks/useSubscriptionPlan';
+import { isSupportConsoleAccount } from '../utils/accountRouting';
 
 function getFallbackPath(pathname = '/') {
   if (pathname.startsWith('/voice')) return '/voice';
@@ -146,6 +147,10 @@ export default function ProtectedRoute({
     return <Navigate to="/verify-phone" replace />;
   }
 
+  if (requireAuth && user && isSupportConsoleAccount(userClaims)) {
+    return <Navigate to="/unsupported-account?reason=support-console" replace />;
+  }
+
   // If user is logged in but claims are missing after loading completes,
   // token might be invalid - redirect to login
   if (requireAuth && user && (!userClaims || (!userClaims.role && !userClaims.type))) {
@@ -162,26 +167,26 @@ export default function ProtectedRoute({
 
   if (requireRestaurant && user && (!userClaims || !isRestaurantUser)) {
     // User is logged in but not a restaurant user
-    console.warn('User logged in but not a restaurant user. Redirecting to home.');
-    return <Navigate to="/" replace />;
+    console.warn('User logged in but not a restaurant user. Redirecting to unsupported account page.');
+    return <Navigate to="/unsupported-account?reason=wrong-tenant" replace />;
   }
 
   if (requireVoice && user && (!userClaims || !isVoiceUser)) {
     // User is logged in but not a voice user
-    console.warn('User logged in but not a voice user. Redirecting to home.');
-    return <Navigate to="/" replace />;
+    console.warn('User logged in but not a voice user. Redirecting to unsupported account page.');
+    return <Navigate to="/unsupported-account?reason=wrong-tenant" replace />;
   }
 
   if (requireRealEstate && user && (!userClaims || !isRealEstateUser)) {
     // User is logged in but not a real estate user
-    console.warn('User logged in but not a real estate user. Redirecting to home.');
-    return <Navigate to="/" replace />;
+    console.warn('User logged in but not a real estate user. Redirecting to unsupported account page.');
+    return <Navigate to="/unsupported-account?reason=wrong-tenant" replace />;
   }
 
   if (requireMerxus && user && (!userClaims || !isMerxusAdmin)) {
     // User is logged in but not a Merxus admin
-    console.warn('User logged in but not a Merxus admin. Redirecting to home.');
-    return <Navigate to="/" replace />;
+    console.warn('User logged in but not a Merxus admin. Redirecting to unsupported account page.');
+    return <Navigate to="/unsupported-account?reason=wrong-tenant" replace />;
   }
 
   if (requireOwner && !isOwner) {

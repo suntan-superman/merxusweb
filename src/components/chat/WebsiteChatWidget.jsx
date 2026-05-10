@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, MessageCircle, Send, UserRound, X } from 'lucide-react';
 import {
   createPublicChatSession,
@@ -191,6 +191,79 @@ export default function WebsiteChatWidget({
   const leadEmailError = shouldShowLead && leadTouched.email && !leadEmailReady ? 'Enter a valid email address.' : '';
   const talkToPersonDisabled = isSending || humanRequested || (!isLoggedIn && !leadCaptured);
 
+  const requestHumanTransfer = useCallback(async ({
+    sessionIdOverride = '',
+    visitorIdOverride = '',
+    leadNameOverride = '',
+    leadEmailOverride = '',
+    message = 'I would like to talk to a person.',
+    reason = 'user_requested_human',
+    initialIntent = 'support',
+  } = {}) => {
+    const requestLeadName = String(leadNameOverride || effectiveLeadName || '').trim();
+    const requestLeadEmail = String(leadEmailOverride || effectiveLeadEmail || '').trim();
+    const requestVisitorId = String(visitorIdOverride || activeVisitorId || visitorId).trim();
+    if (!isLoggedIn && (!isValidLeadName(requestLeadName) || !isValidLeadEmail(requestLeadEmail))) {
+      setLeadTouched({ name: true, email: true });
+      const error = new Error('Please enter your name and a valid email before we notify the team.');
+      error.code = 'LEAD_REQUIRED';
+      throw error;
+    }
+
+    let activeSessionId = sessionIdOverride || sessionId;
+    if (!activeSessionId) {
+      const created = await createPublicChatSession({
+        product,
+        tenantId,
+        tenantType,
+        source: 'website_chat',
+        sourceUrl: window.location.href,
+        visitorId: requestVisitorId,
+        initialIntent,
+        initialMessage: message,
+        leadName: requestLeadName,
+        leadEmail: requestLeadEmail,
+        authenticated: isLoggedIn,
+        appBaseUrl: window.location.origin,
+      });
+      activeSessionId = created.session?.id || '';
+      if (activeSessionId) {
+        setSessionId(activeSessionId);
+        setStoredValue('sessionId', activeSessionId);
+      }
+      if (created.session?.leadName) setLeadName(created.session.leadName);
+      if (created.session?.leadEmail) setLeadEmail(created.session.leadEmail);
+      setMessages(normalizeMessages(created.messages || []));
+    }
+
+    const requested = await requestPublicChatHuman(activeSessionId, {
+      visitorId: requestVisitorId,
+      leadName: requestLeadName,
+      leadEmail: requestLeadEmail,
+      message,
+      reason,
+      authenticated: isLoggedIn,
+      appBaseUrl: window.location.origin,
+    });
+    setHumanRequested(true);
+    setTeamNotice(true);
+    setMessages((current) => normalizeMessages([
+      ...current.filter((item) => item.id !== 'welcome'),
+      ...(requested.messages || [requested.message]).filter(Boolean),
+    ]));
+    return { ...requested, sessionId: activeSessionId };
+  }, [
+    activeVisitorId,
+    effectiveLeadEmail,
+    effectiveLeadName,
+    isLoggedIn,
+    product,
+    sessionId,
+    tenantId,
+    tenantType,
+    visitorId,
+  ]);
+
   function markConversationEnded(nextMessages = messagesRef.current) {
     setMessages(nextMessages?.length ? nextMessages : messagesRef.current);
     setConversationEnded(true);
@@ -230,29 +303,30 @@ export default function WebsiteChatWidget({
         setSessionId(nextSessionId);
         setStoredValue('sessionId', nextSessionId);
       }
+      if (detail.humanRequested) {
+        setHumanRequested(true);
+        setTeamNotice(true);
+      }
 
-      if (detail.action !== 'request-human' || !nextSessionId || isSending || humanRequested) return;
+      if (detail.action !== 'request-human' || isSending || humanRequested) return;
 
       setIsSending(true);
       try {
-        const requestVisitorId = String(detail.visitorId || activeVisitorId || visitorId).trim();
-        const requested = await requestPublicChatHuman(nextSessionId, {
-          visitorId: requestVisitorId,
+        const requested = await requestHumanTransfer({
+          sessionIdOverride: nextSessionId,
+          visitorIdOverride: detail.visitorId,
           leadName: nextLeadName || effectiveLeadName,
           leadEmail: nextLeadEmail || effectiveLeadEmail,
           message: detail.message || 'I would like to chat with a person about booking a demo.',
           reason: detail.reason || 'demo_chat_requested',
-          authenticated: isLoggedIn,
-          appBaseUrl: window.location.origin,
+          initialIntent: detail.initialIntent || 'sales',
         });
-        setHumanRequested(true);
-        setTeamNotice(true);
-        setMessages((current) => normalizeMessages([
-          ...current.filter((item) => item.id !== 'welcome'),
-          ...(requested.messages || [requested.message]).filter(Boolean),
-        ]));
+        if (typeof detail.onResult === 'function') detail.onResult({ ok: true, ...requested });
       } catch (requestError) {
         setError(publicChatErrorMessage(requestError));
+        if (typeof detail.onResult === 'function') {
+          detail.onResult({ ok: false, error: requestError, message: publicChatErrorMessage(requestError) });
+        }
       } finally {
         setIsSending(false);
       }
@@ -262,12 +336,9 @@ export default function WebsiteChatWidget({
     return () => window.removeEventListener('merxus:open-public-chat', handleExternalOpen);
   }, [
     activeVisitorId,
-    effectiveLeadEmail,
-    effectiveLeadName,
     humanRequested,
-    isLoggedIn,
     isSending,
-    visitorId,
+    requestHumanTransfer,
   ]);
 
   useEffect(() => {
@@ -527,38 +598,7 @@ export default function WebsiteChatWidget({
     setError('');
     setIsSending(true);
     try {
-      let activeSessionId = sessionId;
-      if (!activeSessionId) {
-        const result = await createPublicChatSession({
-          product,
-          tenantId,
-          tenantType,
-          source: 'website_chat',
-          sourceUrl: window.location.href,
-          visitorId: activeVisitorId,
-          initialIntent: 'support',
-          initialMessage: 'I would like to talk to a person.',
-          leadName: effectiveLeadName,
-          leadEmail: effectiveLeadEmail,
-          authenticated: isLoggedIn,
-          appBaseUrl: window.location.origin,
-        });
-        activeSessionId = result.session?.id;
-        setSessionId(activeSessionId);
-        setStoredValue('sessionId', activeSessionId);
-        setMessages(normalizeMessages(result.messages || []));
-      }
-
-      const requested = await requestPublicChatHuman(activeSessionId, {
-        visitorId: activeVisitorId,
-        leadName: effectiveLeadName,
-        leadEmail: effectiveLeadEmail,
-        authenticated: isLoggedIn,
-        appBaseUrl: window.location.origin,
-      });
-      setHumanRequested(true);
-      setTeamNotice(true);
-      setMessages((current) => normalizeMessages([...current.filter((item) => item.id !== 'welcome'), requested.message].filter(Boolean)));
+      await requestHumanTransfer();
     } catch (requestError) {
       setError(publicChatErrorMessage(requestError));
     } finally {

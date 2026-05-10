@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { resendInvitationEmail } from '../api/voice';
 import apiClient from '../api/client';
 import { getEmailSignInMethods, getSignInMethodInfo } from '../utils/authProviders';
+import { getPostLoginPath, hasMerxusTenantClaims, isSupportConsoleAccount } from '../utils/accountRouting';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -151,10 +152,15 @@ export default function LoginPage() {
         if (result?.user) {
           const tokenResult = await result.user.getIdTokenResult(true);
           const claims = tokenResult?.claims || {};
-          const hasTenantType = ['merxus', 'voice', 'real_estate', 'restaurant'].includes(claims?.type);
-          const hasTenantAssociation = Boolean(claims?.officeId || claims?.agentId || claims?.restaurantId || claims?.type === 'merxus');
 
-          if (!hasTenantType || !hasTenantAssociation) {
+          if (isSupportConsoleAccount(claims)) {
+            if (!isMounted) return;
+            navigate('/unsupported-account?reason=support-console', { replace: true });
+            setLoading(false);
+            return;
+          }
+
+          if (!hasMerxusTenantClaims(claims)) {
             const unauthorizedEmail = (result.user.email || '').trim().toLowerCase();
             await firebaseSignOut(auth);
             if (!isMounted) return;
@@ -222,11 +228,6 @@ export default function LoginPage() {
   useEffect(() => {
     // Wait for auth to finish loading and user to be available
     if (!authLoading && user) {
-      if (returnToPath) {
-        navigate(returnToPath, { replace: true });
-        return;
-      }
-
       if (needsOnboarding) {
         const onboardingParams = new URLSearchParams();
         onboardingParams.set('type', onboardingType || 'restaurant');
@@ -239,36 +240,20 @@ export default function LoginPage() {
       // Wait a moment for userClaims to load after login
       const timer = setTimeout(() => {
         if (userClaims) {
-          if (userClaims.invitedUser === true && userClaims.phoneVerified === false) {
-            navigate('/verify-phone', { replace: true });
+          if (isSupportConsoleAccount(userClaims)) {
+            navigate('/unsupported-account?reason=support-console', { replace: true });
             return;
           }
-          // Determine redirect based on user type
-          if (userClaims.type === 'merxus') {
-            // Super-admins get a tenant selector, regular admins go to restaurant portal
-            if (userClaims.role === 'super_admin') {
-              navigate('/merxus/select-tenant', { replace: true });
-            } else {
-            navigate('/merxus', { replace: true });
-            }
-          } else if (userClaims.type === 'voice') {
-            navigate('/voice', { replace: true });
-          } else if (userClaims.type === 'real_estate') {
-            navigate('/estate', { replace: true });
-          } else if (userClaims.type === 'restaurant') {
-            navigate('/restaurant', { replace: true });
-          } else {
-            // User doesn't have proper claims - show warning
-            console.warn('User missing custom claims. Please ensure user has role and type set.');
-            // Redirect to home as fallback
-            navigate('/', { replace: true });
+
+          if (returnToPath && hasMerxusTenantClaims(userClaims)) {
+            navigate(returnToPath, { replace: true });
+            return;
           }
+
+          const nextPath = getPostLoginPath(userClaims);
+          navigate(nextPath || '/unsupported-account?reason=no-tenant', { replace: true });
         } else {
-          // User is logged in but claims haven't loaded yet
-          // Give it a bit more time, then redirect based on URL params or home
-          const redirectPath = agentId ? '/estate' : officeId ? '/voice' : restaurantId ? '/restaurant' : '/';
-          console.warn('User logged in but custom claims not yet loaded. Redirecting to:', redirectPath);
-          navigate(redirectPath, { replace: true });
+          console.warn('User logged in but custom claims not yet loaded. Holding on login until claims resolve.');
         }
       }, 500); // Small delay to allow claims to load
 

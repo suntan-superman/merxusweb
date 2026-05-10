@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getPostLoginPath, isSupportConsoleAccount } from '../utils/accountRouting';
 
 const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
 const VALID_TENANT_TYPES = new Set(['restaurant', 'voice', 'real_estate']);
@@ -43,6 +44,11 @@ export default function AutoRedirect() {
       return;
     }
 
+    if (isSupportConsoleAccount(userClaims) && location.pathname !== '/unsupported-account') {
+      navigate('/unsupported-account?reason=support-console', { replace: true });
+      return;
+    }
+
     if (
       userClaims.invitedUser === true &&
       userClaims.phoneVerified === false &&
@@ -57,20 +63,9 @@ export default function AutoRedirect() {
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
     if (isPublicRoute) {
-      // Redirect based on user type
-      if (userClaims.type === 'merxus') {
-        // Super-admins get a tenant selector, regular admins go to restaurant portal
-        if (userClaims.role === 'super_admin') {
-          navigate('/merxus/select-tenant', { replace: true });
-        } else {
-          navigate('/merxus', { replace: true });
-        }
-      } else if (userClaims.type === 'restaurant') {
-        navigate('/restaurant', { replace: true });
-      } else if (userClaims.type === 'voice') {
-        navigate('/voice', { replace: true });
-      } else if (userClaims.type === 'real_estate') {
-        navigate('/estate', { replace: true });
+      const nextPath = getPostLoginPath(userClaims);
+      if (nextPath) {
+        navigate(nextPath, { replace: true });
       }
     }
   }, [user, loading, userClaims, needsOnboarding, location.pathname, navigate]);
