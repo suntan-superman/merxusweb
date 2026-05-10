@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import '../../utils/syncfusionScheduleRuntime';
+import { ScheduleComponent, ViewsDirective, ViewDirective, Day, Week, Month, Agenda, Inject } from '@syncfusion/ej2-react-schedule';
 import {
   cancelRestaurantBooking,
   confirmRestaurantBooking,
+  createRestaurantBooking,
   declineRestaurantBooking,
   fetchRestaurantBookings,
   updateRestaurantBooking,
@@ -30,12 +33,15 @@ const STATUS_STYLES = {
 export default function RestaurantBookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [filter, setFilter] = useState('pending_review');
+  const [viewMode, setViewMode] = useState('table');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [updatingId, setUpdatingId] = useState('');
   const [savingNoteId, setSavingNoteId] = useState('');
   const [savingEditId, setSavingEditId] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     loadBookings();
@@ -144,6 +150,28 @@ export default function RestaurantBookingsPage() {
     }
   }
 
+  async function handleCreateBooking(input) {
+    setCreating(true);
+    setError('');
+    try {
+      const created = await createRestaurantBooking(input);
+      if (created) {
+        setBookings((current) => [...current, created]);
+        setSelectedBooking(created);
+        setCreateOpen(false);
+        setFilter('upcoming');
+      } else {
+        await loadBookings();
+        setCreateOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Failed to create booking.');
+    } finally {
+      setCreating(false);
+    }
+  }
+
   const filteredBookings = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
     const activeStatuses = new Set(['requested', 'pending_review', 'confirmed']);
@@ -182,13 +210,22 @@ export default function RestaurantBookingsPage() {
             Review tenant-scoped AI, SMS, and staff-created booking requests.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={loadBookings}
-          className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-        >
-          Refresh
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            New Booking
+          </button>
+          <button
+            type="button"
+            onClick={loadBookings}
+            className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -197,21 +234,42 @@ export default function RestaurantBookingsPage() {
         <Metric label="Conflicts" value={counts.conflicts} tone="red" />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => setFilter(item.key)}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              filter === item.key
-                ? 'bg-emerald-600 text-white'
-                : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {FILTERS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setFilter(item.key)}
+              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                filter === item.key
+                  ? 'bg-emerald-600 text-white'
+                  : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <div className="inline-flex w-fit rounded-md border border-gray-300 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">
+          {[
+            { key: 'table', label: 'Table' },
+            { key: 'calendar', label: 'Calendar' },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setViewMode(item.key)}
+              className={`rounded px-3 py-1.5 text-xs font-semibold ${
+                viewMode === item.key
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950'
+                  : 'text-gray-600 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-slate-800'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {error ? (
@@ -222,6 +280,8 @@ export default function RestaurantBookingsPage() {
 
       {loading ? (
         <LoadingSpinner text="Loading bookings..." />
+      ) : viewMode === 'calendar' ? (
+        <BookingsCalendar bookings={filteredBookings} onSelect={setSelectedBooking} />
       ) : (
         <BookingsTable
           bookings={filteredBookings}
@@ -231,6 +291,14 @@ export default function RestaurantBookingsPage() {
           onTransition={handleTransition}
         />
       )}
+
+      {createOpen ? (
+        <CreateBookingModal
+          creating={creating}
+          onClose={() => setCreateOpen(false)}
+          onCreate={handleCreateBooking}
+        />
+      ) : null}
 
       {selectedBooking ? (
         <BookingDetailDrawer
@@ -244,6 +312,67 @@ export default function RestaurantBookingsPage() {
           onSaveEdit={handleSaveEdit}
         />
       ) : null}
+    </div>
+  );
+}
+
+function BookingsCalendar({ bookings, onSelect }) {
+  const events = useMemo(() => bookings.map((booking) => {
+    const start = toDate(booking.startAt);
+    const end = toDate(booking.endAt) || (start ? new Date(start.getTime() + Number(booking.durationMinutes || 90) * 60000) : null);
+    const status = formatLabel(booking.status || 'requested');
+    return {
+      Id: booking.bookingId || booking.id,
+      Subject: `${booking.customer?.name || 'Guest'} (${booking.partySize || 0})`,
+      StartTime: start,
+      EndTime: end,
+      Description: `${status} | ${booking.assignedAreaName || booking.requestedAreaName || 'Unassigned'}`,
+      Booking: booking,
+      CategoryColor: booking.status === 'confirmed' ? '#059669' : booking.status === 'pending_review' ? '#d97706' : '#2563eb',
+    };
+  }).filter((event) => event.StartTime && event.EndTime), [bookings]);
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+      <ScheduleComponent
+        width="100%"
+        height="640px"
+        selectedDate={new Date()}
+        currentView="Week"
+        readonly
+        eventSettings={{
+          dataSource: events,
+          fields: {
+            id: 'Id',
+            subject: 'Subject',
+            startTime: 'StartTime',
+            endTime: 'EndTime',
+            description: 'Description',
+          },
+        }}
+        eventRendered={(args) => {
+          if (args.data?.CategoryColor) {
+            args.element.style.backgroundColor = args.data.CategoryColor;
+            args.element.style.borderColor = args.data.CategoryColor;
+          }
+        }}
+        eventClick={(args) => {
+          args.cancel = true;
+          const eventData = args.event || args.data;
+          if (eventData?.Booking) onSelect(eventData.Booking);
+        }}
+        popupOpen={(args) => {
+          if (args.type === 'Editor') args.cancel = true;
+        }}
+      >
+        <ViewsDirective>
+          <ViewDirective option="Day" />
+          <ViewDirective option="Week" />
+          <ViewDirective option="Month" />
+          <ViewDirective option="Agenda" />
+        </ViewsDirective>
+        <Inject services={[Day, Week, Month, Agenda]} />
+      </ScheduleComponent>
     </div>
   );
 }
@@ -377,6 +506,224 @@ function ActionButtons({ booking, updatingId, onTransition }) {
         </button>
       ) : null}
     </div>
+  );
+}
+
+function CreateBookingModal({ creating, onClose, onCreate }) {
+  const now = new Date();
+  const defaultDate = now.toISOString().slice(0, 10);
+  const [draft, setDraft] = useState({
+    customerName: '',
+    customerPhone: '',
+    customerEmail: '',
+    date: defaultDate,
+    time: '18:00',
+    partySize: 2,
+    durationMinutes: 90,
+    requestedAreaName: '',
+    bookingType: 'standard_dining',
+    customerNotes: '',
+    internalNotes: '',
+    status: 'confirmed',
+    notifyCustomer: true,
+  });
+
+  function updateDraft(field, value) {
+    setDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  function submit(event) {
+    event.preventDefault();
+    const startAt = new Date(`${draft.date}T${draft.time}:00`);
+    const durationMinutes = Number(draft.durationMinutes || 90);
+    const payload = {
+      source: 'staff_dashboard',
+      status: draft.status,
+      customerName: draft.customerName.trim() || 'Guest',
+      customerPhone: draft.customerPhone.trim(),
+      customerEmail: draft.customerEmail.trim(),
+      partySize: Number(draft.partySize || 1),
+      durationMinutes,
+      startAt: startAt.toISOString(),
+      endAt: new Date(startAt.getTime() + durationMinutes * 60000).toISOString(),
+      requestedAreaName: draft.requestedAreaName.trim(),
+      assignedAreaName: draft.requestedAreaName.trim(),
+      bookingType: draft.bookingType,
+      customerNotes: draft.customerNotes.trim(),
+      internalNotes: draft.internalNotes.trim(),
+      sendSms: draft.notifyCustomer,
+    };
+    onCreate(payload);
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
+      <div className="fixed inset-x-4 top-8 z-50 mx-auto max-h-[calc(100vh-4rem)] max-w-3xl overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-slate-900">
+        <form onSubmit={submit} className="space-y-5 p-6">
+          <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-4 dark:border-slate-700">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">New Booking</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
+                Add a staff-created reservation to the tenant booking workflow.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md p-2 text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              aria-label="Close new booking form"
+            >
+              X
+            </button>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <Field label="Guest Name">
+              <input
+                required
+                type="text"
+                value={draft.customerName}
+                onChange={(event) => updateDraft('customerName', event.target.value)}
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </Field>
+            <Field label="Phone">
+              <input
+                required
+                type="tel"
+                value={draft.customerPhone}
+                onChange={(event) => updateDraft('customerPhone', event.target.value)}
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </Field>
+            <Field label="Email">
+              <input
+                type="email"
+                value={draft.customerEmail}
+                onChange={(event) => updateDraft('customerEmail', event.target.value)}
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </Field>
+            <Field label="Area">
+              <input
+                type="text"
+                value={draft.requestedAreaName}
+                onChange={(event) => updateDraft('requestedAreaName', event.target.value)}
+                placeholder="Main Dining, Patio, Banquet Room"
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </Field>
+            <Field label="Date">
+              <input
+                required
+                type="date"
+                value={draft.date}
+                onChange={(event) => updateDraft('date', event.target.value)}
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </Field>
+            <Field label="Time">
+              <input
+                required
+                type="time"
+                value={draft.time}
+                onChange={(event) => updateDraft('time', event.target.value)}
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </Field>
+            <Field label="Party Size">
+              <input
+                required
+                type="number"
+                min="1"
+                value={draft.partySize}
+                onChange={(event) => updateDraft('partySize', event.target.value)}
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </Field>
+            <Field label="Duration">
+              <input
+                type="number"
+                min="15"
+                step="15"
+                value={draft.durationMinutes}
+                onChange={(event) => updateDraft('durationMinutes', event.target.value)}
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              />
+            </Field>
+            <Field label="Booking Type">
+              <select
+                value={draft.bookingType}
+                onChange={(event) => updateDraft('bookingType', event.target.value)}
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              >
+                <option value="standard_dining">Standard Dining</option>
+                <option value="large_party">Large Party</option>
+                <option value="private_event">Private Event</option>
+                <option value="venue_rental">Venue Rental</option>
+              </select>
+            </Field>
+            <Field label="Initial Status">
+              <select
+                value={draft.status}
+                onChange={(event) => updateDraft('status', event.target.value)}
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              >
+                <option value="confirmed">Confirmed</option>
+                <option value="pending_review">Pending Review</option>
+                <option value="requested">Requested</option>
+              </select>
+            </Field>
+          </div>
+
+          <Field label="Customer Notes">
+            <textarea
+              rows={3}
+              value={draft.customerNotes}
+              onChange={(event) => updateDraft('customerNotes', event.target.value)}
+              className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+          </Field>
+
+          <Field label="Internal Notes">
+            <textarea
+              rows={3}
+              value={draft.internalNotes}
+              onChange={(event) => updateDraft('internalNotes', event.target.value)}
+              className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+          </Field>
+
+          <label className="flex items-start gap-2 rounded-md border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
+            <input
+              type="checkbox"
+              checked={draft.notifyCustomer}
+              onChange={(event) => updateDraft('notifyCustomer', event.target.checked)}
+              className="mt-1"
+            />
+            <span>Send customer SMS when tenant SMS confirmations are enabled.</span>
+          </label>
+
+          <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={creating}
+              className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {creating ? 'Creating...' : 'Create Booking'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
 

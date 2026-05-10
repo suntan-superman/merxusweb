@@ -36,6 +36,11 @@ export async function updateRestaurantBookingArea(areaId, patch) {
   return res.data?.area || null;
 }
 
+export async function createRestaurantBooking(booking) {
+  const res = await apiClient.post('/restaurant-bookings', booking);
+  return res.data?.booking || null;
+}
+
 export async function confirmRestaurantBooking(bookingId, { notifyCustomer = true } = {}) {
   const res = await apiClient.post(`/restaurant-bookings/${bookingId}/confirm`, {
     notifyCustomer,
