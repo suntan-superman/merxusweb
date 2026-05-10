@@ -88,9 +88,7 @@ export default function RestaurantBookingsPage() {
     try {
       let updated;
       if (action === 'confirm') {
-        updated = await confirmRestaurantBooking(bookingId);
-      } else if (action === 'send_confirmation') {
-        updated = await confirmRestaurantBooking(bookingId, { notifyCustomer: true });
+        updated = await confirmRestaurantBooking(bookingId, { notifyCustomer: false });
       } else if (action === 'decline') {
         updated = await declineRestaurantBooking(bookingId, {
           reason: 'Declined from restaurant bookings dashboard.',
@@ -108,9 +106,6 @@ export default function RestaurantBookingsPage() {
         setSelectedBooking((current) => (
           current && (current.bookingId || current.id) === bookingId ? { ...current, ...updated } : current
         ));
-        if (action === 'send_confirmation') {
-          setNotice('Customer SMS queued.');
-        }
       } else {
         await loadBookings();
       }
@@ -362,8 +357,10 @@ export default function RestaurantBookingsPage() {
           bookings={filteredBookings}
           selectedId={selectedBooking?.bookingId || selectedBooking?.id}
           updatingId={updatingId}
+          sendingSmsId={sendingSmsId}
           onSelect={setSelectedBooking}
           onTransition={requestTransition}
+          onSendCustomerSms={handleSendCustomerSms}
         />
       )}
 
@@ -407,6 +404,19 @@ export default function RestaurantBookingsPage() {
 }
 
 function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }) {
+  useEffect(() => {
+    if (!expanded) return undefined;
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') onCollapse();
+    }
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [expanded, onCollapse]);
+
   const events = useMemo(() => bookings.map((booking) => {
     const start = toDate(booking.startAt);
     const end = toDate(booking.endAt) || (start ? new Date(start.getTime() + Number(booking.durationMinutes || 90) * 60000) : null);
@@ -424,10 +434,10 @@ function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }
 
   return (
     <div className={expanded
-      ? 'fixed inset-0 z-40 flex flex-col bg-white p-4 dark:bg-slate-950'
+      ? 'fixed inset-0 z-[70] flex flex-col bg-white p-4 dark:bg-slate-950'
       : 'overflow-hidden rounded-lg border border-gray-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900'}
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="relative z-[80] mb-3 flex items-center justify-between gap-3 border-b border-gray-200 bg-white pb-3 dark:border-slate-700 dark:bg-slate-950">
         <div>
           <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Booking Calendar</h3>
           <p className="text-xs text-gray-500 dark:text-slate-400">{bookings.length} bookings in the selected view</p>
@@ -440,6 +450,15 @@ function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }
           {expanded ? 'Close Full Screen' : 'Open Full Screen'}
         </button>
       </div>
+      {expanded ? (
+        <button
+          type="button"
+          onClick={onCollapse}
+          className="fixed right-4 top-4 z-[90] rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white"
+        >
+          Exit Calendar
+        </button>
+      ) : null}
       <ScheduleComponent
         width="100%"
         height={expanded ? 'calc(100vh - 96px)' : 'min(720px, calc(100vh - 260px))'}
@@ -498,7 +517,7 @@ function Metric({ label, value, tone }) {
   );
 }
 
-function BookingsTable({ bookings, selectedId, updatingId, onSelect, onTransition }) {
+function BookingsTable({ bookings, selectedId, updatingId, sendingSmsId, onSelect, onTransition, onSendCustomerSms }) {
   if (!bookings.length) {
     return (
       <div className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
@@ -551,7 +570,13 @@ function BookingsTable({ bookings, selectedId, updatingId, onSelect, onTransitio
                   )}
                 </td>
                 <td className="px-4 py-3 text-right" onClick={(event) => event.stopPropagation()}>
-                  <ActionButtons booking={booking} updatingId={updatingId} onTransition={onTransition} />
+                  <ActionButtons
+                    booking={booking}
+                    updatingId={updatingId}
+                    sendingSmsId={sendingSmsId}
+                    onTransition={onTransition}
+                    onSendCustomerSms={onSendCustomerSms}
+                  />
                 </td>
               </tr>
             );
@@ -562,9 +587,10 @@ function BookingsTable({ bookings, selectedId, updatingId, onSelect, onTransitio
   );
 }
 
-function ActionButtons({ booking, updatingId, onTransition }) {
+function ActionButtons({ booking, updatingId, sendingSmsId, onTransition, onSendCustomerSms }) {
   const id = booking.bookingId || booking.id;
   const busy = updatingId === id;
+  const smsBusy = sendingSmsId === id;
   const canConfirm = booking.status === 'pending_review' || booking.status === 'requested' || booking.requiresApproval;
   const canCancel = !['cancelled', 'declined', 'completed', 'no_show'].includes(booking.status);
   const canSendConfirmation = booking.status === 'confirmed' && booking.customer?.phone;
@@ -604,11 +630,11 @@ function ActionButtons({ booking, updatingId, onTransition }) {
       {canSendConfirmation ? (
         <button
           type="button"
-          disabled={busy}
-          onClick={() => onTransition(booking, 'send_confirmation')}
+          disabled={busy || smsBusy}
+          onClick={() => onSendCustomerSms(booking)}
           className="rounded-md border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
         >
-          Send SMS
+          {smsBusy ? 'Sending...' : 'Send SMS'}
         </button>
       ) : null}
     </div>
@@ -1065,7 +1091,13 @@ function BookingDetailDrawer({
                 </>
               ) : null}
             </div>
-            <ActionButtons booking={booking} updatingId={updatingId} onTransition={onTransition} />
+            <ActionButtons
+              booking={booking}
+              updatingId={updatingId}
+              sendingSmsId={sendingSmsId}
+              onTransition={onTransition}
+              onSendCustomerSms={onSendCustomerSms}
+            />
           </div>
         </div>
       </aside>
