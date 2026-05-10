@@ -48,6 +48,9 @@ import {
 const lazy = lazyWithRetry;
 
 const OrdersPage = lazy(() => import('./pages/restaurant/OrdersPage'));
+const RestaurantBookingsPage = lazy(() => import('./pages/restaurant/RestaurantBookingsPage'));
+const RestaurantBookingAreasPage = lazy(() => import('./pages/restaurant/RestaurantBookingAreasPage'));
+const RestaurantBookingSettingsPage = lazy(() => import('./pages/restaurant/RestaurantBookingSettingsPage'));
 const ReservationsPage = lazy(() => import('./pages/restaurant/ReservationsPage'));
 const DashboardPage = lazy(() => import('./pages/restaurant/DashboardPage'));
 const RestaurantDashboard = lazy(() => import('./components/restaurant/RestaurantDashboard'));
@@ -262,6 +265,9 @@ function App() {
                     <Route index element={<LazyRoute><DashboardPage /></LazyRoute>} />
                     <Route path="active-dashboard" element={<LazyRoute><RestaurantDashboard /></LazyRoute>} />
                     <Route path="orders" element={<LazyRoute><OrdersPage /></LazyRoute>} />
+                    <Route path="bookings" element={<LazyRoute><RestaurantBookingsPage /></LazyRoute>} />
+                    <Route path="booking-areas" element={<LazyRoute><RestaurantBookingAreasPage /></LazyRoute>} />
+                    <Route path="booking-settings" element={<LazyRoute><RestaurantBookingSettingsPage /></LazyRoute>} />
                     <Route path="reservations" element={<LazyRoute><ReservationsPage /></LazyRoute>} />
                     <Route path="calls" element={<LazyRoute><CallsPage /></LazyRoute>} />
                     <Route path="customers" element={<LazyRoute><CustomersPage /></LazyRoute>} />

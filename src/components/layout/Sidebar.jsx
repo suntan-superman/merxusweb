@@ -109,6 +109,9 @@ export default function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <NavItem to="/restaurant" label="Dashboard" icon="📊" />
         <NavItem to="/restaurant/orders" label="Orders" icon="📦" />
+        <NavItem to="/restaurant/bookings" label="Bookings" icon="📘" />
+        <NavItem to="/restaurant/booking-areas" label="Booking Areas" icon="🧭" />
+        <NavItem to="/restaurant/booking-settings" label="Booking Rules" icon="🧾" />
         <NavItem to="/restaurant/reservations" label="Reservations" icon="📅" />
         <NavItem to="/restaurant/calls" label="Calls & Messages" icon="📞" />
         <NavItem to="/restaurant/customers" label="Customers" icon="👥" />
