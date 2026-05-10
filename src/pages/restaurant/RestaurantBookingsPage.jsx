@@ -152,7 +152,7 @@ export default function RestaurantBookingsPage() {
       setNotice('Customer SMS sent.');
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.error || 'Failed to send customer SMS.');
+      setError(formatSmsError(err));
     } finally {
       setSendingSmsId('');
     }
@@ -434,70 +434,72 @@ function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }
 
   return (
     <div className={expanded
-      ? 'fixed inset-0 z-[70] flex flex-col bg-white p-4 dark:bg-slate-950'
+      ? 'fixed inset-0 z-[70] flex flex-col bg-slate-50 dark:bg-slate-950'
       : 'overflow-hidden rounded-lg border border-gray-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900'}
     >
-      <div className="relative z-[80] mb-3 flex items-center justify-between gap-3 border-b border-gray-200 bg-white pb-3 dark:border-slate-700 dark:bg-slate-950">
+      <div className={expanded
+        ? 'relative z-[80] flex min-h-[72px] items-center justify-between gap-4 border-b border-gray-200 bg-white px-6 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900'
+        : 'mb-3 flex items-center justify-between gap-3'}
+      >
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Booking Calendar</h3>
-          <p className="text-xs text-gray-500 dark:text-slate-400">{bookings.length} bookings in the selected view</p>
+          <h3 className={expanded ? 'text-lg font-semibold text-gray-900 dark:text-slate-100' : 'text-sm font-semibold text-gray-900 dark:text-slate-100'}>
+            Booking Calendar
+          </h3>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">{bookings.length} bookings in the selected view</p>
         </div>
         <button
           type="button"
           onClick={expanded ? onCollapse : onExpand}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          className={expanded
+            ? 'rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white'
+            : 'rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'}
         >
-          {expanded ? 'Close Full Screen' : 'Open Full Screen'}
+          {expanded ? 'Exit Calendar' : 'Open Full Screen'}
         </button>
       </div>
-      {expanded ? (
-        <button
-          type="button"
-          onClick={onCollapse}
-          className="fixed right-4 top-4 z-[90] rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white"
-        >
-          Exit Calendar
-        </button>
-      ) : null}
-      <ScheduleComponent
-        width="100%"
-        height={expanded ? 'calc(100vh - 96px)' : 'min(720px, calc(100vh - 260px))'}
-        selectedDate={new Date()}
-        currentView="Week"
-        readonly
-        eventSettings={{
-          dataSource: events,
-          fields: {
-            id: 'Id',
-            subject: 'Subject',
-            startTime: 'StartTime',
-            endTime: 'EndTime',
-            description: 'Description',
-          },
-        }}
-        eventRendered={(args) => {
-          if (args.data?.CategoryColor) {
-            args.element.style.backgroundColor = args.data.CategoryColor;
-            args.element.style.borderColor = args.data.CategoryColor;
-          }
-        }}
-        eventClick={(args) => {
-          args.cancel = true;
-          const eventData = args.event || args.data;
-          if (eventData?.Booking) onSelect(eventData.Booking);
-        }}
-        popupOpen={(args) => {
-          if (args.type === 'Editor') args.cancel = true;
-        }}
-      >
-        <ViewsDirective>
-          <ViewDirective option="Day" />
-          <ViewDirective option="Week" />
-          <ViewDirective option="Month" />
-          <ViewDirective option="Agenda" />
-        </ViewsDirective>
-        <Inject services={[Day, Week, Month, Agenda]} />
-      </ScheduleComponent>
+      <div className={expanded ? 'min-h-0 flex-1 p-4' : ''}>
+        <div className={expanded ? 'h-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900' : ''}>
+          <ScheduleComponent
+            width="100%"
+            height={expanded ? 'calc(100vh - 112px)' : 'min(720px, calc(100vh - 260px))'}
+            selectedDate={new Date()}
+            currentView="Week"
+            readonly
+            eventSettings={{
+              dataSource: events,
+              fields: {
+                id: 'Id',
+                subject: 'Subject',
+                startTime: 'StartTime',
+                endTime: 'EndTime',
+                description: 'Description',
+              },
+            }}
+            eventRendered={(args) => {
+              if (args.data?.CategoryColor) {
+                args.element.style.backgroundColor = args.data.CategoryColor;
+                args.element.style.borderColor = args.data.CategoryColor;
+              }
+            }}
+            eventClick={(args) => {
+              args.cancel = true;
+              const eventData = args.event || args.data;
+              if (eventData?.Booking) onSelect(eventData.Booking);
+            }}
+            popupOpen={(args) => {
+              if (args.type === 'Editor') args.cancel = true;
+            }}
+          >
+            <ViewsDirective>
+              <ViewDirective option="Day" />
+              <ViewDirective option="Week" />
+              <ViewDirective option="Month" />
+              <ViewDirective option="Agenda" />
+            </ViewsDirective>
+            <Inject services={[Day, Week, Month, Agenda]} />
+          </ScheduleComponent>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1252,4 +1254,12 @@ function buildBookingSmsBody(booking) {
   const partySize = booking.partySize ? `${booking.partySize} guest${Number(booking.partySize) === 1 ? '' : 's'}` : 'your party';
   const areaText = area ? ` in ${area}` : '';
   return `Hi ${guestName}, your reservation for ${partySize}${areaText} is scheduled for ${date} at ${time}. Reply here if anything changes.`;
+}
+
+function formatSmsError(err) {
+  const providerMessage = err?.response?.data?.error || err?.message || '';
+  if (/mismatch between the ['"]?from['"]? number/i.test(providerMessage)) {
+    return `${providerMessage}. The booking UI is reaching the Merxus SMS endpoint correctly, but Twilio is rejecting the send because this tenant's SMS From number belongs to a different Twilio account than the active Account SID. Update the tenant SMS profile/backend environment so TWILIO_FROM_NUMBER and TWILIO_ACCOUNT_SID are from the same Twilio account.`;
+  }
+  return providerMessage || 'Failed to send customer SMS.';
 }
