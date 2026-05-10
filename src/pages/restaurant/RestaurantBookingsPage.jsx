@@ -6,10 +6,14 @@ import {
   confirmRestaurantBooking,
   createRestaurantBooking,
   declineRestaurantBooking,
+  fetchRestaurantBookingAreas,
   fetchRestaurantBookings,
   updateRestaurantBooking,
 } from '../../api/restaurantBookings';
+import { sendManualSms } from '../../api/sms';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { formatPhoneDisplay, formatPhoneInput, isValidPhone, toE164 } from '../../utils/phoneFormatter';
 
 const FILTERS = [
   { key: 'pending_review', label: 'Pending Review' },
@@ -32,16 +36,21 @@ const STATUS_STYLES = {
 
 export default function RestaurantBookingsPage() {
   const [bookings, setBookings] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [filter, setFilter] = useState('pending_review');
   const [viewMode, setViewMode] = useState('table');
+  const [calendarExpanded, setCalendarExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [updatingId, setUpdatingId] = useState('');
   const [savingNoteId, setSavingNoteId] = useState('');
   const [savingEditId, setSavingEditId] = useState('');
+  const [sendingSmsId, setSendingSmsId] = useState('');
   const [creating, setCreating] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   useEffect(() => {
     loadBookings();
@@ -51,9 +60,16 @@ export default function RestaurantBookingsPage() {
   async function loadBookings() {
     setLoading(true);
     setError('');
+    setNotice('');
     try {
       const rows = await fetchRestaurantBookings({ limit: 250 });
       setBookings(rows);
+      try {
+        setAreas(await fetchRestaurantBookingAreas());
+      } catch (areaErr) {
+        console.warn('Failed to load restaurant booking areas.', areaErr);
+        setAreas([]);
+      }
     } catch (err) {
       console.error(err);
       setError('Failed to load restaurant bookings.');
@@ -68,6 +84,7 @@ export default function RestaurantBookingsPage() {
 
     setUpdatingId(bookingId);
     setError('');
+    setNotice('');
     try {
       let updated;
       if (action === 'confirm') {
@@ -91,6 +108,9 @@ export default function RestaurantBookingsPage() {
         setSelectedBooking((current) => (
           current && (current.bookingId || current.id) === bookingId ? { ...current, ...updated } : current
         ));
+        if (action === 'send_confirmation') {
+          setNotice('Customer SMS queued.');
+        }
       } else {
         await loadBookings();
       }
@@ -99,6 +119,47 @@ export default function RestaurantBookingsPage() {
       setError('Failed to update booking.');
     } finally {
       setUpdatingId('');
+    }
+  }
+
+  function requestTransition(booking, action) {
+    if (action === 'cancel' || action === 'decline') {
+      setConfirmAction({ booking, action });
+      return;
+    }
+    handleTransition(booking, action);
+  }
+
+  async function confirmPendingAction() {
+    if (!confirmAction) return;
+    const pending = confirmAction;
+    setConfirmAction(null);
+    await handleTransition(pending.booking, pending.action);
+  }
+
+  async function handleSendCustomerSms(booking) {
+    const bookingId = booking.bookingId || booking.id;
+    const to = toE164(booking.customer?.phone || '');
+    if (!bookingId || !to) {
+      setError('A valid customer phone number is required before sending SMS.');
+      return;
+    }
+
+    setSendingSmsId(bookingId);
+    setError('');
+    setNotice('');
+    try {
+      await sendManualSms({
+        to,
+        body: buildBookingSmsBody(booking),
+        trigger: 'restaurant_booking_manual',
+      });
+      setNotice('Customer SMS sent.');
+    } catch (err) {
+      console.error(err);
+      setError(err?.response?.data?.error || 'Failed to send customer SMS.');
+    } finally {
+      setSendingSmsId('');
     }
   }
 
@@ -153,6 +214,7 @@ export default function RestaurantBookingsPage() {
   async function handleCreateBooking(input) {
     setCreating(true);
     setError('');
+    setNotice('');
     try {
       const created = await createRestaurantBooking(input);
       if (created) {
@@ -160,6 +222,7 @@ export default function RestaurantBookingsPage() {
         setSelectedBooking(created);
         setCreateOpen(false);
         setFilter('upcoming');
+        setNotice(input.sendSms ? 'Booking created. Customer SMS queued when tenant SMS confirmations are enabled.' : 'Booking created.');
       } else {
         await loadBookings();
         setCreateOpen(false);
@@ -278,23 +341,36 @@ export default function RestaurantBookingsPage() {
         </div>
       ) : null}
 
+      {notice ? (
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200">
+          {notice}
+        </div>
+      ) : null}
+
       {loading ? (
         <LoadingSpinner text="Loading bookings..." />
       ) : viewMode === 'calendar' ? (
-        <BookingsCalendar bookings={filteredBookings} onSelect={setSelectedBooking} />
+        <BookingsCalendar
+          bookings={filteredBookings}
+          expanded={calendarExpanded}
+          onExpand={() => setCalendarExpanded(true)}
+          onCollapse={() => setCalendarExpanded(false)}
+          onSelect={setSelectedBooking}
+        />
       ) : (
         <BookingsTable
           bookings={filteredBookings}
           selectedId={selectedBooking?.bookingId || selectedBooking?.id}
           updatingId={updatingId}
           onSelect={setSelectedBooking}
-          onTransition={handleTransition}
+          onTransition={requestTransition}
         />
       )}
 
       {createOpen ? (
         <CreateBookingModal
           creating={creating}
+          areas={areas}
           onClose={() => setCreateOpen(false)}
           onCreate={handleCreateBooking}
         />
@@ -306,17 +382,31 @@ export default function RestaurantBookingsPage() {
           updatingId={updatingId}
           savingNoteId={savingNoteId}
           savingEditId={savingEditId}
+          sendingSmsId={sendingSmsId}
+          areas={areas}
           onClose={() => setSelectedBooking(null)}
-          onTransition={handleTransition}
+          onTransition={requestTransition}
+          onSendCustomerSms={handleSendCustomerSms}
           onSaveNote={handleSaveNote}
           onSaveEdit={handleSaveEdit}
         />
       ) : null}
+      <ConfirmationModal
+        isOpen={Boolean(confirmAction)}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={confirmPendingAction}
+        title={confirmAction?.action === 'decline' ? 'Decline Booking' : 'Cancel Booking'}
+        message={buildTransitionConfirmationMessage(confirmAction)}
+        confirmText={confirmAction?.action === 'decline' ? 'Decline booking' : 'Cancel booking'}
+        cancelText="Keep booking"
+        variant="warning"
+        isLoading={Boolean(confirmAction && updatingId === (confirmAction.booking?.bookingId || confirmAction.booking?.id))}
+      />
     </div>
   );
 }
 
-function BookingsCalendar({ bookings, onSelect }) {
+function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }) {
   const events = useMemo(() => bookings.map((booking) => {
     const start = toDate(booking.startAt);
     const end = toDate(booking.endAt) || (start ? new Date(start.getTime() + Number(booking.durationMinutes || 90) * 60000) : null);
@@ -333,10 +423,26 @@ function BookingsCalendar({ bookings, onSelect }) {
   }).filter((event) => event.StartTime && event.EndTime), [bookings]);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+    <div className={expanded
+      ? 'fixed inset-0 z-40 flex flex-col bg-white p-4 dark:bg-slate-950'
+      : 'overflow-hidden rounded-lg border border-gray-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900'}
+    >
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Booking Calendar</h3>
+          <p className="text-xs text-gray-500 dark:text-slate-400">{bookings.length} bookings in the selected view</p>
+        </div>
+        <button
+          type="button"
+          onClick={expanded ? onCollapse : onExpand}
+          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          {expanded ? 'Close Full Screen' : 'Open Full Screen'}
+        </button>
+      </div>
       <ScheduleComponent
         width="100%"
-        height="640px"
+        height={expanded ? 'calc(100vh - 96px)' : 'min(720px, calc(100vh - 260px))'}
         selectedDate={new Date()}
         currentView="Week"
         readonly
@@ -492,7 +598,7 @@ function ActionButtons({ booking, updatingId, onTransition }) {
           onClick={() => onTransition(booking, 'cancel')}
           className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
         >
-          Cancel
+          Cancel Booking
         </button>
       ) : null}
       {canSendConfirmation ? (
@@ -509,7 +615,7 @@ function ActionButtons({ booking, updatingId, onTransition }) {
   );
 }
 
-function CreateBookingModal({ creating, onClose, onCreate }) {
+function CreateBookingModal({ creating, areas = [], onClose, onCreate }) {
   const now = new Date();
   const defaultDate = now.toISOString().slice(0, 10);
   const [draft, setDraft] = useState({
@@ -527,6 +633,17 @@ function CreateBookingModal({ creating, onClose, onCreate }) {
     status: 'confirmed',
     notifyCustomer: true,
   });
+  const normalizedEmail = draft.customerEmail.trim();
+  const emailValid = !normalizedEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
+  const canSubmit = Boolean(
+    draft.customerName.trim()
+      && isValidPhone(draft.customerPhone)
+      && draft.date
+      && draft.time
+      && Number(draft.partySize) >= 1
+      && Number(draft.durationMinutes) >= 15
+      && emailValid
+  );
 
   function updateDraft(field, value) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -540,7 +657,7 @@ function CreateBookingModal({ creating, onClose, onCreate }) {
       source: 'staff_dashboard',
       status: draft.status,
       customerName: draft.customerName.trim() || 'Guest',
-      customerPhone: draft.customerPhone.trim(),
+      customerPhone: toE164(draft.customerPhone),
       customerEmail: draft.customerEmail.trim(),
       partySize: Number(draft.partySize || 1),
       durationMinutes,
@@ -558,7 +675,7 @@ function CreateBookingModal({ creating, onClose, onCreate }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/30" />
       <div className="fixed inset-x-4 top-8 z-50 mx-auto max-h-[calc(100vh-4rem)] max-w-3xl overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-slate-900">
         <form onSubmit={submit} className="space-y-5 p-6">
           <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-4 dark:border-slate-700">
@@ -593,7 +710,8 @@ function CreateBookingModal({ creating, onClose, onCreate }) {
                 required
                 type="tel"
                 value={draft.customerPhone}
-                onChange={(event) => updateDraft('customerPhone', event.target.value)}
+                onChange={(event) => updateDraft('customerPhone', formatPhoneInput(event.target.value))}
+                placeholder="(661) 555-1234"
                 className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
               />
             </Field>
@@ -602,17 +720,27 @@ function CreateBookingModal({ creating, onClose, onCreate }) {
                 type="email"
                 value={draft.customerEmail}
                 onChange={(event) => updateDraft('customerEmail', event.target.value)}
-                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                className={`block w-full rounded-md border bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-1 dark:bg-slate-950 dark:text-slate-100 ${
+                  emailValid
+                    ? 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700'
+                    : 'border-red-300 focus:border-red-500 focus:ring-red-500 dark:border-red-800'
+                }`}
               />
+              {!emailValid ? <p className="text-xs text-red-600 dark:text-red-300">Enter a valid email address.</p> : null}
             </Field>
             <Field label="Area">
-              <input
-                type="text"
+              <select
                 value={draft.requestedAreaName}
                 onChange={(event) => updateDraft('requestedAreaName', event.target.value)}
-                placeholder="Main Dining, Patio, Banquet Room"
                 className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-              />
+              >
+                <option value="">Unassigned</option>
+                {areas.map((area) => (
+                  <option key={area.areaId || area.id || area.name} value={area.name}>
+                    {area.name}
+                  </option>
+                ))}
+              </select>
             </Field>
             <Field label="Date">
               <input
@@ -711,11 +839,11 @@ function CreateBookingModal({ creating, onClose, onCreate }) {
               onClick={onClose}
               className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
-              Cancel
+              Close
             </button>
             <button
               type="submit"
-              disabled={creating}
+              disabled={creating || !canSubmit}
               className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
             >
               {creating ? 'Creating...' : 'Create Booking'}
@@ -727,7 +855,19 @@ function CreateBookingModal({ creating, onClose, onCreate }) {
   );
 }
 
-function BookingDetailDrawer({ booking, updatingId, savingNoteId, savingEditId, onClose, onTransition, onSaveNote, onSaveEdit }) {
+function BookingDetailDrawer({
+  booking,
+  updatingId,
+  savingNoteId,
+  savingEditId,
+  sendingSmsId,
+  areas = [],
+  onClose,
+  onTransition,
+  onSendCustomerSms,
+  onSaveNote,
+  onSaveEdit,
+}) {
   const id = booking.bookingId || booking.id;
   const [noteDraft, setNoteDraft] = useState(booking.internalNotes || '');
   const [editDraft, setEditDraft] = useState(() => buildEditDraft(booking));
@@ -830,12 +970,21 @@ function BookingDetailDrawer({ booking, updatingId, savingNoteId, savingEditId, 
                 />
               </Field>
               <Field label="Assigned Area">
-                <input
-                  type="text"
+                <select
                   value={editDraft.assignedAreaName}
                   onChange={(event) => updateDraft('assignedAreaName', event.target.value)}
                   className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                />
+                >
+                  <option value="">Unassigned</option>
+                  {areas.map((area) => (
+                    <option key={area.areaId || area.id || area.name} value={area.name}>
+                      {area.name}
+                    </option>
+                  ))}
+                  {editDraft.assignedAreaName && !areas.some((area) => area.name === editDraft.assignedAreaName) ? (
+                    <option value={editDraft.assignedAreaName}>{editDraft.assignedAreaName}</option>
+                  ) : null}
+                </select>
               </Field>
               <Field label="Booking Type">
                 <select
@@ -905,12 +1054,14 @@ function BookingDetailDrawer({ booking, updatingId, savingNoteId, savingEditId, 
                   >
                     Call Customer
                   </a>
-                  <a
-                    href={`sms:${phone}`}
+                  <button
+                    type="button"
+                    disabled={sendingSmsId === id}
+                    onClick={() => onSendCustomerSms(booking)}
                     className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-white dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
-                    Text Customer
-                  </a>
+                    {sendingSmsId === id ? 'Sending...' : 'Text Customer'}
+                  </button>
                 </>
               ) : null}
             </div>
@@ -1044,13 +1195,29 @@ function formatLabel(value) {
 }
 
 function formatPhone(phone) {
-  if (!phone) return '-';
-  const digits = String(phone).replace(/\D/g, '');
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return formatPhoneDisplay(phone) || '-';
+}
+
+function buildTransitionConfirmationMessage(confirmAction) {
+  if (!confirmAction) return '';
+  const { booking, action } = confirmAction;
+  const guest = booking?.customer?.name || 'this guest';
+  const date = formatDate(booking?.startAt);
+  const time = formatTime(booking?.startAt);
+
+  if (action === 'decline') {
+    return `Decline the booking request for ${guest} on ${date} at ${time}?\n\nThis changes the booking status and may notify the customer if notifications are enabled.`;
   }
-  if (digits.length === 11 && digits[0] === '1') {
-    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
-  }
-  return phone;
+
+  return `Cancel the booking for ${guest} on ${date} at ${time}?\n\nThis keeps the booking history for audit purposes but removes it from active upcoming reservations.`;
+}
+
+function buildBookingSmsBody(booking) {
+  const guestName = booking.customer?.name || 'there';
+  const date = formatDate(booking.startAt);
+  const time = formatTime(booking.startAt);
+  const area = booking.assignedAreaName || booking.requestedAreaName;
+  const partySize = booking.partySize ? `${booking.partySize} guest${Number(booking.partySize) === 1 ? '' : 's'}` : 'your party';
+  const areaText = area ? ` in ${area}` : '';
+  return `Hi ${guestName}, your reservation for ${partySize}${areaText} is scheduled for ${date} at ${time}. Reply here if anything changes.`;
 }
