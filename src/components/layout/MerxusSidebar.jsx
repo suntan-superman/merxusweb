@@ -1,20 +1,9 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../firebase/config';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import SignOutButton from '../common/SignOutButton';
 
 export default function MerxusSidebar() {
   const { user, userClaims } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 dark:bg-slate-900 dark:border-slate-700 flex flex-col h-screen">
@@ -64,12 +53,11 @@ export default function MerxusSidebar() {
             </p>
           </div>
         </div>
-        <button
-          onClick={handleSignOut}
+        <SignOutButton
           className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800 rounded-md transition-colors"
         >
           Sign Out
-        </button>
+        </SignOutButton>
       </div>
     </aside>
   );

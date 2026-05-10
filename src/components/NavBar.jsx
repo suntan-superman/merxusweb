@@ -1,24 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import CallHQModal from './CallHQModal';
 import ThemeToggleButton from './common/ThemeToggleButton';
+import SignOutButton from './common/SignOutButton';
 
 const NavBar = () => {
   const { user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -46,12 +35,12 @@ const NavBar = () => {
                 <Link to="/restaurant" className="text-gray-700 hover:text-primary-600 transition-colors">
                   Dashboard
                 </Link>
-                <button
-                  onClick={handleSignOut}
+                <SignOutButton
+                  navigateTo="/"
                   className="btn-secondary"
                 >
                   Sign Out
-                </button>
+                </SignOutButton>
               </>
             ) : (
               <>
@@ -116,15 +105,13 @@ const NavBar = () => {
                 >
                   Dashboard
                 </Link>
-                <button
-                  onClick={() => {
-                    handleSignOut();
-                    setIsMenuOpen(false);
-                  }}
+                <SignOutButton
+                  navigateTo="/"
+                  onSignedOut={() => setIsMenuOpen(false)}
                   className="btn-secondary w-full"
                 >
                   Sign Out
-                </button>
+                </SignOutButton>
               </>
             ) : (
               <>

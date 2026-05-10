@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../firebase/config';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchEstateSettings } from '../../api/estate';
 import useTeamAccessPending from '../../hooks/useTeamAccessPending';
 import useSubscriptionPlan, { meetsPlanRequirement } from '../../hooks/useSubscriptionPlan';
 import PlanTierBadge from '../billing/PlanTierBadge';
+import SignOutButton from '../common/SignOutButton';
 
 const PRO_SECTION_STORAGE_KEY = 'estateSidebar.proExpanded';
 const ELITE_SECTION_STORAGE_KEY = 'estateSidebar.eliteExpanded';
 
 export default function EstateSidebar() {
   const { user, userClaims } = useAuth();
-  const navigate = useNavigate();
   const [agentName, setAgentName] = useState(null);
 
   const agentId = userClaims?.agentId;
@@ -35,15 +33,6 @@ export default function EstateSidebar() {
 
     fetchAgentName();
   }, [agentId]);
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
 
   const isOwner = userClaims?.role === 'owner';
   const isManager = userClaims?.role === 'manager';
@@ -225,12 +214,11 @@ export default function EstateSidebar() {
             </p>
           </div>
         </div>
-        <button
-          onClick={handleSignOut}
+        <SignOutButton
           className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800 rounded-md transition-colors"
         >
           Sign Out
-        </button>
+        </SignOutButton>
       </div>
     </aside>
   );

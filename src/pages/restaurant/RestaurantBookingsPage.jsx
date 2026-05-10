@@ -434,7 +434,7 @@ function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }
 
   return (
     <div className={expanded
-      ? 'fixed inset-0 z-[70] flex flex-col bg-slate-50 dark:bg-slate-950'
+      ? 'fixed inset-0 z-[9999] flex flex-col bg-slate-50 dark:bg-slate-950'
       : 'overflow-hidden rounded-lg border border-gray-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900'}
     >
       <div className={expanded
