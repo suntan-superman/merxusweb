@@ -137,7 +137,7 @@ export default function QuickStartSidebar({
   }
 
   return (
-    <aside className="hidden h-screen w-64 flex-col border-r border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900 md:flex">
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900 md:flex">
       <div className="flex-shrink-0 border-b border-gray-200 px-5 py-5 dark:border-slate-700">
         <NavLink to={homePath} className="block">
           <div className="flex items-center gap-2">
@@ -153,7 +153,7 @@ export default function QuickStartSidebar({
         </NavLink>
       </div>
 
-      <nav className="flex-1 space-y-2 overflow-y-auto px-3 py-4">
+      <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-4">
         <QuickStartNav
           collapsed={Boolean(prefs.collapsedGroups?.quick_start)}
           editMode={editQuickStart}
@@ -259,7 +259,7 @@ function QuickStartNav({
         </button>
       </div>
       {!collapsed ? (
-        <div className="mt-1 space-y-1">
+        <div className="mt-1 max-h-72 space-y-1 overflow-y-auto pr-1">
           {!loaded ? (
             <p className="px-2 py-2 text-xs text-emerald-700 dark:text-emerald-200">Loading shortcuts...</p>
           ) : items.length === 0 ? (
