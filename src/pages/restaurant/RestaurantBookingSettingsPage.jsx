@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS = {
   largePartyThreshold: 8,
   privateEventThreshold: 15,
   smsConfirmationsEnabled: true,
+  emailConfirmationsEnabled: true,
   smsRemindersEnabled: true,
   reminderHoursBefore: 24,
   staffNotificationChannels: {
@@ -160,9 +161,10 @@ export default function RestaurantBookingSettingsPage() {
       </section>
 
       <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Customer SMS</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Customer Confirmations</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <ToggleField label="Send confirmation SMS" checked={settings.smsConfirmationsEnabled !== false} onChange={(checked) => patch({ smsConfirmationsEnabled: checked })} />
+          <ToggleField label="Send confirmation email" checked={settings.emailConfirmationsEnabled !== false} onChange={(checked) => patch({ emailConfirmationsEnabled: checked })} />
           <ToggleField label="Send reminder SMS" checked={settings.smsRemindersEnabled !== false} onChange={(checked) => patch({ smsRemindersEnabled: checked })} />
           <NumberField label="Reminder hours before booking" value={settings.reminderHoursBefore} onChange={(value) => patch({ reminderHoursBefore: value })} min="1" />
         </div>

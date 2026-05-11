@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { updateReservationStatus } from '../../api/reservations';
 import { useFirestoreCollection } from '../../hooks/useFirestoreListener';
 import { useNewItemNotifications } from '../../hooks/useNotifications';
@@ -132,6 +132,24 @@ export default function ReservationsPage() {
           <p className="text-sm text-gray-600 mt-1">
             Manage reservations from AI phone assistant
           </p>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="font-semibold">New booking workflow available</p>
+            <p className="mt-1 text-emerald-800">
+              Restaurant Bookings is the tenant-scoped workflow for AI, SMS, staff-created reservations,
+              customer notifications, conflict review, and the booking calendar.
+            </p>
+          </div>
+          <Link
+            to="/restaurant/bookings"
+            className="inline-flex shrink-0 items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            Open Bookings
+          </Link>
         </div>
       </div>
 

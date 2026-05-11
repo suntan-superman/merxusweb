@@ -45,6 +45,24 @@ service cloud.firestore {
               request.auth.token.role == 'merxus_support' ||
               request.auth.token.role == 'super_admin');
     }
+
+    // User-owned web preferences.
+    // Used by the Merxus web Quick Start navigation/sidebar.
+    match /users/{userId}/preferences/{docId} {
+      allow read, write: if isAuthenticated()
+        && request.auth.uid == userId
+        && docId in ['navigation'];
+    }
+
+    // User-owned tenant preferences.
+    // Used by the Merxus mobile Attention Center.
+    // Tenant IDs can be restaurantId, officeId, agentId, or the normalized tenantId,
+    // so ownership is enforced by userId and auth uid rather than by tenant claim.
+    match /tenants/{tenantId}/users/{userId}/preferences/{docId} {
+      allow read, write: if isAuthenticated()
+        && request.auth.uid == userId
+        && docId in ['mobileHome'];
+    }
     
     // Restaurant data - ALL subcollections under a restaurant
     // Uses recursive wildcard to match any depth
