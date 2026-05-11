@@ -70,8 +70,8 @@ const BillingPage = () => {
 
   const PLANS = {
     restaurant: {
-      standard: {
-        name: 'Standard',
+      basic: {
+        name: 'Basic',
         price: pricing?.subscription?.unitAmount ? pricing.subscription.unitAmount / 100 : 299,
         setup: pricing?.onboarding?.unitAmount ? pricing.onboarding.unitAmount / 100 : 499,
         features: [
@@ -85,8 +85,8 @@ const BillingPage = () => {
       },
     },
     voice: {
-      standard: {
-        name: 'Standard',
+      basic: {
+        name: 'Basic',
         price: pricing?.subscription?.unitAmount ? pricing.subscription.unitAmount / 100 : 99,
         setup: pricing?.onboarding?.unitAmount ? pricing.onboarding.unitAmount / 100 : 149,
         features: [
@@ -99,8 +99,8 @@ const BillingPage = () => {
       },
     },
     real_estate: {
-      standard: {
-        name: 'Standard',
+      basic: {
+        name: 'Basic',
         price: pricing?.subscription?.unitAmount ? pricing.subscription.unitAmount / 100 : 99,
         setup: pricing?.onboarding?.unitAmount ? pricing.onboarding.unitAmount / 100 : 199,
         features: [
@@ -260,6 +260,8 @@ const BillingPage = () => {
   const isTrialing = subscription?.status === 'trial';
   const isActive = subscription?.status === 'active';
   const currentPlan = subscription?.plan;
+  const currentPlanKey = subscription?.tier === 'base' ? 'basic' : subscription?.tier || null;
+  const currentPlanLabel = subscription?.tierLabel || (currentPlanKey ? plans[currentPlanKey]?.name : null) || 'Basic';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8">
@@ -332,9 +334,9 @@ const BillingPage = () => {
                         </>
                       ) : isActive ? (
                         <>
-                          <span className="font-medium text-green-600 capitalize">{currentPlan} Plan</span>
+                          <span className="font-medium text-green-600 capitalize">{currentPlanLabel} Plan</span>
                           <span className="text-sm text-gray-500 dark:text-slate-400 ml-2">
-                            ${plans[currentPlan]?.price}/month
+                            ${plans[currentPlanKey]?.price}/month
                           </span>
                         </>
                       ) : (
@@ -419,7 +421,7 @@ const BillingPage = () => {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-6">Choose Your Plan</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(plans).map(([planKey, plan]) => {
-              const isCurrentPlan = currentPlan === planKey && isActive;
+              const isCurrentPlan = currentPlanKey === planKey && isActive;
               
               return (
                 <div

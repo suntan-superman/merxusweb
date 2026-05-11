@@ -6,7 +6,7 @@ function badgeClass(tier) {
 
 export default function PlanTierBadge({
   tier = 'base',
-  label = 'Base',
+  label = 'Basic',
   className = '',
 }) {
   return (

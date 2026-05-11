@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getBillingPricing } from '../api/billing';
 
+const ELEVATED_PLAN_TIERS_ENABLED = import.meta.env.VITE_ELEVATED_PLAN_TIERS_ENABLED === 'true';
+
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -197,15 +199,21 @@ export default function Pricing() {
 
   // Get plans based on selected tenant type
   const getPlans = () => {
+    const onlyBasic = (plans) => (
+      ELEVATED_PLAN_TIERS_ENABLED
+        ? plans
+        : plans.filter((plan) => String(plan.name || '').toLowerCase() === 'basic')
+    );
+
     switch (selectedTenantType) {
       case 'real_estate':
-        return realEstatePlans;
+        return onlyBasic(realEstatePlans);
       case 'voice':
-        return voicePlans;
+        return onlyBasic(voicePlans);
       case 'restaurant':
-        return restaurantPlans;
+        return onlyBasic(restaurantPlans);
       default:
-        return restaurantPlans; // Default to restaurant
+        return onlyBasic(restaurantPlans); // Default to restaurant
     }
   };
 

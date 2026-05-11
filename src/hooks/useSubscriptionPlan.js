@@ -8,12 +8,15 @@ export const PLAN_ORDER = {
   elite: 2,
 };
 
+const ELEVATED_PLAN_TIERS_ENABLED = import.meta.env.VITE_ELEVATED_PLAN_TIERS_ENABLED === 'true';
+
 function normalizeSubscriptionTier(plan) {
   const normalized = String(plan || '').trim().toLowerCase();
 
   if (!normalized) return 'base';
+  if (!ELEVATED_PLAN_TIERS_ENABLED) return 'base';
   if (normalized.includes('elite') || normalized.includes('enterprise')) return 'elite';
-  if (normalized.includes('professional') || /\bpro\b/.test(normalized)) return 'professional';
+  if (normalized.includes('professional') || /(^|[^a-z0-9])pro($|[^a-z0-9])/.test(normalized)) return 'professional';
   if (normalized.includes('standard') || normalized.includes('basic') || normalized.includes('starter') || normalized.includes('base')) return 'base';
   return 'base';
 }
@@ -21,7 +24,7 @@ function normalizeSubscriptionTier(plan) {
 export function getTierLabel(tier) {
   if (tier === 'elite') return 'Elite';
   if (tier === 'professional') return 'Professional';
-  return 'Base';
+  return 'Basic';
 }
 
 export function meetsPlanRequirement(currentTier, requiredTier) {
@@ -37,12 +40,12 @@ function getEntitlements(tier) {
 }
 
 function buildSummary(subscription = {}) {
-  const tier = subscription?.tier || normalizeSubscriptionTier(subscription?.plan);
+  const tier = normalizeSubscriptionTier(subscription?.tier || subscription?.plan);
   return {
     ...subscription,
     tier,
-    tierLabel: subscription?.tierLabel || getTierLabel(tier),
-    entitlements: subscription?.entitlements || getEntitlements(tier),
+    tierLabel: getTierLabel(tier),
+    entitlements: getEntitlements(tier),
   };
 }
 
@@ -123,7 +126,7 @@ export default function useSubscriptionPlan({ enabled = true } = {}) {
   return {
     subscription,
     tier: subscription?.tier || 'base',
-    tierLabel: subscription?.tierLabel || 'Base',
+    tierLabel: subscription?.tierLabel || 'Basic',
     entitlements,
     loading,
     error,
