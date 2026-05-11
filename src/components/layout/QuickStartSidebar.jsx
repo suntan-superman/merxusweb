@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -78,6 +78,23 @@ const ICONS = {
   Zap,
 };
 
+const SIDEBAR_WIDTH_STORAGE_KEY = 'merxus.quickStartSidebar.width';
+const MIN_SIDEBAR_WIDTH = 232;
+const MAX_SIDEBAR_WIDTH = 360;
+const DEFAULT_SIDEBAR_WIDTH = 256;
+
+function clampSidebarWidth(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return DEFAULT_SIDEBAR_WIDTH;
+  return Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, numericValue));
+}
+
+function getSavedSidebarWidth() {
+  if (typeof window === 'undefined') return DEFAULT_SIDEBAR_WIDTH;
+  const saved = window.localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
+  return clampSidebarWidth(saved);
+}
+
 export default function QuickStartSidebar({
   user,
   userClaims,
@@ -95,6 +112,7 @@ export default function QuickStartSidebar({
   mobile = false,
 }) {
   const location = useLocation();
+  const sidebarRef = useRef(null);
   const role = userClaims?.role || 'staff';
   const userId = user?.uid;
   const availableItems = useMemo(() => getNavigationItems({ tenantType, role }), [role, tenantType]);
@@ -107,6 +125,8 @@ export default function QuickStartSidebar({
   const [prefs, setPrefs] = useState(defaults);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [editQuickStart, setEditQuickStart] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(getSavedSidebarWidth);
+  const [resizing, setResizing] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -204,13 +224,46 @@ export default function QuickStartSidebar({
     return availableItems.some((item) => item.groupId === groupId && location.pathname === item.path);
   }
 
+  useEffect(() => {
+    if (mobile || !resizing) return undefined;
+
+    function handleMouseMove(event) {
+      const left = sidebarRef.current?.getBoundingClientRect().left || 0;
+      setSidebarWidth(clampSidebarWidth(event.clientX - left));
+    }
+
+    function handleMouseUp() {
+      setResizing(false);
+    }
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [mobile, resizing]);
+
+  useEffect(() => {
+    if (mobile || typeof window === 'undefined') return;
+    window.localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(sidebarWidth));
+  }, [mobile, sidebarWidth]);
+
   return (
-    <aside className={mobile
+    <aside
+      ref={sidebarRef}
+      style={mobile ? undefined : { width: sidebarWidth }}
+      className={mobile
       ? 'flex h-full min-h-0 w-full flex-col bg-white dark:bg-slate-900'
-      : 'hidden h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900 md:flex'}
+      : 'relative hidden h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900 md:flex'}
     >
       <div className="flex-shrink-0 border-b border-gray-200 px-5 py-5 dark:border-slate-700">
-        <NavLink to={homePath} className="block">
+        <NavLink to={homePath} className="block" title={tenantName} aria-label={`${tenantName} home`}>
           <div className="flex items-center gap-2">
             <span className="text-2xl">{tenantIcon}</span>
             <h1 className="truncate text-xl font-bold text-gray-900 dark:text-slate-100">
@@ -290,6 +343,22 @@ export default function QuickStartSidebar({
           Sign Out
         </SignOutButton>
       </div>
+      {!mobile ? (
+        <button
+          type="button"
+          aria-label="Resize navigation menu"
+          title="Resize navigation menu"
+          onMouseDown={(event) => {
+            event.preventDefault();
+            setResizing(true);
+          }}
+          className={`absolute right-0 top-0 h-full w-2 translate-x-1 cursor-col-resize border-r-2 transition-colors ${
+            resizing
+              ? 'border-emerald-500 bg-emerald-500/10'
+              : 'border-transparent hover:border-emerald-400 hover:bg-emerald-500/5'
+          }`}
+        />
+      ) : null}
     </aside>
   );
 }
@@ -315,6 +384,7 @@ function QuickStartNav({
           type="button"
           onClick={onToggle}
           aria-expanded={!collapsed}
+          title="Quick Start"
           className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wide text-emerald-800 hover:bg-emerald-100 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
         >
           <span>★</span>
@@ -324,6 +394,7 @@ function QuickStartNav({
         <button
           type="button"
           onClick={onEdit}
+          title={editMode ? 'Finish editing Quick Start' : 'Edit Quick Start'}
           className="rounded-md px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
         >
           {editMode ? 'Done' : 'Edit'}
@@ -366,6 +437,7 @@ function NavGroup({ group, collapsed, activeInside, onToggle, children }) {
         type="button"
         onClick={onToggle}
         aria-expanded={!collapsed}
+        title={group.summary ? `${group.label}: ${group.summary}` : group.label}
         className={`w-full rounded-md px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide transition-colors ${
           activeInside
             ? 'bg-green-50 text-green-700 dark:bg-emerald-900/30 dark:text-emerald-200'
@@ -405,6 +477,11 @@ function NavItemRow({
   const planBadgeTier = item.requiredPlan || 'professional';
   const planBadgeLabel = item.requiredPlan === 'elite' ? 'Elite' : item.requiredPlan === 'professional' ? 'Pro' : '';
   const Icon = ICONS[item.icon] || LayoutDashboard;
+  const navTooltip = [
+    item.label,
+    locked && planBadgeLabel ? `${planBadgeLabel} plan required` : '',
+    attentionCount > 0 ? `${attentionCount} item${attentionCount === 1 ? '' : 's'} need attention` : '',
+  ].filter(Boolean).join(' - ');
   return (
     <div className="group flex items-center gap-1">
       {editMode ? (
@@ -431,6 +508,8 @@ function NavItemRow({
       ) : null}
       <NavLink
         to={to}
+        title={navTooltip}
+        aria-label={navTooltip}
         className={({ isActive }) => {
           const base = `min-w-0 flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${compact ? 'py-1.5' : ''}`;
           if (attentionCount > 0) {
