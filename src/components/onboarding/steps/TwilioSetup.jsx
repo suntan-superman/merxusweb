@@ -75,6 +75,24 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
         setLoadingUnassigned(true);
         console.log('🔍 Fetching unassigned numbers from Twilio...');
         const result = await listUnassignedNumbers();
+        const diagnostics = result?.diagnostics || {};
+        const ownedNumbers = diagnostics.ownedNumbers || [];
+        const assignedNumbers = diagnostics.assignedNumbers || [];
+        const counts = diagnostics.counts || {};
+
+        console.groupCollapsed(
+          `📞 [TwilioSetup] Provisioning inventory: ${counts.owned ?? ownedNumbers.length} owned, ${counts.unassigned ?? (result.numbers || []).length} unassigned`
+        );
+        console.log('Counts:', counts);
+        console.log('Assigned/reserved normalized numbers:', assignedNumbers);
+        if (ownedNumbers.length > 0) {
+          console.table(ownedNumbers);
+        } else {
+          console.log('No Twilio-owned numbers were returned by the provisioning endpoint.');
+        }
+        console.table(result.numbers || []);
+        console.groupEnd();
+
         console.log('📞 Unassigned numbers:', result);
         setUnassignedNumbers((result.numbers || []).filter((item) => !isReservedTwilioPhoneNumber(item.phoneNumber)));
       } catch (error) {
