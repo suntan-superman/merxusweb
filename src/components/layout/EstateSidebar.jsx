@@ -5,7 +5,7 @@ import useTeamAccessPending from '../../hooks/useTeamAccessPending';
 import useSubscriptionPlan, { meetsPlanRequirement } from '../../hooks/useSubscriptionPlan';
 import QuickStartSidebar from './QuickStartSidebar';
 
-export default function EstateSidebar() {
+export default function EstateSidebar({ mobile = false }) {
   const { user, userClaims } = useAuth();
   const [agentName, setAgentName] = useState(null);
   const agentId = userClaims?.agentId;
@@ -47,6 +47,7 @@ export default function EstateSidebar() {
       attentionCounts={{
         estate_team_access: teamPendingCount,
       }}
+      mobile={mobile}
     />
   );
 }

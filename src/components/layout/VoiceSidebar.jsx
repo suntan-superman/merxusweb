@@ -5,7 +5,7 @@ import useTeamAccessPending from '../../hooks/useTeamAccessPending';
 import useSubscriptionPlan, { meetsPlanRequirement } from '../../hooks/useSubscriptionPlan';
 import QuickStartSidebar from './QuickStartSidebar';
 
-export default function VoiceSidebar() {
+export default function VoiceSidebar({ mobile = false }) {
   const { user, userClaims } = useAuth();
   const [officeName, setOfficeName] = useState(null);
   const officeId = userClaims?.officeId;
@@ -47,6 +47,7 @@ export default function VoiceSidebar() {
       attentionCounts={{
         voice_team_access: teamPendingCount,
       }}
+      mobile={mobile}
     />
   );
 }

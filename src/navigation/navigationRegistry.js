@@ -70,6 +70,19 @@ export const NAV_ITEMS = [
   { id: 'estate_feedback', tenantType: 'real_estate', groupId: 'elite', label: 'Feedback', path: '/estate/feedback', icon: '🗣️', sortOrder: 20, requiredPlan: 'elite' },
   { id: 'estate_automations', tenantType: 'real_estate', groupId: 'elite', label: 'Automations', path: '/estate/automations', icon: '⚡', sortOrder: 30, requiredPlan: 'elite', defaultQuickStart: true },
   { id: 'estate_cx_analytics', tenantType: 'real_estate', groupId: 'elite', label: 'CX Analytics', path: '/estate/cx-analytics', icon: '📈', sortOrder: 40, requiredPlan: 'elite' },
+
+  // Merxus admin
+  { id: 'merxus_dashboard', tenantType: 'merxus', groupId: 'core', label: 'Dashboard', path: '/merxus', icon: '📊', sortOrder: 10, defaultQuickStart: true },
+  { id: 'merxus_tenants', tenantType: 'merxus', groupId: 'core', label: 'All Tenants', path: '/merxus/tenants', icon: '👥', sortOrder: 20, defaultQuickStart: true },
+  { id: 'merxus_restaurants', tenantType: 'merxus', groupId: 'core', label: 'Restaurants', path: '/merxus/restaurants', icon: '🏪', sortOrder: 30 },
+  { id: 'merxus_voices', tenantType: 'merxus', groupId: 'core', label: 'Voice Services', path: '/merxus/voices', icon: '📞', sortOrder: 40 },
+  { id: 'merxus_real_estate', tenantType: 'merxus', groupId: 'core', label: 'Real Estate', path: '/merxus/real-estate', icon: '🏠', sortOrder: 50 },
+  { id: 'merxus_analytics', tenantType: 'merxus', groupId: 'core', label: 'Analytics', path: '/merxus/analytics', icon: '📈', sortOrder: 60, defaultQuickStart: true },
+  { id: 'merxus_ops_audit', tenantType: 'merxus', groupId: 'core', label: 'Ops Audit', path: '/merxus/ops-audit', icon: '🛠️', sortOrder: 70, defaultQuickStart: true },
+  { id: 'merxus_readiness', tenantType: 'merxus', groupId: 'core', label: 'Readiness', path: '/merxus/production-readiness', icon: '🧪', sortOrder: 80, defaultQuickStart: true },
+  { id: 'merxus_team_access', tenantType: 'merxus', groupId: 'admin', label: 'Teams & Access', path: '/merxus/users', icon: '🔐', sortOrder: 10, allowedRoles: ['super_admin'], defaultQuickStart: true },
+  { id: 'merxus_setup_wizard', tenantType: 'merxus', groupId: 'admin', label: 'Setup Wizard', path: '/merxus/setup-wizard', icon: '🚀', sortOrder: 20, allowedRoles: ['super_admin', 'merxus_admin'] },
+  { id: 'merxus_system_settings', tenantType: 'merxus', groupId: 'admin', label: 'System Settings', path: '/merxus/settings', icon: '⚙️', sortOrder: 30, allowedRoles: ['merxus_admin'] },
 ];
 
 export function getNavigationItems({ tenantType, role = 'staff', includeLocked = true } = {}) {

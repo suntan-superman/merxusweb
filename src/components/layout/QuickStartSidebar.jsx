@@ -25,6 +25,7 @@ export default function QuickStartSidebar({
   professionalUnlocked,
   eliteUnlocked,
   attentionCounts = {},
+  mobile = false,
 }) {
   const location = useLocation();
   const role = userClaims?.role || 'staff';
@@ -137,7 +138,10 @@ export default function QuickStartSidebar({
   }
 
   return (
-    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900 md:flex">
+    <aside className={mobile
+      ? 'flex h-full min-h-0 w-full flex-col bg-white dark:bg-slate-900'
+      : 'hidden h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900 md:flex'}
+    >
       <div className="flex-shrink-0 border-b border-gray-200 px-5 py-5 dark:border-slate-700">
         <NavLink to={homePath} className="block">
           <div className="flex items-center gap-2">
@@ -325,6 +329,7 @@ function NavItemRow({
   attentionCount = 0,
   onAdd,
   onRemove,
+  onMoveTop,
   onMoveUp,
   onMoveDown,
   moveUpDisabled,

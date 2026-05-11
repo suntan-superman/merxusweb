@@ -27,3 +27,16 @@ test('getNavigationGroups returns sorted stable groups with Elite above admin', 
   assert.deepEqual(groups.map((group) => group.id), ['core', 'pro', 'elite', 'admin']);
   assert.equal(groups.find((group) => group.id === 'elite')?.summary, 'Includes Pro');
 });
+
+test('getNavigationItems includes role-scoped Merxus admin items', () => {
+  const superAdminItems = getNavigationItems({ tenantType: 'merxus', role: 'super_admin' });
+  const merxusAdminItems = getNavigationItems({ tenantType: 'merxus', role: 'merxus_admin' });
+
+  assert.ok(superAdminItems.some((item) => item.id === 'merxus_team_access'));
+  assert.ok(superAdminItems.some((item) => item.id === 'merxus_setup_wizard'));
+  assert.equal(superAdminItems.some((item) => item.id === 'merxus_system_settings'), false);
+
+  assert.ok(merxusAdminItems.some((item) => item.id === 'merxus_setup_wizard'));
+  assert.ok(merxusAdminItems.some((item) => item.id === 'merxus_system_settings'));
+  assert.equal(merxusAdminItems.some((item) => item.id === 'merxus_team_access'), false);
+});

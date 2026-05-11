@@ -5,7 +5,7 @@ import useTeamAccessPending from '../../hooks/useTeamAccessPending';
 import useSubscriptionPlan, { meetsPlanRequirement } from '../../hooks/useSubscriptionPlan';
 import QuickStartSidebar from './QuickStartSidebar';
 
-export default function Sidebar() {
+export default function Sidebar({ mobile = false }) {
   const { user, userClaims } = useAuth();
   const [restaurantName, setRestaurantName] = useState(null);
   const restaurantId = userClaims?.restaurantId;
@@ -47,6 +47,7 @@ export default function Sidebar() {
       attentionCounts={{
         restaurant_team_access: teamPendingCount,
       }}
+      mobile={mobile}
     />
   );
 }
