@@ -1,6 +1,39 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import {
+  Bell,
+  BookOpen,
+  Brain,
+  CalendarDays,
+  ChartColumn,
+  ClipboardList,
+  ContactRound,
+  CreditCard,
+  FlaskConical,
+  GitMerge,
+  Home,
+  LayoutDashboard,
+  MapPinned,
+  MessageCircle,
+  MessagesSquare,
+  Package,
+  Phone,
+  Route,
+  Rocket,
+  Satellite,
+  Settings,
+  ShieldCheck,
+  Star,
+  Store,
+  TrendingUp,
+  UserCog,
+  Users,
+  Utensils,
+  Voicemail,
+  Wrench,
+  Zap,
+} from 'lucide-react';
 import { getNavigationGroups, getNavigationItems } from '../../navigation/navigationRegistry';
 import {
   buildDefaultNavigationPreferences,
@@ -10,6 +43,40 @@ import {
 } from '../../services/navigationPreferencesService';
 import PlanTierBadge from '../billing/PlanTierBadge';
 import SignOutButton from '../common/SignOutButton';
+
+const ICONS = {
+  Bell,
+  BookOpen,
+  Brain,
+  CalendarDays,
+  ChartColumn,
+  ClipboardList,
+  ContactRound,
+  CreditCard,
+  FlaskConical,
+  GitMerge,
+  Home,
+  LayoutDashboard,
+  MapPinned,
+  MessageCircle,
+  MessagesSquare,
+  Package,
+  Phone,
+  Route,
+  Rocket,
+  Satellite,
+  Settings,
+  ShieldCheck,
+  Star,
+  Store,
+  TrendingUp,
+  UserCog,
+  Users,
+  Utensils,
+  Voicemail,
+  Wrench,
+  Zap,
+};
 
 export default function QuickStartSidebar({
   user,
@@ -337,6 +404,7 @@ function NavItemRow({
 }) {
   const planBadgeTier = item.requiredPlan || 'professional';
   const planBadgeLabel = item.requiredPlan === 'elite' ? 'Elite' : item.requiredPlan === 'professional' ? 'Pro' : '';
+  const Icon = ICONS[item.icon] || LayoutDashboard;
   return (
     <div className="group flex items-center gap-1">
       {editMode ? (
@@ -387,7 +455,7 @@ function NavItemRow({
         }}
       >
         <span className="flex min-w-0 items-center gap-3">
-          <span className="text-lg">{item.icon}</span>
+          <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="truncate">{item.label}</span>
         </span>
         {attentionCount > 0 ? (

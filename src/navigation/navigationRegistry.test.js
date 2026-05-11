@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getNavigationGroups, getNavigationItems } from './navigationRegistry.js';
+import { getNavigationGroups, getNavigationItems, NAV_ITEMS } from './navigationRegistry.js';
 
 test('getNavigationItems filters by tenant type and role', () => {
   const ownerItems = getNavigationItems({ tenantType: 'restaurant', role: 'owner' });
@@ -39,4 +39,10 @@ test('getNavigationItems includes role-scoped Merxus admin items', () => {
   assert.ok(merxusAdminItems.some((item) => item.id === 'merxus_setup_wizard'));
   assert.ok(merxusAdminItems.some((item) => item.id === 'merxus_system_settings'));
   assert.equal(merxusAdminItems.some((item) => item.id === 'merxus_team_access'), false);
+});
+
+test('navigation icons use named app icons instead of emoji-only values', () => {
+  for (const item of NAV_ITEMS) {
+    assert.match(item.icon, /^[A-Za-z][A-Za-z0-9]*$/, `${item.id} should use a named icon`);
+  }
 });
