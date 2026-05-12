@@ -24,7 +24,8 @@ const FILTERS = [
   { key: 'all', label: 'All' },
 ];
 
-const AUTO_REFRESH_STORAGE_KEY = 'merxus.restaurantBookings.autoRefreshSeconds';
+const AUTO_REFRESH_STORAGE_KEY = 'merxus.restaurantBookings.autoRefreshSeconds.v2';
+const DEFAULT_AUTO_REFRESH_SECONDS = 120;
 const AUTO_REFRESH_OPTIONS = [
   { value: 0, label: 'Off' },
   { value: 60, label: '1 min' },
@@ -132,6 +133,21 @@ export default function RestaurantBookingsPage() {
     }, autoRefreshSeconds * 1000);
     return () => window.clearInterval(timer);
   }, [autoRefreshSeconds, loadBookings]);
+
+  useEffect(() => {
+    function refreshWhenVisible() {
+      if (document.visibilityState === 'visible') {
+        loadBookings({ silent: true });
+      }
+    }
+
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [loadBookings]);
 
   async function handleTransition(booking, action) {
     const bookingId = booking.bookingId || booking.id;
@@ -505,12 +521,13 @@ function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }
     const status = formatLabel(booking.status || 'requested');
     const phone = formatPhone(booking.customer?.phone);
     const area = booking.assignedAreaName || booking.requestedAreaName || 'Unassigned';
+    const origin = formatBookingSource(booking.source);
     return {
       Id: booking.bookingId || booking.id,
       Subject: `${booking.customer?.name || 'Guest'} (${booking.partySize || 0})`,
       StartTime: start,
       EndTime: end,
-      Description: `${status} | ${area}${phone && phone !== '-' ? ` | ${phone}` : ''}`,
+      Description: `${status} | ${area} | ${origin}${phone && phone !== '-' ? ` | ${phone}` : ''}`,
       Booking: booking,
       CategoryColor: booking.status === 'confirmed' ? '#059669' : booking.status === 'pending_review' ? '#d97706' : '#2563eb',
     };
@@ -620,6 +637,7 @@ function BookingsTable({ bookings, selectedId, updatingId, sendingSmsId, onSelec
             <th className="px-4 py-3">Guest</th>
             <th className="px-4 py-3">When</th>
             <th className="px-4 py-3">Area</th>
+            <th className="px-4 py-3">Origin</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Conflict</th>
             <th className="px-4 py-3 text-right">Actions</th>
@@ -646,6 +664,9 @@ function BookingsTable({ bookings, selectedId, updatingId, sendingSmsId, onSelec
                 <td className="px-4 py-3 text-gray-700 dark:text-slate-300">
                   <div>{booking.assignedAreaName || booking.requestedAreaName || 'Unassigned'}</div>
                   <div className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">{booking.partySize || 0} guests</div>
+                </td>
+                <td className="px-4 py-3 text-gray-700 dark:text-slate-300">
+                  <SourceBadge source={booking.source} />
                 </td>
                 <td className="px-4 py-3"><StatusBadge status={booking.status} /></td>
                 <td className="px-4 py-3 text-gray-700 dark:text-slate-300">
@@ -1045,7 +1066,7 @@ function BookingDetailDrawer({
             <DetailRow label="Time" value={formatTime(booking.startAt)} />
             <DetailRow label="Area" value={booking.assignedAreaName || booking.requestedAreaName} />
             <DetailRow label="Type" value={formatLabel(booking.bookingType)} />
-            <DetailRow label="Source" value={formatLabel(booking.source)} />
+            <DetailRow label="Origin" value={formatBookingSource(booking.source)} />
           </DetailGroup>
 
           <DetailGroup title="Edit Booking">
@@ -1241,10 +1262,20 @@ function StatusBadge({ status }) {
   );
 }
 
+function SourceBadge({ source }) {
+  return (
+    <span className="inline-flex rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+      {formatBookingSource(source)}
+    </span>
+  );
+}
+
 function readAutoRefreshSeconds() {
-  if (typeof window === 'undefined') return 180;
-  const stored = Number(window.localStorage.getItem(AUTO_REFRESH_STORAGE_KEY));
-  return AUTO_REFRESH_OPTIONS.some((option) => option.value === stored) ? stored : 180;
+  if (typeof window === 'undefined') return DEFAULT_AUTO_REFRESH_SECONDS;
+  const raw = window.localStorage.getItem(AUTO_REFRESH_STORAGE_KEY);
+  if (raw === null) return DEFAULT_AUTO_REFRESH_SECONDS;
+  const stored = Number(raw);
+  return AUTO_REFRESH_OPTIONS.some((option) => option.value === stored) ? stored : DEFAULT_AUTO_REFRESH_SECONDS;
 }
 
 function formatAutoRefreshInterval(seconds) {
@@ -1366,6 +1397,16 @@ function formatLabel(value) {
   return String(value || '')
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatBookingSource(source) {
+  const normalized = String(source || '').toLowerCase();
+  if (['web_form', 'public_venue', 'legends_website', 'website'].includes(normalized)) return 'Legends website';
+  if (['voice_ai', 'phone_ai', 'ai_phone'].includes(normalized)) return 'Merxus AI phone';
+  if (['staff_dashboard', 'merxus_web', 'admin_dashboard'].includes(normalized)) return 'Merxus AI web';
+  if (['sms_ai', 'sms'].includes(normalized)) return 'Merxus AI SMS';
+  if (normalized === 'manual') return 'Manual entry';
+  return formatLabel(source || 'Unknown');
 }
 
 function formatPhone(phone) {
