@@ -62,7 +62,8 @@ export default function RestaurantBookingsPage() {
     setError('');
     setNotice('');
     try {
-      const rows = await fetchRestaurantBookings({ limit: 250 });
+      const { startDate, endDate } = getBookingLoadWindow();
+      const rows = await fetchRestaurantBookings({ startDate, endDate, limit: 500 });
       setBookings(rows);
       try {
         setAreas(await fetchRestaurantBookingAreas());
@@ -421,12 +422,14 @@ function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }
     const start = toDate(booking.startAt);
     const end = toDate(booking.endAt) || (start ? new Date(start.getTime() + Number(booking.durationMinutes || 90) * 60000) : null);
     const status = formatLabel(booking.status || 'requested');
+    const phone = formatPhone(booking.customer?.phone);
+    const area = booking.assignedAreaName || booking.requestedAreaName || 'Unassigned';
     return {
       Id: booking.bookingId || booking.id,
       Subject: `${booking.customer?.name || 'Guest'} (${booking.partySize || 0})`,
       StartTime: start,
       EndTime: end,
-      Description: `${status} | ${booking.assignedAreaName || booking.requestedAreaName || 'Unassigned'}`,
+      Description: `${status} | ${area}${phone && phone !== '-' ? ` | ${phone}` : ''}`,
       Booking: booking,
       CategoryColor: booking.status === 'confirmed' ? '#059669' : booking.status === 'pending_review' ? '#d97706' : '#2563eb',
     };
@@ -1156,6 +1159,20 @@ function StatusBadge({ status }) {
 function dateValue(value) {
   const date = toDate(value);
   return date ? date.getTime() : 0;
+}
+
+function getBookingLoadWindow(now = new Date()) {
+  const start = new Date(now);
+  start.setDate(1);
+  start.setMonth(start.getMonth() - 1);
+
+  const end = new Date(now);
+  end.setFullYear(end.getFullYear() + 1);
+
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  };
 }
 
 function toDate(value) {
