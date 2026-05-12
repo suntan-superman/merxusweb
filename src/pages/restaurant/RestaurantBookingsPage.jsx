@@ -697,6 +697,8 @@ function CreateBookingModal({ creating, areas = [], onClose, onCreate }) {
     event.preventDefault();
     const startAt = new Date(`${draft.date}T${draft.time}:00`);
     const durationMinutes = Number(draft.durationMinutes || 90);
+    const selectedArea = findAreaByName(areas, draft.requestedAreaName);
+    const selectedAreaId = selectedArea?.areaId || selectedArea?.id || '';
     const payload = {
       source: 'staff_dashboard',
       status: draft.status,
@@ -707,7 +709,9 @@ function CreateBookingModal({ creating, areas = [], onClose, onCreate }) {
       durationMinutes,
       startAt: startAt.toISOString(),
       endAt: new Date(startAt.getTime() + durationMinutes * 60000).toISOString(),
+      requestedAreaId: selectedAreaId,
       requestedAreaName: draft.requestedAreaName.trim(),
+      assignedAreaId: selectedAreaId,
       assignedAreaName: draft.requestedAreaName.trim(),
       bookingType: draft.bookingType,
       customerNotes: draft.customerNotes.trim(),
@@ -927,7 +931,7 @@ function BookingDetailDrawer({
   }
 
   function saveEdit() {
-    const patch = buildBookingPatch(editDraft);
+    const patch = buildBookingPatch(editDraft, areas);
     onSaveEdit(booking, patch);
   }
 
@@ -1225,10 +1229,18 @@ function toLocalDateInputValue(date) {
   return `${year}-${month}-${day}`;
 }
 
-function buildBookingPatch(draft) {
+function findAreaByName(areas = [], name = '') {
+  const normalizedName = String(name || '').trim().toLowerCase();
+  return areas.find((area) => String(area.name || area.label || '').trim().toLowerCase() === normalizedName) || null;
+}
+
+function buildBookingPatch(draft, areas = []) {
+  const selectedArea = findAreaByName(areas, draft.assignedAreaName);
+  const selectedAreaId = selectedArea?.areaId || selectedArea?.id || '';
   const patch = {
     partySize: Number(draft.partySize || 1),
     durationMinutes: Number(draft.durationMinutes || 90),
+    assignedAreaId: selectedAreaId,
     assignedAreaName: String(draft.assignedAreaName || '').trim(),
     bookingType: draft.bookingType || 'standard_dining',
     customerNotes: draft.customerNotes || '',
