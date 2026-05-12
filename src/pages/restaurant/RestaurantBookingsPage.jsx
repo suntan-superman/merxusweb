@@ -71,27 +71,38 @@ export default function RestaurantBookingsPage() {
     }
     try {
       const { startDate, endDate } = getBookingLoadWindow();
-      const rows = await fetchRestaurantBookings({ startDate, endDate, limit: 500, debug: true });
-      const diagnostics = {
-        query: { startDate, endDate, limit: 500 },
-        backend: rows.__debug || null,
-        count: rows.length,
-        sample: rows.slice(0, 5).map((booking) => ({
-          id: booking.bookingId || booking.id,
-          status: booking.status,
-          dateKey: booking.dateKey,
-          startAt: booking.startAt,
-        })),
-      };
-      console.info('[RestaurantBookings] loaded bookings', diagnostics);
-      console.info('[RestaurantBookings] diagnostics', JSON.stringify(diagnostics, null, 2));
+      const shouldLoadAreas = !silent;
+      const bookingsPromise = fetchRestaurantBookings({
+        startDate,
+        endDate,
+        limit: 500,
+        debug: Boolean(import.meta.env?.DEV),
+      });
+      const areasPromise = shouldLoadAreas
+        ? fetchRestaurantBookingAreas().catch((areaErr) => {
+            console.warn('Failed to load restaurant booking areas.', areaErr);
+            return null;
+          })
+        : Promise.resolve(null);
+
+      const [rows, nextAreas] = await Promise.all([bookingsPromise, areasPromise]);
+      if (import.meta.env?.DEV) {
+        console.info('[RestaurantBookings] loaded bookings', {
+          query: { startDate, endDate, limit: 500 },
+          backend: rows.__debug || null,
+          count: rows.length,
+          sample: rows.slice(0, 5).map((booking) => ({
+            id: booking.bookingId || booking.id,
+            status: booking.status,
+            dateKey: booking.dateKey,
+            startAt: booking.startAt,
+          })),
+        });
+      }
       setBookings(rows);
       setLastRefreshAt(new Date());
-      try {
-        setAreas(await fetchRestaurantBookingAreas());
-      } catch (areaErr) {
-        console.warn('Failed to load restaurant booking areas.', areaErr);
-        setAreas([]);
+      if (nextAreas) {
+        setAreas(nextAreas);
       }
     } catch (err) {
       console.error(err);
