@@ -502,8 +502,8 @@ export default function FeedbackButton() {
     ? 'mb-4 flex min-h-0 flex-1 flex-col'
     : 'mb-4';
   const initialTextareaClassName = isLoggedInChatWindow
-    ? 'min-h-40 flex-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none'
-    : 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none';
+    ? 'min-h-40 flex-1 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-400'
+    : 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-400';
 
   return (
     <>
@@ -629,7 +629,7 @@ export default function FeedbackButton() {
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
                       placeholder={conversationEnded ? 'This conversation has ended.' : 'Add another message...'}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-400"
                       rows={3}
                       maxLength={1000}
                       disabled={conversationEnded}
@@ -637,7 +637,7 @@ export default function FeedbackButton() {
                     <button
                       type="submit"
                       disabled={conversationEnded || submitting || !feedback.trim()}
-                      className="mt-3 w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                      className="mt-3 w-full rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:border disabled:border-slate-300 disabled:bg-slate-200 disabled:text-slate-500 dark:disabled:border-slate-700 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
                     >
                       {submitting ? 'Sending...' : 'Send Message'}
                     </button>
@@ -674,7 +674,7 @@ export default function FeedbackButton() {
                   <button
                     type="submit"
                     disabled={submitting || !feedback.trim()}
-                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:border disabled:border-slate-300 disabled:bg-slate-200 disabled:text-slate-500 dark:disabled:border-slate-700 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
                   >
                     {submitting ? (
                       <>

@@ -16,6 +16,7 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
   const [form, setForm] = useState({
     name: settings.name || '',
     address: settings.address || '',
+    websiteUrl: settings.websiteUrl || settings.website || '',
     timezone: settings.timezone || 'America/Los_Angeles',
     phoneNumber: settings.phoneNumber || '',
     taxRate: settings.taxRate !== undefined ? (settings.taxRate * 100).toFixed(2) : '7.50',
@@ -80,6 +81,24 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
           options={TIMEZONE_OPTIONS}
           required
         />
+
+        <div>
+          <label htmlFor="websiteUrl" className="block text-sm font-medium text-gray-700 mb-2">
+            Website URL
+          </label>
+          <input
+            id="websiteUrl"
+            name="websiteUrl"
+            type="url"
+            value={form.websiteUrl}
+            onChange={handleChange}
+            className="input-field"
+            placeholder="https://www.yourrestaurant.com"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Primary restaurant website used for profile details and fallback customer links.
+          </p>
+        </div>
 
         <div>
           <label htmlFor="merxusAiNumber" className="block text-sm font-medium text-gray-700 mb-2">

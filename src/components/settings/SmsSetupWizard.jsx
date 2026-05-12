@@ -135,6 +135,10 @@ function isValidPhoneNumber(value) {
 
 function validateStaffContacts(contacts = []) {
   return contacts.reduce((errors, contact, index) => {
+    if (isBlankDraftContact(contact)) {
+      return errors;
+    }
+
     const contactErrors = {};
     const name = String(contact?.name || '').trim();
     const role = String(contact?.role || '').trim();
@@ -169,6 +173,10 @@ function validateStaffContacts(contacts = []) {
 
     return errors;
   }, {});
+}
+
+function getSavableStaffContacts(contacts = []) {
+  return (Array.isArray(contacts) ? contacts : []).filter((contact) => !isBlankDraftContact(contact));
 }
 
 function inferPrimaryPhone(settings = {}, routing = {}) {
@@ -514,12 +522,13 @@ function buildTemplates(businessType, businessName, links = {}) {
 }
 
 function buildRoutingDraft(tenantType, definitions, contacts) {
+  const savableContacts = getSavableStaffContacts(contacts);
   const groups = definitions.reduce((acc, definition) => {
     acc[definition.key] = [];
     return acc;
   }, {});
 
-  contacts.forEach((contact, index) => {
+  savableContacts.forEach((contact, index) => {
     const nextContact = createDraftContact(index, contact);
     roleToGroups(tenantType, nextContact.role).forEach((groupKey) => {
       if (!groups[groupKey]) groups[groupKey] = [];
@@ -528,12 +537,20 @@ function buildRoutingDraft(tenantType, definitions, contacts) {
   });
 
   return {
-    contacts: contacts.map((contact, index) => createDraftContact(index, contact)),
+    contacts: savableContacts.map((contact, index) => createDraftContact(index, contact)),
     groups,
   };
 }
 
-function buildActivatedSettings({ draft, form, routing, tenantType }) {
+function buildActivatedSettings({
+  draft,
+  form,
+  routing,
+  tenantType,
+  includeStaffContacts = true,
+  markCompleted = true,
+  currentStepId = 'review',
+}) {
   const businessName = draft.businessInfo.businessName.trim() || form.businessName || 'Your business';
   const mergedLinks = {
     ...form.links,
@@ -546,10 +563,12 @@ function buildActivatedSettings({ draft, form, routing, tenantType }) {
     draft.notificationPreferences.alertAudience,
     routing.definitions
   );
-  const nextRouting = {
-    ...routing,
-    ...buildRoutingDraft(tenantType, routing.definitions, draft.staffContacts),
-  };
+  const nextRouting = includeStaffContacts
+    ? {
+        ...routing,
+        ...buildRoutingDraft(tenantType, routing.definitions, draft.staffContacts),
+      }
+    : routing;
 
   const selectedStaffChannels = unique(draft.communicationChannels.staffChannels || []);
   const channelsByAudience = normalizeAudienceChannelsMap(
@@ -562,6 +581,24 @@ function buildActivatedSettings({ draft, form, routing, tenantType }) {
   const slackEnabled =
     (selectedStaffChannels.includes('slack') || anyAudienceUsesSlack) &&
     Boolean(form.slack?.installationId || form.slack?.connected || form.slack?.webhookUrl);
+
+  const setupWizard = {
+    ...(form.setupWizard || {}),
+    version: 'smart_setup_v1',
+    lastSavedAt: new Date().toISOString(),
+    currentStep: currentStepId,
+    businessType: draft.businessType,
+    primaryPhone: draft.businessInfo.primaryPhone.trim(),
+    primaryEmail: draft.businessInfo.primaryEmail.trim(),
+    notificationPreferences: {
+      alertAudience: draft.notificationPreferences.alertAudience,
+      channelsByAudience,
+    },
+  };
+
+  if (markCompleted) {
+    setupWizard.completedAt = new Date().toISOString();
+  }
 
   return {
     nextForm: {
@@ -596,18 +633,7 @@ function buildActivatedSettings({ draft, form, routing, tenantType }) {
       },
       dailyDigestRecipientGroupKeys: audienceGroups,
       alertEscalationRecipientGroupKeys: audienceGroups,
-      setupWizard: {
-        ...(form.setupWizard || {}),
-        version: 'smart_setup_v1',
-        completedAt: new Date().toISOString(),
-        businessType: draft.businessType,
-        primaryPhone: draft.businessInfo.primaryPhone.trim(),
-        primaryEmail: draft.businessInfo.primaryEmail.trim(),
-        notificationPreferences: {
-          alertAudience: draft.notificationPreferences.alertAudience,
-          channelsByAudience,
-        },
-      },
+      setupWizard,
     },
     nextRouting,
   };
@@ -758,6 +784,7 @@ export default function SmsSetupWizard({
   const [wizardNotice, setWizardNotice] = useState('');
   const [staffContactErrors, setStaffContactErrors] = useState({});
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   const wizardCompleted = Boolean(form.setupWizard?.completedAt);
   const businessTypeLocked = wizardCompleted && Boolean(form.setupWizard?.businessType || tenantType);
@@ -952,13 +979,15 @@ export default function SmsSetupWizard({
     }
   }
 
-  function validateStaffContactsStep() {
+  function validateStaffContactsStep({ showStepError = true } = {}) {
     const nextErrors = validateStaffContacts(draft.staffContacts);
     setStaffContactErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
-      setWizardError('Fix the highlighted staff contact fields before continuing.');
-      setStepIndex(WIZARD_STEPS.findIndex((step) => step.id === 'staffContacts'));
+      if (showStepError) {
+        setWizardError('Fix the highlighted staff contact fields before continuing, or clear the contact fields and save without staff contacts.');
+        setStepIndex(WIZARD_STEPS.findIndex((step) => step.id === 'staffContacts'));
+      }
       return false;
     }
 
@@ -966,14 +995,76 @@ export default function SmsSetupWizard({
     return true;
   }
 
-  function handleContinue() {
+  async function saveWizardProgress({
+    nextStepIndex = stepIndex,
+    closeAfterSave = false,
+    switchToAdvanced = false,
+    successMessage = 'Messaging setup progress saved.',
+  } = {}) {
+    const staffContactsAreValid = validateStaffContactsStep({ showStepError: !closeAfterSave });
+    const includeStaffContacts = staffContactsAreValid && getSavableStaffContacts(draft.staffContacts).length > 0;
+    const targetStepId = WIZARD_STEPS[nextStepIndex]?.id || activeStep.id;
+
+    try {
+      setSavingDraft(true);
+      setWizardError('');
+      setWizardNotice('');
+      const { nextForm, nextRouting } = buildActivatedSettings({
+        draft,
+        form,
+        routing,
+        tenantType,
+        includeStaffContacts,
+        markCompleted: false,
+        currentStepId: targetStepId,
+      });
+      await saveCurrentSettings(nextForm, nextRouting, {
+        persistRouting: includeStaffContacts,
+        syncBaselineAfterSave: true,
+        successMessage,
+      });
+      if (closeAfterSave) {
+        clearPersistedWizardDraft();
+        setIsOpen(false);
+        setActiveTab(switchToAdvanced ? 'advanced' : 'overview');
+      }
+      return true;
+    } catch (error) {
+      setWizardError(error?.response?.data?.error || 'The wizard could not save your progress. Review the fields and try again.');
+      return false;
+    } finally {
+      setSavingDraft(false);
+    }
+  }
+
+  async function handleContinue() {
     if (activeStep.id === 'staffContacts' && !validateStaffContactsStep()) {
       return;
     }
 
-    setWizardError('');
-    setWizardNotice('');
-    setStepIndex((current) => Math.min(WIZARD_STEPS.length - 1, current + 1));
+    const nextStepIndex = Math.min(WIZARD_STEPS.length - 1, stepIndex + 1);
+    const saved = await saveWizardProgress({ nextStepIndex, successMessage: '' });
+    if (saved) {
+      setWizardError('');
+      setWizardNotice('');
+      setStepIndex(nextStepIndex);
+    }
+  }
+
+  async function handleBack() {
+    const nextStepIndex = Math.max(0, stepIndex - 1);
+    const saved = await saveWizardProgress({ nextStepIndex, successMessage: '' });
+    if (saved) {
+      setStepIndex(nextStepIndex);
+    }
+  }
+
+  async function handleStepSelect(nextStepIndex) {
+    if (nextStepIndex === stepIndex || saving || savingDraft) return;
+    const saved = await saveWizardProgress({ nextStepIndex, successMessage: '' });
+    if (saved) {
+      setStepIndex(nextStepIndex);
+    }
   }
 
   function handleCloseWizard() {
@@ -997,7 +1088,15 @@ export default function SmsSetupWizard({
       setWizardNotice('');
       const shouldConnectSlackAfterActivation =
         draft.communicationChannels.staffChannels.includes('slack') && !slackConnected;
-      const { nextForm, nextRouting } = buildActivatedSettings({ draft, form, routing, tenantType });
+      const { nextForm, nextRouting } = buildActivatedSettings({
+        draft,
+        form,
+        routing,
+        tenantType,
+        includeStaffContacts: true,
+        markCompleted: true,
+        currentStepId: 'review',
+      });
       const saved = await saveCurrentSettings(nextForm, nextRouting, {
         persistRouting: true,
         syncBaselineAfterSave: false,
@@ -1151,7 +1250,7 @@ export default function SmsSetupWizard({
       return (
         <div className="space-y-4">
           <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Staff Contacts control messaging and routing inside this wizard. They do not appear in Team & Access until you finish Step 8 and activate the system, which is when Merxus creates or updates the related team invites.
+            Staff Contacts are optional. Save and close at any point if you only need business details, links, or notification defaults now. Team & Access invites are created or updated only when you activate the system.
           </div>
           {draft.staffContacts.map((contact, index) => (
             <div key={contact.id} className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
@@ -1324,7 +1423,7 @@ export default function SmsSetupWizard({
             ['Business', draft.businessInfo.businessName || 'Not set', draft.businessType.replace(/_/g, ' ')],
             ['Staff alerts', draft.communicationChannels.staffAlertsEnabled ? 'Enabled' : 'Disabled', draft.notificationPreferences.alertAudience],
             ['Caller confirmations', draft.communicationChannels.callerConfirmationEnabled && draft.communicationChannels.callerSmsEnabled ? 'Enabled' : 'Disabled', 'SMS only'],
-            ['Contacts', String(draft.staffContacts.length), 'Role-based routing'],
+            ['Contacts', String(getSavableStaffContacts(draft.staffContacts).length), 'Role-based routing'],
           ].map(([label, value, caption]) => (
             <div key={label} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{label}</p>
@@ -1337,7 +1436,7 @@ export default function SmsSetupWizard({
           <ul className="space-y-3 text-sm text-slate-600">
             <li>Enable SMS: {draft.communicationChannels.smsEnabled ? 'Yes' : 'No'}</li>
             <li>Business website: {draft.serviceLinks.primaryLink || 'Not provided'}</li>
-            <li>Team & Access sync: {draft.staffContacts.length === 1 ? '1 staff contact will be synced on activation' : `${draft.staffContacts.length} staff contacts will be synced on activation`}</li>
+            <li>Team & Access sync: {getSavableStaffContacts(draft.staffContacts).length === 0 ? 'No staff contacts will be synced on activation' : getSavableStaffContacts(draft.staffContacts).length === 1 ? '1 staff contact will be synced on activation' : `${getSavableStaffContacts(draft.staffContacts).length} staff contacts will be synced on activation`}</li>
             <li>Allowed staff channels: {draft.communicationChannels.staffChannels.length ? draft.communicationChannels.staffChannels.join(', ').toUpperCase() : 'None selected'}</li>
             <li>
               Notification profiles: {NOTIFICATION_AUDIENCES.map((audience) => {
@@ -1390,24 +1489,71 @@ export default function SmsSetupWizard({
                   </div>
                   <p className="mt-3 text-sm font-medium text-slate-700">Step {stepIndex + 1} of {WIZARD_STEPS.length}</p>
                   <div className="mt-6 space-y-2">
-                    {WIZARD_STEPS.map((step, index) => <StepChip key={step.id} index={index} label={step.label} active={index === stepIndex} complete={index < stepIndex} onClick={() => setStepIndex(index)} />)}
+                    {WIZARD_STEPS.map((step, index) => (
+                      <StepChip
+                        key={step.id}
+                        index={index}
+                        label={step.label}
+                        active={index === stepIndex}
+                        complete={index < stepIndex}
+                        onClick={() => handleStepSelect(index)}
+                      />
+                    ))}
                   </div>
                   <div className="mt-8 space-y-3">
-                    <button type="button" onClick={() => setIsOpen(false)} className="w-full rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300">{wizardNotice ? 'Keep open' : 'Skip for now'}</button>
-                    <button type="button" onClick={() => { setIsOpen(false); setActiveTab('advanced'); }} className="w-full rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300">Switch to advanced</button>
+                    <button
+                      type="button"
+                      onClick={() => saveWizardProgress({ closeAfterSave: true })}
+                      disabled={saving || savingDraft}
+                      className="w-full rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {savingDraft ? 'Saving...' : 'Save and close'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => saveWizardProgress({ closeAfterSave: true, switchToAdvanced: true })}
+                      disabled={saving || savingDraft}
+                      className="w-full rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Switch to advanced
+                    </button>
                   </div>
                 </aside>
                 <div className="flex min-h-[760px] flex-col">
                   <div className="border-b border-slate-200 px-6 py-6 lg:px-8">
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">{activeStep.label}</p>
-                    <h4 className="mt-2 text-3xl font-bold text-slate-900">{activeStep.label}</h4>
-                    <p className="mt-2 max-w-3xl text-sm text-slate-600">Estimated completion time: 60-90 seconds.</p>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">{activeStep.label}</p>
+                        <h4 className="mt-2 text-3xl font-bold text-slate-900">{activeStep.label}</h4>
+                        <p className="mt-2 max-w-3xl text-sm text-slate-600">Estimated completion time: 60-90 seconds. Progress is saved as you move through the wizard.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => saveWizardProgress({ closeAfterSave: true })}
+                        disabled={saving || savingDraft}
+                        className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {savingDraft ? 'Saving...' : 'Save and close'}
+                      </button>
+                    </div>
                   </div>
                   <div className="flex-1 overflow-y-auto px-6 py-6 lg:px-8">{renderStepContent()}</div>
                   <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-                    <button type="button" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} disabled={stepIndex === 0} className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50">Back</button>
+                    <button type="button" onClick={handleBack} disabled={stepIndex === 0 || saving || savingDraft} className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50">Back</button>
                     {stepIndex < WIZARD_STEPS.length - 1 ? (
-                      <button type="button" onClick={handleContinue} className="btn-primary">Continue</button>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <button
+                          type="button"
+                          onClick={() => saveWizardProgress({ closeAfterSave: true })}
+                          disabled={saving || savingDraft}
+                          className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Save and close
+                        </button>
+                        <button type="button" onClick={handleContinue} className="btn-primary" disabled={saving || savingDraft}>
+                          {savingDraft ? 'Saving...' : 'Continue'}
+                        </button>
+                      </div>
                     ) : (
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                         {wizardNotice ? (
@@ -1419,7 +1565,15 @@ export default function SmsSetupWizard({
                             Close Wizard
                           </button>
                         ) : null}
-                        <button type="button" onClick={handleActivate} className="btn-primary" disabled={saving}>
+                        <button
+                          type="button"
+                          onClick={() => saveWizardProgress({ closeAfterSave: true })}
+                          className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={saving || savingDraft}
+                        >
+                          {savingDraft ? 'Saving...' : 'Save without activating'}
+                        </button>
+                        <button type="button" onClick={handleActivate} className="btn-primary" disabled={saving || savingDraft}>
                           {saving ? 'Activating...' : wizardNotice ? 'Retry Team Sync' : 'Activate System'}
                         </button>
                       </div>
