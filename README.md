@@ -100,3 +100,22 @@ Private - Merxus
 
 To deply the backend: gcloud run deploy merxus-ai-backend --source . --region us-central1 --project merxus-backend-215800813926 --allow-unauthenticated
 
+Last Index Created Manually:
+{
+      "collectionGroup": "tenant_user_activity",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tenantType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    }
