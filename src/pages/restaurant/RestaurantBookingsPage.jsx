@@ -1162,8 +1162,14 @@ function toDate(value) {
   if (!value) return null;
   if (value instanceof Date) return value;
   if (typeof value?.toDate === 'function') return value.toDate();
-  const seconds = value?._seconds ?? value?.seconds ?? null;
-  if (seconds) return new Date(seconds * 1000);
+  const rawSeconds = value?._seconds ?? value?.seconds ?? null;
+  if (rawSeconds !== null && rawSeconds !== undefined && rawSeconds !== '') {
+    const seconds = Number(rawSeconds);
+    const nanos = Number(value?._nanoseconds ?? value?.nanoseconds ?? 0);
+    if (Number.isFinite(seconds)) {
+      return new Date(seconds * 1000 + Math.floor((Number.isFinite(nanos) ? nanos : 0) / 1000000));
+    }
+  }
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
