@@ -661,7 +661,7 @@ function ActionButtons({ booking, updatingId, sendingSmsId, onTransition, onSend
 
 function CreateBookingModal({ creating, areas = [], onClose, onCreate }) {
   const now = new Date();
-  const defaultDate = now.toISOString().slice(0, 10);
+  const defaultDate = toLocalDateInputValue(now);
   const [draft, setDraft] = useState({
     customerName: '',
     customerPhone: '',
@@ -1183,8 +1183,8 @@ function getBookingLoadWindow(now = new Date()) {
   end.setFullYear(end.getFullYear() + 1);
 
   return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10),
+    startDate: toLocalDateInputValue(start),
+    endDate: toLocalDateInputValue(end),
   };
 }
 
@@ -1207,7 +1207,7 @@ function toDate(value) {
 function buildEditDraft(booking) {
   const start = toDate(booking.startAt);
   return {
-    date: start ? start.toISOString().slice(0, 10) : '',
+    date: start ? toLocalDateInputValue(start) : '',
     time: start ? start.toTimeString().slice(0, 5) : '',
     partySize: booking.partySize || 1,
     durationMinutes: booking.durationMinutes || minutesBetween(booking.startAt, booking.endAt) || 90,
@@ -1215,6 +1215,14 @@ function buildEditDraft(booking) {
     bookingType: booking.bookingType || 'standard_dining',
     customerNotes: booking.customerNotes || '',
   };
+}
+
+function toLocalDateInputValue(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function buildBookingPatch(draft) {
