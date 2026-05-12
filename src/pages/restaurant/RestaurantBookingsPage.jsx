@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import '../../utils/syncfusionScheduleRuntime';
 import { ScheduleComponent, ViewsDirective, ViewDirective, Day, Week, Month, Agenda, Inject } from '@syncfusion/ej2-react-schedule';
 import {
@@ -22,6 +22,15 @@ const FILTERS = [
   { key: 'upcoming', label: 'Upcoming' },
   { key: 'closed', label: 'Cancelled / No-show' },
   { key: 'all', label: 'All' },
+];
+
+const AUTO_REFRESH_STORAGE_KEY = 'merxus.restaurantBookings.autoRefreshSeconds';
+const AUTO_REFRESH_OPTIONS = [
+  { value: 0, label: 'Off' },
+  { value: 60, label: '1 min' },
+  { value: 120, label: '2 min' },
+  { value: 180, label: '3 min' },
+  { value: 300, label: '5 min' },
 ];
 
 const STATUS_STYLES = {
@@ -51,16 +60,15 @@ export default function RestaurantBookingsPage() {
   const [creating, setCreating] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [lastRefreshAt, setLastRefreshAt] = useState(null);
+  const [autoRefreshSeconds, setAutoRefreshSeconds] = useState(() => readAutoRefreshSeconds());
 
-  useEffect(() => {
-    loadBookings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function loadBookings() {
-    setLoading(true);
-    setError('');
-    setNotice('');
+  const loadBookings = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError('');
+      setNotice('');
+    }
     try {
       const { startDate, endDate } = getBookingLoadWindow();
       const rows = await fetchRestaurantBookings({ startDate, endDate, limit: 500, debug: true });
@@ -78,6 +86,7 @@ export default function RestaurantBookingsPage() {
       console.info('[RestaurantBookings] loaded bookings', diagnostics);
       console.info('[RestaurantBookings] diagnostics', JSON.stringify(diagnostics, null, 2));
       setBookings(rows);
+      setLastRefreshAt(new Date());
       try {
         setAreas(await fetchRestaurantBookingAreas());
       } catch (areaErr) {
@@ -86,11 +95,32 @@ export default function RestaurantBookingsPage() {
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to load restaurant bookings.');
+      if (!silent) {
+        setError('Failed to load restaurant bookings.');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    loadBookings();
+  }, [loadBookings]);
+
+  useEffect(() => {
+    localStorage.setItem(AUTO_REFRESH_STORAGE_KEY, String(autoRefreshSeconds));
+  }, [autoRefreshSeconds]);
+
+  useEffect(() => {
+    if (!autoRefreshSeconds) return undefined;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      loadBookings({ silent: true });
+    }, autoRefreshSeconds * 1000);
+    return () => window.clearInterval(timer);
+  }, [autoRefreshSeconds, loadBookings]);
 
   async function handleTransition(booking, action) {
     const bookingId = booking.bookingId || booking.id;
@@ -292,12 +322,39 @@ export default function RestaurantBookingsPage() {
           </button>
           <button
             type="button"
-            onClick={loadBookings}
+            onClick={() => loadBookings()}
+            disabled={loading}
             className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            Refresh
+            {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <span className="font-semibold text-gray-800 dark:text-slate-100">Booking updates</span>
+          <span className="ml-2">
+            {autoRefreshSeconds
+              ? `Auto-refreshing every ${formatAutoRefreshInterval(autoRefreshSeconds)}.`
+              : 'Auto-refresh is off.'}
+          </span>
+          <span className="ml-2 text-gray-500 dark:text-slate-500">
+            Last updated {formatRefreshTime(lastRefreshAt)}.
+          </span>
+        </div>
+        <label className="flex w-fit items-center gap-2">
+          <span className="font-medium text-gray-700 dark:text-slate-200">Refresh interval</span>
+          <select
+            value={autoRefreshSeconds}
+            onChange={(event) => setAutoRefreshSeconds(Number(event.target.value))}
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            {AUTO_REFRESH_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -1171,6 +1228,22 @@ function StatusBadge({ status }) {
       {formatLabel(status || 'requested')}
     </span>
   );
+}
+
+function readAutoRefreshSeconds() {
+  if (typeof window === 'undefined') return 180;
+  const stored = Number(window.localStorage.getItem(AUTO_REFRESH_STORAGE_KEY));
+  return AUTO_REFRESH_OPTIONS.some((option) => option.value === stored) ? stored : 180;
+}
+
+function formatAutoRefreshInterval(seconds) {
+  const option = AUTO_REFRESH_OPTIONS.find((item) => item.value === seconds);
+  return option?.label || `${Math.round(seconds / 60)} min`;
+}
+
+function formatRefreshTime(value) {
+  if (!value) return 'after the next refresh';
+  return value.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 function dateValue(value) {
