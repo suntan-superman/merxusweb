@@ -64,7 +64,7 @@ export default function RestaurantBookingsPage() {
     try {
       const { startDate, endDate } = getBookingLoadWindow();
       const rows = await fetchRestaurantBookings({ startDate, endDate, limit: 500, debug: true });
-      console.info('[RestaurantBookings] loaded bookings', {
+      const diagnostics = {
         query: { startDate, endDate, limit: 500 },
         backend: rows.__debug || null,
         count: rows.length,
@@ -74,7 +74,9 @@ export default function RestaurantBookingsPage() {
           dateKey: booking.dateKey,
           startAt: booking.startAt,
         })),
-      });
+      };
+      console.info('[RestaurantBookings] loaded bookings', diagnostics);
+      console.info('[RestaurantBookings] diagnostics', JSON.stringify(diagnostics, null, 2));
       setBookings(rows);
       try {
         setAreas(await fetchRestaurantBookingAreas());
