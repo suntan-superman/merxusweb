@@ -1,14 +1,20 @@
 import { apiClient } from './client';
 
-export async function fetchRestaurantBookings({ status = '', startDate = '', endDate = '', limit = 250 } = {}) {
+export async function fetchRestaurantBookings({ status = '', startDate = '', endDate = '', limit = 250, debug = false } = {}) {
   const params = {};
   if (status) params.status = status;
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
   if (limit) params.limit = limit;
+  if (debug) params.debug = '1';
 
   const res = await apiClient.get('/restaurant-bookings', { params });
-  return res.data?.bookings || [];
+  const bookings = res.data?.bookings || [];
+  Object.defineProperty(bookings, '__debug', {
+    value: res.data?.debug || null,
+    enumerable: false,
+  });
+  return bookings;
 }
 
 export async function fetchRestaurantBookingSettings() {

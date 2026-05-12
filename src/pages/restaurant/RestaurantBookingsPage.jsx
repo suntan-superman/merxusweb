@@ -63,9 +63,10 @@ export default function RestaurantBookingsPage() {
     setNotice('');
     try {
       const { startDate, endDate } = getBookingLoadWindow();
-      const rows = await fetchRestaurantBookings({ startDate, endDate, limit: 500 });
+      const rows = await fetchRestaurantBookings({ startDate, endDate, limit: 500, debug: true });
       console.info('[RestaurantBookings] loaded bookings', {
         query: { startDate, endDate, limit: 500 },
+        backend: rows.__debug || null,
         count: rows.length,
         sample: rows.slice(0, 5).map((booking) => ({
           id: booking.bookingId || booking.id,
