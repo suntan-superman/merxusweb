@@ -64,6 +64,16 @@ export default function RestaurantBookingsPage() {
     try {
       const { startDate, endDate } = getBookingLoadWindow();
       const rows = await fetchRestaurantBookings({ startDate, endDate, limit: 500 });
+      console.info('[RestaurantBookings] loaded bookings', {
+        query: { startDate, endDate, limit: 500 },
+        count: rows.length,
+        sample: rows.slice(0, 5).map((booking) => ({
+          id: booking.bookingId || booking.id,
+          status: booking.status,
+          dateKey: booking.dateKey,
+          startAt: booking.startAt,
+        })),
+      });
       setBookings(rows);
       try {
         setAreas(await fetchRestaurantBookingAreas());
