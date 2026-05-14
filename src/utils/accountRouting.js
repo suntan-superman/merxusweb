@@ -36,6 +36,7 @@ export function isSupportConsoleAccount(claims = null) {
 
 export function getPostLoginPath(claims = null) {
   if (!claims) return null;
+  if (claims.activationRequired === true) return '/tenant-activation';
   if (isSupportConsoleAccount(claims)) return '/unsupported-account?reason=support-console';
   if (claims.invitedUser === true && claims.phoneVerified === false) return '/verify-phone';
   if (claims.type === 'merxus') {

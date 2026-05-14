@@ -8,6 +8,16 @@ export const getSubscription = async () => {
   return response.data;
 };
 
+export const getTenantActivationStatus = async () => {
+  const response = await apiClient.get('/billing/activation-status');
+  return response.data;
+};
+
+export const completeTenantActivation = async () => {
+  const response = await apiClient.post('/billing/complete-activation');
+  return response.data;
+};
+
 /**
  * Get dynamic pricing
  */

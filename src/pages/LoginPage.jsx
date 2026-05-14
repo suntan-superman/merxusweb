@@ -245,6 +245,11 @@ export default function LoginPage() {
             return;
           }
 
+          if (userClaims.activationRequired === true) {
+            navigate('/tenant-activation', { replace: true });
+            return;
+          }
+
           if (returnToPath && hasMerxusTenantClaims(userClaims)) {
             navigate(returnToPath, { replace: true });
             return;

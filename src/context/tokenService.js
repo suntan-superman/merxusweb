@@ -53,6 +53,8 @@ export function extractUserClaims(decodedClaims) {
     emailVerified: decodedClaims.emailVerified === true,
     inviteStatus: decodedClaims.inviteStatus || null,
     disabled: decodedClaims.disabled === true,
+    activationRequired: decodedClaims.activationRequired === true,
+    activationStatus: decodedClaims.activationStatus || null,
   };
 }
 

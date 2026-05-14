@@ -140,6 +140,15 @@ export default function ProtectedRoute({
   if (
     requireAuth &&
     user &&
+    userClaims?.activationRequired === true &&
+    location.pathname !== '/tenant-activation'
+  ) {
+    return <Navigate to="/tenant-activation" state={{ from: location }} replace />;
+  }
+
+  if (
+    requireAuth &&
+    user &&
     userClaims?.invitedUser === true &&
     userClaims?.phoneVerified === false &&
     location.pathname !== '/verify-phone'

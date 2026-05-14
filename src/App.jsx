@@ -33,6 +33,7 @@ import CheckoutHandoffPage from './pages/CheckoutHandoffPage';
 import InstagramLandingPage from './pages/InstagramLandingPage';
 import SimpleOnboardingWizard from './pages/SimpleOnboardingWizard';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import TenantActivationPage from './pages/TenantActivationPage';
 import OfficeLandingPage from './pages/OfficeLandingPage';
 import RealEstateLandingPage from './pages/RealEstateLandingPage';
 import RestaurantLandingPage from './pages/RestaurantLandingPage';
@@ -142,6 +143,7 @@ function PublicWebsiteChat() {
     '/invite',
     '/verify-phone',
     '/checkout',
+    '/tenant-activation',
     '/support',
   ];
 
@@ -227,6 +229,14 @@ function App() {
           />
           <Route path="/onboarding/verify-otp" element={<OnboardingOTPPage />} />
           <Route path="/onboarding-wizard" element={<OnboardingWizardPage />} />
+          <Route
+            path="/tenant-activation"
+            element={
+              <ProtectedRoute requireAuth>
+                <TenantActivationPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/support" element={<SupportPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />

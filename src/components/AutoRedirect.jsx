@@ -44,6 +44,11 @@ export default function AutoRedirect() {
       return;
     }
 
+    if (userClaims.activationRequired === true && location.pathname !== '/tenant-activation') {
+      navigate('/tenant-activation', { replace: true });
+      return;
+    }
+
     if (isSupportConsoleAccount(userClaims) && location.pathname !== '/unsupported-account') {
       navigate('/unsupported-account?reason=support-console', { replace: true });
       return;

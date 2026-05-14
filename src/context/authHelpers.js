@@ -29,6 +29,7 @@ export function buildAuthContextValue({
     loading,
     userClaims,
     needsOnboarding,
+    activationRequired: userClaims?.activationRequired === true,
     isAppleUser,
     isSupportConsoleOnly,
 

@@ -27,6 +27,11 @@ function getSpeechSessionSummary(call) {
   };
 }
 
+function formatHandlingStatus(call) {
+  const value = call?.callHandlingStatus || call?.callReliabilityOutcome || 'handled';
+  return String(value).replace(/_/g, ' ');
+}
+
 function getTranscriptPayload(source = {}) {
   return {
     transcript: source.transcript || source.callerTranscript || source.assistantTranscript || null,
@@ -148,6 +153,10 @@ export default function CallDetailDrawer({ open, onClose, call }) {
             <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">Call Info</h3>
             <div className="text-sm text-gray-800 space-y-1">
               <div>Type: <span className="capitalize">{call.type}</span></div>
+              <div>Handling: <span className="capitalize">{formatHandlingStatus(call)}</span></div>
+              {call.automationSkippedReason && (
+                <div>Automation skipped: <span>{call.automationSkippedReason.replace(/_/g, ' ')}</span></div>
+              )}
               <div>Importance: <span className="capitalize">{call.importance}</span></div>
               <div>Started: {formatDate(call.startedAt)}</div>
               <div>Duration: {call.durationSec}s</div>

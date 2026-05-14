@@ -50,15 +50,9 @@ export default function CallTable({ calls, onCallClick }) {
               </td>
 
               <td className="px-4 py-3">
-                {c.escalation?.triggered ? (
-                  <span className="inline-flex items-center rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-xs font-medium gap-1">
-                    🚨 Escalated
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs font-medium">
-                    Handled
-                  </span>
-                )}
+                <span className={statusClass(c)}>
+                  {statusLabel(c)}
+                </span>
               </td>
 
               <td className="px-4 py-3">
@@ -115,6 +109,34 @@ function importanceClass(level) {
     default:
       return 'inline-flex items-center rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-xs font-medium';
   }
+}
+
+function statusLabel(call) {
+  if (call.escalation?.triggered) return 'Escalated';
+  const status = call.callHandlingStatus || call.callReliabilityOutcome;
+  if (status === 'abandoned' || status === 'no_caller_input' || status === 'greeting_only') {
+    return 'No Caller Input';
+  }
+  if (status === 'transferred' || status === 'live_transfer') return 'Transferred';
+  if (status === 'failed' || status === 'voice_session_failed') return 'Failed';
+  return 'Handled';
+}
+
+function statusClass(call) {
+  if (call.escalation?.triggered) {
+    return 'inline-flex items-center rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-xs font-medium';
+  }
+  const status = call.callHandlingStatus || call.callReliabilityOutcome;
+  if (status === 'abandoned' || status === 'no_caller_input' || status === 'greeting_only') {
+    return 'inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-xs font-medium';
+  }
+  if (status === 'failed' || status === 'voice_session_failed') {
+    return 'inline-flex items-center rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-xs font-medium';
+  }
+  if (status === 'transferred' || status === 'live_transfer') {
+    return 'inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-2 py-0.5 text-xs font-medium';
+  }
+  return 'inline-flex items-center rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs font-medium';
 }
 
 function speechLabel(call) {
