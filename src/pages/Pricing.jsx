@@ -3,7 +3,23 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getBillingPricing } from '../api/billing';
 
-const ELEVATED_PLAN_TIERS_ENABLED = import.meta.env.VITE_ELEVATED_PLAN_TIERS_ENABLED === 'true';
+const DISPLAY_PRICING = {
+  voice: {
+    basic: { price: '$79', setupFee: '$79' },
+    pro: { price: '$149', setupFee: '$149' },
+    elite: { price: '$199', setupFee: '$199' },
+  },
+  real_estate: {
+    basic: { price: '$79', setupFee: '$79' },
+    pro: { price: '$149', setupFee: '$149' },
+    elite: { price: '$199', setupFee: '$199' },
+  },
+  restaurant: {
+    basic: { price: '$199', setupFee: '$199' },
+    pro: { price: '$299', setupFee: '$299' },
+    elite: { price: '$499', setupFee: '$499' },
+  },
+};
 
 export default function Pricing() {
   const { user } = useAuth();
@@ -42,17 +58,17 @@ export default function Pricing() {
 
   const getDynamicPrice = (plan) => {
     const pricingKey = plan.tenantType === 'voice' ? 'office' : plan.tenantType;
-    const pricing = pricingData?.tenants?.[pricingKey];
-    const amount = pricing?.subscription?.unitAmount;
-    const currency = pricing?.subscription?.currency;
+    const tierPricing = pricingData?.displayPlans?.[pricingKey]?.find((item) => item.tier === plan.tier);
+    const amount = tierPricing?.subscriptionUnitAmount;
+    const currency = tierPricing?.currency;
     return formatMoney(amount, currency) || plan.price;
   };
 
   const getDynamicSetupFee = (plan) => {
     const pricingKey = plan.tenantType === 'voice' ? 'office' : plan.tenantType;
-    const pricing = pricingData?.tenants?.[pricingKey];
-    const amount = pricing?.onboarding?.unitAmount;
-    const currency = pricing?.onboarding?.currency;
+    const tierPricing = pricingData?.displayPlans?.[pricingKey]?.find((item) => item.tier === plan.tier);
+    const amount = tierPricing?.onboardingUnitAmount;
+    const currency = tierPricing?.currency;
     return formatMoney(amount, currency) || plan.setupFee;
   };
 
@@ -60,9 +76,10 @@ export default function Pricing() {
   const realEstatePlans = [
     {
       name: 'Basic',
-      price: '$49',
+      tier: 'basic',
+      price: DISPLAY_PRICING.real_estate.basic.price,
       period: '/month',
-      setupFee: '$49',
+      setupFee: DISPLAY_PRICING.real_estate.basic.setupFee,
       description: 'Perfect for individual real estate agents',
       features: [
         'Basic AI Assistant',
@@ -76,10 +93,11 @@ export default function Pricing() {
       tenantType: 'real_estate',
     },
     {
-      name: 'Professional',
-      price: '$79',
+      name: 'Pro',
+      tier: 'pro',
+      price: DISPLAY_PRICING.real_estate.pro.price,
       period: '/month',
-      setupFee: '$99',
+      setupFee: DISPLAY_PRICING.real_estate.pro.setupFee,
       description: 'For agents who need advanced features',
       features: [
         'Enhanced AI Assistant with Routing',
@@ -93,15 +111,34 @@ export default function Pricing() {
       popular: true,
       tenantType: 'real_estate',
     },
+    {
+      name: 'Elite',
+      tier: 'elite',
+      price: DISPLAY_PRICING.real_estate.elite.price,
+      period: '/month',
+      setupFee: DISPLAY_PRICING.real_estate.elite.setupFee,
+      description: 'For teams ready for premium automation and insights',
+      features: [
+        'Elite AI Assistant',
+        '1 phone number',
+        'Priority support',
+        'Advanced lead management',
+        'Review and feedback workflows',
+        'Automation and CX analytics',
+      ],
+      popular: false,
+      tenantType: 'real_estate',
+    },
   ];
 
   // Voice/Office Pricing Plans
   const voicePlans = [
     {
       name: 'Basic',
-      price: '$49',
+      tier: 'basic',
+      price: DISPLAY_PRICING.voice.basic.price,
       period: '/month',
-      setupFee: '$49',
+      setupFee: DISPLAY_PRICING.voice.basic.setupFee,
       description: 'Perfect for small businesses getting started',
       features: [
         'Basic AI Assistant',
@@ -115,10 +152,11 @@ export default function Pricing() {
       tenantType: 'voice',
     },
     {
-      name: 'Professional',
-      price: '$99',
+      name: 'Pro',
+      tier: 'pro',
+      price: DISPLAY_PRICING.voice.pro.price,
       period: '/month',
-      setupFee: '$149',
+      setupFee: DISPLAY_PRICING.voice.pro.setupFee,
       description: 'For growing businesses with multiple needs',
       features: [
         'Enhanced AI Assistant with Routing',
@@ -133,10 +171,11 @@ export default function Pricing() {
       tenantType: 'voice',
     },
     {
-      name: 'Enterprise',
-      price: '$199',
+      name: 'Elite',
+      tier: 'elite',
+      price: DISPLAY_PRICING.voice.elite.price,
       period: '/month',
-      setupFee: '$249',
+      setupFee: DISPLAY_PRICING.voice.elite.setupFee,
       description: 'For businesses requiring advanced capabilities',
       features: [
         'Enhanced AI Assistant with Routing',
@@ -157,9 +196,10 @@ export default function Pricing() {
   const restaurantPlans = [
     {
       name: 'Basic',
-      price: '$199',
+      tier: 'basic',
+      price: DISPLAY_PRICING.restaurant.basic.price,
       period: '/month',
-      setupFee: '$299',
+      setupFee: DISPLAY_PRICING.restaurant.basic.setupFee,
       description: 'Perfect for restaurants getting started',
       features: [
         'Basic AI Assistant with Order and Reservation Taking',
@@ -175,11 +215,32 @@ export default function Pricing() {
       tenantType: 'restaurant',
     },
     {
-      name: 'Enterprise',
-      price: '$499',
+      name: 'Pro',
+      tier: 'pro',
+      price: DISPLAY_PRICING.restaurant.pro.price,
       period: '/month',
-      setupFee: '$999',
-      description: 'For restaurants with POS integration needs',
+      setupFee: DISPLAY_PRICING.restaurant.pro.setupFee,
+      description: 'For restaurants and event venues with active booking workflows',
+      features: [
+        'Enhanced AI Assistant for Orders and Reservations',
+        'Event and large-party booking workflows',
+        '5 phone numbers',
+        'Priority support',
+        'Advanced analytics',
+        'Menu import and optimization',
+        'Customer CRM',
+        'Email & SMS notifications',
+      ],
+      popular: true,
+      tenantType: 'restaurant',
+    },
+    {
+      name: 'Elite',
+      tier: 'elite',
+      price: DISPLAY_PRICING.restaurant.elite.price,
+      period: '/month',
+      setupFee: DISPLAY_PRICING.restaurant.elite.setupFee,
+      description: 'For restaurants with POS integration and multi-location needs',
       features: [
         'Basic AI Assistant with Order and Reservation Taking',
         'POS integration (Toast/Square, etc)',
@@ -192,28 +253,22 @@ export default function Pricing() {
         'API access',
         'Dedicated account manager',
       ],
-      popular: true,
+      popular: false,
       tenantType: 'restaurant',
     },
   ];
 
   // Get plans based on selected tenant type
   const getPlans = () => {
-    const onlyBasic = (plans) => (
-      ELEVATED_PLAN_TIERS_ENABLED
-        ? plans
-        : plans.filter((plan) => String(plan.name || '').toLowerCase() === 'basic')
-    );
-
     switch (selectedTenantType) {
       case 'real_estate':
-        return onlyBasic(realEstatePlans);
+        return realEstatePlans;
       case 'voice':
-        return onlyBasic(voicePlans);
+        return voicePlans;
       case 'restaurant':
-        return onlyBasic(restaurantPlans);
+        return restaurantPlans;
       default:
-        return onlyBasic(restaurantPlans); // Default to restaurant
+        return restaurantPlans; // Default to restaurant
     }
   };
 
@@ -409,7 +464,7 @@ export default function Pricing() {
                       </li>
                       <li className="flex items-start">
                         <span className="mr-2 text-primary-600">✓</span>
-                        <span>POS integration assistance (Enterprise plan)</span>
+                        <span>POS integration assistance (Elite plan)</span>
                       </li>
                     </>
                   )}
@@ -443,7 +498,7 @@ export default function Pricing() {
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
               <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">What's included in POS integration?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                POS integration (Restaurant Enterprise plan) includes automatic menu synchronization, 
+                POS integration (Restaurant Elite plan) includes automatic menu synchronization, 
                 order import/export, and real-time inventory updates. We support Toast, Square, Clover, and other major POS systems.
               </p>
             </div>

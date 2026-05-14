@@ -461,6 +461,7 @@ export default function RestaurantBookingsPage() {
       ) : viewMode === 'calendar' ? (
         <BookingsCalendar
           bookings={filteredBookings}
+          areas={areas}
           expanded={calendarExpanded}
           onExpand={() => setCalendarExpanded(true)}
           onCollapse={() => setCalendarExpanded(false)}
@@ -521,7 +522,9 @@ export default function RestaurantBookingsPage() {
   );
 }
 
-function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }) {
+function BookingsCalendar({ bookings, areas = [], expanded, onExpand, onCollapse, onSelect }) {
+  const [showFullDay, setShowFullDay] = useState(false);
+
   useEffect(() => {
     if (!expanded) return undefined;
     function handleKeyDown(event) {
@@ -553,6 +556,12 @@ function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }
     };
   }).filter((event) => event.StartTime && event.EndTime), [bookings]);
 
+  const visibleHours = useMemo(() => (
+    showFullDay
+      ? { startHour: '00:00', endHour: '23:59', label: 'Full day' }
+      : getVenueCalendarHours(areas)
+  ), [areas, showFullDay]);
+
   return (
     <div className={expanded
       ? 'fixed inset-0 z-[9999] flex flex-col bg-slate-50 dark:bg-slate-950'
@@ -568,15 +577,25 @@ function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }
           </h3>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">{bookings.length} bookings in the selected view</p>
         </div>
-        <button
-          type="button"
-          onClick={expanded ? onCollapse : onExpand}
-          className={expanded
-            ? 'rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white'
-            : 'rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'}
-        >
-          {expanded ? 'Exit Calendar' : 'Open Full Screen'}
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowFullDay((current) => !current)}
+            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            title={showFullDay ? 'Show configured venue hours' : 'Show 12:00 AM through 11:59 PM'}
+          >
+            {showFullDay ? 'Venue Hours' : 'Full Day'}
+          </button>
+          <button
+            type="button"
+            onClick={expanded ? onCollapse : onExpand}
+            className={expanded
+              ? 'rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white'
+              : 'rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'}
+          >
+            {expanded ? 'Exit Calendar' : 'Open Full Screen'}
+          </button>
+        </div>
       </div>
       <div className={expanded ? 'min-h-0 flex-1 p-4' : ''}>
         <div className={expanded ? 'h-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900' : ''}>
@@ -585,6 +604,8 @@ function BookingsCalendar({ bookings, expanded, onExpand, onCollapse, onSelect }
             height={expanded ? 'calc(100vh - 112px)' : 'min(720px, calc(100vh - 260px))'}
             selectedDate={new Date()}
             currentView="Week"
+            startHour={visibleHours.startHour}
+            endHour={visibleHours.endHour}
             readonly
             eventSettings={{
               dataSource: events,
@@ -1391,6 +1412,54 @@ function buildBookingPatch(draft, areas = []) {
   }
 
   return patch;
+}
+
+function getVenueCalendarHours(areas = []) {
+  const ranges = [];
+  for (const area of areas) {
+    const hours = area?.operatingHours || area?.businessHours || null;
+    if (!hours || typeof hours !== 'object') continue;
+    for (const window of Object.values(hours)) {
+      if (!window || window.closed) continue;
+      const open = timeStringToMinutes(window.open);
+      const close = timeStringToMinutes(window.close);
+      if (!Number.isFinite(open) || !Number.isFinite(close)) continue;
+      ranges.push({
+        open,
+        close: close > open ? close : 24 * 60 - 1,
+      });
+    }
+  }
+
+  if (!ranges.length) {
+    return { startHour: '08:00', endHour: '23:00', label: 'Default venue hours' };
+  }
+
+  const earliestOpen = Math.min(...ranges.map((range) => range.open));
+  const latestClose = Math.max(...ranges.map((range) => range.close));
+  return {
+    startHour: minutesToTimeString(earliestOpen),
+    endHour: minutesToTimeString(latestClose),
+    label: 'Venue hours',
+  };
+}
+
+function timeStringToMinutes(value) {
+  const match = String(value || '').match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    return null;
+  }
+  return hours * 60 + minutes;
+}
+
+function minutesToTimeString(totalMinutes) {
+  const bounded = Math.max(0, Math.min(24 * 60 - 1, Number(totalMinutes) || 0));
+  const hours = Math.floor(bounded / 60);
+  const minutes = bounded % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
 function minutesBetween(startValue, endValue) {

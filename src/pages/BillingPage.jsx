@@ -22,12 +22,6 @@ const BillingPage = () => {
   // Get tenant type from user claims
   const tenantType = userTenantType || 'restaurant';
 
-  const getPricingForTenant = () => {
-    const pricingKey = tenantType === 'voice' ? 'office' : tenantType;
-    return pricingData?.tenants?.[pricingKey] || null;
-  };
-
-  const pricing = getPricingForTenant();
   const upgradeContext = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
     const requiredTier = params.get('requiredTier');
@@ -68,12 +62,18 @@ const BillingPage = () => {
     }
   };
 
+  const getDisplayTierPricing = (planKey) => {
+    const pricingKey = tenantType === 'voice' ? 'office' : tenantType;
+    const displayTier = planKey === 'professional' ? 'pro' : planKey;
+    return pricingData?.displayPlans?.[pricingKey]?.find((item) => item.tier === displayTier) || null;
+  };
+
   const PLANS = {
     restaurant: {
       basic: {
         name: 'Basic',
-        price: pricing?.subscription?.unitAmount ? pricing.subscription.unitAmount / 100 : 299,
-        setup: pricing?.onboarding?.unitAmount ? pricing.onboarding.unitAmount / 100 : 499,
+        price: 199,
+        setup: 199,
         features: [
           'AI Phone Assistant',
           'Order & Reservation Taking',
@@ -81,28 +81,78 @@ const BillingPage = () => {
           'Analytics Dashboard',
           'Call Transcripts',
         ],
+        popular: false,
+      },
+      professional: {
+        name: 'Pro',
+        price: 299,
+        setup: 299,
+        features: [
+          'Enhanced AI Phone Assistant',
+          'Orders, Reservations, and Events',
+          'Priority Support',
+          'Advanced Analytics Dashboard',
+          'Customer CRM',
+        ],
         popular: true,
+      },
+      elite: {
+        name: 'Elite',
+        price: 499,
+        setup: 499,
+        features: [
+          'Elite AI Phone Assistant',
+          'POS Integration Support',
+          'Multi-Location Workflows',
+          'Automation and CX Analytics',
+          'Dedicated Account Support',
+        ],
+        popular: false,
       },
     },
     voice: {
       basic: {
         name: 'Basic',
-        price: pricing?.subscription?.unitAmount ? pricing.subscription.unitAmount / 100 : 99,
-        setup: pricing?.onboarding?.unitAmount ? pricing.onboarding.unitAmount / 100 : 149,
+        price: 79,
+        setup: 79,
         features: [
           'AI Phone Assistant',
           'Call Routing',
           'Priority Support',
           'Analytics Dashboard',
         ],
+        popular: false,
+      },
+      professional: {
+        name: 'Pro',
+        price: 149,
+        setup: 149,
+        features: [
+          'Enhanced AI Phone Assistant',
+          'Advanced Call Routing',
+          'Priority Support',
+          'Analytics Dashboard',
+        ],
         popular: true,
+      },
+      elite: {
+        name: 'Elite',
+        price: 199,
+        setup: 199,
+        features: [
+          'Elite AI Phone Assistant',
+          'Automation Workflows',
+          'Advanced Analytics',
+          'API Access',
+        ],
+        popular: false,
       },
     },
     real_estate: {
       basic: {
         name: 'Basic',
-        price: pricing?.subscription?.unitAmount ? pricing.subscription.unitAmount / 100 : 99,
-        setup: pricing?.onboarding?.unitAmount ? pricing.onboarding.unitAmount / 100 : 199,
+        price: 79,
+        setup: 79,
         features: [
           'AI Phone Assistant',
           'Lead Management',
@@ -110,7 +160,31 @@ const BillingPage = () => {
           'Priority Support',
           'Analytics Dashboard',
         ],
+        popular: false,
+      },
+      professional: {
+        name: 'Pro',
+        price: 149,
+        setup: 149,
+        features: [
+          'Enhanced AI Phone Assistant',
+          'Lead and Showing Workflows',
+          'Priority Support',
+          'Analytics Dashboard',
+        ],
         popular: true,
+      },
+      elite: {
+        name: 'Elite',
+        price: 199,
+        setup: 199,
+        features: [
+          'Elite AI Phone Assistant',
+          'Review and Feedback Workflows',
+          'Automation and CX Analytics',
+          'Advanced Lead Intelligence',
+        ],
+        popular: false,
       },
     },
   };
@@ -422,6 +496,9 @@ const BillingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(plans).map(([planKey, plan]) => {
               const isCurrentPlan = currentPlanKey === planKey && isActive;
+              const tierPricing = getDisplayTierPricing(planKey);
+              const monthlyPrice = formatMoney(tierPricing?.subscriptionUnitAmount, tierPricing?.currency) || `$${plan.price}`;
+              const setupPrice = formatMoney(tierPricing?.onboardingUnitAmount, tierPricing?.currency) || `$${plan.setup}`;
               
               return (
                 <div
@@ -448,11 +525,11 @@ const BillingPage = () => {
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">{plan.name}</h3>
                   <div className="mb-4">
                     <span className="text-4xl font-bold text-gray-900 dark:text-slate-100">
-                      {formatMoney(pricing?.subscription?.unitAmount, pricing?.subscription?.currency) || `$${plan.price}`}
+                      {monthlyPrice}
                     </span>
                     <span className="text-gray-600 dark:text-slate-300">/month</span>
                     <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
-                      {formatMoney(pricing?.onboarding?.unitAmount, pricing?.onboarding?.currency) || `$${plan.setup}`} one-time setup fee
+                      {setupPrice} one-time setup fee
                     </p>
                   </div>
                   
