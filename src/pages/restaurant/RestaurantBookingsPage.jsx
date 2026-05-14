@@ -159,14 +159,16 @@ export default function RestaurantBookingsPage() {
     try {
       let updated;
       if (action === 'confirm') {
-        updated = await confirmRestaurantBooking(bookingId, { notifyCustomer: false });
+        updated = await confirmRestaurantBooking(bookingId, { notifyCustomer: true });
       } else if (action === 'decline') {
         updated = await declineRestaurantBooking(bookingId, {
           reason: 'Declined from restaurant bookings dashboard.',
+          notifyCustomer: true,
         });
       } else if (action === 'cancel') {
         updated = await cancelRestaurantBooking(bookingId, {
           reason: 'Cancelled from restaurant bookings dashboard.',
+          notifyCustomer: true,
         });
       }
 
@@ -180,6 +182,7 @@ export default function RestaurantBookingsPage() {
       } else {
         await loadBookings();
       }
+      setNotice(getTransitionNotice(action));
     } catch (err) {
       console.error(err);
       setError('Failed to update booking.');
@@ -189,17 +192,17 @@ export default function RestaurantBookingsPage() {
   }
 
   function requestTransition(booking, action) {
-    if (action === 'cancel' || action === 'decline') {
-      setConfirmAction({ booking, action });
-      return;
-    }
-    handleTransition(booking, action);
+    setConfirmAction({ type: 'transition', booking, action });
   }
 
   async function confirmPendingAction() {
     if (!confirmAction) return;
     const pending = confirmAction;
     setConfirmAction(null);
+    if (pending.type === 'edit') {
+      await performSaveEdit(pending.booking, pending.patch, { notifyCustomer: true });
+      return;
+    }
     await handleTransition(pending.booking, pending.action);
   }
 
@@ -254,13 +257,17 @@ export default function RestaurantBookingsPage() {
     }
   }
 
-  async function handleSaveEdit(booking, patch) {
+  async function performSaveEdit(booking, patch, { notifyCustomer = false } = {}) {
     const bookingId = booking.bookingId || booking.id;
     if (!bookingId) return;
     setSavingEditId(bookingId);
     setError('');
+    setNotice('');
     try {
-      const updated = await updateRestaurantBooking(bookingId, patch);
+      const updated = await updateRestaurantBooking(bookingId, {
+        ...patch,
+        ...(notifyCustomer ? { notifyCustomer: true } : {}),
+      });
       if (updated) {
         setBookings((current) => current.map((item) => (
           (item.bookingId || item.id) === bookingId ? { ...item, ...updated } : item
@@ -269,12 +276,21 @@ export default function RestaurantBookingsPage() {
           current && (current.bookingId || current.id) === bookingId ? { ...current, ...updated } : current
         ));
       }
+      setNotice(notifyCustomer ? 'Booking changes saved and customer notification sent when contact info is available.' : 'Booking changes saved.');
     } catch (err) {
       console.error(err);
       setError('Failed to save booking changes.');
     } finally {
       setSavingEditId('');
     }
+  }
+
+  async function handleSaveEdit(booking, patch) {
+    if (hasScheduleChange(booking, patch)) {
+      setConfirmAction({ type: 'edit', booking, patch });
+      return;
+    }
+    await performSaveEdit(booking, patch);
   }
 
   async function handleCreateBooking(input) {
@@ -490,12 +506,16 @@ export default function RestaurantBookingsPage() {
         isOpen={Boolean(confirmAction)}
         onClose={() => setConfirmAction(null)}
         onConfirm={confirmPendingAction}
-        title={confirmAction?.action === 'decline' ? 'Decline Booking' : 'Cancel Booking'}
-        message={buildTransitionConfirmationMessage(confirmAction)}
-        confirmText={confirmAction?.action === 'decline' ? 'Decline booking' : 'Cancel booking'}
-        cancelText="Keep booking"
-        variant="warning"
-        isLoading={Boolean(confirmAction && updatingId === (confirmAction.booking?.bookingId || confirmAction.booking?.id))}
+        title={getConfirmationTitle(confirmAction)}
+        message={buildConfirmationMessage(confirmAction)}
+        confirmText={getConfirmationConfirmText(confirmAction)}
+        cancelText={confirmAction?.type === 'edit' ? 'Keep editing' : 'Keep booking'}
+        variant={getConfirmationVariant(confirmAction)}
+        isLoading={Boolean(confirmAction && (
+          confirmAction.type === 'edit'
+            ? savingEditId === (confirmAction.booking?.bookingId || confirmAction.booking?.id)
+            : updatingId === (confirmAction.booking?.bookingId || confirmAction.booking?.id)
+        ))}
       />
     </div>
   );
@@ -1414,18 +1434,78 @@ function formatPhone(phone) {
   return formatPhoneDisplay(phone) || '-';
 }
 
-function buildTransitionConfirmationMessage(confirmAction) {
+function getTransitionNotice(action) {
+  if (action === 'confirm') return 'Booking confirmed. Customer notification sent when contact info is available.';
+  if (action === 'decline') return 'Booking declined. Customer notification sent when contact info is available.';
+  if (action === 'cancel') return 'Booking cancelled. Customer notification sent when contact info is available.';
+  return 'Booking updated.';
+}
+
+function getConfirmationTitle(confirmAction) {
+  if (!confirmAction) return 'Confirm Action';
+  if (confirmAction.type === 'edit') return 'Save Schedule Change';
+  if (confirmAction.action === 'confirm') return 'Confirm Booking';
+  if (confirmAction.action === 'decline') return 'Decline Booking';
+  return 'Cancel Booking';
+}
+
+function getConfirmationConfirmText(confirmAction) {
+  if (!confirmAction) return 'Confirm';
+  if (confirmAction.type === 'edit') return 'Save and notify';
+  if (confirmAction.action === 'confirm') return 'Confirm booking';
+  if (confirmAction.action === 'decline') return 'Decline booking';
+  return 'Cancel booking';
+}
+
+function getConfirmationVariant(confirmAction) {
+  if (confirmAction?.type === 'edit' || confirmAction?.action === 'confirm') return 'info';
+  return 'warning';
+}
+
+function buildConfirmationMessage(confirmAction) {
   if (!confirmAction) return '';
   const { booking, action } = confirmAction;
   const guest = booking?.customer?.name || 'this guest';
   const date = formatDate(booking?.startAt);
   const time = formatTime(booking?.startAt);
 
-  if (action === 'decline') {
-    return `Decline the booking request for ${guest} on ${date} at ${time}?\n\nThis changes the booking status and may notify the customer if notifications are enabled.`;
+  if (confirmAction.type === 'edit') {
+    const nextStart = toDate(confirmAction.patch?.startAt);
+    const nextEnd = toDate(confirmAction.patch?.endAt);
+    const nextDate = formatDate(nextStart);
+    const nextTime = formatTime(nextStart);
+    const duration = nextStart && nextEnd ? minutesBetween(nextStart, nextEnd) : confirmAction.patch?.durationMinutes;
+    const durationText = duration ? ` for ${duration} minutes` : '';
+    return `Save the schedule change for ${guest}?\n\nCurrent: ${date} at ${time}\nNew: ${nextDate} at ${nextTime}${durationText}\n\nMerxus will send the customer a confirmation email and/or SMS when contact info is available and notifications are enabled.`;
   }
 
-  return `Cancel the booking for ${guest} on ${date} at ${time}?\n\nThis keeps the booking history for audit purposes but removes it from active upcoming reservations.`;
+  if (action === 'confirm') {
+    return `Confirm the booking for ${guest} on ${date} at ${time}?\n\nMerxus will send the customer a confirmation email and/or SMS when contact info is available and notifications are enabled.`;
+  }
+
+  if (action === 'decline') {
+    return `Decline the booking request for ${guest} on ${date} at ${time}?\n\nMerxus will send the customer a decline email and/or SMS when contact info is available and notifications are enabled.`;
+  }
+
+  return `Cancel the booking for ${guest} on ${date} at ${time}?\n\nThis keeps the booking history for audit purposes and Merxus will send the customer a cancellation email and/or SMS when contact info is available.`;
+}
+
+function hasScheduleChange(booking, patch = {}) {
+  if (!booking || !patch) return false;
+  const nextStart = patch.startAt ? toDate(patch.startAt) : null;
+  const currentStart = toDate(booking.startAt);
+  if (Boolean(nextStart) !== Boolean(currentStart)) return true;
+  if (nextStart && currentStart && nextStart.getTime() !== currentStart.getTime()) return true;
+
+  const nextEnd = patch.endAt ? toDate(patch.endAt) : null;
+  const currentEnd = toDate(booking.endAt);
+  if (Boolean(nextEnd) !== Boolean(currentEnd)) return true;
+  if (nextEnd && currentEnd && nextEnd.getTime() !== currentEnd.getTime()) return true;
+
+  const currentDuration = booking.durationMinutes || minutesBetween(booking.startAt, booking.endAt);
+  if (patch.durationMinutes != null && Number(patch.durationMinutes) !== Number(currentDuration || 0)) return true;
+
+  return false;
 }
 
 function buildBookingSmsBody(booking) {
