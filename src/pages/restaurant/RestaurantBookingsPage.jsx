@@ -1401,7 +1401,8 @@ function formatLabel(value) {
 
 function formatBookingSource(source) {
   const normalized = String(source || '').toLowerCase();
-  if (['web_form', 'public_venue', 'legends_website', 'website'].includes(normalized)) return 'Legends website';
+  if (normalized === 'agave_oak_website') return 'Agave & Oak website';
+  if (['web_form', 'public_venue', 'legends_website', 'website'].includes(normalized)) return 'Venue website';
   if (['voice_ai', 'phone_ai', 'ai_phone'].includes(normalized)) return 'Merxus AI phone';
   if (['staff_dashboard', 'merxus_web', 'admin_dashboard'].includes(normalized)) return 'Merxus AI web';
   if (['sms_ai', 'sms'].includes(normalized)) return 'Merxus AI SMS';
