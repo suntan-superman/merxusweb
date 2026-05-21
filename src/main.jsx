@@ -5,6 +5,7 @@ import App from './App.jsx'
 import './index.css'
 import { Toaster } from 'react-hot-toast'
 import { ThemeProvider, useTheme } from './context/ThemeContext'
+import { installProductionDiagnostics, markDiagnostic } from './utils/productionDiagnostics'
 
 const VITE_PRELOAD_RETRY_KEY = 'merxus.vitePreloadRetryTriggered'
 const MODULE_IMPORT_RETRY_KEY = 'merxus.moduleImportRetryTriggered'
@@ -32,7 +33,12 @@ function retryWithHardReload({ sessionKey, queryParam }) {
 }
 
 if (typeof window !== 'undefined') {
+  installProductionDiagnostics()
+
   window.addEventListener('vite:preloadError', (event) => {
+    markDiagnostic('vite:preload-error', {
+      message: String(event?.payload?.message || event?.message || 'preload error'),
+    })
     event.preventDefault()
     retryWithHardReload({
       sessionKey: VITE_PRELOAD_RETRY_KEY,
@@ -50,6 +56,10 @@ if (typeof window !== 'undefined') {
       target.src.includes('/assets/')
 
     if (message.includes('failed to load module script') || isModuleScriptTagFailure) {
+      markDiagnostic('asset:module-load-failure', {
+        message,
+        assetUrl: target?.src || null,
+      })
       event.preventDefault()
       retryWithHardReload({
         sessionKey: MODULE_IMPORT_RETRY_KEY,
@@ -60,6 +70,9 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('unhandledrejection', (event) => {
     if (!isRecoverableModuleLoadFailure(event?.reason)) return
+    markDiagnostic('asset:dynamic-import-failure', {
+      reason: String(event?.reason?.message || event?.reason || 'unknown'),
+    })
     event.preventDefault()
     retryWithHardReload({
       sessionKey: MODULE_IMPORT_RETRY_KEY,
@@ -139,6 +152,8 @@ function ThemeAwareToaster() {
   )
 }
 
+markDiagnostic('react:render-start')
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -149,4 +164,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </QueryClientProvider>
   </React.StrictMode>,
 )
+
+markDiagnostic('react:render-scheduled')
 

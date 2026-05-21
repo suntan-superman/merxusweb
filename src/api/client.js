@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { auth } from '../firebase/config';
 import { getIdToken } from 'firebase/auth';
+import { markDiagnostic } from '../utils/productionDiagnostics';
 
 // Get the project ID from environment variable
 const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || 'merxus';
@@ -34,6 +35,19 @@ export const apiClient = axios.create({
   },
 });
 
+apiClient.interceptors.request.use((config) => {
+  config.metadata = {
+    ...(config.metadata || {}),
+    startedAt: performance.now(),
+  };
+  markDiagnostic('api:request', {
+    method: config.method || 'get',
+    url: config.url,
+    baseURL: config.baseURL || baseURL,
+  });
+  return config;
+});
+
 // Request interceptor to attach auth token
 apiClient.interceptors.request.use(
   async (config) => {
@@ -58,9 +72,25 @@ apiClient.interceptors.request.use(
 
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const startedAt = response.config?.metadata?.startedAt;
+    markDiagnostic('api:response', {
+      url: response.config?.url,
+      status: response.status,
+      elapsedMs: Number.isFinite(startedAt) ? Math.round(performance.now() - startedAt) : null,
+    });
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config || {};
+    const startedAt = originalRequest?.metadata?.startedAt;
+    markDiagnostic('api:error', {
+      url: originalRequest?.url,
+      status: error.response?.status || null,
+      code: error.code || null,
+      message: error.message,
+      elapsedMs: Number.isFinite(startedAt) ? Math.round(performance.now() - startedAt) : null,
+    });
     // Skip logging if explicitly suppressed (e.g., for expected 403/404 errors)
     const shouldSuppressLogging = originalRequest?.headers?.['X-Suppress-Error-Log'] === 'true';
 

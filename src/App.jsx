@@ -45,6 +45,7 @@ import {
   persistCampaignAttribution,
   trackMetaEvent,
 } from './utils/metaPixel';
+import { markDiagnostic } from './utils/productionDiagnostics';
 
 const lazy = lazyWithRetry;
 
@@ -169,6 +170,11 @@ function MetaRouteTracker() {
   }, []);
 
   useEffect(() => {
+    markDiagnostic('route:resolved', {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+    });
     persistCampaignAttribution();
     trackMetaEvent('PageView', {
       path: location.pathname,
