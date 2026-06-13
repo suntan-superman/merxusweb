@@ -1032,6 +1032,13 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
   background: #ffffff;
 }
 
+.website-chat-message-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
 .website-chat-message span {
   white-space: pre-wrap;
 }
@@ -1056,6 +1063,40 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
 .website-chat-message.agent {
   border-color: #99f6e4;
   background: #f0fdfa;
+}
+
+.website-chat-answer-feedback {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 86%;
+  padding-left: 2px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.website-chat-answer-feedback button {
+  min-height: 24px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 0 8px;
+  color: #334155;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.website-chat-answer-feedback button:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.website-chat-answer-feedback button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .website-chat-lead {

@@ -6,6 +6,7 @@ import {
   requestPublicChatHuman,
   sendPublicChatTranscript,
   sendPublicChatMessage,
+  submitPublicChatAnswerFeedback,
   timeoutPublicChatSession,
   publicChatErrorMessage,
   isPublicChatClosedError,
@@ -33,6 +34,18 @@ function messageKey(message) {
 function isInboundMessage(message) {
   const sender = String(message?.sender || message?.role || '').toLowerCase();
   return Boolean(message?.body) && message.id !== 'welcome' && sender !== 'visitor' && sender !== 'user';
+}
+
+function isAssistantMessage(message) {
+  const sender = String(message?.sender || '').toLowerCase();
+  const role = String(message?.role || '').toLowerCase();
+  return Boolean(message?.body) && message.id !== 'welcome' && (sender === 'ai' || role === 'assistant');
+}
+
+function isVisitorMessage(message) {
+  const sender = String(message?.sender || '').toLowerCase();
+  const role = String(message?.role || '').toLowerCase();
+  return Boolean(message?.body) && (sender === 'visitor' || sender === 'user' || role === 'visitor' || role === 'user');
 }
 
 function hasNewInboundMessage(previousMessages = [], nextMessages = []) {
@@ -150,6 +163,7 @@ function renderMessageBody(body) {
 export default function WebsiteChatWidget({
   product = 'merxus',
   tenantId = 'merxus-platform',
+  tenantName = 'Merxus',
   tenantType = 'platform',
 }) {
   const { user } = useAuth();
@@ -170,6 +184,7 @@ export default function WebsiteChatWidget({
   const [confirmEndChat, setConfirmEndChat] = useState(false);
   const [emailTranscriptOnEnd, setEmailTranscriptOnEnd] = useState(true);
   const [conversationEnded, setConversationEnded] = useState(false);
+  const [answerFeedback, setAnswerFeedback] = useState({});
   const [lastActivityAt, setLastActivityAt] = useState(() => Number(getStoredValue('lastActivityAt')) || Date.now());
   const visitorId = useMemo(getVisitorId, []);
   const [activeVisitorId, setActiveVisitorId] = useState(visitorId);
@@ -190,6 +205,11 @@ export default function WebsiteChatWidget({
   const leadNameError = shouldShowLead && leadTouched.name && !leadNameReady ? 'Name must be at least 3 characters.' : '';
   const leadEmailError = shouldShowLead && leadTouched.email && !leadEmailReady ? 'Enter a valid email address.' : '';
   const talkToPersonDisabled = isSending || humanRequested || (!isLoggedIn && !leadCaptured);
+  const latestAssistantMessage = useMemo(
+    () => [...messages].reverse().find((message) => isAssistantMessage(message)) || null,
+    [messages],
+  );
+  const latestAssistantMessageId = latestAssistantMessage ? messageKey(latestAssistantMessage) : '';
 
   const requestHumanTransfer = useCallback(async ({
     sessionIdOverride = '',
@@ -419,6 +439,7 @@ export default function WebsiteChatWidget({
     setConfirmEndChat(false);
     setEmailTranscriptOnEnd(true);
     setConversationEnded(false);
+    setAnswerFeedback({});
     setActiveVisitorId(visitorId);
     setError('');
     recordActivity();
@@ -606,6 +627,53 @@ export default function WebsiteChatWidget({
     }
   }
 
+  function previousVisitorQuestionFor(message) {
+    const targetKey = messageKey(message);
+    const targetIndex = messages.findIndex((item) => messageKey(item) === targetKey);
+    if (targetIndex <= 0) return '';
+    for (let index = targetIndex - 1; index >= 0; index -= 1) {
+      if (isVisitorMessage(messages[index])) return messages[index].body || '';
+    }
+    return '';
+  }
+
+  async function handleAnswerFeedback(message, rating) {
+    const feedbackKey = messageKey(message);
+    recordActivity();
+    setAnswerFeedback((current) => ({
+      ...current,
+      [feedbackKey]: rating === 'helpful' ? { status: 'thanks' } : { status: 'sending' },
+    }));
+
+    if (rating === 'helpful') return;
+
+    if (!sessionId) {
+      setAnswerFeedback((current) => ({ ...current, [feedbackKey]: { status: 'idle' } }));
+      setError('Feedback could not be sent because this chat session has not started yet.');
+      return;
+    }
+
+    try {
+      await submitPublicChatAnswerFeedback(sessionId, {
+        product,
+        tenantId,
+        tenantName,
+        visitorId: activeVisitorId,
+        rating: 'not_helpful',
+        question: previousVisitorQuestionFor(message),
+        answer: message.body,
+        messageId: message.id || feedbackKey,
+        sourceUrl: window.location.href,
+        authenticated: Boolean(user),
+        appBaseUrl: window.location.origin,
+      });
+      setAnswerFeedback((current) => ({ ...current, [feedbackKey]: { status: 'thanks' } }));
+    } catch (feedbackError) {
+      setAnswerFeedback((current) => ({ ...current, [feedbackKey]: { status: 'idle' } }));
+      setError(publicChatErrorMessage(feedbackError));
+    }
+  }
+
   return (
     <div className="website-chat-widget" aria-live="polite">
       {isOpen ? (
@@ -641,12 +709,48 @@ export default function WebsiteChatWidget({
           </header>
 
           <div className="website-chat-thread" ref={threadRef}>
-            {messages.map((message) => (
-              <div key={message.id || `${message.sender}-${message.body}`} className={`website-chat-message ${message.role || message.sender}`}>
-                {message.sender === 'agent' ? <UserRound size={14} /> : null}
-                <span>{renderMessageBody(message.body)}</span>
-              </div>
-            ))}
+            {messages.map((message) => {
+              const feedbackKey = messageKey(message);
+              const feedback = answerFeedback[feedbackKey] || {};
+              const showAnswerFeedback =
+                !conversationEnded &&
+                Boolean(sessionId) &&
+                latestAssistantMessageId === feedbackKey &&
+                isAssistantMessage(message);
+              return (
+                <div key={message.id || `${message.sender}-${message.body}`} className="website-chat-message-row">
+                  <div className={`website-chat-message ${message.role || message.sender}`}>
+                    {message.sender === 'agent' ? <UserRound size={14} /> : null}
+                    <span>{renderMessageBody(message.body)}</span>
+                  </div>
+                  {showAnswerFeedback ? (
+                    <div className="website-chat-answer-feedback">
+                      {feedback.status === 'thanks' ? (
+                        <span>Thanks for the feedback.</span>
+                      ) : (
+                        <>
+                          <span>Was this helpful?</span>
+                          <button
+                            type="button"
+                            onClick={() => handleAnswerFeedback(message, 'helpful')}
+                            disabled={feedback.status === 'sending'}
+                          >
+                            Yes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAnswerFeedback(message, 'not_helpful')}
+                            disabled={feedback.status === 'sending'}
+                          >
+                            No
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
 
           {shouldShowLead ? (

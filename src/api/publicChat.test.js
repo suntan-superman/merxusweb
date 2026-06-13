@@ -6,6 +6,7 @@ import {
   isPublicChatClosedError,
   isPublicChatClosedPayload,
   publicChatErrorMessage,
+  submitPublicChatAnswerFeedback,
 } from './publicChat.js';
 
 test('extractPublicChatError handles nested structured backend errors', () => {
@@ -65,4 +66,37 @@ test('isPublicChatClosedPayload detects session close shapes', () => {
 test('isPublicChatClosedError detects closed chat errors', () => {
   assert.equal(isPublicChatClosedError(new PublicChatError('Session is closed', { code: 'SESSION_CLOSED' })), true);
   assert.equal(isPublicChatClosedError(new PublicChatError('Chat is temporarily unavailable.', { code: 'NETWORK' })), false);
+});
+
+test('submitPublicChatAnswerFeedback posts to the answer feedback endpoint', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url, options });
+    return {
+      ok: true,
+      text: async () => JSON.stringify({ ok: true }),
+    };
+  };
+
+  try {
+    const body = {
+      product: 'merxus',
+      tenantId: 'merxus-platform',
+      rating: 'not_helpful',
+      question: 'What do you do?',
+      answer: 'Merxus answers customer questions.',
+      messageId: 'msg_1',
+    };
+    const result = await submitPublicChatAnswerFeedback('session 1', body);
+
+    assert.deepEqual(result, { ok: true });
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, 'https://api.merxus.ai/api/chat/public/session/session%201/answer-feedback');
+    assert.equal(calls[0].options.method, 'POST');
+    assert.equal(calls[0].options.headers['Content-Type'], 'application/json');
+    assert.deepEqual(JSON.parse(calls[0].options.body), body);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

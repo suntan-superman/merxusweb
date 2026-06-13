@@ -37,3 +37,6 @@ enhancements_complate.md
 **/*-firebase-adminsdk-*.json
 serviceAccountKey.json
 
+
+# Local Netlify folder
+.netlify
