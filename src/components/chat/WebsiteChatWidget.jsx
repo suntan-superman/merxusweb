@@ -654,7 +654,7 @@ export default function WebsiteChatWidget({
     }
 
     try {
-      await submitPublicChatAnswerFeedback(sessionId, {
+      const result = await submitPublicChatAnswerFeedback(sessionId, {
         product,
         tenantId,
         tenantName,
@@ -667,7 +667,15 @@ export default function WebsiteChatWidget({
         authenticated: Boolean(user),
         appBaseUrl: window.location.origin,
       });
-      setAnswerFeedback((current) => ({ ...current, [feedbackKey]: { status: 'thanks' } }));
+      setAnswerFeedback((current) => ({
+        ...current,
+        [feedbackKey]: {
+          status: 'thanks',
+          message: result?.notified
+            ? 'Thanks. Support was notified so we can improve this answer.'
+            : 'Thanks. We saved this for review.',
+        },
+      }));
     } catch (feedbackError) {
       setAnswerFeedback((current) => ({ ...current, [feedbackKey]: { status: 'idle' } }));
       setError(publicChatErrorMessage(feedbackError));
@@ -726,7 +734,7 @@ export default function WebsiteChatWidget({
                   {showAnswerFeedback ? (
                     <div className="website-chat-answer-feedback">
                       {feedback.status === 'thanks' ? (
-                        <span>Thanks for the feedback.</span>
+                        <span>{feedback.message || 'Thanks for the feedback.'}</span>
                       ) : (
                         <>
                           <span>Was this helpful?</span>
@@ -742,7 +750,7 @@ export default function WebsiteChatWidget({
                             onClick={() => handleAnswerFeedback(message, 'not_helpful')}
                             disabled={feedback.status === 'sending'}
                           >
-                            No
+                            {feedback.status === 'sending' ? 'Sending' : 'No'}
                           </button>
                         </>
                       )}
