@@ -85,7 +85,7 @@ export default function SupportPage() {
     },
     {
       question: 'How do I set up call forwarding?',
-      answer: 'Go to Settings and find the Call Forwarding section. You\'ll see your Merxus phone number and instructions for forwarding calls from your carrier. The mobile app also has a dedicated Call Forwarding screen.'
+      answer: 'Find your assigned Merxus phone number in Settings. If your business line is mobile, use the Merxus mobile app call-forwarding setup when available. If it is a landline, the common flow is to dial *72 from the landline, enter your Merxus number, then test by calling the original business number from another phone. Dial *73 from the landline to turn standard forwarding off. Some VoIP, PBX, cable phone, and mobile carriers require changes in the carrier portal or admin console instead.'
     }
   ];
 
