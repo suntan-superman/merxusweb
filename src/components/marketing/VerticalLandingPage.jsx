@@ -6,12 +6,14 @@ import {
   requestPublicDemo,
   requestPublicChatHuman,
 } from '../../api/publicChat';
+import { useAuth } from '../../context/AuthContext';
 import {
   getCampaignAttribution,
   trackMetaCustomEvent,
   trackMetaEvent,
   trackMetaLeadOnce,
 } from '../../utils/metaPixel';
+import { getPostLoginPath } from '../../utils/accountRouting';
 import { formatPhoneInput, getRawPhone } from '../../utils/phoneFormatter';
 
 const BUSINESS_TYPE_OPTIONS = [
@@ -35,6 +37,40 @@ function normalizePhone(value) {
 
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(value || '').trim());
+}
+
+function getConfiguredCalendlyUrl() {
+  return String(import.meta.env?.VITE_CALENDLY_URL || '').trim();
+}
+
+function isExternalUrl(value) {
+  return /^https?:\/\//i.test(String(value || '').trim());
+}
+
+function appendDemoContext(baseUrl, { content, attribution }) {
+  const href = String(baseUrl || '').trim();
+  if (!isExternalUrl(href)) return href;
+
+  try {
+    const url = new URL(href);
+    const context = {
+      source: 'meta_ads',
+      product: 'merxus',
+      vertical: content.tenantType || content.theme || 'office',
+      path: typeof window !== 'undefined' ? window.location.pathname : '',
+      landingPagePath: typeof window !== 'undefined' ? window.location.pathname : '',
+      ...attribution,
+    };
+
+    Object.entries(context).forEach(([key, value]) => {
+      if (value && !url.searchParams.has(key)) {
+        url.searchParams.set(key, String(value));
+      }
+    });
+    return url.toString();
+  } catch {
+    return href;
+  }
 }
 
 function createInitialLead(content) {
@@ -104,9 +140,17 @@ function getThemeClasses(theme) {
 
 export default function VerticalLandingPage({ content }) {
   const theme = getThemeClasses(content.theme);
+  const { user, userClaims, signOut } = useAuth();
   const [lead, setLead] = useState(() => createInitialLead(content));
   const [leadStatus, setLeadStatus] = useState({ state: 'idle', message: '', sessionId: '' });
   const attribution = useMemo(() => getCampaignAttribution(), []);
+  const demoUrl = useMemo(() => appendDemoContext(
+    getConfiguredCalendlyUrl() || content.demoHref || 'mailto:support@merxusllc.com?subject=Merxus%20Demo%20Request',
+    { content, attribution },
+  ), [attribution, content]);
+  const demoTarget = isExternalUrl(demoUrl) ? '_blank' : undefined;
+  const demoRel = isExternalUrl(demoUrl) ? 'noreferrer' : undefined;
+  const dashboardPath = getPostLoginPath(userClaims) || '/';
   const leadName = `${lead.firstName} ${lead.lastName}`.trim();
   const canSubmit =
     lead.firstName.trim().length >= 2 &&
@@ -235,15 +279,38 @@ export default function VerticalLandingPage({ content }) {
     }
   }
 
-  async function handleBookDemo() {
+  function openChat(source = 'paid_social_landing') {
+    window.dispatchEvent(new CustomEvent('merxus:open-public-chat', {
+      detail: {
+        action: 'open',
+        visitorId: attribution.fbclid || `landing_${Date.now()}`,
+        leadName,
+        leadEmail: lead.email.trim(),
+        initialIntent: 'sales',
+      },
+    }));
+    trackMetaCustomEvent('MerxusChatOpened', {
+      product: 'merxus',
+      industry: content.tenantType || content.theme,
+      source,
+      ...attribution,
+    });
+  }
+
+  function handleBookDemo(source = 'paid_social_landing') {
+    trackMetaEvent('Schedule', {
+      product: 'merxus',
+      industry: content.tenantType || content.theme,
+      source,
+      ...attribution,
+    });
+
     if (!leadStatus.sessionId || leadStatus.state === 'submitting') return;
-    setLeadStatus((current) => ({ ...current, state: 'submitting', message: 'Sending your demo request...' }));
-    try {
-      await requestPublicDemo({
+    requestPublicDemo({
         product: 'merxus',
         tenantType: content.tenantType || content.theme || 'office',
         vertical: content.tenantLabel || content.eyebrow || content.theme,
-        source: 'meta_ads',
+        source,
         sourceUrl: window.location.href,
         sessionId: leadStatus.sessionId,
         visitorId: attribution.fbclid || `landing_${Date.now()}`,
@@ -256,69 +323,116 @@ export default function VerticalLandingPage({ content }) {
         primaryNeed: lead.primaryNeed,
         preferredContactMethod: lead.preferredContactMethod,
         campaign: attribution,
+      })
+      .then(() => {
+        setLeadStatus((current) => (
+          current.state === 'submitting' ? current : {
+            ...current,
+            message: 'Demo link opened. We also saved your request for follow-up.',
+          }
+        ));
+      })
+      .catch((error) => {
+        setLeadStatus((current) => ({
+          ...current,
+          state: 'error',
+          message: publicChatErrorMessage(error),
+        }));
       });
-      trackMetaEvent('Schedule', {
-        product: 'merxus',
-        industry: content.tenantType || content.theme,
-        source: 'meta_ads_lead_form',
-        ...attribution,
-      });
-      setLeadStatus((current) => ({
-        ...current,
-        state: 'submitted',
-        message: 'Demo request sent. We will follow up using your preferred contact method.',
-      }));
-    } catch (error) {
-      setLeadStatus((current) => ({
-        ...current,
-        state: 'error',
-        message: publicChatErrorMessage(error),
-      }));
-    }
+  }
+
+  function handleStartSetup(source = 'paid_social_landing') {
+    trackMetaCustomEvent('MerxusOnboardingStarted', {
+      product: 'merxus',
+      industry: content.tenantType || content.theme,
+      source,
+      ...attribution,
+    });
+  }
+
+  function LandingActions({ source, compact = false, inverted = false }) {
+    const baseButton = compact
+      ? 'flex-1 rounded-2xl px-4 py-3 text-center text-sm font-semibold transition'
+      : 'inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold transition';
+    const secondaryClass = inverted
+      ? 'border border-white/35 bg-white/10 text-white hover:bg-white/20'
+      : `border ${theme.secondaryButton}`;
+    const tertiaryClass = inverted
+      ? 'border border-white/20 bg-black/10 text-white hover:bg-white/10'
+      : 'border border-gray-300 bg-white text-gray-900 hover:bg-gray-50';
+
+    return (
+      <>
+        <a
+          href="#lead-form"
+          onClick={() => handleStartSetup(source)}
+          className={`${baseButton} shadow-lg ${theme.accentButton}`}
+        >
+          Start Setup
+        </a>
+        <a
+          href={demoUrl}
+          target={demoTarget}
+          rel={demoRel}
+          onClick={() => handleBookDemo(source)}
+          className={`${baseButton} ${secondaryClass}`}
+        >
+          Book a 15-minute Demo
+        </a>
+        {!compact ? (
+          <button
+            type="button"
+            onClick={() => openChat(source)}
+            className={`${baseButton} ${tertiaryClass}`}
+          >
+            Ask a Question
+          </button>
+        ) : null}
+      </>
+    );
   }
 
   return (
-    <div className={`min-h-screen ${theme.pageBg}`}>
-      <section className="px-4 pb-12 pt-12">
+    <div className={`merxus-landing-page min-h-screen pb-24 ${theme.pageBg}`}>
+      <header className="sticky top-0 z-30 border-b border-white/60 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+          <Link to="/" className="text-base font-black tracking-tight text-gray-950">
+            Merxus <span className={theme.accentText}>AI</span>
+          </Link>
+          <nav className="flex items-center gap-2 text-sm font-semibold">
+            {user ? (
+              <>
+                <Link to={dashboardPath} className="rounded-xl px-3 py-2 text-gray-800 hover:bg-gray-100">Dashboard</Link>
+                <button type="button" onClick={signOut} className="rounded-xl px-3 py-2 text-gray-800 hover:bg-gray-100">Sign Out</button>
+              </>
+            ) : (
+              <>
+                <a href={demoUrl} target={demoTarget} rel={demoRel} onClick={() => handleBookDemo('paid_social_header')} className="hidden rounded-xl px-3 py-2 text-gray-800 hover:bg-gray-100 sm:inline-flex">Book Demo</a>
+                <a href="#lead-form" onClick={() => handleStartSetup('paid_social_header')} className="rounded-xl px-3 py-2 text-gray-800 hover:bg-gray-100">Start Setup</a>
+                <Link to="/login" className="rounded-xl bg-gray-950 px-3 py-2 text-white hover:bg-gray-800">Login</Link>
+              </>
+            )}
+          </nav>
+        </div>
+      </header>
+
+      <section className="px-4 pb-8 pt-6">
         <div className="mx-auto max-w-6xl">
-          <div className={`overflow-hidden rounded-[32px] shadow-2xl ${theme.heroPanel}`}>
-            <div className="grid gap-10 px-6 py-10 md:grid-cols-[1.2fr,0.8fr] md:px-10 md:py-14">
+          <div className={`overflow-hidden rounded-[24px] shadow-2xl ${theme.heroPanel}`}>
+            <div className="grid gap-8 px-6 py-8 md:grid-cols-[1.2fr,0.8fr] md:px-10 md:py-10">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-white/75">
                   {content.eyebrow}
                 </p>
-                <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight md:text-6xl">
+                <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight md:text-5xl">
                   {content.heroTitle}
                 </h1>
-                <p className={`mt-5 max-w-2xl text-base md:text-lg ${theme.accentSoftText}`}>
+                <p className="mt-5 max-w-2xl text-base text-white/90 md:text-lg">
                   {content.heroSubtitle}
                 </p>
 
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    to={content.setupHref}
-                    onClick={() => trackMetaCustomEvent('MerxusOnboardingStarted', {
-                      product: 'merxus',
-                      industry: content.tenantType || content.theme,
-                      source: 'paid_social_landing',
-                      ...attribution,
-                    })}
-                    className={`inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold shadow-lg transition ${theme.accentButton}`}
-                  >
-                    {content.primaryCta}
-                  </Link>
-                <a
-                  href="#lead-form"
-                  onClick={() => trackMetaEvent('Schedule', {
-                    product: 'merxus',
-                    industry: content.tenantType || content.theme,
-                    source: 'paid_social_landing',
-                    ...attribution,
-                    })}
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
-                  >
-                    {content.secondaryCta}
-                  </a>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <LandingActions source="paid_social_hero" inverted />
                 </div>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -357,7 +471,7 @@ export default function VerticalLandingPage({ content }) {
         </div>
       </section>
 
-      <section id="lead-form" className="px-4 py-6">
+      <section id="lead-form" className="scroll-mt-24 px-4 py-5">
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr,1.1fr]">
           <div className={`rounded-[28px] border px-6 py-8 md:px-8 ${theme.sectionHighlight}`}>
             <p className={`text-xs font-semibold uppercase tracking-[0.22em] ${theme.accentText}`}>See Merxus In Action</p>
@@ -379,10 +493,10 @@ export default function VerticalLandingPage({ content }) {
             </div>
           </div>
 
-          <form onSubmit={handleLeadSubmit} className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-gray-200 md:p-8">
+          <form onSubmit={handleLeadSubmit} className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-gray-300 md:p-8">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="text-sm font-semibold text-gray-800">
-                First name
+                First name <span className={theme.accentText}>*</span>
                 <input
                   value={lead.firstName}
                   onChange={(event) => updateLead('firstName', event.target.value)}
@@ -392,7 +506,7 @@ export default function VerticalLandingPage({ content }) {
                 />
               </label>
               <label className="text-sm font-semibold text-gray-800">
-                Last name
+                Last name <span className={theme.accentText}>*</span>
                 <input
                   value={lead.lastName}
                   onChange={(event) => updateLead('lastName', event.target.value)}
@@ -402,7 +516,7 @@ export default function VerticalLandingPage({ content }) {
                 />
               </label>
               <label className="text-sm font-semibold text-gray-800">
-                Email
+                Email <span className={theme.accentText}>*</span>
                 <input
                   value={lead.email}
                   onChange={(event) => updateLead('email', event.target.value)}
@@ -413,7 +527,7 @@ export default function VerticalLandingPage({ content }) {
                 />
               </label>
               <label className="text-sm font-semibold text-gray-800">
-                Phone
+                Phone <span className={theme.accentText}>*</span>
                 <input
                   value={lead.phone}
                   onChange={(event) => updateLead('phone', event.target.value)}
@@ -425,7 +539,7 @@ export default function VerticalLandingPage({ content }) {
                 />
               </label>
               <label className="text-sm font-semibold text-gray-800 sm:col-span-2">
-                Company name
+                Company name <span className={theme.accentText}>*</span>
                 <input
                   value={lead.companyName}
                   onChange={(event) => updateLead('companyName', event.target.value)}
@@ -465,7 +579,7 @@ export default function VerticalLandingPage({ content }) {
                 />
               </label>
               <label className="text-sm font-semibold text-gray-800 sm:col-span-2">
-                Preferred contact
+                Preferred contact method
                 <select
                   value={lead.preferredContactMethod}
                   onChange={(event) => updateLead('preferredContactMethod', event.target.value)}
@@ -516,23 +630,24 @@ export default function VerticalLandingPage({ content }) {
                   })}
                   className="rounded-xl bg-gray-950 px-4 py-3 text-center text-xs font-semibold text-white transition hover:bg-gray-800"
                 >
-                  Continue onboarding
+                  Continue setup
                 </Link>
-                <button
-                  type="button"
-                  onClick={handleBookDemo}
-                  disabled={leadStatus.state === 'submitting'}
+                <a
+                  href={demoUrl}
+                  target={demoTarget}
+                  rel={demoRel}
+                  onClick={() => handleBookDemo('meta_ads_lead_form')}
                   className="rounded-xl border border-gray-300 px-4 py-3 text-center text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
                 >
-                  Book demo
-                </button>
+                  Book a demo
+                </a>
                 <button
                   type="button"
                   onClick={handleChatWithPerson}
                   disabled={leadStatus.state === 'submitting'}
                   className="rounded-xl border border-gray-300 px-4 py-3 text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
                 >
-                  Chat with a person
+                  Ask a question
                 </button>
               </div>
             ) : null}
@@ -623,7 +738,7 @@ export default function VerticalLandingPage({ content }) {
         </div>
       </section>
 
-      <section className="px-4 py-10">
+      <section className="px-4 py-8">
         <div className="mx-auto max-w-6xl rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-gray-200 md:p-10">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div className="max-w-3xl">
@@ -631,31 +746,8 @@ export default function VerticalLandingPage({ content }) {
               <h2 className="mt-3 text-3xl font-black text-gray-900 md:text-4xl">{content.finalTitle}</h2>
               <p className="mt-4 text-base leading-7 text-gray-700 md:text-lg">{content.finalBody}</p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                to={content.setupHref}
-                onClick={() => trackMetaCustomEvent('MerxusOnboardingStarted', {
-                  product: 'merxus',
-                  industry: content.tenantType || content.theme,
-                  source: 'paid_social_landing',
-                  ...attribution,
-                })}
-                className={`inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold shadow-lg transition ${theme.accentButton}`}
-              >
-                {content.primaryCta}
-              </Link>
-              <a
-                href="#lead-form"
-                onClick={() => trackMetaEvent('Schedule', {
-                  product: 'merxus',
-                  industry: content.tenantType || content.theme,
-                  source: 'paid_social_landing',
-                  ...attribution,
-                })}
-                className={`inline-flex items-center justify-center rounded-2xl border px-6 py-3 text-sm font-semibold transition ${theme.secondaryButton}`}
-              >
-                {content.secondaryCta}
-              </a>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <LandingActions source="paid_social_final_cta" />
             </div>
           </div>
         </div>
@@ -663,30 +755,7 @@ export default function VerticalLandingPage({ content }) {
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-6xl gap-3">
-          <Link
-            to={content.setupHref}
-            onClick={() => trackMetaCustomEvent('MerxusOnboardingStarted', {
-              product: 'merxus',
-              industry: content.tenantType || content.theme,
-              source: 'paid_social_landing_mobile_sticky',
-              ...attribution,
-            })}
-            className={`flex-1 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg transition ${theme.accentButton}`}
-          >
-            {content.primaryCta}
-          </Link>
-          <a
-            href="#lead-form"
-            onClick={() => trackMetaEvent('Schedule', {
-              product: 'merxus',
-              industry: content.tenantType || content.theme,
-              source: 'paid_social_landing_mobile_sticky',
-              ...attribution,
-            })}
-            className={`flex-1 rounded-2xl border px-4 py-3 text-center text-sm font-semibold transition ${theme.secondaryButton}`}
-          >
-            {content.secondaryCta}
-          </a>
+          <LandingActions source="paid_social_mobile_sticky" compact />
         </div>
       </div>
     </div>

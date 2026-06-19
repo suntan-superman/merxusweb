@@ -182,6 +182,7 @@ function MetaRouteTracker() {
     });
 
     const paidSocialRoutes = {
+      '/never-miss-calls': 'general',
       '/office-ai-front-desk': 'office',
       '/ai-front-desk': 'office',
       '/solutions/office': 'office',

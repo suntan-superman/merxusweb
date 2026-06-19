@@ -1337,12 +1337,12 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
 @media (max-width: 520px) {
   .website-chat-widget {
     right: 14px;
-    bottom: 14px;
+    bottom: 92px;
   }
 
   .website-chat-panel {
     width: calc(100vw - 28px);
-    height: min(610px, calc(100vh - 28px));
+    height: min(610px, calc(100vh - 106px));
   }
 
   .website-chat-lead {
