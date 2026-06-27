@@ -123,3 +123,11 @@ Last Index Created Manually:
         }
       ]
     }
+
+////////////////////////////////////////////////////////////
+To test the Meta Events:
+https://merxusllc.com/meta-event-test?test_event_code=TEST8449
+
+For puppeteer:
+npm run verify:release
+///////////////////////////////////////////////////////////

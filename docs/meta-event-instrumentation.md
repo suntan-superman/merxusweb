@@ -56,6 +56,8 @@ Run:
 
 ```bash
 npm run verify:release
+npm run verify:release -- -- --only meta
+npm run verify:release -- -- --target production --only meta --certify --archive
 ```
 
 The Meta verification config is in `release-test.config.js`.
@@ -74,6 +76,20 @@ Safe automated verification currently uses:
 
 The `/meta-event-test` route is a safe browser-only QA page. It sends Pixel events only and does not create production leads, Calendly bookings, Stripe checkout sessions, or charges.
 
+## Event Classification
+
+Release certification classifies events from `release-test.config.js`:
+
+| Event | Classification | Release behavior |
+|---|---|---|
+| `PageView` | Required | Missing event fails the Meta check. |
+| `ViewContent` | Required | Missing event fails the Meta check. |
+| `Lead` | Required | Missing event fails the Meta check. |
+| `MerxusChatOpened` | Required | Missing event fails the Meta check. |
+| `Schedule` | Recommended | Missing or skipped event warns. |
+| `MerxusOnboardingStarted` | Recommended | Missing or skipped event warns. |
+| `Purchase` | Recommended | Missing or skipped event warns. |
+
 To test manually in Meta Events Manager, open the URL Meta shows in Test Events:
 
 ```text
@@ -91,5 +107,14 @@ The release report includes a Meta section with:
 - Pixel ID
 - Missing events
 - Skipped events
+- Classified required/recommended/optional event tables
+- Readiness score
+- Deployment recommendation
 - Console errors
 - Failed network requests
+
+When `--certify --archive` is used, the release framework also generates:
+
+- `reports/Merxus/release-certificate.pdf`
+- `reports/Merxus/latest/`
+- `reports/Merxus/archive/YYYY-MM-DD/HHmmss-<target>-<shortCommit>/`

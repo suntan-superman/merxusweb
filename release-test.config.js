@@ -2,14 +2,50 @@ import { fileURLToPath } from "node:url";
 
 const EXPECTED_META_PIXEL_ID = process.env.VITE_META_PIXEL_ID || process.env.MERXUS_META_PIXEL_ID || "974258021755637";
 const EXPECTED_META_EVENTS = [
-  "PageView",
-  "ViewContent",
-  "Lead",
-  "Schedule",
-  "MerxusOnboardingStarted",
-  "MerxusChatOpened",
-  "Purchase"
+  {
+    name: "PageView",
+    classification: "required",
+    blocking: true,
+    description: "Every route/page load"
+  },
+  {
+    name: "ViewContent",
+    classification: "required",
+    blocking: true,
+    description: "Solutions, feature, restaurant, office, and real estate pages"
+  },
+  {
+    name: "Lead",
+    classification: "required",
+    blocking: true,
+    description: "Demo/contact lead through safe test path"
+  },
+  {
+    name: "Schedule",
+    classification: "recommended",
+    blocking: false,
+    description: "Calendly/demo scheduling begins or completes"
+  },
+  {
+    name: "MerxusOnboardingStarted",
+    classification: "recommended",
+    blocking: false,
+    description: "Onboarding/setup wizard begins"
+  },
+  {
+    name: "MerxusChatOpened",
+    classification: "required",
+    blocking: true,
+    description: "Website AI chat widget opened"
+  },
+  {
+    name: "Purchase",
+    classification: "recommended",
+    blocking: false,
+    description: "Subscription starts after verified Stripe success state"
+  }
 ];
+const REQUIRED_META_EVENTS = EXPECTED_META_EVENTS.filter((event) => event.classification === "required").map((event) => event.name);
 
 export default {
   productName: "Merxus AI",
@@ -43,7 +79,7 @@ export default {
     pixelIdEnv: "VITE_META_PIXEL_ID",
     expectedPixelId: EXPECTED_META_PIXEL_ID,
     expectedEvents: EXPECTED_META_EVENTS,
-    requiredEvents: EXPECTED_META_EVENTS,
+    requiredEvents: REQUIRED_META_EVENTS,
     payloadRules: {},
     duplicateLimit: 4,
     routes: ["/meta-event-test?test_event_code=TEST8449"],
