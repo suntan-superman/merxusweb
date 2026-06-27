@@ -9,7 +9,12 @@
     "build": "vite build",
     "test:node": "node --test src/api/publicChat.test.js src/utils/metaPixel.test.js src/utils/notificationCenterRouting.test.js src/utils/notificationCenterPresentation.test.js src/utils/feedbackIntegrationsRouting.test.js src/utils/feedbackIntegrationsPresentation.test.js src/utils/feedbackWorkspace.test.js src/utils/reviewWorkspace.test.js src/utils/merxusOpsAudit.test.js src/utils/merxusProductionReadiness.test.js src/utils/systemOperationsConsole.test.js src/utils/analyticsSummary.test.js src/utils/systemCrossTenant.test.js src/utils/analyticsActivityFeed.test.js src/utils/analyticsWorkspace.test.js src/utils/analyticsOperations.test.js src/utils/analyticsOperationsGrid.test.js src/utils/analyticsTenantFeedback.test.js src/utils/callSpeech.test.js src/utils/objectRouting.test.js src/utils/validation.test.js src/utils/phoneFormatter.test.js src/services/navigationPreferencesModel.test.js src/navigation/navigationRegistry.test.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:release": "node ./scripts/verify-release.js",
+    "verify:release:local": "node ./scripts/verify-release.js --target local",
+    "verify:release:prod": "node ./scripts/verify-release.js --target production",
+    "test:puppeteer": "node ./scripts/verify-release.js --only routes",
+    "test:meta": "node ./scripts/verify-release.js --only meta"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -46,6 +51,7 @@
     "firebase-admin": "^13.6.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
-    "vite": "^5.0.8"
+    "vite": "^5.0.8",
+    "puppeteer": "^25.2.1"
   }
 }

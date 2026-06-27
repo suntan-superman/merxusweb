@@ -1,6 +1,9 @@
 const ATTRIBUTION_KEY = 'merxus.metaAttribution';
 const LEAD_EVENT_KEY_PREFIX = 'merxus.metaLeadEvent.';
+const PURCHASE_EVENT_KEY_PREFIX = 'merxus.metaPurchaseEvent.';
+const SCHEDULE_EVENT_KEY_PREFIX = 'merxus.metaScheduleEvent.';
 const META_PIXEL_STATUS_KEY = '__MERXUS_META_PIXEL_STATUS__';
+const META_PIXEL_LOG_KEY = '__MERXUS_META_PIXEL_EVENTS__';
 
 const TRACKING_PARAMS = [
   'utm_source',
@@ -16,13 +19,16 @@ function canUseWindow() {
   return typeof window !== 'undefined' && typeof document !== 'undefined';
 }
 
+function isMetaDebugEnabled() {
+  return Boolean(
+    import.meta.env?.DEV ||
+    import.meta.env?.MODE === 'test' ||
+    import.meta.env?.VITE_META_PIXEL_DEBUG === 'true'
+  );
+}
+
 export function getConfiguredMetaPixelId() {
-  return String(
-    import.meta.env?.VITE_META_PIXEL_ID ||
-    import.meta.env?.VITE_META_PIXELS_ID ||
-    import.meta.env?.VITE_META_DATASET_ID ||
-    ''
-  ).trim();
+  return String(import.meta.env?.VITE_META_PIXEL_ID || '').trim();
 }
 
 function getMetaPixelStatus() {
@@ -34,6 +40,7 @@ function getMetaPixelStatus() {
       scriptInjected: false,
       lastError: '',
       events: [],
+      initializedPixelIds: [],
     };
   }
   return window[META_PIXEL_STATUS_KEY];
@@ -52,7 +59,7 @@ function recordMetaPixelStatus(update = {}) {
 function recordMetaPixelEvent(kind, name, parameters = {}, options = {}, fired = false, reason = '') {
   const status = getMetaPixelStatus();
   if (!status) return;
-  status.events.push({
+  const entry = {
     kind,
     name,
     parameters,
@@ -60,8 +67,14 @@ function recordMetaPixelEvent(kind, name, parameters = {}, options = {}, fired =
     fired,
     reason,
     timestamp: new Date().toISOString(),
-  });
+    pageUrl: canUseWindow() ? window.location.href : '',
+  };
+  status.events.push(entry);
   status.events = status.events.slice(-25);
+  window[META_PIXEL_LOG_KEY] = status.events;
+  if (isMetaDebugEnabled()) {
+    console.info('[Merxus Meta Pixel]', entry);
+  }
 }
 
 export function collectCampaignAttribution({ href, search, referrer } = {}) {
@@ -106,6 +119,7 @@ export function initMetaPixel(pixelId = getConfiguredMetaPixelId()) {
   if (!canUseWindow()) return false;
 
   const normalizedPixelId = String(pixelId || '').trim();
+  const status = getMetaPixelStatus();
   recordMetaPixelStatus({
     requestedPixelId: normalizedPixelId,
     fbqPresentBeforeInit: Boolean(window.fbq),
@@ -119,12 +133,25 @@ export function initMetaPixel(pixelId = getConfiguredMetaPixelId()) {
     return false;
   }
 
-  if (window.fbq) {
-    window.fbq('init', normalizedPixelId);
+  if (status?.initialized && status.pixelId === normalizedPixelId && window.fbq) {
     recordMetaPixelStatus({
       initialized: true,
       pixelId: normalizedPixelId,
       fbqPresentAfterInit: true,
+      lastError: '',
+    });
+    return true;
+  }
+
+  if (window.fbq) {
+    if (!status?.initializedPixelIds?.includes(normalizedPixelId)) {
+      window.fbq('init', normalizedPixelId);
+    }
+    recordMetaPixelStatus({
+      initialized: true,
+      pixelId: normalizedPixelId,
+      fbqPresentAfterInit: true,
+      initializedPixelIds: [...new Set([...(status?.initializedPixelIds || []), normalizedPixelId])],
       lastError: '',
     });
     return true;
@@ -147,6 +174,7 @@ export function initMetaPixel(pixelId = getConfiguredMetaPixelId()) {
     scriptInjected: true,
     pixelId: normalizedPixelId,
     fbqPresentAfterInit: Boolean(window.fbq),
+    initializedPixelIds: [...new Set([...(status?.initializedPixelIds || []), normalizedPixelId])],
     lastError: '',
   });
   return true;
@@ -176,11 +204,63 @@ export function trackMetaCustomEvent(name, parameters = {}, options = {}) {
   return true;
 }
 
+export function trackPageView(parameters = {}) {
+  return trackMetaEvent('PageView', parameters);
+}
+
+export function trackViewContent(parameters = {}) {
+  return trackMetaEvent('ViewContent', parameters);
+}
+
+export function trackLead(parameters = {}, options = {}) {
+  const key = options.dedupeKey || `${parameters.lead_type || 'lead'}:${parameters.page_path || parameters.pagePath || window.location.pathname}`;
+  return trackOnce({
+    storageKey: `${LEAD_EVENT_KEY_PREFIX}${key}`,
+    eventName: 'Lead',
+    parameters,
+    options: { eventID: `lead_${safeEventId(key)}` },
+  });
+}
+
+export function trackSchedule(parameters = {}, options = {}) {
+  const key = options.dedupeKey || `${parameters.content_name || 'schedule'}:${parameters.page_path || parameters.pagePath || window.location.pathname}`;
+  return trackOnce({
+    storageKey: `${SCHEDULE_EVENT_KEY_PREFIX}${key}`,
+    eventName: 'Schedule',
+    parameters,
+    options: { eventID: `schedule_${safeEventId(key)}` },
+  });
+}
+
+export function trackPurchase(parameters = {}, options = {}) {
+  const key = options.dedupeKey || parameters.session_id || parameters.sessionId || `${parameters.content_name || 'purchase'}:${parameters.page_path || parameters.pagePath || window.location.pathname}`;
+  return trackOnce({
+    storageKey: `${PURCHASE_EVENT_KEY_PREFIX}${key}`,
+    eventName: 'Purchase',
+    parameters,
+    options: { eventID: `purchase_${safeEventId(key)}` },
+  });
+}
+
+export function trackMerxusOnboardingStarted(parameters = {}) {
+  return trackMetaCustomEvent('MerxusOnboardingStarted', parameters);
+}
+
+export function trackMerxusChatOpened(parameters = {}) {
+  return trackMetaCustomEvent('MerxusChatOpened', parameters);
+}
+
 export function trackMetaLeadOnce(key, parameters = {}) {
+  return trackLead(parameters, { dedupeKey: key });
+}
+
+function trackOnce({ storageKey, eventName, parameters, options }) {
   if (!canUseWindow()) return false;
-  const safeKey = String(key || '').trim() || 'default';
-  const storageKey = `${LEAD_EVENT_KEY_PREFIX}${safeKey}`;
   if (window.sessionStorage.getItem(storageKey)) return false;
   window.sessionStorage.setItem(storageKey, 'true');
-  return trackMetaEvent('Lead', parameters, { eventID: `lead_${safeKey}` });
+  return trackMetaEvent(eventName, parameters, options);
+}
+
+function safeEventId(value) {
+  return String(value || 'default').trim().replace(/[^a-z0-9_-]+/gi, '_').slice(0, 80) || 'default';
 }

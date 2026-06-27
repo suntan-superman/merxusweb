@@ -1,0 +1,4 @@
+{
+  "status": "not_collected",
+  "reason": "JavaScript coverage collection is scaffolded but not enabled by default."
+}

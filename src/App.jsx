@@ -43,7 +43,8 @@ import lazyWithRetry from './utils/lazyWithRetry';
 import {
   initMetaPixel,
   persistCampaignAttribution,
-  trackMetaEvent,
+  trackPageView,
+  trackViewContent,
 } from './utils/metaPixel';
 import { markDiagnostic } from './utils/productionDiagnostics';
 
@@ -176,12 +177,14 @@ function MetaRouteTracker() {
       hash: location.hash,
     });
     persistCampaignAttribution();
-    trackMetaEvent('PageView', {
+    trackPageView({
       path: location.pathname,
+      page_path: location.pathname,
       search: location.search,
     });
 
-    const paidSocialRoutes = {
+    const viewContentRoutes = {
+      '/': { industry: 'platform', contentName: 'Merxus AI Communication Command Center', category: 'homepage' },
       '/never-miss-calls': 'general',
       '/office-ai-front-desk': 'office',
       '/ai-front-desk': 'office',
@@ -190,12 +193,19 @@ function MetaRouteTracker() {
       '/solutions/real-estate': 'real_estate',
       '/restaurant-ai': 'restaurant',
       '/solutions/restaurant': 'restaurant',
+      '/pricing': { industry: 'platform', contentName: 'Merxus Pricing', category: 'pricing' },
     };
-    const industry = paidSocialRoutes[location.pathname];
-    if (industry) {
-      trackMetaEvent('ViewContent', {
-        industry,
-        pageType: 'paid_social_landing',
+    const routeConfig = viewContentRoutes[location.pathname];
+    if (routeConfig) {
+      const normalized = typeof routeConfig === 'string'
+        ? { industry: routeConfig, contentName: `Merxus ${routeConfig.replace(/_/g, ' ')} Solution`, category: 'solution' }
+        : routeConfig;
+      trackViewContent({
+        content_name: normalized.contentName,
+        content_category: normalized.category,
+        industry: normalized.industry,
+        page_type: normalized.category === 'pricing' ? 'pricing' : 'paid_social_landing',
+        page_path: location.pathname,
         path: location.pathname,
       });
     }

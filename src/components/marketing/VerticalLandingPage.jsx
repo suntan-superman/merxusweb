@@ -9,9 +9,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import {
   getCampaignAttribution,
-  trackMetaCustomEvent,
-  trackMetaEvent,
-  trackMetaLeadOnce,
+  trackLead,
+  trackMerxusChatOpened,
+  trackMerxusOnboardingStarted,
+  trackSchedule,
 } from '../../utils/metaPixel';
 import { getPostLoginPath } from '../../utils/accountRouting';
 import { formatPhoneInput, getRawPhone } from '../../utils/phoneFormatter';
@@ -100,7 +101,7 @@ function getThemeClasses(theme) {
         accentCard: 'bg-orange-50',
         accentPill: 'bg-orange-100 text-orange-800',
         accentRing: 'ring-orange-200',
-        accentButton: 'bg-orange-500 hover:bg-orange-400 text-white',
+        accentButton: 'bg-orange-700 hover:bg-orange-600 !text-white',
         secondaryButton: 'border-orange-200 text-orange-700 hover:bg-orange-50',
         sectionHighlight: 'bg-gradient-to-r from-orange-50 to-rose-50 border-orange-100',
       };
@@ -115,7 +116,7 @@ function getThemeClasses(theme) {
         accentCard: 'bg-sky-50',
         accentPill: 'bg-sky-100 text-sky-800',
         accentRing: 'ring-sky-200',
-        accentButton: 'bg-sky-600 hover:bg-sky-500 text-white',
+        accentButton: 'bg-sky-700 hover:bg-sky-600 !text-white',
         secondaryButton: 'border-sky-200 text-sky-700 hover:bg-sky-50',
         sectionHighlight: 'bg-gradient-to-r from-sky-50 to-stone-50 border-sky-100',
       };
@@ -131,7 +132,7 @@ function getThemeClasses(theme) {
         accentCard: 'bg-emerald-50',
         accentPill: 'bg-emerald-100 text-emerald-800',
         accentRing: 'ring-emerald-200',
-        accentButton: 'bg-emerald-500 hover:bg-emerald-400 text-black',
+        accentButton: 'bg-emerald-700 hover:bg-emerald-600 !text-white',
         secondaryButton: 'border-emerald-200 text-emerald-700 hover:bg-emerald-50',
         sectionHighlight: 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-100',
       };
@@ -216,11 +217,16 @@ export default function VerticalLandingPage({ content }) {
     try {
       const result = await createPublicChatSession(payload);
       const sessionId = result.session?.id || '';
-      trackMetaLeadOnce(`${content.theme}:${lead.email.trim().toLowerCase()}`, {
+      trackLead({
+        content_name: 'Merxus Demo Lead',
+        lead_type: content.tenantType || content.theme || 'paid_social',
+        page_path: window.location.pathname,
         product: 'merxus',
         industry: content.tenantType || content.theme,
         source: 'meta_ads',
         ...attribution,
+      }, {
+        dedupeKey: `${content.theme}:${lead.email.trim().toLowerCase()}`,
       });
       setLeadStatus({
         state: 'submitted',
@@ -259,7 +265,9 @@ export default function VerticalLandingPage({ content }) {
           teamNotice: true,
         },
       }));
-      trackMetaCustomEvent('MerxusChatOpened', {
+      trackMerxusChatOpened({
+        content_name: 'Merxus Website Assistant',
+        page_path: window.location.pathname,
         product: 'merxus',
         industry: content.tenantType || content.theme,
         source: 'meta_ads_lead_form',
@@ -289,7 +297,9 @@ export default function VerticalLandingPage({ content }) {
         initialIntent: 'sales',
       },
     }));
-    trackMetaCustomEvent('MerxusChatOpened', {
+    trackMerxusChatOpened({
+      content_name: 'Merxus Website Assistant',
+      page_path: window.location.pathname,
       product: 'merxus',
       industry: content.tenantType || content.theme,
       source,
@@ -298,7 +308,9 @@ export default function VerticalLandingPage({ content }) {
   }
 
   function handleBookDemo(source = 'paid_social_landing') {
-    trackMetaEvent('Schedule', {
+    trackSchedule({
+      content_name: 'Merxus Demo Scheduled',
+      page_path: window.location.pathname,
       product: 'merxus',
       industry: content.tenantType || content.theme,
       source,
@@ -342,7 +354,9 @@ export default function VerticalLandingPage({ content }) {
   }
 
   function handleStartSetup(source = 'paid_social_landing') {
-    trackMetaCustomEvent('MerxusOnboardingStarted', {
+    trackMerxusOnboardingStarted({
+      content_name: 'Merxus Onboarding Started',
+      page_path: window.location.pathname,
       product: 'merxus',
       industry: content.tenantType || content.theme,
       source,
@@ -622,7 +636,9 @@ export default function VerticalLandingPage({ content }) {
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <Link
                   to={content.setupHref}
-                  onClick={() => trackMetaCustomEvent('MerxusOnboardingStarted', {
+                  onClick={() => trackMerxusOnboardingStarted({
+                    content_name: 'Merxus Onboarding Started',
+                    page_path: window.location.pathname,
                     product: 'merxus',
                     industry: content.tenantType || content.theme,
                     source: 'meta_ads_lead_form',

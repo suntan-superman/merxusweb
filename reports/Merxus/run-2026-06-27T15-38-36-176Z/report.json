@@ -1,0 +1,123 @@
+{
+  "productName": "Merxus AI",
+  "productSlug": "merxus",
+  "baseUrl": "http://127.0.0.1:3000",
+  "target": "local",
+  "timestamp": "2026-06-27T15:38:36.176Z",
+  "overall": "FAIL",
+  "certification": "NOT CERTIFIED",
+  "git": {
+    "branch": "main",
+    "commit": "debaecf1c509bcd667f7d56c67e7f01ae3cc0421"
+  },
+  "reports": {
+    "html": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-report.html",
+    "json": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-report.json",
+    "markdownSummary": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-summary.md",
+    "releaseCertification": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-certification.md",
+    "archive": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\run-2026-06-27T15-38-36-176Z"
+  },
+  "checks": [
+    {
+      "name": "env",
+      "status": "pass",
+      "message": "Environment guardrails passed.",
+      "blocking": true,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "build",
+      "status": "skip",
+      "message": "Disabled by product check policy.",
+      "blocking": false,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "lint",
+      "status": "skip",
+      "message": "Disabled by product check policy.",
+      "blocking": false,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "routes",
+      "status": "fail",
+      "error": "net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3000/",
+      "blocking": true,
+      "releaseImpact": "blocking_failure"
+    },
+    {
+      "name": "seo",
+      "status": "fail",
+      "error": "net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3000/",
+      "blocking": false,
+      "releaseImpact": "warning"
+    },
+    {
+      "name": "broken-links",
+      "status": "skip",
+      "message": "Disabled by product check policy.",
+      "blocking": false,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "meta",
+      "status": "fail",
+      "error": "net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3000/office-ai-front-desk",
+      "blocking": false,
+      "releaseImpact": "warning"
+    },
+    {
+      "name": "stripe",
+      "status": "fail",
+      "message": "Stripe safe checkout mode is enabled but no safe start checkout selector is configured.",
+      "stripeResults": [
+        {
+          "status": "missing_safe_selector",
+          "allowRealCharges": false
+        }
+      ],
+      "blocking": false,
+      "releaseImpact": "warning"
+    },
+    {
+      "name": "auth",
+      "status": "warn",
+      "message": "Auth check configured but release test credentials are not set.",
+      "blocking": false,
+      "releaseImpact": "warning"
+    },
+    {
+      "name": "lighthouse",
+      "status": "skip",
+      "message": "Disabled by product check policy.",
+      "blocking": false,
+      "releaseImpact": "none"
+    }
+  ],
+  "consoleErrors": [],
+  "failedRequests": [],
+  "metaEvents": [],
+  "metaRequests": [],
+  "metaSummary": {
+    "status": "fail",
+    "pixelId": "",
+    "fbqLoaded": false,
+    "expectedEvents": [],
+    "observedEvents": [],
+    "missingEvents": [],
+    "skippedEvents": [],
+    "consoleErrors": [],
+    "failedRequests": []
+  },
+  "stripeResults": [
+    "[REDACTED_CIRCULAR]"
+  ],
+  "safety": {
+    "liveStripeKeysDetected": false,
+    "realChargesBlocked": true,
+    "productionMutationAllowed": false,
+    "reportsSanitized": true,
+    "stripeStatus": "fail"
+  }
+}

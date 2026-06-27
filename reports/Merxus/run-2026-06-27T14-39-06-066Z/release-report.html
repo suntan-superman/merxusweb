@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Merxus AI Release Verification</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:32px;color:#172033;background:#f8fafc}
+    main{max-width:1100px;margin:auto;background:white;border:1px solid #dbe3ef;border-radius:8px;padding:24px}
+    table{width:100%;border-collapse:collapse;margin-top:20px}
+    th,td{text-align:left;border-bottom:1px solid #e5eaf2;padding:10px;vertical-align:top}
+    .pass td:first-child{border-left:4px solid #1f9d55}.fail td:first-child{border-left:4px solid #d64545}.warn td:first-child{border-left:4px solid #c27803}.skip td:first-child{border-left:4px solid #6b7280}
+    code{background:#eef2f7;padding:2px 4px;border-radius:4px}
+  </style>
+</head>
+<body><main>
+  <h1>Merxus AI Release Verification</h1>
+  <p><strong>Overall:</strong> PASS_WITH_WARNINGS | <strong>Certification:</strong> CERTIFIED WITH WARNINGS | <strong>Target:</strong> production</p>
+  <p><strong>Branch:</strong> <code>main</code> | <strong>Commit:</strong> <code>debaecf1c509bcd667f7d56c67e7f01ae3cc0421</code></p>
+  <table><thead><tr><th>Check</th><th>Status</th><th>Policy</th><th>Details</th></tr></thead><tbody><tr class="pass"><td>Environment</td><td>pass</td><td>Blocking</td><td>Environment guardrails passed.</td></tr><tr class="skip"><td>Build</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="skip"><td>Lint</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="skip"><td>Browser Smoke</td><td>skip</td><td>Blocking</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>SEO</td><td>skip</td><td>Warning</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Broken Links</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="skip"><td>Meta Pixel</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="skip"><td>Stripe Guardrails</td><td>skip</td><td>Warning</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Authentication</td><td>skip</td><td>Warning</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Lighthouse</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr></tbody></table>
+</main></body></html>

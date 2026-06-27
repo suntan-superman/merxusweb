@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {
   collectCampaignAttribution,
   initMetaPixel,
+  trackMerxusChatOpened,
+  trackPageView,
   trackMetaEvent,
 } from './metaPixel.js';
 
@@ -63,15 +65,26 @@ test('initMetaPixel injects Meta script and records tracked events', () => {
 
   try {
     assert.equal(initMetaPixel('937938119035288'), true);
+    assert.equal(initMetaPixel('937938119035288'), true);
     assert.equal(insertedScripts.length, 1);
     assert.equal(insertedScripts[0].src, 'https://connect.facebook.net/en_US/fbevents.js');
 
-    assert.equal(trackMetaEvent('PageView', { path: '/office-ai-front-desk' }), true);
+    assert.equal(trackPageView({ path: '/office-ai-front-desk' }), true);
+    assert.equal(trackMetaEvent('ViewContent', { page_path: '/office-ai-front-desk' }), true);
+    assert.equal(trackMerxusChatOpened({ page_path: '/office-ai-front-desk' }), true);
     assert.equal(window.__MERXUS_META_PIXEL_STATUS__.pixelId, '937938119035288');
     assert.equal(window.__MERXUS_META_PIXEL_STATUS__.initialized, true);
     assert.equal(
       window.__MERXUS_META_PIXEL_STATUS__.events.some((event) => event.name === 'PageView' && event.fired),
       true
+    );
+    assert.equal(
+      window.__MERXUS_META_PIXEL_STATUS__.events.some((event) => event.name === 'MerxusChatOpened' && event.fired),
+      true
+    );
+    assert.equal(
+      window.__MERXUS_META_PIXEL_STATUS__.initializedPixelIds.filter((id) => id === '937938119035288').length,
+      1
     );
   } finally {
     globalThis.window = originalWindow;

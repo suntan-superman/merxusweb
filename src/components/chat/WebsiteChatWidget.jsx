@@ -13,7 +13,7 @@ import {
   isPublicChatClosedPayload,
 } from '../../api/publicChat';
 import { useAuth } from '../../context/AuthContext';
-import { getCampaignAttribution, trackMetaCustomEvent } from '../../utils/metaPixel';
+import { getCampaignAttribution, trackMerxusChatOpened } from '../../utils/metaPixel';
 
 const STORAGE_PREFIX = 'merxus.publicChat';
 const IDLE_WARNING_MS = 5 * 60 * 1000;
@@ -886,7 +886,9 @@ export default function WebsiteChatWidget({
           onClick={() => {
             unlockChatSound();
             setIsOpen(true);
-            trackMetaCustomEvent('MerxusChatOpened', {
+            trackMerxusChatOpened({
+              content_name: 'Merxus Website Assistant',
+              page_path: window.location.pathname,
               product,
               tenantType,
               source: 'website_chat',

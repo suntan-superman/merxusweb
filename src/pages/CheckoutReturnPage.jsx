@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { trackPurchase } from '../utils/metaPixel';
 
 const CheckoutReturnPage = () => {
   const location = useLocation();
@@ -9,6 +10,19 @@ const CheckoutReturnPage = () => {
   const success = params.get('success') === 'true';
   const canceled = params.get('canceled') === 'true';
   const deeplink = params.get('deeplink') || '';
+  const sessionId = params.get('session_id') || params.get('checkout_session_id') || '';
+
+  useEffect(() => {
+    if (!success) return;
+    trackPurchase({
+      content_name: 'Merxus Subscription',
+      currency: 'USD',
+      page_path: location.pathname,
+      session_id: sessionId || undefined,
+    }, {
+      dedupeKey: sessionId || `checkout-return:${location.search}`,
+    });
+  }, [location.pathname, location.search, sessionId, success]);
 
   useEffect(() => {
     if (deeplink && !attemptedOpen) {

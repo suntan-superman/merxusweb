@@ -28,6 +28,7 @@ import {
 import { submitOnboarding } from '../components/onboarding/onboardingApi';
 import { getEmailSignInMethods, getSignInMethodInfo } from '../utils/authProviders';
 import { capitalizeWordsPreservingApostrophes } from '../utils/textFormatters';
+import { trackMerxusOnboardingStarted } from '../utils/metaPixel';
 import { sendVerificationEmail } from '../api/otp';
 import {
   AccountMethodSelector,
@@ -85,6 +86,17 @@ const Onboarding = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [tenantType]);
+
+  useEffect(() => {
+    if (!hasExplicitTenantType) return;
+    trackMerxusOnboardingStarted({
+      content_name: 'Merxus Onboarding Started',
+      page_path: window.location.pathname,
+      product: 'merxus',
+      industry: tenantType,
+      source: source || 'onboarding_route',
+    });
+  }, [hasExplicitTenantType, source, tenantType]);
 
   useEffect(() => {
     if (tenantType) {

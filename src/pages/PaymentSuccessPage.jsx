@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { finalizeProvisioning, verifyCheckoutSession, verifyTestCallReadiness } from "../api/billing";
 import { useAuth } from "../context/AuthContext";
+import { trackPurchase } from "../utils/metaPixel";
 
 function isMobileDevice() {
   if (typeof navigator === "undefined") return false;
@@ -141,6 +142,20 @@ export default function PaymentSuccessPage() {
     }
     handleFinalizeProvisioning();
   }, [handleFinalizeProvisioning, provisioning.error, provisioning.loading, provisioning.result, state.loading, state.result]);
+
+  useEffect(() => {
+    if (state.loading || !state.result?.paid) return;
+    trackPurchase({
+      content_name: "Merxus Subscription",
+      currency: String(state.result.currency || "USD").toUpperCase(),
+      value: Number(state.result.amountTotal || state.result.amount_total || 0) / 100 || undefined,
+      page_path: window.location.pathname,
+      session_id: sessionId,
+      tenant_type: state.result.tenantType || tenantTypeFromParams,
+    }, {
+      dedupeKey: sessionId || state.result.subscriptionId || state.result.tenantId,
+    });
+  }, [sessionId, state.loading, state.result, tenantTypeFromParams]);
 
   if (!loading && !user) {
     return (
