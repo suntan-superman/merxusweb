@@ -3,7 +3,7 @@
   "productSlug": "merxus",
   "baseUrl": "https://merxusllc.com",
   "target": "production",
-  "timestamp": "2026-06-27T15:55:08.971Z",
+  "timestamp": "2026-06-27T15:53:14.557Z",
   "overall": "PASS_WITH_WARNINGS",
   "certification": "CERTIFIED WITH WARNINGS",
   "git": {
@@ -15,7 +15,7 @@
     "json": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-report.json",
     "markdownSummary": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-summary.md",
     "releaseCertification": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-certification.md",
-    "archive": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\run-2026-06-27T15-55-08-971Z"
+    "archive": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\run-2026-06-27T15-53-14-557Z"
   },
   "checks": [
     {
@@ -75,7 +75,7 @@
             "init",
             "[REDACTED_PHONE]55637"
           ],
-          "timestamp": "2026-06-27T15:55:01.548Z",
+          "timestamp": "2026-06-27T15:53:06.850Z",
           "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         },
         {
@@ -97,7 +97,7 @@
             },
             null
           ],
-          "timestamp": "2026-06-27T15:55:01.548Z",
+          "timestamp": "2026-06-27T15:53:06.850Z",
           "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         },
         {
@@ -125,7 +125,7 @@
             },
             null
           ],
-          "timestamp": "2026-06-27T15:55:01.549Z",
+          "timestamp": "2026-06-27T15:53:06.850Z",
           "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         },
         {
@@ -139,7 +139,7 @@
             "source": "website_chat",
             "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
             "referrer": "",
-            "timestamp": "2026-06-27T15:55:01.548Z"
+            "timestamp": "2026-06-27T15:53:06.849Z"
           },
           "options": {},
           "args": [
@@ -153,11 +153,11 @@
               "source": "website_chat",
               "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
               "referrer": "",
-              "timestamp": "2026-06-27T15:55:01.548Z"
+              "timestamp": "2026-06-27T15:53:06.849Z"
             },
             null
           ],
-          "timestamp": "2026-06-27T15:55:05.273Z",
+          "timestamp": "2026-06-27T15:53:10.772Z",
           "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         },
         {
@@ -171,7 +171,7 @@
             "source": "paid_social_header",
             "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
             "referrer": "",
-            "timestamp": "2026-06-27T15:55:01.548Z"
+            "timestamp": "2026-06-27T15:53:06.849Z"
           },
           "options": {},
           "args": [
@@ -185,11 +185,11 @@
               "source": "paid_social_header",
               "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
               "referrer": "",
-              "timestamp": "2026-06-27T15:55:01.548Z"
+              "timestamp": "2026-06-27T15:53:06.849Z"
             },
             null
           ],
-          "timestamp": "2026-06-27T15:55:07.810Z",
+          "timestamp": "2026-06-27T15:53:13.243Z",
           "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         }
       ],

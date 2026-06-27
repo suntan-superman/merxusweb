@@ -1,0 +1,344 @@
+{
+  "productName": "Merxus AI",
+  "productSlug": "merxus",
+  "baseUrl": "https://merxus.ai",
+  "target": "production",
+  "timestamp": "2026-06-27T15:52:30.910Z",
+  "overall": "PASS_WITH_WARNINGS",
+  "certification": "CERTIFIED WITH WARNINGS",
+  "git": {
+    "branch": "main",
+    "commit": "2d5c01efa2492c09a00495de286de5224baf4d9e"
+  },
+  "reports": {
+    "html": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-report.html",
+    "json": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-report.json",
+    "markdownSummary": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-summary.md",
+    "releaseCertification": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-certification.md",
+    "archive": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\run-2026-06-27T15-52-30-910Z"
+  },
+  "checks": [
+    {
+      "name": "env",
+      "status": "skip",
+      "message": "Skipped by CLI flag.",
+      "blocking": true,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "build",
+      "status": "skip",
+      "message": "Disabled by product check policy.",
+      "blocking": false,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "lint",
+      "status": "skip",
+      "message": "Disabled by product check policy.",
+      "blocking": false,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "routes",
+      "status": "skip",
+      "message": "Skipped by CLI flag.",
+      "blocking": true,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "seo",
+      "status": "skip",
+      "message": "Skipped by CLI flag.",
+      "blocking": false,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "broken-links",
+      "status": "skip",
+      "message": "Disabled by product check policy.",
+      "blocking": false,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "meta",
+      "status": "fail",
+      "message": "Meta fbq was not loaded.; Expected Pixel ID [REDACTED_PHONE]55637 but observed none.; Missing required Meta event: PageView; Missing required Meta event: ViewContent; Missing required Meta event: MerxusChatOpened",
+      "metaEvents": [],
+      "metaRequests": [],
+      "metaValidation": {
+        "failures": [
+          "Meta fbq was not loaded.",
+          "Expected Pixel ID [REDACTED_PHONE]55637 but observed none.",
+          "Missing required Meta event: PageView",
+          "Missing required Meta event: ViewContent",
+          "Missing required Meta event: MerxusChatOpened"
+        ],
+        "warnings": [],
+        "observedEvents": [],
+        "missingEvents": [
+          "PageView",
+          "ViewContent"
+        ],
+        "skippedEvents": [
+          {
+            "eventName": "MerxusChatOpened",
+            "skipped": true,
+            "reason": "Selector not found: button[aria-label='Open Merxus chat']"
+          },
+          {
+            "eventName": "MerxusOnboardingStarted",
+            "skipped": true,
+            "reason": "Selector not found: a[href='#lead-form']"
+          },
+          {
+            "eventName": "Lead",
+            "reason": "Skipped in automated release verification because submitting the public lead form would create a production lead."
+          },
+          {
+            "eventName": "Schedule",
+            "reason": "Skipped because no safe Calendly test-booking completion flow is configured."
+          },
+          {
+            "eventName": "Purchase",
+            "reason": "Skipped because no safe Stripe test confirmation URL/session is configured; verifier never creates charges."
+          }
+        ],
+        "fbqLoaded": false,
+        "initializedPixelIds": []
+      },
+      "metaSummary": {
+        "pixelId": "[REDACTED_PHONE]55637",
+        "fbqLoaded": false,
+        "expectedEvents": [
+          "PageView",
+          "ViewContent",
+          "Lead",
+          "Schedule",
+          "MerxusOnboardingStarted",
+          "MerxusChatOpened",
+          "Purchase"
+        ],
+        "observedEvents": [],
+        "missingEvents": [
+          "PageView",
+          "ViewContent"
+        ],
+        "skippedEvents": [
+          {
+            "eventName": "MerxusChatOpened",
+            "skipped": true,
+            "reason": "Selector not found: button[aria-label='Open Merxus chat']"
+          },
+          {
+            "eventName": "MerxusOnboardingStarted",
+            "skipped": true,
+            "reason": "Selector not found: a[href='#lead-form']"
+          },
+          {
+            "eventName": "Lead",
+            "reason": "Skipped in automated release verification because submitting the public lead form would create a production lead."
+          },
+          {
+            "eventName": "Schedule",
+            "reason": "Skipped because no safe Calendly test-booking completion flow is configured."
+          },
+          {
+            "eventName": "Purchase",
+            "reason": "Skipped because no safe Stripe test confirmation URL/session is configured; verifier never creates charges."
+          }
+        ],
+        "consoleErrors": [
+          {
+            "type": "error",
+            "text": "Failed to load resource: the server responded with a status of 404 ()",
+            "location": {
+              "url": "https://merxus.ai/office-ai-front-desk"
+            },
+            "timestamp": "2026-06-27T15:52:25.257Z"
+          },
+          {
+            "type": "error",
+            "text": "Failed to load resource: the server responded with a status of 404 ()",
+            "location": {
+              "url": "https://merxus.ai/favicon.ico"
+            },
+            "timestamp": "2026-06-27T15:52:25.361Z"
+          },
+          {
+            "type": "error",
+            "text": "Failed to load resource: the server responded with a status of 404 ()",
+            "location": {
+              "url": "https://merxus.ai/office-ai-front-desk"
+            },
+            "timestamp": "2026-06-27T15:52:26.940Z"
+          },
+          {
+            "type": "error",
+            "text": "Failed to load resource: the server responded with a status of 404 ()",
+            "location": {
+              "url": "https://merxus.ai/office-ai-front-desk"
+            },
+            "timestamp": "2026-06-27T15:52:28.924Z"
+          }
+        ],
+        "failedRequests": [],
+        "eventCount": 0,
+        "requestCount": 0
+      },
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "location": {
+            "url": "https://merxus.ai/office-ai-front-desk"
+          },
+          "timestamp": "2026-06-27T15:52:25.257Z"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "location": {
+            "url": "https://merxus.ai/favicon.ico"
+          },
+          "timestamp": "2026-06-27T15:52:25.361Z"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "location": {
+            "url": "https://merxus.ai/office-ai-front-desk"
+          },
+          "timestamp": "2026-06-27T15:52:26.940Z"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "location": {
+            "url": "https://merxus.ai/office-ai-front-desk"
+          },
+          "timestamp": "2026-06-27T15:52:28.924Z"
+        }
+      ],
+      "failedRequests": [],
+      "blocking": false,
+      "releaseImpact": "warning"
+    },
+    {
+      "name": "stripe",
+      "status": "skip",
+      "message": "Skipped by CLI flag.",
+      "blocking": false,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "auth",
+      "status": "skip",
+      "message": "Skipped by CLI flag.",
+      "blocking": false,
+      "releaseImpact": "none"
+    },
+    {
+      "name": "lighthouse",
+      "status": "skip",
+      "message": "Disabled by product check policy.",
+      "blocking": false,
+      "releaseImpact": "none"
+    }
+  ],
+  "consoleErrors": [
+    "[REDACTED_CIRCULAR]",
+    "[REDACTED_CIRCULAR]",
+    "[REDACTED_CIRCULAR]",
+    "[REDACTED_CIRCULAR]"
+  ],
+  "failedRequests": [],
+  "metaEvents": [],
+  "metaRequests": [],
+  "metaSummary": {
+    "status": "fail",
+    "pixelId": "[REDACTED_PHONE]55637",
+    "fbqLoaded": false,
+    "expectedEvents": [
+      "PageView",
+      "ViewContent",
+      "Lead",
+      "Schedule",
+      "MerxusOnboardingStarted",
+      "MerxusChatOpened",
+      "Purchase"
+    ],
+    "observedEvents": [],
+    "missingEvents": [
+      "PageView",
+      "ViewContent"
+    ],
+    "skippedEvents": [
+      {
+        "eventName": "MerxusChatOpened",
+        "skipped": true,
+        "reason": "Selector not found: button[aria-label='Open Merxus chat']"
+      },
+      {
+        "eventName": "MerxusOnboardingStarted",
+        "skipped": true,
+        "reason": "Selector not found: a[href='#lead-form']"
+      },
+      {
+        "eventName": "Lead",
+        "reason": "Skipped in automated release verification because submitting the public lead form would create a production lead."
+      },
+      {
+        "eventName": "Schedule",
+        "reason": "Skipped because no safe Calendly test-booking completion flow is configured."
+      },
+      {
+        "eventName": "Purchase",
+        "reason": "Skipped because no safe Stripe test confirmation URL/session is configured; verifier never creates charges."
+      }
+    ],
+    "consoleErrors": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 ()",
+        "location": {
+          "url": "https://merxus.ai/office-ai-front-desk"
+        },
+        "timestamp": "2026-06-27T15:52:25.257Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 ()",
+        "location": {
+          "url": "https://merxus.ai/favicon.ico"
+        },
+        "timestamp": "2026-06-27T15:52:25.361Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 ()",
+        "location": {
+          "url": "https://merxus.ai/office-ai-front-desk"
+        },
+        "timestamp": "2026-06-27T15:52:26.940Z"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 ()",
+        "location": {
+          "url": "https://merxus.ai/office-ai-front-desk"
+        },
+        "timestamp": "2026-06-27T15:52:28.924Z"
+      }
+    ],
+    "failedRequests": []
+  },
+  "stripeResults": [],
+  "safety": {
+    "liveStripeKeysDetected": false,
+    "realChargesBlocked": true,
+    "productionMutationAllowed": false,
+    "reportsSanitized": true,
+    "stripeStatus": "skip"
+  }
+}

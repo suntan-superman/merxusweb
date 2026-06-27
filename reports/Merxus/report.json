@@ -1,21 +1,21 @@
 {
   "productName": "Merxus AI",
   "productSlug": "merxus",
-  "baseUrl": "http://localhost:3000",
-  "target": "local",
-  "timestamp": "2026-06-27T15:42:00.878Z",
+  "baseUrl": "https://merxusllc.com",
+  "target": "production",
+  "timestamp": "2026-06-27T15:55:08.971Z",
   "overall": "PASS_WITH_WARNINGS",
   "certification": "CERTIFIED WITH WARNINGS",
   "git": {
     "branch": "main",
-    "commit": "debaecf1c509bcd667f7d56c67e7f01ae3cc0421"
+    "commit": "2d5c01efa2492c09a00495de286de5224baf4d9e"
   },
   "reports": {
     "html": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-report.html",
     "json": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-report.json",
     "markdownSummary": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-summary.md",
     "releaseCertification": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-certification.md",
-    "archive": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\run-2026-06-27T15-42-00-878Z"
+    "archive": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\run-2026-06-27T15-55-08-971Z"
   },
   "checks": [
     {
@@ -75,8 +75,8 @@
             "init",
             "[REDACTED_PHONE]55637"
           ],
-          "timestamp": "2026-06-27T15:41:53.261Z",
-          "pageUrl": "http://localhost:3000/office-ai-front-desk"
+          "timestamp": "2026-06-27T15:55:01.548Z",
+          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         },
         {
           "kind": "track",
@@ -97,8 +97,8 @@
             },
             null
           ],
-          "timestamp": "2026-06-27T15:41:53.261Z",
-          "pageUrl": "http://localhost:3000/office-ai-front-desk"
+          "timestamp": "2026-06-27T15:55:01.548Z",
+          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         },
         {
           "kind": "track",
@@ -125,8 +125,8 @@
             },
             null
           ],
-          "timestamp": "2026-06-27T15:41:53.261Z",
-          "pageUrl": "http://localhost:3000/office-ai-front-desk"
+          "timestamp": "2026-06-27T15:55:01.549Z",
+          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         },
         {
           "kind": "trackCustom",
@@ -137,9 +137,9 @@
             "product": "merxus",
             "tenantType": "platform",
             "source": "website_chat",
-            "landingPageUrl": "http://localhost:3000/office-ai-front-desk",
+            "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
             "referrer": "",
-            "timestamp": "2026-06-27T15:41:53.260Z"
+            "timestamp": "2026-06-27T15:55:01.548Z"
           },
           "options": {},
           "args": [
@@ -151,14 +151,14 @@
               "product": "merxus",
               "tenantType": "platform",
               "source": "website_chat",
-              "landingPageUrl": "http://localhost:3000/office-ai-front-desk",
+              "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
               "referrer": "",
-              "timestamp": "2026-06-27T15:41:53.260Z"
+              "timestamp": "2026-06-27T15:55:01.548Z"
             },
             null
           ],
-          "timestamp": "2026-06-27T15:41:57.158Z",
-          "pageUrl": "http://localhost:3000/office-ai-front-desk"
+          "timestamp": "2026-06-27T15:55:05.273Z",
+          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         },
         {
           "kind": "trackCustom",
@@ -169,9 +169,9 @@
             "product": "merxus",
             "industry": "office",
             "source": "paid_social_header",
-            "landingPageUrl": "http://localhost:3000/office-ai-front-desk",
+            "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
             "referrer": "",
-            "timestamp": "2026-06-27T15:41:53.260Z"
+            "timestamp": "2026-06-27T15:55:01.548Z"
           },
           "options": {},
           "args": [
@@ -183,14 +183,14 @@
               "product": "merxus",
               "industry": "office",
               "source": "paid_social_header",
-              "landingPageUrl": "http://localhost:3000/office-ai-front-desk",
+              "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
               "referrer": "",
-              "timestamp": "2026-06-27T15:41:53.260Z"
+              "timestamp": "2026-06-27T15:55:01.548Z"
             },
             null
           ],
-          "timestamp": "2026-06-27T15:41:59.739Z",
-          "pageUrl": "http://localhost:3000/office-ai-front-desk"
+          "timestamp": "2026-06-27T15:55:07.810Z",
+          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
         }
       ],
       "metaRequests": [],
