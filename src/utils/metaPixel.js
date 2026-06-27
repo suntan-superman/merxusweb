@@ -4,6 +4,7 @@ const PURCHASE_EVENT_KEY_PREFIX = 'merxus.metaPurchaseEvent.';
 const SCHEDULE_EVENT_KEY_PREFIX = 'merxus.metaScheduleEvent.';
 const META_PIXEL_STATUS_KEY = '__MERXUS_META_PIXEL_STATUS__';
 const META_PIXEL_LOG_KEY = '__MERXUS_META_PIXEL_EVENTS__';
+const META_TEST_EVENT_CODE_KEY = 'merxus.metaTestEventCode';
 
 const TRACKING_PARAMS = [
   'utm_source',
@@ -13,6 +14,7 @@ const TRACKING_PARAMS = [
   'utm_term',
   'fbclid',
   'adVariant',
+  'test_event_code',
 ];
 
 function canUseWindow() {
@@ -93,6 +95,27 @@ export function collectCampaignAttribution({ href, search, referrer } = {}) {
   });
 
   return attribution;
+}
+
+function getMetaTestEventCode() {
+  if (!canUseWindow()) return '';
+  const params = new URLSearchParams(window.location.search || '');
+  const fromUrl = params.get('test_event_code') || params.get('meta_test_event_code') || '';
+  const normalized = String(fromUrl || '').trim();
+  if (normalized) {
+    window.sessionStorage.setItem(META_TEST_EVENT_CODE_KEY, normalized);
+    return normalized;
+  }
+  return String(window.sessionStorage.getItem(META_TEST_EVENT_CODE_KEY) || '').trim();
+}
+
+function withMetaTestEventCode(parameters = {}) {
+  const payload = parameters && typeof parameters === 'object' ? { ...parameters } : {};
+  const testEventCode = getMetaTestEventCode();
+  if (testEventCode && !payload.test_event_code) {
+    payload.test_event_code = testEventCode;
+  }
+  return payload;
 }
 
 export function persistCampaignAttribution() {
@@ -182,25 +205,27 @@ export function initMetaPixel(pixelId = getConfiguredMetaPixelId()) {
 
 export function trackMetaEvent(name, parameters = {}, options = {}) {
   if (!canUseWindow() || !name) return false;
+  const payload = withMetaTestEventCode(parameters);
   if (!window.fbq && !initMetaPixel()) {
-    recordMetaPixelEvent('track', name, parameters, options, false, 'fbq_unavailable');
+    recordMetaPixelEvent('track', name, payload, options, false, 'fbq_unavailable');
     return false;
   }
   const eventOptions = options.eventID ? { eventID: options.eventID } : undefined;
-  window.fbq('track', name, parameters, eventOptions);
-  recordMetaPixelEvent('track', name, parameters, eventOptions, true);
+  window.fbq('track', name, payload, eventOptions);
+  recordMetaPixelEvent('track', name, payload, eventOptions, true);
   return true;
 }
 
 export function trackMetaCustomEvent(name, parameters = {}, options = {}) {
   if (!canUseWindow() || !name) return false;
+  const payload = withMetaTestEventCode(parameters);
   if (!window.fbq && !initMetaPixel()) {
-    recordMetaPixelEvent('trackCustom', name, parameters, options, false, 'fbq_unavailable');
+    recordMetaPixelEvent('trackCustom', name, payload, options, false, 'fbq_unavailable');
     return false;
   }
   const eventOptions = options.eventID ? { eventID: options.eventID } : undefined;
-  window.fbq('trackCustom', name, parameters, eventOptions);
-  recordMetaPixelEvent('trackCustom', name, parameters, eventOptions, true);
+  window.fbq('trackCustom', name, payload, eventOptions);
+  recordMetaPixelEvent('trackCustom', name, payload, eventOptions, true);
   return true;
 }
 

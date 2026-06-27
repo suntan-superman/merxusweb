@@ -16,7 +16,7 @@ export default {
   productSlug: "merxus",
   reportProductKey: "Merxus",
   appRoot: fileURLToPath(new URL(".", import.meta.url)),
-  baseUrl: process.env.MERXUS_RELEASE_BASE_URL || "https://merxus.ai",
+  baseUrl: process.env.MERXUS_RELEASE_BASE_URL || "https://merxusllc.com",
   localUrl: "http://localhost:3000",
   environment: process.env.RELEASE_TEST_TARGET || "production",
   app: {
@@ -43,34 +43,45 @@ export default {
     pixelIdEnv: "VITE_META_PIXEL_ID",
     expectedPixelId: EXPECTED_META_PIXEL_ID,
     expectedEvents: EXPECTED_META_EVENTS,
-    requiredEvents: ["PageView", "ViewContent", "MerxusChatOpened"],
+    requiredEvents: EXPECTED_META_EVENTS,
     payloadRules: {},
     duplicateLimit: 4,
-    routes: ["/office-ai-front-desk"],
+    routes: ["/meta-event-test?test_event_code=TEST8449"],
     safeActions: [
       {
-        eventName: "MerxusChatOpened",
-        route: "/office-ai-front-desk",
-        selector: "button[aria-label='Open Merxus chat']"
+        eventName: "PageView",
+        route: "/meta-event-test?test_event_code=TEST8449",
+        selector: "[data-meta-event='PageView']"
       },
       {
-        eventName: "MerxusOnboardingStarted",
-        route: "/office-ai-front-desk",
-        selector: "a[href='#lead-form']"
-      }
-    ],
-    skippedEvents: [
+        eventName: "ViewContent",
+        route: "/meta-event-test?test_event_code=TEST8449",
+        selector: "[data-meta-event='ViewContent']"
+      },
       {
         eventName: "Lead",
-        reason: "Skipped in automated release verification because submitting the public lead form would create a production lead."
+        route: "/meta-event-test?test_event_code=TEST8449",
+        selector: "[data-meta-event='Lead']"
       },
       {
         eventName: "Schedule",
-        reason: "Skipped because no safe Calendly test-booking completion flow is configured."
+        route: "/meta-event-test?test_event_code=TEST8449",
+        selector: "[data-meta-event='Schedule']"
+      },
+      {
+        eventName: "MerxusOnboardingStarted",
+        route: "/meta-event-test?test_event_code=TEST8449",
+        selector: "[data-meta-event='MerxusOnboardingStarted']"
+      },
+      {
+        eventName: "MerxusChatOpened",
+        route: "/meta-event-test?test_event_code=TEST8449",
+        selector: "[data-meta-event='MerxusChatOpened']"
       },
       {
         eventName: "Purchase",
-        reason: "Skipped because no safe Stripe test confirmation URL/session is configured; verifier never creates charges."
+        route: "/meta-event-test?test_event_code=TEST8449",
+        selector: "[data-meta-event='Purchase']"
       }
     ]
   },

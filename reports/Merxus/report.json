@@ -1,21 +1,21 @@
 {
   "productName": "Merxus AI",
   "productSlug": "merxus",
-  "baseUrl": "https://merxusllc.com",
-  "target": "production",
-  "timestamp": "2026-06-27T15:55:08.971Z",
+  "baseUrl": "http://localhost:3000",
+  "target": "local",
+  "timestamp": "2026-06-27T16:02:08.827Z",
   "overall": "PASS_WITH_WARNINGS",
   "certification": "CERTIFIED WITH WARNINGS",
   "git": {
     "branch": "main",
-    "commit": "2d5c01efa2492c09a00495de286de5224baf4d9e"
+    "commit": "9cb7d0d30419bfcd076819558b3080ec2668178a"
   },
   "reports": {
     "html": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-report.html",
     "json": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-report.json",
     "markdownSummary": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-summary.md",
     "releaseCertification": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\release-certification.md",
-    "archive": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\run-2026-06-27T15-55-08-971Z"
+    "archive": "C:\\Users\\sjroy\\Source\\Merxus\\web\\reports\\Merxus\\run-2026-06-27T16-02-08-827Z"
   },
   "checks": [
     {
@@ -63,7 +63,7 @@
     {
       "name": "meta",
       "status": "pass",
-      "message": "Meta Pixel observed events: PageView, ViewContent, MerxusChatOpened, MerxusOnboardingStarted.",
+      "message": "Meta Pixel observed events: PageView, ViewContent, Lead, Schedule, MerxusOnboardingStarted, MerxusChatOpened, Purchase.",
       "metaEvents": [
         {
           "kind": "init",
@@ -75,103 +75,149 @@
             "init",
             "[REDACTED_PHONE]55637"
           ],
-          "timestamp": "2026-06-27T15:55:01.548Z",
-          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
+          "timestamp": "2026-06-27T16:01:47.926Z",
+          "pageUrl": "http://localhost:3000/meta-event-test?test_event_code=TEST8449"
         },
         {
           "kind": "track",
           "eventName": "PageView",
           "payload": {
-            "path": "/office-ai-front-desk",
-            "page_path": "/office-ai-front-desk",
-            "search": ""
+            "path": "/meta-event-test",
+            "page_path": "/meta-event-test",
+            "search": "?test_event_code=TEST8449",
+            "test_event_code": "TEST8449"
           },
           "options": {},
           "args": [
             "track",
             "PageView",
             {
-              "path": "/office-ai-front-desk",
-              "page_path": "/office-ai-front-desk",
-              "search": ""
+              "path": "/meta-event-test",
+              "page_path": "/meta-event-test",
+              "search": "?test_event_code=TEST8449",
+              "test_event_code": "TEST8449"
             },
             null
           ],
-          "timestamp": "2026-06-27T15:55:01.548Z",
-          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
+          "timestamp": "2026-06-27T16:01:47.926Z",
+          "pageUrl": "http://localhost:3000/meta-event-test?test_event_code=TEST8449"
+        },
+        {
+          "kind": "track",
+          "eventName": "PageView",
+          "payload": {
+            "page_path": "/meta-event-test",
+            "path": "/meta-event-test",
+            "source": "manual_meta_test",
+            "test_event_code": "TEST8449"
+          },
+          "options": {},
+          "args": [
+            "track",
+            "PageView",
+            {
+              "page_path": "/meta-event-test",
+              "path": "/meta-event-test",
+              "source": "manual_meta_test",
+              "test_event_code": "TEST8449"
+            },
+            null
+          ],
+          "timestamp": "2026-06-27T16:01:51.784Z",
+          "pageUrl": "http://localhost:3000/meta-event-test?test_event_code=TEST8449"
         },
         {
           "kind": "track",
           "eventName": "ViewContent",
           "payload": {
-            "content_name": "Merxus office Solution",
-            "content_category": "solution",
-            "industry": "office",
-            "page_type": "paid_social_landing",
-            "page_path": "/office-ai-front-desk",
-            "path": "/office-ai-front-desk"
+            "content_name": "Merxus Meta Test Content",
+            "content_category": "meta_test",
+            "page_path": "/meta-event-test",
+            "source": "manual_meta_test",
+            "test_event_code": "TEST8449"
           },
           "options": {},
           "args": [
             "track",
             "ViewContent",
             {
-              "content_name": "Merxus office Solution",
-              "content_category": "solution",
-              "industry": "office",
-              "page_type": "paid_social_landing",
-              "page_path": "/office-ai-front-desk",
-              "path": "/office-ai-front-desk"
+              "content_name": "Merxus Meta Test Content",
+              "content_category": "meta_test",
+              "page_path": "/meta-event-test",
+              "source": "manual_meta_test",
+              "test_event_code": "TEST8449"
             },
             null
           ],
-          "timestamp": "2026-06-27T15:55:01.549Z",
-          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
+          "timestamp": "2026-06-27T16:01:54.538Z",
+          "pageUrl": "http://localhost:3000/meta-event-test?test_event_code=TEST8449"
         },
         {
-          "kind": "trackCustom",
-          "eventName": "MerxusChatOpened",
+          "kind": "track",
+          "eventName": "Lead",
           "payload": {
-            "content_name": "Merxus Website Assistant",
-            "page_path": "/office-ai-front-desk",
-            "product": "merxus",
-            "tenantType": "platform",
-            "source": "website_chat",
-            "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
-            "referrer": "",
-            "timestamp": "2026-06-27T15:55:01.548Z"
+            "content_name": "Merxus Demo Lead",
+            "lead_type": "meta_test",
+            "page_path": "/meta-event-test",
+            "source": "manual_meta_test",
+            "test_event_code": "TEST8449"
           },
-          "options": {},
+          "options": {
+            "eventID": "lead_manual-meta-test-lead-[REDACTED_PHONE]996"
+          },
           "args": [
-            "trackCustom",
-            "MerxusChatOpened",
+            "track",
+            "Lead",
             {
-              "content_name": "Merxus Website Assistant",
-              "page_path": "/office-ai-front-desk",
-              "product": "merxus",
-              "tenantType": "platform",
-              "source": "website_chat",
-              "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
-              "referrer": "",
-              "timestamp": "2026-06-27T15:55:01.548Z"
+              "content_name": "Merxus Demo Lead",
+              "lead_type": "meta_test",
+              "page_path": "/meta-event-test",
+              "source": "manual_meta_test",
+              "test_event_code": "TEST8449"
             },
-            null
+            {
+              "eventID": "lead_manual-meta-test-lead-[REDACTED_PHONE]996"
+            }
           ],
-          "timestamp": "2026-06-27T15:55:05.273Z",
-          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
+          "timestamp": "2026-06-27T16:01:56.996Z",
+          "pageUrl": "http://localhost:3000/meta-event-test?test_event_code=TEST8449"
+        },
+        {
+          "kind": "track",
+          "eventName": "Schedule",
+          "payload": {
+            "content_name": "Merxus Demo Scheduled",
+            "page_path": "/meta-event-test",
+            "source": "manual_meta_test",
+            "test_event_code": "TEST8449"
+          },
+          "options": {
+            "eventID": "schedule_manual-meta-test-schedule-[REDACTED_PHONE]698"
+          },
+          "args": [
+            "track",
+            "Schedule",
+            {
+              "content_name": "Merxus Demo Scheduled",
+              "page_path": "/meta-event-test",
+              "source": "manual_meta_test",
+              "test_event_code": "TEST8449"
+            },
+            {
+              "eventID": "schedule_manual-meta-test-schedule-[REDACTED_PHONE]698"
+            }
+          ],
+          "timestamp": "2026-06-27T16:01:59.698Z",
+          "pageUrl": "http://localhost:3000/meta-event-test?test_event_code=TEST8449"
         },
         {
           "kind": "trackCustom",
           "eventName": "MerxusOnboardingStarted",
           "payload": {
             "content_name": "Merxus Onboarding Started",
-            "page_path": "/office-ai-front-desk",
-            "product": "merxus",
-            "industry": "office",
-            "source": "paid_social_header",
-            "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
-            "referrer": "",
-            "timestamp": "2026-06-27T15:55:01.548Z"
+            "page_path": "/meta-event-test",
+            "source": "manual_meta_test",
+            "test_event_code": "TEST8449"
           },
           "options": {},
           "args": [
@@ -179,18 +225,70 @@
             "MerxusOnboardingStarted",
             {
               "content_name": "Merxus Onboarding Started",
-              "page_path": "/office-ai-front-desk",
-              "product": "merxus",
-              "industry": "office",
-              "source": "paid_social_header",
-              "landingPageUrl": "https://merxusllc.com/office-ai-front-desk",
-              "referrer": "",
-              "timestamp": "2026-06-27T15:55:01.548Z"
+              "page_path": "/meta-event-test",
+              "source": "manual_meta_test",
+              "test_event_code": "TEST8449"
             },
             null
           ],
-          "timestamp": "2026-06-27T15:55:07.810Z",
-          "pageUrl": "https://merxusllc.com/office-ai-front-desk"
+          "timestamp": "2026-06-27T16:02:02.391Z",
+          "pageUrl": "http://localhost:3000/meta-event-test?test_event_code=TEST8449"
+        },
+        {
+          "kind": "trackCustom",
+          "eventName": "MerxusChatOpened",
+          "payload": {
+            "content_name": "Merxus Website Assistant",
+            "page_path": "/meta-event-test",
+            "source": "manual_meta_test",
+            "test_event_code": "TEST8449"
+          },
+          "options": {},
+          "args": [
+            "trackCustom",
+            "MerxusChatOpened",
+            {
+              "content_name": "Merxus Website Assistant",
+              "page_path": "/meta-event-test",
+              "source": "manual_meta_test",
+              "test_event_code": "TEST8449"
+            },
+            null
+          ],
+          "timestamp": "2026-06-27T16:02:05.076Z",
+          "pageUrl": "http://localhost:3000/meta-event-test?test_event_code=TEST8449"
+        },
+        {
+          "kind": "track",
+          "eventName": "Purchase",
+          "payload": {
+            "content_name": "Merxus Subscription",
+            "currency": "USD",
+            "value": 1,
+            "page_path": "/meta-event-test",
+            "source": "manual_meta_test",
+            "test_event_code": "TEST8449"
+          },
+          "options": {
+            "eventID": "purchase_manual-meta-test-purchase-[REDACTED_PHONE]779"
+          },
+          "args": [
+            "track",
+            "Purchase",
+            {
+              "content_name": "Merxus Subscription",
+              "currency": "USD",
+              "value": 1,
+              "page_path": "/meta-event-test",
+              "source": "manual_meta_test",
+              "test_event_code": "TEST8449"
+            },
+            {
+              "eventID": "purchase_manual-meta-test-purchase-[REDACTED_PHONE]779"
+            }
+          ],
+          "timestamp": "2026-06-27T16:02:07.779Z",
+          "pageUrl": "http://localhost:3000/meta-event-test?test_event_code=TEST8449"
         }
       ],
       "metaRequests": [],
@@ -200,24 +298,14 @@
         "observedEvents": [
           "PageView",
           "ViewContent",
+          "Lead",
+          "Schedule",
+          "MerxusOnboardingStarted",
           "MerxusChatOpened",
-          "MerxusOnboardingStarted"
+          "Purchase"
         ],
         "missingEvents": [],
-        "skippedEvents": [
-          {
-            "eventName": "Lead",
-            "reason": "Skipped in automated release verification because submitting the public lead form would create a production lead."
-          },
-          {
-            "eventName": "Schedule",
-            "reason": "Skipped because no safe Calendly test-booking completion flow is configured."
-          },
-          {
-            "eventName": "Purchase",
-            "reason": "Skipped because no safe Stripe test confirmation URL/session is configured; verifier never creates charges."
-          }
-        ],
+        "skippedEvents": [],
         "fbqLoaded": true,
         "initializedPixelIds": [
           "[REDACTED_PHONE]55637"
@@ -238,27 +326,17 @@
         "observedEvents": [
           "PageView",
           "ViewContent",
+          "Lead",
+          "Schedule",
+          "MerxusOnboardingStarted",
           "MerxusChatOpened",
-          "MerxusOnboardingStarted"
+          "Purchase"
         ],
         "missingEvents": [],
-        "skippedEvents": [
-          {
-            "eventName": "Lead",
-            "reason": "Skipped in automated release verification because submitting the public lead form would create a production lead."
-          },
-          {
-            "eventName": "Schedule",
-            "reason": "Skipped because no safe Calendly test-booking completion flow is configured."
-          },
-          {
-            "eventName": "Purchase",
-            "reason": "Skipped because no safe Stripe test confirmation URL/session is configured; verifier never creates charges."
-          }
-        ],
+        "skippedEvents": [],
         "consoleErrors": [],
         "failedRequests": [],
-        "eventCount": 5,
+        "eventCount": 9,
         "requestCount": 0
       },
       "consoleErrors": [],
@@ -295,6 +373,10 @@
     "[REDACTED_CIRCULAR]",
     "[REDACTED_CIRCULAR]",
     "[REDACTED_CIRCULAR]",
+    "[REDACTED_CIRCULAR]",
+    "[REDACTED_CIRCULAR]",
+    "[REDACTED_CIRCULAR]",
+    "[REDACTED_CIRCULAR]",
     "[REDACTED_CIRCULAR]"
   ],
   "metaRequests": [],
@@ -314,24 +396,14 @@
     "observedEvents": [
       "PageView",
       "ViewContent",
+      "Lead",
+      "Schedule",
+      "MerxusOnboardingStarted",
       "MerxusChatOpened",
-      "MerxusOnboardingStarted"
+      "Purchase"
     ],
     "missingEvents": [],
-    "skippedEvents": [
-      {
-        "eventName": "Lead",
-        "reason": "Skipped in automated release verification because submitting the public lead form would create a production lead."
-      },
-      {
-        "eventName": "Schedule",
-        "reason": "Skipped because no safe Calendly test-booking completion flow is configured."
-      },
-      {
-        "eventName": "Purchase",
-        "reason": "Skipped because no safe Stripe test confirmation URL/session is configured; verifier never creates charges."
-      }
-    ],
+    "skippedEvents": [],
     "consoleErrors": [],
     "failedRequests": []
   },

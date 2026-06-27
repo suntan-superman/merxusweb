@@ -47,11 +47,19 @@ test('initMetaPixel injects Meta script and records tracked events', () => {
       insertedScripts.push(node);
     },
   };
+  const sessionValues = new Map();
 
   globalThis.window = {
-    location: { href: 'https://merxusllc.com/office-ai-front-desk' },
+    location: {
+      href: 'https://merxusllc.com/office-ai-front-desk?test_event_code=TEST8449',
+      pathname: '/office-ai-front-desk',
+      search: '?test_event_code=TEST8449',
+    },
     localStorage: { getItem: () => null, setItem: () => {} },
-    sessionStorage: { getItem: () => null, setItem: () => {} },
+    sessionStorage: {
+      getItem: (key) => sessionValues.get(key) || null,
+      setItem: (key, value) => sessionValues.set(key, value),
+    },
   };
   globalThis.document = {
     referrer: '',
@@ -76,6 +84,10 @@ test('initMetaPixel injects Meta script and records tracked events', () => {
     assert.equal(window.__MERXUS_META_PIXEL_STATUS__.initialized, true);
     assert.equal(
       window.__MERXUS_META_PIXEL_STATUS__.events.some((event) => event.name === 'PageView' && event.fired),
+      true
+    );
+    assert.equal(
+      window.__MERXUS_META_PIXEL_STATUS__.events.some((event) => event.name === 'PageView' && event.parameters.test_event_code === 'TEST8449'),
       true
     );
     assert.equal(

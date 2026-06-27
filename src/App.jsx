@@ -34,6 +34,7 @@ import InstagramLandingPage from './pages/InstagramLandingPage';
 import SimpleOnboardingWizard from './pages/SimpleOnboardingWizard';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import TenantActivationPage from './pages/TenantActivationPage';
+import MetaEventTestPage from './pages/MetaEventTestPage';
 import OfficeLandingPage from './pages/OfficeLandingPage';
 import RealEstateLandingPage from './pages/RealEstateLandingPage';
 import RestaurantLandingPage from './pages/RestaurantLandingPage';
@@ -255,6 +256,7 @@ function App() {
             }
           />
           <Route path="/support" element={<SupportPage />} />
+          <Route path="/meta-event-test" element={<MetaEventTestPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route path="/terms-and-conditions" element={<Navigate to="/terms-of-service" replace />} />

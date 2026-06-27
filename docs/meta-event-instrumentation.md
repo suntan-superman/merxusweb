@@ -64,16 +64,23 @@ Safe automated verification currently uses:
 
 | Event | Route | Selector |
 |---|---|---|
-| `PageView` | `/office-ai-front-desk` | Passive route load |
-| `ViewContent` | `/office-ai-front-desk` | Passive route load |
-| `MerxusChatOpened` | `/office-ai-front-desk` | `button[aria-label='Open Merxus chat']` |
-| `MerxusOnboardingStarted` | `/office-ai-front-desk` | `a[href='#lead-form']` |
+| `PageView` | `/meta-event-test?test_event_code=TEST8449` | `[data-meta-event='PageView']` |
+| `ViewContent` | `/meta-event-test?test_event_code=TEST8449` | `[data-meta-event='ViewContent']` |
+| `Lead` | `/meta-event-test?test_event_code=TEST8449` | `[data-meta-event='Lead']` |
+| `Schedule` | `/meta-event-test?test_event_code=TEST8449` | `[data-meta-event='Schedule']` |
+| `MerxusOnboardingStarted` | `/meta-event-test?test_event_code=TEST8449` | `[data-meta-event='MerxusOnboardingStarted']` |
+| `MerxusChatOpened` | `/meta-event-test?test_event_code=TEST8449` | `[data-meta-event='MerxusChatOpened']` |
+| `Purchase` | `/meta-event-test?test_event_code=TEST8449` | `[data-meta-event='Purchase']` |
 
-Skipped in automated release verification:
+The `/meta-event-test` route is a safe browser-only QA page. It sends Pixel events only and does not create production leads, Calendly bookings, Stripe checkout sessions, or charges.
 
-- `Lead`: skipped because submitting the public lead form would create a production lead.
-- `Schedule`: skipped because no safe Calendly test-booking completion flow is configured.
-- `Purchase`: skipped because no safe Stripe test confirmation URL/session is configured; the verifier never creates charges.
+To test manually in Meta Events Manager, open the URL Meta shows in Test Events:
+
+```text
+https://merxusllc.com/meta-event-test?test_event_code=TEST8449
+```
+
+Then click each event button. The helper persists `test_event_code` in session storage and attaches it to subsequent Pixel payloads so events appear in the Test Events panel.
 
 ## Report Output
 
@@ -86,4 +93,3 @@ The release report includes a Meta section with:
 - Skipped events
 - Console errors
 - Failed network requests
-

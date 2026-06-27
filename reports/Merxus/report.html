@@ -14,17 +14,17 @@
 </head>
 <body><main>
   <h1>Merxus AI Release Verification</h1>
-  <p><strong>Overall:</strong> PASS_WITH_WARNINGS | <strong>Certification:</strong> CERTIFIED WITH WARNINGS | <strong>Target:</strong> production</p>
-  <p><strong>Branch:</strong> <code>main</code> | <strong>Commit:</strong> <code>2d5c01efa2492c09a00495de286de5224baf4d9e</code></p>
-  <table><thead><tr><th>Check</th><th>Status</th><th>Policy</th><th>Details</th></tr></thead><tbody><tr class="skip"><td>Environment</td><td>skip</td><td>Blocking</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Build</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="skip"><td>Lint</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="skip"><td>Browser Smoke</td><td>skip</td><td>Blocking</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>SEO</td><td>skip</td><td>Warning</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Broken Links</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="pass"><td>Meta Pixel</td><td>pass</td><td>Warning</td><td>Meta Pixel observed events: PageView, ViewContent, MerxusChatOpened, MerxusOnboardingStarted.</td></tr><tr class="skip"><td>Stripe Guardrails</td><td>skip</td><td>Warning</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Authentication</td><td>skip</td><td>Warning</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Lighthouse</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr></tbody></table>
+  <p><strong>Overall:</strong> PASS_WITH_WARNINGS | <strong>Certification:</strong> CERTIFIED WITH WARNINGS | <strong>Target:</strong> local</p>
+  <p><strong>Branch:</strong> <code>main</code> | <strong>Commit:</strong> <code>9cb7d0d30419bfcd076819558b3080ec2668178a</code></p>
+  <table><thead><tr><th>Check</th><th>Status</th><th>Policy</th><th>Details</th></tr></thead><tbody><tr class="skip"><td>Environment</td><td>skip</td><td>Blocking</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Build</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="skip"><td>Lint</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="skip"><td>Browser Smoke</td><td>skip</td><td>Blocking</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>SEO</td><td>skip</td><td>Warning</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Broken Links</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr><tr class="pass"><td>Meta Pixel</td><td>pass</td><td>Warning</td><td>Meta Pixel observed events: PageView, ViewContent, Lead, Schedule, MerxusOnboardingStarted, MerxusChatOpened, Purchase.</td></tr><tr class="skip"><td>Stripe Guardrails</td><td>skip</td><td>Warning</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Authentication</td><td>skip</td><td>Warning</td><td>Skipped by CLI flag.</td></tr><tr class="skip"><td>Lighthouse</td><td>skip</td><td>Warning</td><td>Disabled by product check policy.</td></tr></tbody></table>
   <section>
     <h2>Meta Pixel</h2>
     <p><strong>Pixel ID:</strong> <code>[REDACTED_PHONE]55637</code> | <strong>fbq loaded:</strong> yes</p>
     <p><strong>Expected:</strong> PageView, ViewContent, Lead, Schedule, MerxusOnboardingStarted, MerxusChatOpened, Purchase</p>
-    <p><strong>Observed:</strong> PageView, ViewContent, MerxusChatOpened, MerxusOnboardingStarted</p>
+    <p><strong>Observed:</strong> PageView, ViewContent, Lead, Schedule, MerxusOnboardingStarted, MerxusChatOpened, Purchase</p>
     <p><strong>Missing:</strong> none</p>
     <p><strong>Console errors:</strong> 0 | <strong>Failed network requests:</strong> 0</p>
     <h3>Skipped Events</h3>
-    <ul><li>Lead: Skipped in automated release verification because submitting the public lead form would create a production lead.</li><li>Schedule: Skipped because no safe Calendly test-booking completion flow is configured.</li><li>Purchase: Skipped because no safe Stripe test confirmation URL/session is configured; verifier never creates charges.</li></ul>
+    <ul><li>None</li></ul>
   </section>
 </main></body></html>
