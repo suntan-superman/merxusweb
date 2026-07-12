@@ -127,11 +127,17 @@ export default {
     testPassword: process.env.RELEASE_TEST_PASSWORD,
     loginUrl: "/login",
     dashboardUrl: "/dashboard",
+    successUrlPattern: "/(dashboard|merxus|restaurant|voice|estate|tenant-activation|onboarding-wizard|unsupported-account)",
     credentials: {
       emailEnv: "RELEASE_TEST_EMAIL",
       passwordEnv: "RELEASE_TEST_PASSWORD"
     },
-    selectors: {}
+    selectors: {
+      email: "#email",
+      password: "#password",
+      submit: "form button[type='submit']",
+      error: ".bg-red-50, [role='alert']"
+    }
   },
   stripe: {
     enabled: true,

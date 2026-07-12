@@ -103,6 +103,7 @@ export default function TenantsManagementPage() {
         let trialEndsAt = null;
         let billingPaused = false;
         let cancelAtPeriodEnd = false;
+        let stripeSubscriptionId = null;
         try {
           const subsSnapshot = await getDocs(
             query(collection(db, 'subscriptions'), where('tenantId', '==', tenantDoc.id))
@@ -113,6 +114,7 @@ export default function TenantsManagementPage() {
               .sort((a, b) => getSubscriptionSortValue(b) - getSubscriptionSortValue(a))[0];
             billingPaused = !!sub.billingPaused;
             cancelAtPeriodEnd = !!sub.cancelAtPeriodEnd;
+            stripeSubscriptionId = sub.stripeSubscriptionId || null;
             subscriptionStatus = billingPaused
               ? 'paused'
               : (cancelAtPeriodEnd && sub.status && sub.status !== 'canceled'
@@ -143,6 +145,7 @@ export default function TenantsManagementPage() {
           trialEndsAt,
           billingPaused,
           cancelAtPeriodEnd,
+          stripeSubscriptionId,
           noRecurringChargesOverride: !!settings.noRecurringChargesOverride,
           type: currentTab.type,
           tenantType: currentTab.id === 'offices' ? 'voice' : currentTab.id === 'agents' ? 'real_estate' : 'restaurant',
@@ -348,8 +351,9 @@ export default function TenantsManagementPage() {
 
   const actionsTemplate = (props) => {
     const isPaused = props.billingPaused || props.subscriptionStatus === 'paused';
-    const hasSubscription = props.subscriptionStatus && props.subscriptionStatus !== 'No Subscription';
-    const canCancel = hasSubscription && props.subscriptionStatus !== 'canceled' && !props.cancelAtPeriodEnd;
+    const cancelableStatuses = ['active', 'trialing', 'past_due', 'unpaid', 'incomplete'];
+    const hasSubscription = cancelableStatuses.includes(String(props.subscriptionStatus || '').toLowerCase());
+    const canCancel = hasSubscription && !props.cancelAtPeriodEnd;
     return (
       <div className="flex items-center gap-2">
         <button
@@ -518,6 +522,7 @@ export default function TenantsManagementPage() {
       const result = await cancelSubscriptionForTenant({
         tenantId: cancelTenant.id,
         tenantType: cancelTenant.tenantType,
+        stripeSubscriptionId: cancelTenant.stripeSubscriptionId || undefined,
         cancelImmediately,
         reason: cancelReason.trim() || 'admin_request',
       });

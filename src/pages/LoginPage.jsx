@@ -295,6 +295,14 @@ export default function LoginPage() {
       // Navigation will be handled by useEffect once userClaims are loaded
     } catch (err) {
       console.error('Login error:', err);
+      if (typeof window !== 'undefined') {
+        window.__MERXUS_AUTH_LAST_ERROR__ = {
+          code: err?.code || '',
+          message: err?.message || String(err),
+          email: (email || '').trim().toLowerCase(),
+          timestamp: new Date().toISOString(),
+        };
+      }
       if (err.code === 'auth/user-not-found') {
         setLoading(false);
         showAccountNotFoundPrompt((email || '').trim().toLowerCase(), 'email');
@@ -504,6 +512,8 @@ export default function LoginPage() {
         return 'Invalid email address';
       case 'auth/user-disabled':
         return 'This account has been disabled';
+      case 'auth/network-request-failed':
+        return 'Network error while contacting Firebase Auth. Please check connectivity and try again.';
       default:
         return 'An error occurred. Please try again.';
     }
