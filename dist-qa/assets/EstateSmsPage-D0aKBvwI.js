@@ -1,1 +1,0 @@
-import{j as t}from"./react-vendor-COdRva8O.js";import{S as r}from"./SmsInboxWorkspace-CVVeszq1.js";import"./sms-780lRdRt.js";import"./index-DgPsug2T.js";import"./query-vendor-CMCOVfS5.js";import"./firebase-B-jjiT4g.js";import"./recharts-CKZUhdaN.js";function n(){return t.jsx(r,{tenantType:"real_estate"})}export{n as default};

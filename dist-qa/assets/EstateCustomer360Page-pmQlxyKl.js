@@ -1,1 +1,0 @@
-import{j as t}from"./react-vendor-COdRva8O.js";import{C as e}from"./Customer360Workspace-DNg8PLpi.js";import"./graph-D2CYvjpP.js";import"./index-DgPsug2T.js";import"./query-vendor-CMCOVfS5.js";import"./firebase-B-jjiT4g.js";function i(){return t.jsx(e,{tenantType:"real_estate",basePath:"/estate/customer-360"})}export{i as default};

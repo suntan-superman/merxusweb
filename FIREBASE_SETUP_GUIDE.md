@@ -61,7 +61,7 @@ This guide will walk you through setting up a Firebase project for the Merxus ap
 It will look like this:
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIza...",
+  apiKey: "YOUR_FIREBASE_WEB_API_KEY",
   authDomain: "merxus-xxxxx.firebaseapp.com",
   projectId: "merxus-xxxxx",
   storageBucket: "merxus-xxxxx.appspot.com",
@@ -80,7 +80,7 @@ const firebaseConfig = {
 
 2. Open `.env` and fill in your Firebase config:
    ```env
-   VITE_FIREBASE_API_KEY=AIza...
+    VITE_FIREBASE_API_KEY=YOUR_FIREBASE_WEB_API_KEY
    VITE_FIREBASE_AUTH_DOMAIN=merxus-xxxxx.firebaseapp.com
    VITE_FIREBASE_PROJECT_ID=merxus-xxxxx
    VITE_FIREBASE_STORAGE_BUCKET=merxus-xxxxx.appspot.com

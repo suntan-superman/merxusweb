@@ -43,3 +43,11 @@ serviceAccountKey.json
 
 # Release certification artifacts
 reports/
+
+# Generated verification and build artifacts. Keep source and configuration in
+# Git; keep compiled bundles and test output local or upload them as CI artifacts.
+dist-qa/
+.qa/
+coverage/
+test-results/
+playwright-report/
