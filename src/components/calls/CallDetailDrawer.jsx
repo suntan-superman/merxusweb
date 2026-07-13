@@ -34,9 +34,10 @@ function formatHandlingStatus(call) {
 
 function getTranscriptPayload(source = {}) {
   return {
-    transcript: source.transcript || source.callerTranscript || source.assistantTranscript || null,
+    originalTranscript: source.originalTranscript || source.transcript || source.callerTranscript || source.assistantTranscript || null,
     translatedTranscript: source.translatedTranscript || null,
     detectedLanguage: source.detectedLanguage || null,
+    detectionConfidence: source.detectionConfidence ?? source.callLanguage?.detectionConfidence ?? null,
   };
 }
 
@@ -51,10 +52,10 @@ function getApiErrorMessage(error, fallbackMessage) {
 
 export default function CallDetailDrawer({ open, onClose, call }) {
   const [loading, setLoading] = useState(false);
-  const [transcript, setTranscript] = useState(null);
+  const [originalTranscript, setOriginalTranscript] = useState(null);
   const [translatedTranscript, setTranslatedTranscript] = useState(null);
   const [detectedLanguage, setDetectedLanguage] = useState(null);
-  const [showTranslation, setShowTranslation] = useState(false);
+  const [detectionConfidence, setDetectionConfidence] = useState(null);
   const [translating, setTranslating] = useState(false);
   const [error, setError] = useState(null);
 
@@ -68,22 +69,19 @@ export default function CallDetailDrawer({ open, onClose, call }) {
 
         const data = await fetchCallTranscript(call.id);
         const payload = getTranscriptPayload(data);
-        setTranscript(payload.transcript);
+        setOriginalTranscript(payload.originalTranscript);
         setTranslatedTranscript(payload.translatedTranscript);
         setDetectedLanguage(payload.detectedLanguage);
+        setDetectionConfidence(payload.detectionConfidence);
         
-        // Auto-show translation if available
-        if (payload.translatedTranscript) {
-          setShowTranslation(true);
-        }
       } catch (err) {
         console.error(err);
         const fallbackPayload = getTranscriptPayload(call);
-        if (fallbackPayload.transcript || fallbackPayload.translatedTranscript) {
-          setTranscript(fallbackPayload.transcript);
+        if (fallbackPayload.originalTranscript || fallbackPayload.translatedTranscript) {
+          setOriginalTranscript(fallbackPayload.originalTranscript);
           setTranslatedTranscript(fallbackPayload.translatedTranscript);
           setDetectedLanguage(fallbackPayload.detectedLanguage);
-          setShowTranslation(Boolean(fallbackPayload.translatedTranscript));
+          setDetectionConfidence(fallbackPayload.detectionConfidence);
           setError('Transcript API unavailable. Showing stored call transcript.');
         } else {
           setError(getApiErrorMessage(err, 'Failed to load transcript.'));
@@ -104,7 +102,6 @@ export default function CallDetailDrawer({ open, onClose, call }) {
       const data = await translateCallTranscript(call.id, 'en');
       setTranslatedTranscript(data.translatedTranscript);
       setDetectedLanguage(data.detectedLanguage);
-      setShowTranslation(true);
     } catch (err) {
       console.error(err);
       setError(getApiErrorMessage(err, 'Failed to translate transcript.'));
@@ -202,27 +199,19 @@ export default function CallDetailDrawer({ open, onClose, call }) {
           <section>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-semibold uppercase text-gray-500">
-                {showTranslation && translatedTranscript ? 'Translated Transcript' : 'Full Transcript'}
+                Original Transcript
               </h3>
               
               <div className="flex items-center gap-2">
                 {detectedLanguage && detectedLanguage !== 'en' && detectedLanguage !== 'unknown' && (
                   <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                     {detectedLanguage.toUpperCase()}
+                    {Number.isFinite(detectionConfidence) ? ` · ${Math.round(detectionConfidence * 100)}%` : ''}
                   </span>
                 )}
                 
-                {!loading && transcript && (
+                {!loading && originalTranscript && (
                   <div className="flex gap-2">
-                    {translatedTranscript && (
-                      <button
-                        onClick={() => setShowTranslation(!showTranslation)}
-                        className="text-xs px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                      >
-                        {showTranslation ? 'Show Original' : 'Show Translation'}
-                      </button>
-                    )}
-                    
                     {!translatedTranscript && (
                       <button
                         onClick={handleTranslate}
@@ -254,24 +243,30 @@ export default function CallDetailDrawer({ open, onClose, call }) {
               <p className="text-xs text-red-600 mt-2">{error}</p>
             )}
 
-            {!loading && transcript && (
+            {!loading && originalTranscript && (
               <div className="mt-2 space-y-2">
                 <pre className="whitespace-pre-wrap rounded-md bg-gray-50 p-3 text-xs text-gray-800 border">
-                  {showTranslation && translatedTranscript ? translatedTranscript : transcript}
+                  {originalTranscript}
                 </pre>
-                
-                {showTranslation && translatedTranscript && detectedLanguage && detectedLanguage !== 'en' && (
-                  <p className="text-xs text-gray-500 italic">
-                    ✓ Translated from {getLanguageName(detectedLanguage)} to English
-                  </p>
-                )}
               </div>
             )}
 
-            {!loading && !transcript && !error && (
+            {!loading && !originalTranscript && !error && (
               <p className="text-xs text-gray-500 mt-2">No transcript available.</p>
             )}
           </section>
+
+          {translatedTranscript && (
+            <section>
+              <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">English Translation</h3>
+              <pre className="whitespace-pre-wrap rounded-md bg-blue-50 p-3 text-xs text-gray-800 border border-blue-100">
+                {translatedTranscript}
+              </pre>
+              <p className="mt-2 text-xs text-gray-500 italic">
+                Machine translated from {getLanguageName(detectedLanguage)} to English.
+              </p>
+            </section>
+          )}
         </div>
 
         <footer className="border-t px-4 py-3 flex items-center justify-between">
