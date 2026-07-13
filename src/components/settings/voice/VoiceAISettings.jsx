@@ -66,6 +66,24 @@ export default function VoiceAISettings({ settings, onSave, saving, businessType
     setForm((prev) => ({ ...prev, systemPrompt: newPrompt }));
   }
 
+  function handleLanguageModeChange(mode) {
+    setForm((prev) => {
+      const bilingual = mode === 'bilingual_auto';
+      const primaryLanguage = prev.languageConfig.primaryLanguage || 'en-US';
+      return {
+        ...prev,
+        languageConfig: {
+          ...prev.languageConfig,
+          mode,
+          primaryLanguage,
+          supportedLanguages: bilingual ? ['en-US', 'es-MX'] : [primaryLanguage],
+          translationEnabled: bilingual ? prev.languageConfig.translationEnabled === true : false,
+          translationTargetLanguage: 'en',
+        },
+      };
+    });
+  }
+
   function handleConfigChange(config) {
     // When a template is selected, store its routing and language config
     setForm((prev) => ({
@@ -141,6 +159,18 @@ export default function VoiceAISettings({ settings, onSave, saving, businessType
         />
 
         <SelectField
+          id="languageMode"
+          name="languageMode"
+          label="Language Mode"
+          value={form.languageConfig.mode}
+          onChange={handleLanguageModeChange}
+          options={[
+            { value: 'single_language', label: 'Single Language' },
+            { value: 'bilingual_auto', label: 'English + Spanish (Automatic)' },
+          ]}
+        />
+
+        <SelectField
           id="language"
           name="language"
           label="Primary Language"
@@ -150,7 +180,9 @@ export default function VoiceAISettings({ settings, onSave, saving, businessType
             languageConfig: {
               ...prev.languageConfig,
               primaryLanguage: nextValue,
-              supportedLanguages: [nextValue],
+              supportedLanguages: prev.languageConfig.mode === 'bilingual_auto'
+                ? ['en-US', 'es-MX']
+                : [nextValue],
             },
           }))}
           options={[
