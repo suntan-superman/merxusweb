@@ -3,14 +3,34 @@ import VoicePromptDropdown from './VoicePromptDropdown';
 import { getPromptsForIndustry } from '../../../../data/voicePromptLibraryWithRouting';
 import SelectField from '../../common/SelectField';
 
+function getInitialLanguageConfig(settings) {
+  const saved = settings.language;
+  if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+    return saved;
+  }
+
+  const legacyLanguage = settings.aiConfig?.language;
+  const primaryLanguage = legacyLanguage === 'es-MX' || legacyLanguage === 'es-ES' || legacyLanguage === 'es-US'
+    ? 'es-MX'
+    : 'en-US';
+
+  return {
+    version: 1,
+    mode: 'single_language',
+    primaryLanguage,
+    supportedLanguages: [primaryLanguage],
+    translationEnabled: false,
+    translationTargetLanguage: 'en',
+  };
+}
+
 export default function VoiceAISettings({ settings, onSave, saving, businessType = null }) {
   const [form, setForm] = useState({
     model: settings.aiConfig?.model || 'gpt-4o-mini',
     voiceName: settings.aiConfig?.voiceName || 'alloy',
-    language: settings.aiConfig?.language || 'en-US',
+    languageConfig: getInitialLanguageConfig(settings),
     systemPrompt: settings.aiConfig?.systemPrompt || '',
     routing: settings.routing || null,
-    languageConfig: settings.languageConfig || null,
     promptMetadata: settings.promptMetadata || null, // Store prompt ID, category, industry for reference
   });
 
@@ -68,9 +88,10 @@ export default function VoiceAISettings({ settings, onSave, saving, businessType
       aiConfig: {
         model: form.model,
         voiceName: form.voiceName,
-        language: form.language,
+        language: form.languageConfig.primaryLanguage,
         systemPrompt: form.systemPrompt,
       },
+      language: form.languageConfig,
       routing: form.routing,
       languageConfig: form.languageConfig,
       promptMetadata: form.promptMetadata,
@@ -123,17 +144,20 @@ export default function VoiceAISettings({ settings, onSave, saving, businessType
           id="language"
           name="language"
           label="Primary Language"
-          value={form.language}
-          onChange={(nextValue) => setForm((prev) => ({ ...prev, language: nextValue }))}
+          value={form.languageConfig.primaryLanguage}
+          onChange={(nextValue) => setForm((prev) => ({
+            ...prev,
+            languageConfig: {
+              ...prev.languageConfig,
+              primaryLanguage: nextValue,
+              supportedLanguages: [nextValue],
+            },
+          }))}
           options={[
             { value: 'en-US', label: 'English (US)' },
-            { value: 'es-ES', label: 'Spanish (Spain)' },
             { value: 'es-MX', label: 'Spanish (Mexico)' },
-            { value: 'es-US', label: 'Spanish (US)' },
-            { value: 'fr-FR', label: 'French' },
-            { value: 'de-DE', label: 'German' },
           ]}
-          helperText="The AI will support both English and Spanish automatically, but this sets the primary language."
+          helperText="Choose the primary language for your phone receptionist."
         />
 
         <div>
