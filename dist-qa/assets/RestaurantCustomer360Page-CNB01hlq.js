@@ -1,0 +1,1 @@
+import{j as t}from"./react-vendor-COdRva8O.js";import{C as r}from"./Customer360Workspace-DNg8PLpi.js";import"./graph-D2CYvjpP.js";import"./index-DgPsug2T.js";import"./query-vendor-CMCOVfS5.js";import"./firebase-B-jjiT4g.js";function u(){return t.jsx(r,{tenantType:"restaurant",basePath:"/restaurant/customer-360"})}export{u as default};

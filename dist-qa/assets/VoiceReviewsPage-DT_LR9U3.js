@@ -1,0 +1,1 @@
+import{j as o}from"./react-vendor-COdRva8O.js";import{R as t}from"./ReviewsWorkspace-CuAGyMbd.js";import"./index-DgPsug2T.js";import"./query-vendor-CMCOVfS5.js";import"./firebase-B-jjiT4g.js";import"./csv-D_iavtNZ.js";import"./useReviewQueries-DG-Hw9u5.js";import"./sms-780lRdRt.js";function c(){return o.jsx(t,{tenantType:"voice"})}export{c as default};

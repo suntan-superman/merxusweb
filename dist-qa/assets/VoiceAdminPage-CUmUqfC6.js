@@ -1,0 +1,1 @@
+import{b as t,r as o}from"./react-vendor-COdRva8O.js";import{u}from"./index-DgPsug2T.js";import"./query-vendor-CMCOVfS5.js";import"./firebase-B-jjiT4g.js";function c(){const r=t(),{userClaims:e}=u();return o.useEffect(()=>{if((e==null?void 0:e.role)!=="super_admin"){r("/merxus",{replace:!0});return}r("/merxus/voices",{replace:!0})},[r,e]),null}export{c as default};

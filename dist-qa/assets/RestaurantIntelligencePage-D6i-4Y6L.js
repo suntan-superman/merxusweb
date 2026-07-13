@@ -1,0 +1,1 @@
+import{j as t}from"./react-vendor-COdRva8O.js";import{I as e}from"./InteractionIntelligenceWorkspace-TuvPDxAx.js";import"./intelligence-CE740_0m.js";import"./index-DgPsug2T.js";import"./query-vendor-CMCOVfS5.js";import"./firebase-B-jjiT4g.js";function m(){return t.jsx(e,{tenantType:"restaurant"})}export{m as default};

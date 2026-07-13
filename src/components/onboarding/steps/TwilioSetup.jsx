@@ -4,7 +4,7 @@ import { searchAvailableNumbers, listUnassignedNumbers, purchasePhoneNumber } fr
 import { toast } from 'react-toastify';
 import { formatPhoneDisplay } from '../../../utils/phoneFormatter';
 
-const RESERVED_TWILIO_PHONE_NUMBER = '+18882506769';
+const RESERVED_TWILIO_PHONE_NUMBERS = new Set(['+18882506769', '+16614047441']);
 
 function normalizePhoneNumber(value) {
   const digits = String(value || '').replace(/\D/g, '');
@@ -19,7 +19,7 @@ function normalizePhoneNumber(value) {
 }
 
 function isReservedTwilioPhoneNumber(value) {
-  return normalizePhoneNumber(value) === RESERVED_TWILIO_PHONE_NUMBER;
+  return RESERVED_TWILIO_PHONE_NUMBERS.has(normalizePhoneNumber(value));
 }
 
 export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
