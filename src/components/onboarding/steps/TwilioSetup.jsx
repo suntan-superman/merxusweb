@@ -4,7 +4,7 @@ import { searchAvailableNumbers, listUnassignedNumbers, purchasePhoneNumber } fr
 import { toast } from 'react-toastify';
 import { formatPhoneDisplay } from '../../../utils/phoneFormatter';
 
-const RESERVED_TWILIO_PHONE_NUMBERS = new Set(['+18882506769', '+16614047441']);
+const RESERVED_TWILIO_PHONE_NUMBERS = new Set(['+18882506769', '+16614047441', '+16613872290']);
 
 function normalizePhoneNumber(value) {
   const digits = String(value || '').replace(/\D/g, '');
