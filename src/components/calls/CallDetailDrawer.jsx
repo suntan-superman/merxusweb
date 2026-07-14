@@ -36,6 +36,7 @@ function getTranscriptPayload(source = {}) {
   return {
     originalTranscript: source.originalTranscript || source.transcript || source.callerTranscript || source.assistantTranscript || null,
     translatedTranscript: source.translatedTranscript || null,
+    translation: source.translation || null,
     detectedLanguage: source.detectedLanguage || null,
     detectionConfidence: source.detectionConfidence ?? source.callLanguage?.detectionConfidence ?? null,
   };
@@ -56,6 +57,7 @@ export default function CallDetailDrawer({ open, onClose, call }) {
   const [translatedTranscript, setTranslatedTranscript] = useState(null);
   const [detectedLanguage, setDetectedLanguage] = useState(null);
   const [detectionConfidence, setDetectionConfidence] = useState(null);
+  const [translation, setTranslation] = useState(null);
   const [translating, setTranslating] = useState(false);
   const [error, setError] = useState(null);
 
@@ -73,6 +75,7 @@ export default function CallDetailDrawer({ open, onClose, call }) {
         setTranslatedTranscript(payload.translatedTranscript);
         setDetectedLanguage(payload.detectedLanguage);
         setDetectionConfidence(payload.detectionConfidence);
+        setTranslation(payload.translation);
         
       } catch (err) {
         console.error(err);
@@ -82,6 +85,7 @@ export default function CallDetailDrawer({ open, onClose, call }) {
           setTranslatedTranscript(fallbackPayload.translatedTranscript);
           setDetectedLanguage(fallbackPayload.detectedLanguage);
           setDetectionConfidence(fallbackPayload.detectionConfidence);
+          setTranslation(fallbackPayload.translation);
           setError('Transcript API unavailable. Showing stored call transcript.');
         } else {
           setError(getApiErrorMessage(err, 'Failed to load transcript.'));
@@ -102,6 +106,7 @@ export default function CallDetailDrawer({ open, onClose, call }) {
       const data = await translateCallTranscript(call.id, 'en');
       setTranslatedTranscript(data.translatedTranscript);
       setDetectedLanguage(data.detectedLanguage);
+      setTranslation(data.translation || { status: 'completed', translatedTranscript: data.translatedTranscript });
     } catch (err) {
       console.error(err);
       setError(getApiErrorMessage(err, 'Failed to translate transcript.'));
@@ -112,6 +117,9 @@ export default function CallDetailDrawer({ open, onClose, call }) {
 
   if (!open || !call) return null;
   const speechSummary = getSpeechSessionSummary(call);
+  const translationStatus = translation?.status || null;
+  const translationPending = ['pending', 'processing'].includes(translationStatus);
+  const translationRetryable = translationStatus === 'failed_retryable';
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -212,7 +220,7 @@ export default function CallDetailDrawer({ open, onClose, call }) {
                 
                 {!loading && originalTranscript && (
                   <div className="flex gap-2">
-                    {!translatedTranscript && (
+                    {!translatedTranscript && !translationPending && (!translationStatus || translationRetryable) && (
                       <button
                         onClick={handleTranslate}
                         disabled={translating}
@@ -225,7 +233,7 @@ export default function CallDetailDrawer({ open, onClose, call }) {
                           </>
                         ) : (
                           <>
-                            🌐 Translate to English
+                            {translationRetryable ? 'Retry English translation' : 'Translate to English'}
                           </>
                         )}
                       </button>
@@ -253,6 +261,15 @@ export default function CallDetailDrawer({ open, onClose, call }) {
 
             {!loading && !originalTranscript && !error && (
               <p className="text-xs text-gray-500 mt-2">No transcript available.</p>
+            )}
+            {translationPending && (
+              <p className="mt-2 text-xs text-gray-500">English translation is processing.</p>
+            )}
+            {translationStatus === 'failed_terminal' && (
+              <p className="mt-2 text-xs text-red-600">English translation could not be completed.</p>
+            )}
+            {translationRetryable && translation?.errorMessage && (
+              <p className="mt-2 text-xs text-amber-700">Translation can be retried: {translation.errorMessage}</p>
             )}
           </section>
 
