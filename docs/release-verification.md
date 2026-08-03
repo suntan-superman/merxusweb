@@ -27,6 +27,24 @@ Reports are written under `reports/Merxus/`:
 - `latest/`
 - `archive/YYYY-MM-DD/HHmmss-<target>-<shortCommit>/` when archive output is enabled
 
+## Bilingual Voice QA
+
+`npm run verify:release` also writes `bilingual-voice-qa-certification.json` and
+`bilingual-voice-qa-certification.md` beside the normal Merxus release reports.
+These files consume the existing backend report at
+`../merxus-ai-backend/reports/spanish-voice-qa/release-latest.json`; they do not
+place calls or duplicate the backend QA logic.
+
+Regenerate that source report before a bilingual pilot release with:
+
+```powershell
+Set-Location ..\merxus-ai-backend
+npm run voice:qa:release
+```
+
+The certification explicitly preserves `bilingualProductionReady: false` until
+the controlled human pilot has been approved.
+
 Generated report artifacts are ignored by Git.
 
 ## Deployment Recommendation

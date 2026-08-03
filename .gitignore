@@ -14,6 +14,14 @@ dist-ssr
 functions
 scripts
 
+# Keep release-verification source in Git without admitting local account setup
+# utilities or credentials that also live under scripts/.
+!scripts/
+scripts/*
+!scripts/verify-release.js
+!scripts/write-bilingual-voice-qa-certification.js
+!scripts/write-bilingual-voice-qa-certification.test.js
+
 enhancements_complate.md
 
 # Editor directories and files
