@@ -215,6 +215,72 @@ function MetaRouteTracker() {
   return null;
 }
 
+const ROUTE_METADATA = {
+  '/': {
+    title: 'Merxus AI | Every Customer Conversation Gets a Next Step',
+    description: 'Merxus is an AI front desk for offices and real-estate teams, helping every customer conversation get a clear next step.',
+  },
+  '/office-ai-front-desk': {
+    title: 'AI Front Desk for Offices | Merxus AI',
+    description: 'Give office callers a clear response path with guided call coverage, routing, bilingual handling, and team follow-up.',
+  },
+  '/ai-front-desk': {
+    title: 'AI Front Desk for Offices | Merxus AI',
+    description: 'Give office callers a clear response path with guided call coverage, routing, bilingual handling, and team follow-up.',
+  },
+  '/solutions/office': {
+    title: 'AI Front Desk for Offices | Merxus AI',
+    description: 'Give office callers a clear response path with guided call coverage, routing, bilingual handling, and team follow-up.',
+  },
+  '/real-estate-ai': {
+    title: 'AI Front Desk for Real Estate | Merxus AI',
+    description: 'Capture listing inquiries, keep showing momentum, and manage real-estate follow-up from web or mobile with Merxus.',
+  },
+  '/solutions/real-estate': {
+    title: 'AI Front Desk for Real Estate | Merxus AI',
+    description: 'Capture listing inquiries, keep showing momentum, and manage real-estate follow-up from web or mobile with Merxus.',
+  },
+  '/restaurant-ai': {
+    title: 'AI Front Desk for Restaurants | Merxus AI',
+    description: 'Help restaurant callers get a response path for reservations, guest questions, and team follow-up during busy service periods.',
+  },
+  '/solutions/restaurant': {
+    title: 'AI Front Desk for Restaurants | Merxus AI',
+    description: 'Help restaurant callers get a response path for reservations, guest questions, and team follow-up during busy service periods.',
+  },
+  '/pricing': {
+    title: 'Merxus AI Pricing | AI Front Desk Plans',
+    description: 'Explore Merxus AI front-desk plans for office and real-estate teams that need responsive call handling and follow-up.',
+  },
+  '/login': {
+    title: 'Sign In | Merxus AI',
+    description: 'Sign in to Merxus to manage call coverage, routing, team notifications, and customer follow-up.',
+  },
+  '/privacy-policy': {
+    title: 'Privacy Policy | Merxus AI',
+    description: 'Read the Merxus AI privacy policy and learn how we handle customer, account, and service information.',
+  },
+};
+
+function RouteMetadata() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const metadata = ROUTE_METADATA[pathname] || ROUTE_METADATA['/'];
+    document.title = metadata.title;
+
+    let description = document.querySelector('meta[name="description"]');
+    if (!description) {
+      description = document.createElement('meta');
+      description.name = 'description';
+      document.head.appendChild(description);
+    }
+    description.content = metadata.description;
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -230,6 +296,7 @@ function App() {
       <AuthProvider>
         <Router>
         <MetaRouteTracker />
+        <RouteMetadata />
         <Routes>
           {/* Public routes - no NavBar */}
           <Route path="/login" element={<LoginPage />} />

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { createPublicChatSession, requestPublicChatHuman } from '../api/publicChat';
 import { 
   EnvelopeIcon, 
   PhoneIcon, 
@@ -24,32 +25,31 @@ export default function SupportPage() {
     setSubmitStatus(null);
 
     try {
-      const projectId = 'merxus-f0872';
-      const functionUrl = `https://us-central1-${projectId}.cloudfunctions.net/submitSupportRequest`;
-      
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message
-        })
+      const message = [
+        'Support form submission',
+        `Subject: ${formData.subject.trim()}`,
+        '',
+        formData.message.trim(),
+      ].join('\n');
+      const session = await createPublicChatSession({
+        product: 'merxus',
+        initialIntent: 'support',
+        initialMessage: message,
+        leadName: formData.name.trim(),
+        leadEmail: formData.email.trim(),
+        source: 'support_form',
+        sourceUrl: window.location.href,
+      });
+      await requestPublicChatHuman(session.sessionId || session.id, {
+        intent: 'support',
+        reason: 'support_form_submitted',
+        message,
+        leadName: formData.name.trim(),
+        leadEmail: formData.email.trim(),
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setSubmitStatus('success');
-        // Reset form
-        setFormData({ name: '', email: '', subject: '', message: '' });
-      } else {
-        setSubmitStatus('error');
-        console.error('Support request error:', data.error);
-      }
+      setSubmitStatus('success');
+      setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
       console.error('Error submitting support request:', error);
       setSubmitStatus('error');
@@ -212,7 +212,7 @@ export default function SupportPage() {
             </div>
             {submitStatus === 'success' && (
               <div className="p-3 text-sm text-green-800 border border-green-200 dark:border-green-700 rounded-md bg-green-50 dark:bg-green-950/30">
-                ✓ Your support request has been submitted successfully! We've sent a confirmation email and will respond within 24 hours.
+                ✓ Your support request has been submitted successfully. Our team will follow up within 24 hours.
               </div>
             )}
             {submitStatus === 'error' && (
@@ -225,7 +225,7 @@ export default function SupportPage() {
               disabled={isSubmitting}
               className="w-full px-6 py-2 text-white bg-green-600 rounded-md md:w-auto hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Opening Email...' : 'Send Message'}
+              {isSubmitting ? 'Sending...' : 'Send Message'}
             </button>
           </form>
         </div>
