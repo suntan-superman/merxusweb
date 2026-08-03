@@ -9,7 +9,7 @@ export const getSubscription = async () => {
 };
 
 export const getTenantActivationStatus = async () => {
-  const response = await apiClient.get('/billing/activation-status');
+  const response = await apiClient.get('/billing/activation-status', { timeout: 15000 });
   return response.data;
 };
 

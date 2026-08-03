@@ -7,6 +7,7 @@ import TwilioSetup from '../components/onboarding/steps/TwilioSetup';
 import { completeTenantActivation, getTenantActivationStatus } from '../api/billing';
 import { useAuth } from '../context/AuthContext';
 import { formatPhoneDisplay } from '../utils/phoneFormatter';
+import { shouldLeaveTenantActivation } from '../utils/tenantActivation';
 
 function getDashboardPath(tenantType) {
   if (tenantType === 'restaurant') return '/restaurant/dashboard';
@@ -33,6 +34,7 @@ export default function TenantActivationPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null);
+  const [loadError, setLoadError] = useState('');
   const [activationData, setActivationData] = useState({
     paymentCompleted: false,
     twilioPhoneNumber: '',
@@ -55,6 +57,7 @@ export default function TenantActivationPage() {
 
   const loadStatus = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const result = await getTenantActivationStatus();
       setStatus(result);
@@ -68,12 +71,14 @@ export default function TenantActivationPage() {
         twilioAuthToken: result.phone?.twilioPhoneNumber ? 'auto_provisioned' : current.twilioAuthToken || '',
       }));
 
-      if (result.activationRequired === false || result.activationComplete === true) {
+      if (shouldLeaveTenantActivation(result)) {
         navigate(getDashboardPath(result.tenantType), { replace: true });
       }
     } catch (error) {
       console.error('Failed to load activation status:', error);
-      toast.error(error?.response?.data?.error || 'Failed to load activation status.');
+      const message = error?.response?.data?.error || 'Failed to load activation status.';
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -114,6 +119,24 @@ export default function TenantActivationPage() {
         <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
           <Loader2 className="animate-spin" size={20} />
           Loading activation...
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-slate-950 px-6 text-slate-100 flex items-center justify-center">
+        <div className="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6">
+          <h1 className="text-lg font-semibold text-white">Unable to load activation</h1>
+          <p className="mt-2 text-sm text-slate-300">{loadError}</p>
+          <button
+            type="button"
+            onClick={loadStatus}
+            className="mt-5 rounded-md bg-green-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-green-400"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
