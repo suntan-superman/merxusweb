@@ -193,7 +193,7 @@ export default function EstateDashboardPage() {
 
   // Handle flyover completion
   const handleFlyoverComplete = () => {
-    markFlyoverComplete();
+    markFlyoverComplete(agentId);
     // Refetch settings using React Query (automatic cache invalidation)
     refetchSettings();
   };
@@ -204,6 +204,7 @@ export default function EstateDashboardPage() {
       <FlyoverBanner 
         onStartFlyover={() => setFlyoverOpen(true)} 
         settings={estateSettings}
+        agentId={agentId}
       />
 
       {/* Flyover Modal */}
