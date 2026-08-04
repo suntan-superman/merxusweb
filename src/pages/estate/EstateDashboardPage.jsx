@@ -140,6 +140,26 @@ export default function EstateDashboardPage() {
     };
   }, [calls, listings, leads, showings, startOfToday, startOfWeek, startOfMonth]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadTenantAnalytics() {
+      try {
+        const data = await fetchTenantAnalytics();
+        if (mounted) {
+          setTenantAnalytics(data);
+        }
+      } catch (error) {
+        console.warn('Unable to load tenant analytics for dashboard:', error);
+      }
+    }
+
+    loadTenantAnalytics();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   if (callsLoading || listingsLoading || leadsLoading || showingsLoading) {
     return <LoadingSpinner />;
   }
@@ -170,26 +190,6 @@ export default function EstateDashboardPage() {
   };
 
   const recentCalls = calls.slice(0, 5);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadTenantAnalytics() {
-      try {
-        const data = await fetchTenantAnalytics();
-        if (mounted) {
-          setTenantAnalytics(data);
-        }
-      } catch (error) {
-        console.warn('Unable to load tenant analytics for dashboard:', error);
-      }
-    }
-
-    loadTenantAnalytics();
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   // Handle flyover completion
   const handleFlyoverComplete = () => {
