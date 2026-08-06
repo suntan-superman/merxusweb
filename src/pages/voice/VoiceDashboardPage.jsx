@@ -189,7 +189,7 @@ export default function VoiceDashboardPage() {
 
   // Handle flyover completion
   const handleFlyoverComplete = () => {
-    markVoiceFlyoverComplete();
+    markVoiceFlyoverComplete(officeId);
     // Refetch settings using React Query (automatic cache invalidation)
     refetchSettings();
   };
@@ -200,6 +200,7 @@ export default function VoiceDashboardPage() {
       <VoiceFlyoverBanner 
         onStartFlyover={() => setFlyoverOpen(true)} 
         settings={voiceSettings}
+        officeId={officeId}
       />
 
       {/* Flyover Modal */}

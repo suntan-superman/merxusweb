@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import CallHQModal from './CallHQModal';
 import ThemeToggleButton from './common/ThemeToggleButton';
@@ -7,7 +7,21 @@ import SignOutButton from './common/SignOutButton';
 
 const NavBar = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const currentQuery = new URLSearchParams(location.search);
+  const requestedTenantType = currentQuery.get('type');
+  const landingTenantType = (() => {
+    if (requestedTenantType === 'voice' || requestedTenantType === 'real_estate' || requestedTenantType === 'restaurant') {
+      return requestedTenantType;
+    }
+    if (['/office-ai-front-desk', '/ai-front-desk', '/solutions/office'].includes(location.pathname)) return 'voice';
+    if (['/real-estate-ai', '/solutions/real-estate'].includes(location.pathname)) return 'real_estate';
+    if (['/restaurant-ai', '/solutions/restaurant'].includes(location.pathname)) return 'restaurant';
+    return null;
+  })();
+  const tenantQuery = landingTenantType ? `?type=${landingTenantType}` : '';
+  const onboardingPath = landingTenantType ? `/onboarding?type=${landingTenantType}` : '/onboarding';
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -22,10 +36,10 @@ const NavBar = () => {
             <ThemeToggleButton compact />
             {!user && (
               <>
-                <Link to="/features" className="text-gray-700 hover:text-primary-600 transition-colors">
+                <Link to={`/features${tenantQuery}`} className="text-gray-700 hover:text-primary-600 transition-colors">
                   Features
                 </Link>
-                <Link to="/pricing" className="text-gray-700 hover:text-primary-600 transition-colors">
+                <Link to={`/pricing${tenantQuery}`} className="text-gray-700 hover:text-primary-600 transition-colors">
                   Pricing
                 </Link>
               </>
@@ -47,7 +61,7 @@ const NavBar = () => {
                 <Link to="/login" className="text-gray-700 hover:text-primary-600 transition-colors">
                   Login
                 </Link>
-                <Link to="/onboarding" className="btn-primary">
+                <Link to={onboardingPath} className="btn-primary">
                   Get Started
                 </Link>
               </>
@@ -81,14 +95,14 @@ const NavBar = () => {
             {!user && (
               <>
                 <Link
-                  to="/features"
+                  to={`/features${tenantQuery}`}
                   className="block text-gray-700 hover:text-primary-600 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Features
                 </Link>
                 <Link
-                  to="/pricing"
+                  to={`/pricing${tenantQuery}`}
                   className="block text-gray-700 hover:text-primary-600 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -123,7 +137,7 @@ const NavBar = () => {
                   Login
                 </Link>
                 <Link
-                  to="/onboarding"
+                  to={onboardingPath}
                   className="btn-primary block text-center"
                   onClick={() => setIsMenuOpen(false)}
                 >

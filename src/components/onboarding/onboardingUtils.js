@@ -10,20 +10,22 @@ import { auth } from '../../firebase/config';
  */
 export const PRICING = {
   restaurant: {
-    basic: { monthly: 199, setup: 299, planName: 'Basic' },
-    enterprise: { monthly: 499, setup: 999, planName: 'Enterprise' },
-    default: { monthly: 199, setup: 299, planName: 'Basic' },
+    basic: { monthly: 199, setup: 199, planName: 'Basic' },
+    pro: { monthly: 299, setup: 299, planName: 'Pro' },
+    elite: { monthly: 499, setup: 499, planName: 'Elite' },
+    default: { monthly: 199, setup: 199, planName: 'Basic' },
   },
   voice: {
-    basic: { monthly: 49, setup: 49, planName: 'Basic' },
-    professional: { monthly: 99, setup: 149, planName: 'Professional' },
-    enterprise: { monthly: 199, setup: 249, planName: 'Enterprise' },
-    default: { monthly: 49, setup: 49, planName: 'Basic' },
+    basic: { monthly: 79, setup: 79, planName: 'Basic' },
+    pro: { monthly: 149, setup: 149, planName: 'Pro' },
+    elite: { monthly: 199, setup: 199, planName: 'Elite' },
+    default: { monthly: 79, setup: 79, planName: 'Basic' },
   },
   real_estate: {
-    basic: { monthly: 49, setup: 49, planName: 'Basic' },
-    professional: { monthly: 79, setup: 99, planName: 'Professional' },
-    default: { monthly: 49, setup: 49, planName: 'Basic' },
+    basic: { monthly: 79, setup: 79, planName: 'Basic' },
+    pro: { monthly: 149, setup: 149, planName: 'Pro' },
+    elite: { monthly: 199, setup: 199, planName: 'Elite' },
+    default: { monthly: 79, setup: 79, planName: 'Basic' },
   },
 };
 

@@ -1350,3 +1350,70 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
   }
 }
 
+/* Paid acquisition pages must retain their deliberate contrast in either app theme. */
+html.dark .merxus-paid-landing {
+  color: #0f172a;
+}
+
+html.dark .merxus-paid-landing.merxus-paid-landing--office {
+  background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 45%, #f0fdfa 100%) !important;
+}
+
+html.dark .merxus-paid-landing.merxus-paid-landing--real-estate {
+  background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 45%, #f8fafc 100%) !important;
+}
+
+html.dark .merxus-paid-landing .bg-white,
+html.dark .merxus-paid-landing .bg-white\/95 {
+  background-color: #ffffff !important;
+}
+
+html.dark .merxus-paid-landing [class*='bg-white/'] {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+html.dark .merxus-paid-landing .merxus-landing-hero [class*='bg-white/'] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html.dark .merxus-paid-landing .bg-sky-50 {
+  background-color: #eaf6ff !important;
+}
+
+html.dark .merxus-paid-landing .bg-emerald-50,
+html.dark .merxus-paid-landing .bg-teal-50 {
+  background-color: #ecfdf5 !important;
+}
+
+html.dark .merxus-paid-landing .text-gray-900,
+html.dark .merxus-paid-landing .text-gray-800,
+html.dark .merxus-paid-landing .text-gray-700,
+html.dark .merxus-paid-landing .text-gray-600,
+html.dark .merxus-paid-landing .text-gray-500 {
+  color: #0f172a !important;
+}
+
+html.dark .merxus-paid-landing .text-sky-700 {
+  color: #075985 !important;
+}
+
+html.dark .merxus-paid-landing .text-emerald-700 {
+  color: #047857 !important;
+}
+
+html.dark .merxus-paid-landing .border-gray-200,
+html.dark .merxus-paid-landing .border-gray-300 {
+  border-color: #cbd5e1 !important;
+}
+
+html.dark .merxus-paid-landing .border-sky-100,
+html.dark .merxus-paid-landing .border-sky-200 {
+  border-color: #bae6fd !important;
+}
+
+html.dark .merxus-paid-landing .border-emerald-100,
+html.dark .merxus-paid-landing .border-emerald-200,
+html.dark .merxus-paid-landing .border-teal-200 {
+  border-color: #a7f3d0 !important;
+}
+

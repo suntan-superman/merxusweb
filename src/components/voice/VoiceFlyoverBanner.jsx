@@ -5,14 +5,16 @@ import { Sparkles, X, ArrowRight } from 'lucide-react';
 const FLYOVER_COMPLETE_KEY = 'merxus_voice_flyover_complete';
 const FLYOVER_DISMISSED_KEY = 'merxus_voice_flyover_dismissed';
 
-export default function VoiceFlyoverBanner({ onStartFlyover, settings }) {
+const tenantStorageKey = (key, officeId) => (officeId ? `${key}:${officeId}` : key);
+
+export default function VoiceFlyoverBanner({ onStartFlyover, settings, officeId }) {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     // Check if flyover was completed or permanently dismissed
-    const isComplete = localStorage.getItem(FLYOVER_COMPLETE_KEY) === 'true';
-    const isDismissed = localStorage.getItem(FLYOVER_DISMISSED_KEY) === 'true';
+    const isComplete = localStorage.getItem(tenantStorageKey(FLYOVER_COMPLETE_KEY, officeId)) === 'true';
+    const isDismissed = localStorage.getItem(tenantStorageKey(FLYOVER_DISMISSED_KEY, officeId)) === 'true';
 
     // Also check if essential settings are filled
     const hasEssentials = settings?.name && settings?.twilioPhoneNumber;
@@ -21,7 +23,7 @@ export default function VoiceFlyoverBanner({ onStartFlyover, settings }) {
     if (!isComplete && !isDismissed && !hasEssentials) {
       setVisible(true);
     }
-  }, [settings]);
+  }, [settings, officeId]);
 
   const handleDismiss = () => {
     setDismissed(true);
@@ -33,7 +35,7 @@ export default function VoiceFlyoverBanner({ onStartFlyover, settings }) {
   const handlePermanentDismiss = () => {
     setDismissed(true);
     setVisible(false);
-    localStorage.setItem(FLYOVER_DISMISSED_KEY, 'true');
+    localStorage.setItem(tenantStorageKey(FLYOVER_DISMISSED_KEY, officeId), 'true');
   };
 
   const handleStart = () => {
@@ -80,14 +82,14 @@ export default function VoiceFlyoverBanner({ onStartFlyover, settings }) {
 }
 
 // Export the completion function for use after flyover
-export function markVoiceFlyoverComplete() {
-  localStorage.setItem(FLYOVER_COMPLETE_KEY, 'true');
+export function markVoiceFlyoverComplete(officeId) {
+  localStorage.setItem(tenantStorageKey(FLYOVER_COMPLETE_KEY, officeId), 'true');
 }
 
 // Export reset function for testing
-export function resetVoiceFlyoverState() {
-  localStorage.removeItem(FLYOVER_COMPLETE_KEY);
-  localStorage.removeItem(FLYOVER_DISMISSED_KEY);
-  localStorage.removeItem('merxus_voice_flyover_state');
+export function resetVoiceFlyoverState(officeId) {
+  localStorage.removeItem(tenantStorageKey(FLYOVER_COMPLETE_KEY, officeId));
+  localStorage.removeItem(tenantStorageKey(FLYOVER_DISMISSED_KEY, officeId));
+  localStorage.removeItem(tenantStorageKey('merxus_voice_flyover_state', officeId));
   sessionStorage.removeItem('voice_flyover_dismissed_session');
 }

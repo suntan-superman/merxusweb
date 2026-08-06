@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getBillingPricing } from '../api/billing';
@@ -24,7 +24,12 @@ const DISPLAY_PRICING = {
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [selectedTenantType, setSelectedTenantType] = useState('restaurant');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTenantType = searchParams.get('type');
+  const initialTenantType = ['voice', 'real_estate', 'restaurant'].includes(requestedTenantType)
+    ? requestedTenantType
+    : 'voice';
+  const [selectedTenantType, setSelectedTenantType] = useState(initialTenantType);
   const [pricingData, setPricingData] = useState(null);
   const [pricingLoading, setPricingLoading] = useState(true);
 
@@ -43,6 +48,17 @@ export default function Pricing() {
 
     loadPricing();
   }, []);
+
+  useEffect(() => {
+    if (['voice', 'real_estate', 'restaurant'].includes(requestedTenantType)) {
+      setSelectedTenantType(requestedTenantType);
+    }
+  }, [requestedTenantType]);
+
+  const selectTenantType = (tenantType) => {
+    setSelectedTenantType(tenantType);
+    setSearchParams({ type: tenantType }, { replace: true });
+  };
 
   const formatMoney = (amount, currency = 'usd') => {
     if (amount === null || amount === undefined) return null;
@@ -290,27 +306,17 @@ export default function Pricing() {
         {/* Tenant Type Selector */}
         <div className="flex flex-wrap justify-center gap-4 mb-12">
           <button
-            onClick={() => setSelectedTenantType('restaurant')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-              selectedTenantType === 'restaurant'
-                ? 'bg-primary-600 text-white'
-                : 'border-2 border-gray-200 bg-white text-gray-700 hover:border-primary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
-            }`}
-          >
-            Restaurants
-          </button>
-          <button
-            onClick={() => setSelectedTenantType('voice')}
+            onClick={() => selectTenantType('voice')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
               selectedTenantType === 'voice'
                 ? 'bg-primary-600 text-white'
                 : 'border-2 border-gray-200 bg-white text-gray-700 hover:border-primary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
             }`}
           >
-            Small Business
+            Office
           </button>
           <button
-            onClick={() => setSelectedTenantType('real_estate')}
+            onClick={() => selectTenantType('real_estate')}
             className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
               selectedTenantType === 'real_estate'
                 ? 'bg-primary-600 text-white'
@@ -318,6 +324,16 @@ export default function Pricing() {
             }`}
           >
             Real Estate
+          </button>
+          <button
+            onClick={() => selectTenantType('restaurant')}
+            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+              selectedTenantType === 'restaurant'
+                ? 'bg-primary-600 text-white'
+                : 'border-2 border-gray-200 bg-white text-gray-700 hover:border-primary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
+            }`}
+          >
+            Restaurants
           </button>
         </div>
 
@@ -454,7 +470,7 @@ export default function Pricing() {
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2 text-primary-600">✓</span>
-                    <span>Training session for your team</span>
+                    <span>Custom training sessions are available</span>
                   </li>
                   {selectedTenantType === 'restaurant' && (
                     <>
@@ -484,8 +500,8 @@ export default function Pricing() {
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
               <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Is the setup fee required?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                Yes, the setup fee is required for all plans and covers comprehensive onboarding, configuration, 
-                and training to get you started quickly. Setup fees vary by plan type and tier.
+                Yes, the setup fee is required for all plans and covers comprehensive onboarding and configuration 
+                to get you started quickly. Custom training sessions are available. Setup fees vary by plan type and tier.
               </p>
             </div>
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
@@ -543,7 +559,7 @@ export default function Pricing() {
             ) : (
               <>
                 <Link 
-                  to="/onboarding" 
+                  to={`/onboarding?type=${selectedTenantType}`}
                   className="inline-block px-8 py-3 text-lg font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors text-center"
                 >
                   Get Started

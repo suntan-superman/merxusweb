@@ -277,6 +277,9 @@ const STEPS = [
 
 export default function EstateFlyover({ isOpen, onClose, onComplete }) {
   const { agentId } = useAuth();
+  const flyoverStorageKey = agentId
+    ? `${FLYOVER_STORAGE_KEY}:${agentId}`
+    : FLYOVER_STORAGE_KEY;
   const [currentStep, setCurrentStep] = useState(0);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -315,7 +318,7 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
     if (isOpen) {
       loadState();
     }
-  }, [isOpen]);
+  }, [isOpen, agentId]);
 
   const loadState = async () => {
     setLoading(true);
@@ -325,7 +328,7 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
       setSettings(data);
 
       // Load saved flyover progress from localStorage
-      const savedState = localStorage.getItem(FLYOVER_STORAGE_KEY);
+      const savedState = localStorage.getItem(flyoverStorageKey);
       let savedStep = 0;
       let savedFormData = {};
 
@@ -386,7 +389,7 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
       formData: data,
       lastUpdated: new Date().toISOString(),
     };
-    localStorage.setItem(FLYOVER_STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(flyoverStorageKey, JSON.stringify(state));
   };
 
   // Handle field changes
@@ -637,7 +640,7 @@ export default function EstateFlyover({ isOpen, onClose, onComplete }) {
   // Complete the flyover
   const handleComplete = async () => {
     await saveStepData();
-    localStorage.removeItem(FLYOVER_STORAGE_KEY);
+    localStorage.removeItem(flyoverStorageKey);
     toast.success('🎉 Setup complete! Your AI assistant is ready.');
     onComplete?.();
     onClose();

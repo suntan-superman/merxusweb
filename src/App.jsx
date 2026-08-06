@@ -281,6 +281,67 @@ function RouteMetadata() {
   return null;
 }
 
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname, search]);
+
+  return null;
+}
+
+function PublicFooter() {
+  const location = useLocation();
+  const queryType = new URLSearchParams(location.search).get('type');
+  const tenantType = (() => {
+    if (['voice', 'real_estate', 'restaurant'].includes(queryType)) return queryType;
+    if (['/office-ai-front-desk', '/ai-front-desk', '/solutions/office'].includes(location.pathname)) return 'voice';
+    if (['/real-estate-ai', '/solutions/real-estate'].includes(location.pathname)) return 'real_estate';
+    if (['/restaurant-ai', '/solutions/restaurant'].includes(location.pathname)) return 'restaurant';
+    return null;
+  })();
+  const query = tenantType ? `?type=${tenantType}` : '';
+
+  return (
+    <footer className="mt-20 bg-gray-900 text-white">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+          <div>
+            <h3 className="mb-4 text-xl font-bold text-primary-400">Merxus</h3>
+            <p className="text-gray-400">AI communication command center for calls, SMS, chat, reviews, and team routing.</p>
+          </div>
+          <div>
+            <h4 className="mb-4 font-semibold">Quick Links</h4>
+            <ul className="space-y-2 text-gray-400">
+              <li><Link to={`/features${query}`} className="transition-colors hover:text-primary-400">Features</Link></li>
+              <li><Link to={`/pricing${query}`} className="transition-colors hover:text-primary-400">Pricing</Link></li>
+              <li><Link to={`/onboarding${query}`} className="transition-colors hover:text-primary-400">Get Started</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-4 font-semibold">Support</h4>
+            <ul className="space-y-2 text-gray-400">
+              <li><a href="/support" className="transition-colors hover:text-primary-400">Help Center</a></li>
+              <li><a href="/privacy-policy" className="transition-colors hover:text-primary-400">Privacy Policy</a></li>
+              <li><a href="/terms-of-service" className="transition-colors hover:text-primary-400">Terms of Service</a></li>
+              <li><a href="mailto:support@merxusllc.com" className="transition-colors hover:text-primary-400">Contact Us</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-4 font-semibold">Contact</h4>
+            <p className="text-gray-400">Schedule a 15-minute demo to get started.</p>
+            <a href="mailto:support@merxusllc.com" className="text-primary-400 hover:text-primary-300">support@merxusllc.com</a>
+          </div>
+        </div>
+        <div className="mt-8 border-t border-gray-800 pt-8 text-center text-gray-400">
+          <p>{APP_INFO.fullCopyright}</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 function App() {
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -297,6 +358,7 @@ function App() {
         <Router>
         <MetaRouteTracker />
         <RouteMetadata />
+        <ScrollToTop />
         <Routes>
           {/* Public routes - no NavBar */}
           <Route path="/login" element={<LoginPage />} />
@@ -739,47 +801,7 @@ function App() {
                   {/* Redirect authenticated users */}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-                <footer className="mt-20 text-white bg-gray-900">
-                  <div className="container px-4 py-8 mx-auto">
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-                      <div>
-                        <h3 className="mb-4 text-xl font-bold text-primary-400">Merxus</h3>
-                        <p className="text-gray-400">
-                          AI communication command center for calls, SMS, chat, reviews, and team routing.
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="mb-4 font-semibold">Quick Links</h4>
-                        <ul className="space-y-2 text-gray-400">
-                          <li><Link to="/features" className="transition-colors hover:text-primary-400">Features</Link></li>
-                          <li><Link to="/pricing" className="transition-colors hover:text-primary-400">Pricing</Link></li>
-                          <li><Link to="/onboarding" className="transition-colors hover:text-primary-400">Get Started</Link></li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="mb-4 font-semibold">Support</h4>
-                        <ul className="space-y-2 text-gray-400">
-                          <li><a href="/support" className="transition-colors hover:text-primary-400">Help Center</a></li>
-                          <li><a href="/privacy-policy" className="transition-colors hover:text-primary-400">Privacy Policy</a></li>
-                          <li><a href="/terms-of-service" className="transition-colors hover:text-primary-400">Terms of Service</a></li>
-                          <li><a href="mailto:support@merxusllc.com" className="transition-colors hover:text-primary-400">Contact Us</a></li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="mb-4 font-semibold">Contact</h4>
-                        <p className="text-gray-400">
-                          Schedule a 15-minute demo to get started.
-                        </p>
-                        <a href="mailto:support@merxusllc.com" className="text-primary-400 hover:text-primary-300">
-                          support@merxusllc.com
-                        </a>
-                      </div>
-                    </div>
-                    <div className="pt-8 mt-8 text-center text-gray-400 border-t border-gray-800">
-                      <p>{APP_INFO.fullCopyright}</p>
-                    </div>
-                  </div>
-                </footer>
+                <PublicFooter />
                 <PublicWebsiteChat />
               </>
             }

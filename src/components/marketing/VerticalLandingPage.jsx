@@ -407,7 +407,7 @@ export default function VerticalLandingPage({ content }) {
   }
 
   return (
-    <div className={`merxus-landing-page min-h-screen pb-24 ${theme.pageBg}`}>
+    <div className={`merxus-landing-page merxus-paid-landing merxus-paid-landing--${content.theme} min-h-screen pb-24 ${theme.pageBg}`}>
       <header className="sticky top-0 z-30 border-b border-white/60 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <Link to="/" className="text-base font-black tracking-tight text-gray-950">
@@ -432,7 +432,7 @@ export default function VerticalLandingPage({ content }) {
 
       <section className="px-4 pb-8 pt-6">
         <div className="mx-auto max-w-6xl">
-          <div className={`overflow-hidden rounded-[24px] shadow-2xl ${theme.heroPanel}`}>
+          <div className={`merxus-landing-hero overflow-hidden rounded-[24px] shadow-2xl ${theme.heroPanel}`}>
             <div className="grid gap-8 px-6 py-8 md:grid-cols-[1.2fr,0.8fr] md:px-10 md:py-10">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-white/75">

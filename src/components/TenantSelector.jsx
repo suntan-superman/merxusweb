@@ -9,7 +9,7 @@ const TENANT_OPTIONS = [
     icon: '📞',
     intro: 'Best for offices and small businesses that need a smart receptionist and call routing.',
     audience: 'Home services, clinics, law offices, contractors, and local businesses',
-    price: 'Starts at $49/month',
+    price: 'Starts at $79/month',
     bullets: [
       'Smart routing, voicemail, and receptionist coverage',
       'Appointment, quote, and service-request capture',
@@ -24,7 +24,7 @@ const TENANT_OPTIONS = [
     icon: '🏡',
     intro: 'Best for real-estate teams that need listing inquiries, showing requests, and lead qualification.',
     audience: 'Individual agents, broker teams, and real-estate offices',
-    price: 'Starts at $49/month',
+    price: 'Starts at $79/month',
     bullets: [
       'Listing inquiries, showing requests, and lead capture',
       'Property-aware follow-up and customer memory',

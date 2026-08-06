@@ -15,6 +15,7 @@ import {
   Search,
   Resize,
 } from '@syncfusion/ej2-react-grids';
+import { formatListingDetails, getListingValue } from '../../utils/listingPresentation';
 
 const GRID_STORAGE_KEY = 'merxus_estate_listings_grid_columns';
 
@@ -130,7 +131,7 @@ export default function ListingsTable({
 
   const detailsTemplate = (props) => (
     <div className="text-xs text-gray-600 dark:text-slate-300">
-      {props.beds || 'N/A'} bed • {props.baths || 'N/A'} bath • {props.sq_ft ? `${props.sq_ft.toLocaleString()} sq ft` : 'N/A'}
+      {formatListingDetails(props)}
     </div>
   );
 
@@ -310,7 +311,8 @@ function formatAddress(listing) {
   if (listing.address) parts.push(listing.address);
   if (listing.city) parts.push(listing.city);
   if (listing.state) parts.push(listing.state);
-  if (listing.zip) parts.push(listing.zip);
+  const zipCode = getListingValue(listing, 'zipCode', 'zip');
+  if (zipCode) parts.push(zipCode);
   return parts.join(', ') || 'Address not provided';
 }
 

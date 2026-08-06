@@ -7,9 +7,11 @@ import { resendInvitationEmail } from '../api/voice';
 import apiClient from '../api/client';
 import { getEmailSignInMethods, getSignInMethodInfo } from '../utils/authProviders';
 import { getPostLoginPath, hasMerxusTenantClaims, isSupportConsoleAccount } from '../utils/accountRouting';
+import { clearRememberedLoginEmail, getRememberedLoginEmail, saveRememberedLoginEmail } from '../utils/loginPreferences';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => getRememberedLoginEmail());
+  const [rememberEmail, setRememberEmail] = useState(() => Boolean(getRememberedLoginEmail()));
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -290,6 +292,11 @@ export default function LoginPage() {
       // With Firebase email-enumeration protection, this check can return no methods
       // for valid accounts. Attempt sign-in regardless.
       const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      if (rememberEmail) {
+        saveRememberedLoginEmail(normalizedEmail);
+      } else {
+        clearRememberedLoginEmail();
+      }
       // Force token refresh to get latest claims
       await userCredential.user.getIdToken(true);
       // Navigation will be handled by useEffect once userClaims are loaded
@@ -904,6 +911,20 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-between">
+                <label htmlFor="remember-email" className="flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+                  <input
+                    id="remember-email"
+                    type="checkbox"
+                    checked={rememberEmail}
+                    onChange={(event) => {
+                      const shouldRemember = event.target.checked;
+                      setRememberEmail(shouldRemember);
+                      if (!shouldRemember) clearRememberedLoginEmail();
+                    }}
+                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-800"
+                  />
+                  <span>Remember email</span>
+                </label>
                 {isAppleOnly ? (
                   <span className="text-xs text-gray-500 dark:text-slate-400">
                     Password reset isn’t available for Apple Sign-In.

@@ -59,7 +59,15 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
 
   const [newFeature, setNewFeature] = useState('');
   const [newPhoto, setNewPhoto] = useState('');
-  const flyerAvailable = !!(editing?.flyerUrl || editing?.flyerURL);
+  const savedFlyerUrl = editing?.flyerUrl || editing?.flyerURL || '';
+  const flyerAvailable = Boolean(savedFlyerUrl) && form.flyerUrl === savedFlyerUrl;
+  const flyerTestHint = flyerAvailable
+    ? 'Send a test flyer email to verify content and formatting.'
+    : form.flyerUrl
+      ? 'Click Update Listing to save this flyer before sending a test email.'
+      : savedFlyerUrl
+        ? 'Click Update Listing to save the flyer removal before sending a test email.'
+        : 'Upload a flyer, then click Update Listing to enable test sends.';
   const [flyerStatus, setFlyerStatus] = useState(null); // { type: 'success'|'error'|'info', message: string }
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
@@ -257,7 +265,7 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
       const url = await getDownloadURL(storageRef);
       setForm((prev) => ({ ...prev, flyerUrl: url }));
       setHasUnsavedChanges(true);
-      setFlyerStatus({ type: 'success', message: 'Flyer uploaded. Click Save to commit.' });
+      setFlyerStatus({ type: 'success', message: 'Flyer uploaded. Click Update Listing to save it before sending a test email.' });
     } catch (err) {
       console.error('Flyer upload error:', err);
       setFlyerStatus({ type: 'error', message: 'Upload failed. Please retry.' });
@@ -731,7 +739,8 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
                 className="btn-secondary"
                 onClick={() => {
                   setForm((prev) => ({ ...prev, flyerUrl: '' }));
-                  setFlyerStatus({ type: 'info', message: 'Flyer removed. Save to apply.' });
+                  setHasUnsavedChanges(true);
+                  setFlyerStatus({ type: 'info', message: 'Flyer removed. Click Update Listing to apply the change.' });
                 }}
                 disabled={!form.flyerUrl}
               >
@@ -756,7 +765,10 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
               type="url"
               name="flyerUrl"
               value={form.flyerUrl}
-              onChange={(e) => setForm((prev) => ({ ...prev, flyerUrl: e.target.value }))}
+              onChange={(e) => {
+                setHasUnsavedChanges(true);
+                setForm((prev) => ({ ...prev, flyerUrl: e.target.value }));
+              }}
               className="input-field"
               placeholder="https://your-storage.com/flyers/listing.pdf"
             />
@@ -867,19 +879,29 @@ export default function ListingForm({ open, onClose, onSave, editing = null, onT
               <div>
                 <p className="text-sm font-semibold text-gray-800">Test Flyer Email</p>
                 <p className="text-xs text-gray-600">
-                  {flyerAvailable
-                    ? 'Send a test flyer email to verify content and formatting.'
-                    : 'Upload a flyer above to enable test sends.'}
+                  {flyerTestHint}
                 </p>
               </div>
-              <button
-                type="button"
-                className={`btn-secondary ${!flyerAvailable ? 'opacity-60 cursor-not-allowed' : ''}`}
-                onClick={() => flyerAvailable && onTestSend(editing)}
-                disabled={!flyerAvailable}
-              >
-                Send Test
-              </button>
+              <span className="group relative inline-flex" title={!flyerAvailable ? flyerTestHint : undefined}>
+                <button
+                  type="button"
+                  className={`btn-secondary ${!flyerAvailable ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  onClick={() => flyerAvailable && onTestSend(editing)}
+                  disabled={!flyerAvailable}
+                  aria-describedby={!flyerAvailable ? 'test-flyer-save-hint' : undefined}
+                >
+                  Send Test
+                </button>
+                {!flyerAvailable && (
+                  <span
+                    id="test-flyer-save-hint"
+                    role="tooltip"
+                    className="pointer-events-none absolute right-0 top-full z-10 mt-2 hidden w-64 rounded border border-slate-600 bg-slate-950 px-3 py-2 text-xs text-white shadow-lg group-hover:block group-focus-within:block"
+                  >
+                    {flyerTestHint}
+                  </span>
+                )}
+              </span>
             </div>
           </div>
         )}

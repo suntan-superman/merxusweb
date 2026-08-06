@@ -2,15 +2,15 @@ import { Building2, Utensils, Phone, Briefcase } from 'lucide-react';
 
 const INDUSTRIES = [
   {
-    id: 'restaurant',
-    name: 'Restaurant',
-    icon: Utensils,
-    description: 'Take orders, manage reservations, answer menu questions',
-    features: ['Phone orders', 'Reservations', 'Menu Q&A', 'POS integration'],
-    color: 'from-orange-500 to-red-500',
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-200',
-    hoverBorder: 'hover:border-orange-400',
+    id: 'voice',
+    name: 'Professional Office',
+    icon: Phone,
+    description: 'Route calls, take messages, schedule appointments',
+    features: ['Call routing', 'Voicemail', 'Scheduling', 'Multi-user'],
+    color: 'from-purple-500 to-pink-500',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-200',
+    hoverBorder: 'hover:border-purple-400',
   },
   {
     id: 'real_estate',
@@ -24,17 +24,6 @@ const INDUSTRIES = [
     hoverBorder: 'hover:border-blue-400',
   },
   {
-    id: 'voice',
-    name: 'Professional Office',
-    icon: Phone,
-    description: 'Route calls, take messages, schedule appointments',
-    features: ['Call routing', 'Voicemail', 'Scheduling', 'Multi-user'],
-    color: 'from-purple-500 to-pink-500',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200',
-    hoverBorder: 'hover:border-purple-400',
-  },
-  {
     id: 'general',
     name: 'General Business',
     icon: Briefcase,
@@ -44,6 +33,17 @@ const INDUSTRIES = [
     bgColor: 'bg-gray-50',
     borderColor: 'border-gray-200',
     hoverBorder: 'hover:border-gray-400',
+  },
+  {
+    id: 'restaurant',
+    name: 'Restaurant',
+    icon: Utensils,
+    description: 'Take orders, manage reservations, answer menu questions',
+    features: ['Phone orders', 'Reservations', 'Menu Q&A', 'POS integration'],
+    color: 'from-orange-500 to-red-500',
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-orange-200',
+    hoverBorder: 'hover:border-orange-400',
   },
 ];
 

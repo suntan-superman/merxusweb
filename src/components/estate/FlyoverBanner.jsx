@@ -5,14 +5,16 @@ import { Sparkles, X, ArrowRight } from 'lucide-react';
 const FLYOVER_COMPLETE_KEY = 'merxus_estate_flyover_complete';
 const FLYOVER_DISMISSED_KEY = 'merxus_estate_flyover_dismissed';
 
-export default function FlyoverBanner({ onStartFlyover, settings }) {
+const tenantStorageKey = (key, agentId) => (agentId ? `${key}:${agentId}` : key);
+
+export default function FlyoverBanner({ onStartFlyover, settings, agentId }) {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     // Check if flyover was completed or permanently dismissed
-    const isComplete = localStorage.getItem(FLYOVER_COMPLETE_KEY) === 'true';
-    const isDismissed = localStorage.getItem(FLYOVER_DISMISSED_KEY) === 'true';
+    const isComplete = localStorage.getItem(tenantStorageKey(FLYOVER_COMPLETE_KEY, agentId)) === 'true';
+    const isDismissed = localStorage.getItem(tenantStorageKey(FLYOVER_DISMISSED_KEY, agentId)) === 'true';
 
     // Also check if essential settings are filled
     const hasEssentials = settings?.name && settings?.twilioPhoneNumber;
@@ -21,7 +23,7 @@ export default function FlyoverBanner({ onStartFlyover, settings }) {
     if (!isComplete && !isDismissed && !hasEssentials) {
       setVisible(true);
     }
-  }, [settings]);
+  }, [settings, agentId]);
 
   const handleDismiss = () => {
     setDismissed(true);
@@ -33,7 +35,7 @@ export default function FlyoverBanner({ onStartFlyover, settings }) {
   const handlePermanentDismiss = () => {
     setDismissed(true);
     setVisible(false);
-    localStorage.setItem(FLYOVER_DISMISSED_KEY, 'true');
+    localStorage.setItem(tenantStorageKey(FLYOVER_DISMISSED_KEY, agentId), 'true');
   };
 
   const handleStart = () => {
@@ -80,14 +82,14 @@ export default function FlyoverBanner({ onStartFlyover, settings }) {
 }
 
 // Export the completion function for use after flyover
-export function markFlyoverComplete() {
-  localStorage.setItem(FLYOVER_COMPLETE_KEY, 'true');
+export function markFlyoverComplete(agentId) {
+  localStorage.setItem(tenantStorageKey(FLYOVER_COMPLETE_KEY, agentId), 'true');
 }
 
 // Export reset function for testing
-export function resetFlyoverState() {
-  localStorage.removeItem(FLYOVER_COMPLETE_KEY);
-  localStorage.removeItem(FLYOVER_DISMISSED_KEY);
-  localStorage.removeItem('merxus_estate_flyover_state');
+export function resetFlyoverState(agentId) {
+  localStorage.removeItem(tenantStorageKey(FLYOVER_COMPLETE_KEY, agentId));
+  localStorage.removeItem(tenantStorageKey(FLYOVER_DISMISSED_KEY, agentId));
+  localStorage.removeItem(tenantStorageKey('merxus_estate_flyover_state', agentId));
   sessionStorage.removeItem('flyover_dismissed_session');
 }
