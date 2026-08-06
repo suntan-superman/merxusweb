@@ -6,7 +6,6 @@ import {
   requestPublicDemo,
   requestPublicChatHuman,
 } from '../../api/publicChat';
-import { useAuth } from '../../context/AuthContext';
 import {
   getCampaignAttribution,
   trackLead,
@@ -14,7 +13,6 @@ import {
   trackMerxusOnboardingStarted,
   trackSchedule,
 } from '../../utils/metaPixel';
-import { getPostLoginPath } from '../../utils/accountRouting';
 import { formatPhoneInput, getRawPhone } from '../../utils/phoneFormatter';
 
 const BUSINESS_TYPE_OPTIONS = [
@@ -141,7 +139,6 @@ function getThemeClasses(theme) {
 
 export default function VerticalLandingPage({ content }) {
   const theme = getThemeClasses(content.theme);
-  const { user, userClaims, signOut } = useAuth();
   const [lead, setLead] = useState(() => createInitialLead(content));
   const [leadStatus, setLeadStatus] = useState({ state: 'idle', message: '', sessionId: '' });
   const attribution = useMemo(() => getCampaignAttribution(), []);
@@ -151,7 +148,6 @@ export default function VerticalLandingPage({ content }) {
   ), [attribution, content]);
   const demoTarget = isExternalUrl(demoUrl) ? '_blank' : undefined;
   const demoRel = isExternalUrl(demoUrl) ? 'noreferrer' : undefined;
-  const dashboardPath = getPostLoginPath(userClaims) || '/';
   const leadName = `${lead.firstName} ${lead.lastName}`.trim();
   const canSubmit =
     lead.firstName.trim().length >= 2 &&
@@ -408,28 +404,6 @@ export default function VerticalLandingPage({ content }) {
 
   return (
     <div className={`merxus-landing-page merxus-paid-landing merxus-paid-landing--${content.theme} min-h-screen pb-24 ${theme.pageBg}`}>
-      <header className="sticky top-0 z-30 border-b border-white/60 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <Link to="/" className="text-base font-black tracking-tight text-gray-950">
-            Merxus <span className={theme.accentText}>AI</span>
-          </Link>
-          <nav className="flex items-center gap-2 text-sm font-semibold">
-            {user ? (
-              <>
-                <Link to={dashboardPath} className="rounded-xl px-3 py-2 text-gray-800 hover:bg-gray-100">Dashboard</Link>
-                <button type="button" onClick={signOut} className="rounded-xl px-3 py-2 text-gray-800 hover:bg-gray-100">Sign Out</button>
-              </>
-            ) : (
-              <>
-                <a href={demoUrl} target={demoTarget} rel={demoRel} onClick={() => handleBookDemo('paid_social_header')} className="hidden rounded-xl px-3 py-2 text-gray-800 hover:bg-gray-100 sm:inline-flex">Book Demo</a>
-                <a href="#lead-form" onClick={() => handleStartSetup('paid_social_header')} className="rounded-xl px-3 py-2 text-gray-800 hover:bg-gray-100">Start Setup</a>
-                <Link to="/login" className="rounded-xl bg-gray-950 px-3 py-2 text-white hover:bg-gray-800">Login</Link>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
-
       <section className="px-4 pb-8 pt-6">
         <div className="mx-auto max-w-6xl">
           <div className={`merxus-landing-hero overflow-hidden rounded-[24px] shadow-2xl ${theme.heroPanel}`}>
@@ -487,7 +461,7 @@ export default function VerticalLandingPage({ content }) {
 
       <section id="lead-form" className="scroll-mt-24 px-4 py-5">
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr,1.1fr]">
-          <div className={`rounded-[28px] border px-6 py-8 md:px-8 ${theme.sectionHighlight}`}>
+          <div className={`merxus-landing-intro rounded-[28px] border px-6 py-8 md:px-8 ${theme.sectionHighlight}`}>
             <p className={`text-xs font-semibold uppercase tracking-[0.22em] ${theme.accentText}`}>See Merxus In Action</p>
             <h2 className="mt-3 text-3xl font-black text-gray-900 md:text-4xl">{content.formTitle || 'Get a workflow-specific demo'}</h2>
             <p className="mt-4 text-base leading-7 text-gray-700">
@@ -507,7 +481,7 @@ export default function VerticalLandingPage({ content }) {
             </div>
           </div>
 
-          <form onSubmit={handleLeadSubmit} className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-gray-300 md:p-8">
+          <form onSubmit={handleLeadSubmit} className="merxus-landing-form rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-gray-300 md:p-8">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="text-sm font-semibold text-gray-800">
                 First name <span className={theme.accentText}>*</span>
@@ -673,7 +647,7 @@ export default function VerticalLandingPage({ content }) {
 
       <section className="px-4 pb-6">
         <div className="mx-auto max-w-6xl">
-          <div className={`rounded-[28px] border px-6 py-6 md:px-8 ${theme.sectionHighlight}`}>
+          <div className={`merxus-landing-problem rounded-[28px] border px-6 py-6 md:px-8 ${theme.sectionHighlight}`}>
             <p className={`text-xs font-semibold uppercase tracking-[0.22em] ${theme.accentText}`}>The Core Problem</p>
             <h2 className="mt-3 text-3xl font-black text-gray-900 md:text-4xl">{content.problemTitle}</h2>
             <p className="mt-4 max-w-4xl text-base leading-7 text-gray-700 md:text-lg">
@@ -686,7 +660,7 @@ export default function VerticalLandingPage({ content }) {
       <section className="px-4 py-6">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-6 lg:grid-cols-[0.95fr,1.05fr]">
-            <div className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-gray-200 md:p-8">
+            <div className="merxus-landing-solution rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-gray-200 md:p-8">
               <p className={`text-xs font-semibold uppercase tracking-[0.22em] ${theme.accentText}`}>How Merxus Helps</p>
               <h2 className="mt-3 text-3xl font-black text-gray-900">{content.solutionTitle}</h2>
               <p className="mt-4 text-base leading-7 text-gray-700">{content.solutionBody}</p>
@@ -708,7 +682,7 @@ export default function VerticalLandingPage({ content }) {
 
             <div className="grid gap-4 md:grid-cols-2">
               {content.featureCards.map((feature) => (
-                <div key={feature.title} className={`rounded-[28px] border p-6 shadow-sm ${theme.accentCard} ${theme.accentBorder}`}>
+                <div key={feature.title} className={`merxus-landing-feature rounded-[28px] border p-6 shadow-sm ${theme.accentCard} ${theme.accentBorder}`}>
                   <p className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${theme.accentPill}`}>
                     {feature.kicker}
                   </p>
@@ -722,7 +696,7 @@ export default function VerticalLandingPage({ content }) {
       </section>
 
       <section className="px-4 py-6">
-        <div className="mx-auto max-w-6xl rounded-[28px] bg-gray-950 px-6 py-8 text-white md:px-8">
+        <div className="merxus-landing-proof mx-auto max-w-6xl rounded-[28px] bg-gray-950 px-6 py-8 text-white md:px-8">
           <div className="grid gap-6 lg:grid-cols-[0.9fr,1.1fr]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/60">Operational Proof</p>
@@ -744,7 +718,7 @@ export default function VerticalLandingPage({ content }) {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-4 md:grid-cols-3">
             {content.audienceCards.map((item) => (
-              <div key={item.title} className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-gray-200">
+              <div key={item.title} className="merxus-landing-audience rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-gray-200">
                 <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${theme.accentText}`}>{item.kicker}</p>
                 <h3 className="mt-3 text-xl font-bold text-gray-900">{item.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-gray-600">{item.description}</p>
@@ -755,7 +729,7 @@ export default function VerticalLandingPage({ content }) {
       </section>
 
       <section className="px-4 py-8">
-        <div className="mx-auto max-w-6xl rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-gray-200 md:p-10">
+        <div className="merxus-landing-final mx-auto max-w-6xl rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-gray-200 md:p-10">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div className="max-w-3xl">
               <p className={`text-xs font-semibold uppercase tracking-[0.22em] ${theme.accentText}`}>Call To Action</p>

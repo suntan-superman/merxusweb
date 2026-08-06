@@ -1351,69 +1351,99 @@ html.dark .e-grid .e-pager .e-pagesizes .e-input {
 }
 
 /* Paid acquisition pages must retain their deliberate contrast in either app theme. */
-html.dark .merxus-paid-landing {
-  color: #0f172a;
+.merxus-paid-landing {
+  --landing-accent: #38bdf8;
+  --landing-border: rgba(56, 189, 248, 0.28);
+  --landing-panel: #0d1b2f;
+  --landing-panel-alt: #10243d;
+  background: #07111f !important;
+  color: #e2e8f0;
 }
 
-html.dark .merxus-paid-landing.merxus-paid-landing--office {
-  background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 45%, #f0fdfa 100%) !important;
+.merxus-paid-landing--office {
+  --landing-accent: #34d399;
+  --landing-border: rgba(52, 211, 153, 0.28);
+  --landing-panel: #0b211f;
+  --landing-panel-alt: #10302d;
 }
 
-html.dark .merxus-paid-landing.merxus-paid-landing--real-estate {
-  background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 45%, #f8fafc 100%) !important;
+.merxus-paid-landing .merxus-landing-intro,
+.merxus-paid-landing .merxus-landing-problem,
+.merxus-paid-landing .merxus-landing-solution,
+.merxus-paid-landing .merxus-landing-audience,
+.merxus-paid-landing .merxus-landing-final {
+  background: var(--landing-panel) !important;
+  border-color: var(--landing-border) !important;
 }
 
-html.dark .merxus-paid-landing .bg-white,
-html.dark .merxus-paid-landing .bg-white\/95 {
-  background-color: #ffffff !important;
+.merxus-paid-landing .merxus-landing-form {
+  background: #0c1628 !important;
+  border-color: var(--landing-border) !important;
 }
 
-html.dark .merxus-paid-landing [class*='bg-white/'] {
-  background-color: rgba(255, 255, 255, 0.72) !important;
+.merxus-paid-landing .merxus-landing-feature {
+  background: var(--landing-panel-alt) !important;
+  border-color: var(--landing-border) !important;
 }
 
-html.dark .merxus-paid-landing .merxus-landing-hero [class*='bg-white/'] {
+.merxus-paid-landing .merxus-landing-proof {
+  background: #060d18 !important;
+  border: 1px solid var(--landing-border);
+}
+
+.merxus-paid-landing .merxus-landing-intro [class*='bg-white/'] {
+  background: rgba(255, 255, 255, 0.07) !important;
+  box-shadow: none;
+}
+
+.merxus-paid-landing .merxus-landing-hero [class*='bg-white/'] {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-html.dark .merxus-paid-landing .bg-sky-50 {
-  background-color: #eaf6ff !important;
+.merxus-paid-landing .merxus-landing-intro .text-gray-900,
+.merxus-paid-landing .merxus-landing-problem .text-gray-900,
+.merxus-paid-landing .merxus-landing-solution .text-gray-900,
+.merxus-paid-landing .merxus-landing-feature .text-gray-900,
+.merxus-paid-landing .merxus-landing-audience .text-gray-900,
+.merxus-paid-landing .merxus-landing-final .text-gray-900,
+.merxus-paid-landing .merxus-landing-form .text-gray-800 {
+  color: #f8fafc !important;
 }
 
-html.dark .merxus-paid-landing .bg-emerald-50,
-html.dark .merxus-paid-landing .bg-teal-50 {
-  background-color: #ecfdf5 !important;
+.merxus-paid-landing .merxus-landing-intro .text-gray-700,
+.merxus-paid-landing .merxus-landing-problem .text-gray-700,
+.merxus-paid-landing .merxus-landing-solution .text-gray-700,
+.merxus-paid-landing .merxus-landing-feature .text-gray-700,
+.merxus-paid-landing .merxus-landing-audience .text-gray-600,
+.merxus-paid-landing .merxus-landing-final .text-gray-700,
+.merxus-paid-landing .merxus-landing-form .text-gray-500 {
+  color: #cbd5e1 !important;
 }
 
-html.dark .merxus-paid-landing .text-gray-900,
-html.dark .merxus-paid-landing .text-gray-800,
-html.dark .merxus-paid-landing .text-gray-700,
-html.dark .merxus-paid-landing .text-gray-600,
-html.dark .merxus-paid-landing .text-gray-500 {
-  color: #0f172a !important;
+.merxus-paid-landing .merxus-landing-intro .text-sky-700,
+.merxus-paid-landing .merxus-landing-problem .text-sky-700,
+.merxus-paid-landing .merxus-landing-feature .text-sky-700,
+.merxus-paid-landing .merxus-landing-final .text-sky-700 {
+  color: #7dd3fc !important;
 }
 
-html.dark .merxus-paid-landing .text-sky-700 {
-  color: #075985 !important;
+.merxus-paid-landing .merxus-landing-intro .text-emerald-700,
+.merxus-paid-landing .merxus-landing-problem .text-emerald-700,
+.merxus-paid-landing .merxus-landing-feature .text-emerald-700,
+.merxus-paid-landing .merxus-landing-final .text-emerald-700 {
+  color: #6ee7b7 !important;
 }
 
-html.dark .merxus-paid-landing .text-emerald-700 {
-  color: #047857 !important;
+.merxus-paid-landing .merxus-landing-form input,
+.merxus-paid-landing .merxus-landing-form textarea,
+.merxus-paid-landing .merxus-landing-form select {
+  background: #07111f !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
 }
 
-html.dark .merxus-paid-landing .border-gray-200,
-html.dark .merxus-paid-landing .border-gray-300 {
-  border-color: #cbd5e1 !important;
-}
-
-html.dark .merxus-paid-landing .border-sky-100,
-html.dark .merxus-paid-landing .border-sky-200 {
-  border-color: #bae6fd !important;
-}
-
-html.dark .merxus-paid-landing .border-emerald-100,
-html.dark .merxus-paid-landing .border-emerald-200,
-html.dark .merxus-paid-landing .border-teal-200 {
-  border-color: #a7f3d0 !important;
+.merxus-paid-landing .merxus-landing-form input::placeholder,
+.merxus-paid-landing .merxus-landing-form textarea::placeholder {
+  color: #94a3b8 !important;
 }
 
