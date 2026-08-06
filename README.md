@@ -50,6 +50,16 @@ Policy links used by landing pages and forms:
 - `/privacy-policy`
 - `/terms-of-service`
 
+### Demo Scheduling
+
+Paid landing pages always save a demo request in Merxus before offering any third-party scheduling flow. To enable the optional scheduling button after a request is submitted, set this Netlify environment variable and redeploy:
+
+```text
+VITE_MERXUS_DEMO_SCHEDULING_URL=https://calendly.com/sroy-worksidesoftware/merxus-ai-assistant-demo
+```
+
+Leave it unset while the Calendly event is unavailable or requires an upgrade. The landing pages will continue to collect demo requests and route them to the Merxus team without sending prospects to Calendly.
+
 3. Start the development server:
 ```bash
 yarn dev

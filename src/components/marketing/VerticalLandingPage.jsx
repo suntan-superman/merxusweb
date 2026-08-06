@@ -38,8 +38,8 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(String(value || '').trim());
 }
 
-function getConfiguredCalendlyUrl() {
-  return String(import.meta.env?.VITE_CALENDLY_URL || '').trim();
+function getConfiguredDemoSchedulingUrl() {
+  return String(import.meta.env?.VITE_MERXUS_DEMO_SCHEDULING_URL || '').trim();
 }
 
 function isExternalUrl(value) {
@@ -143,11 +143,12 @@ export default function VerticalLandingPage({ content }) {
   const [leadStatus, setLeadStatus] = useState({ state: 'idle', message: '', sessionId: '' });
   const attribution = useMemo(() => getCampaignAttribution(), []);
   const demoUrl = useMemo(() => appendDemoContext(
-    getConfiguredCalendlyUrl() || content.demoHref || 'mailto:support@merxusllc.com?subject=Merxus%20Demo%20Request',
+    getConfiguredDemoSchedulingUrl(),
     { content, attribution },
   ), [attribution, content]);
-  const demoTarget = isExternalUrl(demoUrl) ? '_blank' : undefined;
-  const demoRel = isExternalUrl(demoUrl) ? 'noreferrer' : undefined;
+  const hasSchedulingUrl = isExternalUrl(demoUrl);
+  const demoTarget = hasSchedulingUrl ? '_blank' : undefined;
+  const demoRel = hasSchedulingUrl ? 'noreferrer' : undefined;
   const leadName = `${lead.firstName} ${lead.lastName}`.trim();
   const canSubmit =
     lead.firstName.trim().length >= 2 &&
@@ -226,7 +227,9 @@ export default function VerticalLandingPage({ content }) {
       });
       setLeadStatus({
         state: 'submitted',
-        message: 'Thanks. We captured your request and can route you to the next step.',
+        message: hasSchedulingUrl
+          ? 'Thanks. Your request is saved. You can choose a time below or ask a question.'
+          : 'Thanks. Your demo request is saved. A Merxus team member will contact you shortly.',
         sessionId,
       });
     } catch (error) {
@@ -304,6 +307,8 @@ export default function VerticalLandingPage({ content }) {
   }
 
   function handleBookDemo(source = 'paid_social_landing') {
+    if (!hasSchedulingUrl) return;
+
     trackSchedule({
       content_name: 'Merxus Demo Scheduled',
       page_path: window.location.pathname,
@@ -381,13 +386,10 @@ export default function VerticalLandingPage({ content }) {
           Start Setup
         </a>
         <a
-          href={demoUrl}
-          target={demoTarget}
-          rel={demoRel}
-          onClick={() => handleBookDemo(source)}
+          href="#lead-form"
           className={`${baseButton} ${secondaryClass}`}
         >
-          Book a 15-minute Demo
+          Request a 15-minute Demo
         </a>
         {!compact ? (
           <button
@@ -607,7 +609,7 @@ export default function VerticalLandingPage({ content }) {
             </button>
 
             {leadStatus.sessionId ? (
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className={`mt-4 grid gap-3 ${hasSchedulingUrl ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
                 <Link
                   to={content.setupHref}
                   onClick={() => trackMerxusOnboardingStarted({
@@ -622,15 +624,17 @@ export default function VerticalLandingPage({ content }) {
                 >
                   Continue setup
                 </Link>
-                <a
-                  href={demoUrl}
-                  target={demoTarget}
-                  rel={demoRel}
-                  onClick={() => handleBookDemo('meta_ads_lead_form')}
-                  className="rounded-xl border border-gray-300 px-4 py-3 text-center text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
-                >
-                  Book a demo
-                </a>
+                {hasSchedulingUrl ? (
+                  <a
+                    href={demoUrl}
+                    target={demoTarget}
+                    rel={demoRel}
+                    onClick={() => handleBookDemo('meta_ads_lead_form')}
+                    className="rounded-xl border border-gray-300 px-4 py-3 text-center text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
+                  >
+                    Choose a time
+                  </a>
+                ) : null}
                 <button
                   type="button"
                   onClick={handleChatWithPerson}
