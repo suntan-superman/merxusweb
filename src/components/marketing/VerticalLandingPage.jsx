@@ -122,7 +122,7 @@ function getThemeClasses(theme) {
     default:
       return {
         pageBg: 'bg-gradient-to-b from-emerald-50 via-white to-teal-50',
-        heroPanel: 'bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 text-white',
+        heroPanel: 'bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white',
         accentText: 'text-emerald-700',
         accentSoftText: 'text-emerald-100',
         accentBg: 'bg-emerald-500',
