@@ -15,7 +15,7 @@ const content = {
   demoHref: 'mailto:support@merxusllc.com?subject=Merxus%20Real%20Estate%20Demo%20Request',
   formTitle: 'See how Merxus would handle your listing inquiries.',
   formIntro: 'Tell us how leads reach you today, and we will map the right real estate response workflow.',
-  formCta: 'Get My Real Estate Demo',
+  formCta: 'Request My Real Estate Demo',
   primaryNeedPlaceholder: 'Example: after-hours listing questions, showing requests, buyer qualification, seller leads, or mobile alerts',
   formHighlights: [
     'After-hours lead capture',

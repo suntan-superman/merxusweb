@@ -428,27 +428,27 @@ export default function VerticalLandingPage({ content }) {
   }
 
   return (
-    <div className={`merxus-landing-page merxus-paid-landing merxus-paid-landing--${content.theme} min-h-screen pb-24 ${theme.pageBg}`}>
-      <section className="px-4 pb-8 pt-6">
+    <div className={`merxus-landing-page merxus-paid-landing merxus-paid-landing--${content.theme} min-h-screen overflow-x-hidden pb-20 sm:pb-24 ${theme.pageBg}`}>
+      <section className="px-3 pb-6 pt-5 sm:px-4 sm:pb-8 sm:pt-6">
         <div className="mx-auto max-w-6xl">
-          <div className={`merxus-landing-hero overflow-hidden rounded-[24px] shadow-2xl ${theme.heroPanel}`}>
-            <div className="grid gap-8 px-6 py-8 md:grid-cols-[1.2fr,0.8fr] md:px-10 md:py-10">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-white/75">
+          <div className={`merxus-landing-hero overflow-hidden rounded-[20px] shadow-2xl sm:rounded-[24px] ${theme.heroPanel}`}>
+            <div className="grid gap-6 px-5 py-6 sm:px-6 sm:py-8 md:grid-cols-[1.2fr,0.8fr] md:gap-8 md:px-10 md:py-10">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 sm:text-xs sm:tracking-[0.26em]">
                   {content.eyebrow}
                 </p>
-                <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight md:text-5xl">
+                <h1 className="mt-3 max-w-3xl text-[2rem] font-black leading-[1.08] sm:mt-4 sm:text-4xl sm:leading-tight md:text-5xl">
                   {content.heroTitle}
                 </h1>
-                <p className="mt-5 max-w-2xl text-base text-white/90 md:text-lg">
+                <p className="mt-4 max-w-2xl text-[15px] leading-6 text-white/90 sm:mt-5 sm:text-base sm:leading-normal md:text-lg">
                   {content.heroSubtitle}
                 </p>
 
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <div className="mt-6 flex flex-col gap-2.5 sm:mt-7 sm:gap-3 sm:flex-row sm:flex-wrap">
                   <LandingActions source="paid_social_hero" inverted />
                 </div>
 
-                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                <div className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2">
                   {content.heroBullets.map((bullet) => (
                     <div key={bullet} className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
                       <span className="mt-0.5 text-lg">✓</span>
@@ -625,10 +625,14 @@ export default function VerticalLandingPage({ content }) {
 
             <button
               type="submit"
-              disabled={!canSubmit || leadStatus.state === 'submitting'}
+              disabled={!canSubmit || ['submitting', 'submitted'].includes(leadStatus.state)}
               className={`mt-5 w-full rounded-2xl px-6 py-3 text-sm font-semibold shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${theme.accentButton}`}
             >
-              {leadStatus.state === 'submitting' ? 'Sending...' : content.formCta || 'Get My Demo'}
+              {leadStatus.state === 'submitting'
+                ? 'Sending...'
+                : leadStatus.state === 'submitted'
+                  ? 'Demo request sent'
+                  : content.formCta || 'Request My Demo'}
             </button>
 
             {leadStatus.sessionId ? (
@@ -654,8 +658,10 @@ export default function VerticalLandingPage({ content }) {
                     rel={demoRel}
                     onClick={() => handleBookDemo('meta_ads_lead_form')}
                     className="rounded-xl border border-gray-300 px-4 py-3 text-center text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
+                    title="Open Calendly with your submitted details pre-filled."
+                    aria-label="Book a demo time in Calendly with your submitted details pre-filled"
                   >
-                    Choose a time
+                    Book a time
                   </a>
                 ) : null}
                 <button
@@ -663,8 +669,10 @@ export default function VerticalLandingPage({ content }) {
                   onClick={handleChatWithPerson}
                   disabled={leadStatus.state === 'submitting'}
                   className="rounded-xl border border-gray-300 px-4 py-3 text-xs font-semibold text-gray-800 transition hover:bg-gray-50"
+                  title="Open the Merxus website chat and notify our team."
+                  aria-label="Chat with the Merxus team"
                 >
-                  Ask a question
+                  Chat with our team
                 </button>
               </div>
             ) : null}

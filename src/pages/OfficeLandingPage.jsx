@@ -15,7 +15,7 @@ const content = {
   demoHref: 'mailto:support@merxusllc.com?subject=Merxus%20Office%20Demo%20Request',
   formTitle: 'See how Merxus would handle your office front desk.',
   formIntro: 'Tell us where requests come in today, and we will route you to the right setup path.',
-  formCta: 'Get My Office Demo',
+  formCta: 'Request My Office Demo',
   primaryNeedPlaceholder: 'Example: after-hours calls, appointment requests, quote requests, review alerts, Slack routing, or staff interruptions',
   formHighlights: [
     'No per-call charges',

@@ -15,7 +15,7 @@ const content = {
   demoHref: 'mailto:support@merxusllc.com?subject=Merxus%20Restaurant%20Demo%20Request',
   formTitle: 'See how Merxus would handle your restaurant calls.',
   formIntro: 'Tell us when call volume hits hardest and what requests your team handles most often.',
-  formCta: 'Get My Restaurant Demo',
+  formCta: 'Request My Restaurant Demo',
   primaryNeedPlaceholder: 'Example: reservation calls, menu questions, catering requests, after-hours messages, review alerts, or manager notifications',
   formHighlights: [
     'No per-call charges for busy nights',
