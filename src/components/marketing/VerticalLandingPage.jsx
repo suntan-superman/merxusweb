@@ -30,6 +30,14 @@ const CONTACT_METHOD_OPTIONS = [
   { value: 'sms', label: 'SMS' },
 ];
 
+// These positions match the current Merxus demo event in Calendly:
+// a1 is Business Name and a2 is the Industry radio group.
+const CALENDLY_INDUSTRY_ANSWER_INDEX = {
+  restaurant: '1',
+  real_estate_agent: '4',
+  real_estate_team: '4',
+};
+
 function normalizePhone(value) {
   return getRawPhone(value);
 }
@@ -46,7 +54,7 @@ function isExternalUrl(value) {
   return /^https?:\/\//i.test(String(value || '').trim());
 }
 
-function appendDemoContext(baseUrl, { content, attribution }) {
+function appendDemoContext(baseUrl, { content, attribution, lead }) {
   const href = String(baseUrl || '').trim();
   if (!isExternalUrl(href)) return href;
 
@@ -66,6 +74,21 @@ function appendDemoContext(baseUrl, { content, attribution }) {
         url.searchParams.set(key, String(value));
       }
     });
+
+    const fullName = `${lead?.firstName || ''} ${lead?.lastName || ''}`.trim();
+    const prefilledAnswers = {
+      name: fullName,
+      email: String(lead?.email || '').trim(),
+      a1: String(lead?.companyName || '').trim(),
+      a2: CALENDLY_INDUSTRY_ANSWER_INDEX[lead?.businessType],
+    };
+
+    Object.entries(prefilledAnswers).forEach(([key, value]) => {
+      if (value && !url.searchParams.has(key)) {
+        url.searchParams.set(key, String(value));
+      }
+    });
+
     return url.toString();
   } catch {
     return href;
@@ -144,8 +167,8 @@ export default function VerticalLandingPage({ content }) {
   const attribution = useMemo(() => getCampaignAttribution(), []);
   const demoUrl = useMemo(() => appendDemoContext(
     getConfiguredDemoSchedulingUrl(),
-    { content, attribution },
-  ), [attribution, content]);
+    { content, attribution, lead },
+  ), [attribution, content, lead]);
   const hasSchedulingUrl = isExternalUrl(demoUrl);
   const demoTarget = hasSchedulingUrl ? '_blank' : undefined;
   const demoRel = hasSchedulingUrl ? 'noreferrer' : undefined;

@@ -60,6 +60,8 @@ VITE_MERXUS_DEMO_SCHEDULING_URL=https://calendly.com/sroy-worksidesoftware/merxu
 
 Leave it unset while the Calendly event is unavailable or requires an upgrade. The landing pages will continue to collect demo requests and route them to the Merxus team without sending prospects to Calendly.
 
+When enabled, Merxus pre-fills the submitted name and email, along with the event's first custom question (`a1`, Business Name). It also pre-fills the current Industry radio question (`a2`) for Restaurant and Real Estate leads. Keep the Merxus Calendly event question order unchanged: Business Name first, Industry second; Real Estate is currently option 4 in that Industry list.
+
 3. Start the development server:
 ```bash
 yarn dev
@@ -148,3 +150,5 @@ https://merxusllc.com/meta-event-test?test_event_code=TEST8449
 For puppeteer:
 npm run verify:release
 ///////////////////////////////////////////////////////////
+Calendy link:
+https://calendly.com/sroy-worksidesoftware/merxus-ai-assistant-demo
