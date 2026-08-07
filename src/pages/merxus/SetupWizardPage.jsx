@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import apiClient from '../../api/client';
 import { auth } from '../../firebase/config';
 import { getEmailSignInMethods, getSignInMethodInfo } from '../../utils/authProviders';
+import { trackWorksideAnalyticsEvent } from '../../utils/worksideAnalytics';
 
 export default function SetupWizardPage() {
   const navigate = useNavigate();
@@ -175,6 +176,12 @@ export default function SetupWizardPage() {
       // Store tenant info to prevent duplicate creation
       const createdTenant = { ...response.data, tenantType: wizardData.tenantType };
       setTenantCreated(createdTenant);
+      const resolvedTenantId = createdTenant.tenantId || createdTenant.id || wizardData.tenantId || null;
+      void trackWorksideAnalyticsEvent('tenant_created', {
+        tenantId: resolvedTenantId,
+        tenantType: wizardData.tenantType,
+        source: isPreSave ? 'setup_wizard_presave' : 'setup_wizard_complete',
+      }, { sessionId: resolvedTenantId });
       
       if (isPreSave) {
         // Pre-save at Step 5 (before test) - don't redirect yet
@@ -184,6 +191,10 @@ export default function SetupWizardPage() {
       } else {
         // Final completion at Step 7 - refresh auth claims then redirect
         toast.success('🎉 Setup completed! Refreshing your access...');
+        void trackWorksideAnalyticsEvent('onboarding_completed', {
+          tenantId: resolvedTenantId,
+          tenantType: wizardData.tenantType,
+        }, { sessionId: resolvedTenantId });
         
         // Force token refresh to get new claims
         try {

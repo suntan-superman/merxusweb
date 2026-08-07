@@ -10,7 +10,7 @@ import {
 
 test('collectCampaignAttribution extracts paid social params', () => {
   const attribution = collectCampaignAttribution({
-    href: 'https://merxusllc.com/office-ai-front-desk?utm_source=meta&utm_medium=paid_social&utm_campaign=Office&utm_content=AdA&utm_term=Owners&fbclid=abc123&adVariant=office-a',
+    href: 'https://merxusllc.com/office-ai-front-desk?utm_source=meta&utm_medium=paid_social&utm_campaign=Office&utm_content=AdA&utm_term=Owners&fbclid=abc123&gclid=google456&adVariant=office-a',
     referrer: 'https://facebook.com/',
   });
 
@@ -20,6 +20,7 @@ test('collectCampaignAttribution extracts paid social params', () => {
   assert.equal(attribution.utm_content, 'AdA');
   assert.equal(attribution.utm_term, 'Owners');
   assert.equal(attribution.fbclid, 'abc123');
+  assert.equal(attribution.gclid, 'google456');
   assert.equal(attribution.adVariant, 'office-a');
   assert.equal(attribution.landingPageUrl.includes('merxusllc.com'), true);
   assert.equal(attribution.referrer, 'https://facebook.com/');

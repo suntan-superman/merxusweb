@@ -13,6 +13,7 @@ const TRACKING_PARAMS = [
   'utm_content',
   'utm_term',
   'fbclid',
+  'gclid',
   'adVariant',
   'test_event_code',
 ];
@@ -213,6 +214,7 @@ export function trackMetaEvent(name, parameters = {}, options = {}) {
   const eventOptions = options.eventID ? { eventID: options.eventID } : undefined;
   window.fbq('track', name, payload, eventOptions);
   recordMetaPixelEvent('track', name, payload, eventOptions, true);
+  trackWorksideFromMeta(name, payload, options);
   return true;
 }
 
@@ -226,6 +228,7 @@ export function trackMetaCustomEvent(name, parameters = {}, options = {}) {
   const eventOptions = options.eventID ? { eventID: options.eventID } : undefined;
   window.fbq('trackCustom', name, payload, eventOptions);
   recordMetaPixelEvent('trackCustom', name, payload, eventOptions, true);
+  trackWorksideFromMeta(name, payload, options);
   return true;
 }
 
@@ -288,4 +291,32 @@ function trackOnce({ storageKey, eventName, parameters, options }) {
 
 function safeEventId(value) {
   return String(value || 'default').trim().replace(/[^a-z0-9_-]+/gi, '_').slice(0, 80) || 'default';
+}
+
+async function trackWorksideFromMeta(name, parameters = {}, options = {}) {
+  const eventName = worksideEventNameForMeta(name, parameters);
+  if (!eventName) return;
+  try {
+    const { trackWorksideAnalyticsEvent } = await import('./worksideAnalytics.js');
+    void trackWorksideAnalyticsEvent(eventName, {
+      metaEventName: name,
+      eventId: options.eventID || null,
+      ...parameters,
+    }, {
+      page: canUseWindow() ? window.location.href : null,
+      sessionId: options.sessionId || null,
+    });
+  } catch {
+    // Workside Analytics is optional for Merxus releases; never block Meta Pixel.
+  }
+}
+
+function worksideEventNameForMeta(name, parameters = {}) {
+  if (name === 'PageView') return 'landing_page_view';
+  if (name === 'ViewContent') return parameters.page_type === 'pricing' ? 'pricing_view' : 'content_viewed';
+  if (name === 'Lead') return 'lead_created';
+  if (name === 'Schedule') return 'demo_scheduled';
+  if (name === 'MerxusChatOpened') return 'chat_opened';
+  if (name === 'MerxusOnboardingStarted') return 'onboarding_started';
+  return null;
 }

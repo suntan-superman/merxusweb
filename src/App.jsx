@@ -48,6 +48,7 @@ import {
   trackViewContent,
 } from './utils/metaPixel';
 import { markDiagnostic } from './utils/productionDiagnostics';
+import { flushWorksideAnalyticsQueue } from './utils/worksideAnalytics';
 
 const lazy = lazyWithRetry;
 
@@ -169,6 +170,7 @@ function MetaRouteTracker() {
   useEffect(() => {
     persistCampaignAttribution();
     initMetaPixel();
+    void flushWorksideAnalyticsQueue();
   }, []);
 
   useEffect(() => {

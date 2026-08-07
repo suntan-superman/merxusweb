@@ -6,6 +6,7 @@ import apiClient from '../api/client';
 import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { queueFirstLoginChecklist } from '../utils/firstLoginChecklist';
+import { trackWorksideAnalyticsEvent } from '../utils/worksideAnalytics';
 
 const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
 const ONBOARDING_PENDING_PREFILL_KEY = 'merxus_onboarding_pending_prefill';
@@ -312,6 +313,11 @@ export default function OnboardingWizardPage() {
       const createdTenant = { ...response.data, tenantType: wizardData.tenantType };
       setTenantCreated(createdTenant);
       const resolvedTenantId = resolveTenantIdFromPayload(createdTenant) || resolveTenantIdFromPayload(wizardData);
+      void trackWorksideAnalyticsEvent('tenant_created', {
+        tenantId: resolvedTenantId,
+        tenantType: wizardData.tenantType,
+        source: isPreSave ? 'onboarding_presave' : 'onboarding_complete',
+      }, { sessionId: resolvedTenantId });
       queueChecklistPrompt(wizardData.tenantType, resolvedTenantId);
 
       if (isPreSave) {
@@ -321,6 +327,10 @@ export default function OnboardingWizardPage() {
       }
 
       toast.success('🎉 Setup completed! Refreshing your access...');
+      void trackWorksideAnalyticsEvent('onboarding_completed', {
+        tenantId: resolvedTenantId,
+        tenantType: wizardData.tenantType,
+      }, { sessionId: resolvedTenantId });
 
       try {
         const currentUser = auth.currentUser;
