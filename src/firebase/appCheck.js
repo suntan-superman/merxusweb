@@ -1,5 +1,5 @@
 import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
-import app from './config';
+import app from './app';
 
 let appCheckInstance = null;
 let initializationAttempted = false;
