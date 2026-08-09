@@ -114,6 +114,14 @@ export const createRefundForTenant = async (payload) => {
 };
 
 /**
+ * Admin: Load the six most recent completed Stripe transactions for a tenant
+ */
+export const getRefundTransactionsForTenant = async (params) => {
+  const response = await apiClient.get('/billing/admin/transactions', { params });
+  return response.data;
+};
+
+/**
  * Admin: Cancel a tenant subscription in Stripe
  */
 export const cancelSubscriptionForTenant = async (payload) => {

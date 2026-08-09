@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Users, Building, Home, Phone, AlertCircle, CheckCircle, XCircle, Edit2, PauseCircle, PlayCircle, DollarSign, History } from 'lucide-react';
 import { collection, query, where, getDocs, doc, updateDoc, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -7,14 +7,40 @@ import '../../utils/syncfusionRuntime';
 import { GridComponent, ColumnsDirective, ColumnDirective, Page, Sort, Filter, Toolbar, ExcelExport, Inject } from '@syncfusion/ej2-react-grids';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 import SelectField from '../../components/common/SelectField';
-import { pauseSubscriptionForTenant, resumeSubscriptionForTenant, createRefundForTenant, cancelSubscriptionForTenant } from '../../api/billing';
+import {
+  pauseSubscriptionForTenant,
+  resumeSubscriptionForTenant,
+  createRefundForTenant,
+  getRefundTransactionsForTenant,
+  cancelSubscriptionForTenant,
+} from '../../api/billing';
+
+const EMPTY_REFUND_SUMMARY = {
+  chargedAmountCents: 0,
+  refundedAmountCents: 0,
+  refundableAmountCents: 0,
+};
 
 function createRefundRequestId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   return `refund_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
 }
 
+function formatTransactionCurrency(amountCents, currency = 'usd') {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: String(currency || 'usd').toUpperCase(),
+  }).format((Number(amountCents) || 0) / 100);
+}
+
+function formatTransactionDate(value) {
+  if (!value) return 'Unknown date';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+}
+
 export default function TenantsManagementPage() {
+  const refundTransactionsRequestRef = useRef(0);
   const [activeTab, setActiveTab] = useState('restaurants');
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,6 +56,12 @@ export default function TenantsManagementPage() {
   const [refundReason, setRefundReason] = useState('requested_by_customer');
   const [refundRequestId, setRefundRequestId] = useState(null);
   const [processingRefund, setProcessingRefund] = useState(false);
+  const [refundTransactions, setRefundTransactions] = useState([]);
+  const [refundTransactionSummary, setRefundTransactionSummary] = useState(EMPTY_REFUND_SUMMARY);
+  const [refundTransactionsCurrency, setRefundTransactionsCurrency] = useState('usd');
+  const [selectedRefundTransactionIds, setSelectedRefundTransactionIds] = useState([]);
+  const [loadingRefundTransactions, setLoadingRefundTransactions] = useState(false);
+  const [refundTransactionsError, setRefundTransactionsError] = useState('');
   const [refundHistoryTenant, setRefundHistoryTenant] = useState(null);
   const [refundHistory, setRefundHistory] = useState([]);
   const [loadingRefundHistory, setLoadingRefundHistory] = useState(false);
@@ -169,6 +201,81 @@ export default function TenantsManagementPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetRefundModal = () => {
+    refundTransactionsRequestRef.current += 1;
+    setRefundTenant(null);
+    setRefundAmount('');
+    setRefundReason('requested_by_customer');
+    setRefundRequestId(null);
+    setRefundTransactions([]);
+    setRefundTransactionSummary(EMPTY_REFUND_SUMMARY);
+    setRefundTransactionsCurrency('usd');
+    setSelectedRefundTransactionIds([]);
+    setLoadingRefundTransactions(false);
+    setRefundTransactionsError('');
+  };
+
+  const loadRefundTransactions = async (tenant) => {
+    if (!tenant?.id || !tenant?.tenantType) return;
+    const requestNumber = refundTransactionsRequestRef.current + 1;
+    refundTransactionsRequestRef.current = requestNumber;
+    setLoadingRefundTransactions(true);
+    setRefundTransactionsError('');
+    setRefundTransactions([]);
+    setRefundTransactionSummary(EMPTY_REFUND_SUMMARY);
+    setSelectedRefundTransactionIds([]);
+    setRefundAmount('');
+
+    try {
+      const result = await getRefundTransactionsForTenant({
+        tenantId: tenant.id,
+        tenantType: tenant.tenantType,
+        stripeSubscriptionId: tenant.stripeSubscriptionId || undefined,
+      });
+      if (refundTransactionsRequestRef.current !== requestNumber) return;
+      setRefundTransactions(Array.isArray(result?.transactions) ? result.transactions : []);
+      setRefundTransactionSummary(result?.summary || EMPTY_REFUND_SUMMARY);
+      setRefundTransactionsCurrency(result?.currency || 'usd');
+    } catch (error) {
+      if (refundTransactionsRequestRef.current !== requestNumber) return;
+      console.error('Error loading recent Stripe transactions:', error);
+      setRefundTransactionsError(
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        'Could not load recent Stripe transactions.'
+      );
+    } finally {
+      if (refundTransactionsRequestRef.current === requestNumber) {
+        setLoadingRefundTransactions(false);
+      }
+    }
+  };
+
+  const handleOpenRefundModal = (tenant) => {
+    setRefundTenant(tenant);
+    setRefundAmount('');
+    setRefundReason('requested_by_customer');
+    setRefundRequestId(createRefundRequestId());
+    setSelectedRefundTransactionIds([]);
+    void loadRefundTransactions(tenant);
+  };
+
+  const handleToggleRefundTransaction = (transaction) => {
+    if (!transaction?.stripeChargeId || !(transaction.refundableAmountCents > 0)) return;
+
+    const isSelected = selectedRefundTransactionIds.includes(transaction.id);
+    const nextSelectedIds = isSelected
+      ? selectedRefundTransactionIds.filter((id) => id !== transaction.id)
+      : [...selectedRefundTransactionIds, transaction.id];
+    const nextTotalCents = refundTransactions
+      .filter((item) => nextSelectedIds.includes(item.id))
+      .reduce((total, item) => total + (item.refundableAmountCents || 0), 0);
+
+    setSelectedRefundTransactionIds(nextSelectedIds);
+    setRefundAmount(nextTotalCents > 0 ? (nextTotalCents / 100).toFixed(2) : '');
+    setRefundRequestId(createRefundRequestId());
   };
 
   const handleDisableTenant = (tenant) => {
@@ -385,12 +492,7 @@ export default function TenantsManagementPage() {
         )}
         {hasSubscription && (
           <button
-            onClick={() => {
-              setRefundTenant(props);
-              setRefundAmount('');
-              setRefundReason('requested_by_customer');
-              setRefundRequestId(createRefundRequestId());
-            }}
+            onClick={() => handleOpenRefundModal(props)}
             className="rounded-lg p-2 text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/30"
             title="Issue Refund"
           >
@@ -494,27 +596,36 @@ export default function TenantsManagementPage() {
 
   const handleSubmitRefund = async () => {
     if (!refundTenant) return;
-    const parsed = Number.parseFloat(refundAmount);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      toast.error('Enter a valid refund amount');
+    const selectedTransactions = refundTransactions.filter((transaction) =>
+      selectedRefundTransactionIds.includes(transaction.id)
+    );
+    const amountCents = selectedTransactions.length
+      ? selectedTransactions.reduce(
+          (total, transaction) => total + (transaction.refundableAmountCents || 0),
+          0
+        )
+      : Math.round(Number.parseFloat(refundAmount) * 100);
+    if (!Number.isSafeInteger(amountCents) || amountCents <= 0) {
+      toast.error('Enter a valid refund amount or select a transaction');
       return;
     }
-    const amountCents = Math.round(parsed * 100);
     setProcessingRefund(true);
     try {
-      await createRefundForTenant({
+      const result = await createRefundForTenant({
         tenantId: refundTenant.id,
         tenantType: refundTenant.tenantType,
         stripeSubscriptionId: refundTenant.stripeSubscriptionId || undefined,
         amountCents,
         reason: refundReason,
         requestId: refundRequestId || createRefundRequestId(),
+        refundItems: selectedTransactions.map((transaction) => ({
+          stripeChargeId: transaction.stripeChargeId,
+          amountCents: transaction.refundableAmountCents,
+        })),
       });
-      toast.success('Refund issued');
-      setRefundTenant(null);
-      setRefundAmount('');
-      setRefundReason('requested_by_customer');
-      setRefundRequestId(null);
+      const refundCount = result?.refunds?.length || 1;
+      toast.success(refundCount > 1 ? `${refundCount} refunds issued` : 'Refund issued');
+      resetRefundModal();
       loadTenants();
     } catch (error) {
       console.error('Error issuing refund:', error);
@@ -1034,16 +1145,12 @@ export default function TenantsManagementPage() {
       {/* Refund Modal */}
       {refundTenant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="mx-4 w-full max-w-xl rounded-lg bg-white p-6 dark:bg-slate-900 dark:text-slate-100">
+          <div className="mx-4 max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white p-6 dark:bg-slate-900 dark:text-slate-100">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Issue Refund</h2>
               <button
-                onClick={() => {
-                  setRefundTenant(null);
-                  setRefundAmount('');
-                  setRefundReason('requested_by_customer');
-                  setRefundRequestId(null);
-                }}
+                onClick={resetRefundModal}
+                disabled={processingRefund}
                 className="p-1 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-200"
                 title="Close"
               >
@@ -1056,21 +1163,139 @@ export default function TenantsManagementPage() {
               Tenant: <span className="font-semibold">{refundTenant.name}</span>
             </p>
 
+            <section className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-slate-100">Recent Stripe Transactions</h3>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">
+                    Select a transaction to add its remaining balance to the refund total.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void loadRefundTransactions(refundTenant)}
+                  disabled={loadingRefundTransactions || processingRefund}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              <div className="mb-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-md bg-white p-3 dark:bg-slate-900/70">
+                  <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-slate-400">Charged</div>
+                  <div className="font-semibold text-gray-900 dark:text-slate-100">
+                    {formatTransactionCurrency(refundTransactionSummary.chargedAmountCents, refundTransactionsCurrency)}
+                  </div>
+                </div>
+                <div className="rounded-md bg-white p-3 dark:bg-slate-900/70">
+                  <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-slate-400">Already refunded</div>
+                  <div className="font-semibold text-gray-900 dark:text-slate-100">
+                    {formatTransactionCurrency(refundTransactionSummary.refundedAmountCents, refundTransactionsCurrency)}
+                  </div>
+                </div>
+                <div className="rounded-md bg-white p-3 dark:bg-slate-900/70">
+                  <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-slate-400">Available</div>
+                  <div className="font-semibold text-emerald-700 dark:text-emerald-300">
+                    {formatTransactionCurrency(refundTransactionSummary.refundableAmountCents, refundTransactionsCurrency)}
+                  </div>
+                </div>
+              </div>
+
+              {loadingRefundTransactions ? (
+                <div className="py-6 text-center text-sm text-gray-500 dark:text-slate-400">
+                  Loading recent transactions…
+                </div>
+              ) : refundTransactionsError ? (
+                <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+                  {refundTransactionsError}
+                </div>
+              ) : refundTransactions.length === 0 ? (
+                <div className="rounded-md border border-gray-200 bg-white p-4 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-400">
+                  No completed Stripe payments are available to refund.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {refundTransactions.map((transaction) => {
+                    const selectable = Boolean(
+                      transaction.stripeChargeId && transaction.refundableAmountCents > 0
+                    );
+                    const selected = selectedRefundTransactionIds.includes(transaction.id);
+                    return (
+                      <label
+                        key={transaction.id}
+                        className={`grid gap-3 rounded-md border p-3 sm:grid-cols-[auto_1.4fr_repeat(3,minmax(0,1fr))] sm:items-center ${
+                          selected
+                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/25'
+                            : 'border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900/70'
+                        } ${selectable ? 'cursor-pointer' : 'cursor-not-allowed opacity-65'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          disabled={!selectable || processingRefund}
+                          onChange={() => handleToggleRefundTransaction(transaction)}
+                          className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          aria-label={`Select transaction from ${formatTransactionDate(transaction.paidAt)}`}
+                        />
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-slate-100">
+                            {formatTransactionDate(transaction.paidAt)}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-slate-400">
+                            {transaction.invoiceNumber || transaction.stripeInvoiceId || 'Stripe payment'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 dark:text-slate-400">Charged</div>
+                          <div className="text-sm font-medium">
+                            {formatTransactionCurrency(transaction.amountCents, transaction.currency)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 dark:text-slate-400">Refunded</div>
+                          <div className="text-sm font-medium">
+                            {formatTransactionCurrency(transaction.refundedAmountCents, transaction.currency)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-500 dark:text-slate-400">Available</div>
+                          <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                            {formatTransactionCurrency(transaction.refundableAmountCents, transaction.currency)}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">Amount (USD)</label>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">
+                  Refund total (USD)
+                </label>
                 <input
                   type="number"
                   min="0.01"
                   step="0.01"
                   value={refundAmount}
+                  readOnly={selectedRefundTransactionIds.length > 0}
                   onChange={(e) => {
                     setRefundAmount(e.target.value);
                     setRefundRequestId(createRefundRequestId());
                   }}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
+                  className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400 ${
+                    selectedRefundTransactionIds.length > 0 ? 'cursor-not-allowed opacity-75' : ''
+                  }`}
                   placeholder="0.00"
                 />
+                {selectedRefundTransactionIds.length > 0 && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                    The total is calculated from the selected transaction balances. Clear the selections to enter a partial amount manually.
+                  </p>
+                )}
               </div>
               <SelectField
                 label="Reason"
@@ -1089,12 +1314,8 @@ export default function TenantsManagementPage() {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => {
-                  setRefundTenant(null);
-                  setRefundAmount('');
-                  setRefundReason('requested_by_customer');
-                  setRefundRequestId(null);
-                }}
+                onClick={resetRefundModal}
+                disabled={processingRefund}
                 className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 transition-colors hover:bg-gray-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
               >
                 Cancel
