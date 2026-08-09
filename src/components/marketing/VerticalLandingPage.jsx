@@ -251,8 +251,8 @@ export default function VerticalLandingPage({ content }) {
       setLeadStatus({
         state: 'submitted',
         message: hasSchedulingUrl
-          ? 'Thanks. Your request is saved. You can choose a time below or ask a question.'
-          : 'Thanks. Your demo request is saved. A Merxus team member will contact you shortly.',
+          ? 'Thanks. Your request is saved. You can continue setup, choose a time, or ask a question.'
+          : 'Thanks. Your demo request is saved. You can continue setup now, or a Merxus team member will contact you shortly.',
         sessionId,
       });
     } catch (error) {
@@ -401,18 +401,18 @@ export default function VerticalLandingPage({ content }) {
 
     return (
       <>
-        <a
-          href="#lead-form"
+        <Link
+          to={content.setupHref}
           onClick={() => handleStartSetup(source)}
           className={`${baseButton} shadow-lg ${theme.accentButton}`}
         >
-          Start Setup
-        </a>
+          {content.primaryCta || 'Start Setup'}
+        </Link>
         <a
           href="#lead-form"
           className={`${baseButton} ${secondaryClass}`}
         >
-          Request a 15-minute Demo
+          {content.secondaryCta || 'Request a 15-minute Demo'}
         </a>
         {!compact ? (
           <button
@@ -623,34 +623,32 @@ export default function VerticalLandingPage({ content }) {
               </div>
             ) : null}
 
-            <button
-              type="submit"
-              disabled={!canSubmit || ['submitting', 'submitted'].includes(leadStatus.state)}
-              className={`mt-5 w-full rounded-2xl px-6 py-3 text-sm font-semibold shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${theme.accentButton}`}
-            >
-              {leadStatus.state === 'submitting'
-                ? 'Sending...'
-                : leadStatus.state === 'submitted'
-                  ? 'Demo request sent'
-                  : content.formCta || 'Request My Demo'}
-            </button>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <Link
+                to={content.setupHref}
+                onClick={() => handleStartSetup('meta_ads_lead_form')}
+                className={`rounded-2xl px-6 py-3 text-center text-sm font-semibold shadow-lg transition ${theme.accentButton}`}
+              >
+                Continue setup
+              </Link>
+              <button
+                type="submit"
+                disabled={!canSubmit || ['submitting', 'submitted'].includes(leadStatus.state)}
+                className={`rounded-2xl border px-6 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${theme.secondaryButton}`}
+              >
+                {leadStatus.state === 'submitting'
+                  ? 'Sending...'
+                  : leadStatus.state === 'submitted'
+                    ? 'Demo request sent'
+                    : content.formCta || 'Request My Demo'}
+              </button>
+            </div>
+            <p className="mt-3 text-center text-xs text-gray-500">
+              You can begin onboarding now. Requesting a demo is optional.
+            </p>
 
             {leadStatus.sessionId ? (
-              <div className={`mt-4 grid gap-3 ${hasSchedulingUrl ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
-                <Link
-                  to={content.setupHref}
-                  onClick={() => trackMerxusOnboardingStarted({
-                    content_name: 'Merxus Onboarding Started',
-                    page_path: window.location.pathname,
-                    product: 'merxus',
-                    industry: content.tenantType || content.theme,
-                    source: 'meta_ads_lead_form',
-                    ...attribution,
-                  })}
-                  className="rounded-xl bg-gray-950 px-4 py-3 text-center text-xs font-semibold text-white transition hover:bg-gray-800"
-                >
-                  Continue setup
-                </Link>
+              <div className={`mt-4 grid gap-3 ${hasSchedulingUrl ? 'sm:grid-cols-2' : ''}`}>
                 {hasSchedulingUrl ? (
                   <a
                     href={demoUrl}
