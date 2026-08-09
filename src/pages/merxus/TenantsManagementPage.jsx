@@ -9,6 +9,11 @@ import ConfirmationModal from '../../components/common/ConfirmationModal';
 import SelectField from '../../components/common/SelectField';
 import { pauseSubscriptionForTenant, resumeSubscriptionForTenant, createRefundForTenant, cancelSubscriptionForTenant } from '../../api/billing';
 
+function createRefundRequestId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `refund_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+}
+
 export default function TenantsManagementPage() {
   const [activeTab, setActiveTab] = useState('restaurants');
   const [tenants, setTenants] = useState([]);
@@ -23,6 +28,7 @@ export default function TenantsManagementPage() {
   const [refundTenant, setRefundTenant] = useState(null);
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('requested_by_customer');
+  const [refundRequestId, setRefundRequestId] = useState(null);
   const [processingRefund, setProcessingRefund] = useState(false);
   const [refundHistoryTenant, setRefundHistoryTenant] = useState(null);
   const [refundHistory, setRefundHistory] = useState([]);
@@ -383,6 +389,7 @@ export default function TenantsManagementPage() {
               setRefundTenant(props);
               setRefundAmount('');
               setRefundReason('requested_by_customer');
+              setRefundRequestId(createRefundRequestId());
             }}
             className="rounded-lg p-2 text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/30"
             title="Issue Refund"
@@ -498,17 +505,24 @@ export default function TenantsManagementPage() {
       await createRefundForTenant({
         tenantId: refundTenant.id,
         tenantType: refundTenant.tenantType,
+        stripeSubscriptionId: refundTenant.stripeSubscriptionId || undefined,
         amountCents,
         reason: refundReason,
+        requestId: refundRequestId || createRefundRequestId(),
       });
       toast.success('Refund issued');
       setRefundTenant(null);
       setRefundAmount('');
       setRefundReason('requested_by_customer');
+      setRefundRequestId(null);
       loadTenants();
     } catch (error) {
       console.error('Error issuing refund:', error);
-      toast.error('Failed to issue refund');
+      toast.error(
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        'Failed to issue refund'
+      );
     } finally {
       setProcessingRefund(false);
     }
@@ -1028,6 +1042,7 @@ export default function TenantsManagementPage() {
                   setRefundTenant(null);
                   setRefundAmount('');
                   setRefundReason('requested_by_customer');
+                  setRefundRequestId(null);
                 }}
                 className="p-1 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-200"
                 title="Close"
@@ -1046,10 +1061,13 @@ export default function TenantsManagementPage() {
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-200">Amount (USD)</label>
                 <input
                   type="number"
-                  min="0"
+                  min="0.01"
                   step="0.01"
                   value={refundAmount}
-                  onChange={(e) => setRefundAmount(e.target.value)}
+                  onChange={(e) => {
+                    setRefundAmount(e.target.value);
+                    setRefundRequestId(createRefundRequestId());
+                  }}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400"
                   placeholder="0.00"
                 />
@@ -1057,7 +1075,10 @@ export default function TenantsManagementPage() {
               <SelectField
                 label="Reason"
                 value={refundReason}
-                onChange={setRefundReason}
+                onChange={(value) => {
+                  setRefundReason(value);
+                  setRefundRequestId(createRefundRequestId());
+                }}
                 options={[
                   { value: 'requested_by_customer', label: 'Requested by customer' },
                   { value: 'duplicate', label: 'Duplicate' },
@@ -1072,6 +1093,7 @@ export default function TenantsManagementPage() {
                   setRefundTenant(null);
                   setRefundAmount('');
                   setRefundReason('requested_by_customer');
+                  setRefundRequestId(null);
                 }}
                 className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-gray-800 transition-colors hover:bg-gray-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
               >
