@@ -236,6 +236,28 @@ export default function SystemSettingsPage() {
           ))}
         </div>
 
+        <div className="p-4 mt-6 border border-amber-300 rounded-lg bg-amber-50">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h4 className="text-base font-semibold text-amber-950">Merxus Training Session</h4>
+              <span className="px-2 py-1 text-xs font-semibold text-amber-900 border border-amber-300 rounded-full bg-amber-100">
+                Checkout disabled
+              </span>
+            </div>
+            <p className="text-sm text-amber-900">
+              $75 for 30 minutes beyond onboarding. The exported Stripe price is metered and recurs daily, so it must not be used for checkout until replaced with a one-time price.
+            </p>
+            <div className="grid grid-cols-1 gap-2 mt-1 text-xs md:grid-cols-2">
+              <p className="font-mono text-amber-950">
+                Product: {billingConfig?.addOns?.trainingSession?.productId || 'prod_V2noFvsZlupMU6'}
+              </p>
+              <p className="font-mono text-amber-950">
+                Unsafe price: {billingConfig?.addOns?.trainingSession?.priceId || 'price_1U2iD01P3zfcOCVWjOA5lm5w'}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="p-4 mt-6 border border-amber-200 rounded-lg bg-amber-50">
           <p className="text-sm text-amber-800">
             Updating these IDs changes future pricing reads and future checkout sessions. Existing active subscriptions

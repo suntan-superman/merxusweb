@@ -5,19 +5,13 @@ import { getBillingPricing } from '../api/billing';
 
 const DISPLAY_PRICING = {
   voice: {
-    basic: { price: '$79', setupFee: '$79' },
-    pro: { price: '$149', setupFee: '$149' },
-    elite: { price: '$199', setupFee: '$199' },
+    basic: { price: '$49', setupFee: '$49' },
   },
   real_estate: {
-    basic: { price: '$79', setupFee: '$79' },
-    pro: { price: '$149', setupFee: '$149' },
-    elite: { price: '$199', setupFee: '$199' },
+    basic: { price: '$49', setupFee: '$49' },
   },
   restaurant: {
-    basic: { price: '$199', setupFee: '$199' },
-    pro: { price: '$299', setupFee: '$299' },
-    elite: { price: '$499', setupFee: '$499' },
+    basic: { price: '$299', setupFee: '$499' },
   },
 };
 
@@ -88,17 +82,17 @@ export default function Pricing() {
     return formatMoney(amount, currency) || plan.setupFee;
   };
 
-  // Real Estate Pricing Plans
+  // Stripe currently has one active billable offering for each tenant type.
   const realEstatePlans = [
     {
-      name: 'Basic',
+      name: 'Merxus Real Estate',
       tier: 'basic',
       price: DISPLAY_PRICING.real_estate.basic.price,
       period: '/month',
       setupFee: DISPLAY_PRICING.real_estate.basic.setupFee,
-      description: 'Perfect for individual real estate agents',
+      description: 'AI call handling and lead capture for real estate professionals',
       features: [
-        'Basic AI Assistant',
+        'Merxus AI Assistant',
         '1 phone number',
         'Standard support',
         'Call routing',
@@ -108,56 +102,18 @@ export default function Pricing() {
       popular: false,
       tenantType: 'real_estate',
     },
-    {
-      name: 'Pro',
-      tier: 'pro',
-      price: DISPLAY_PRICING.real_estate.pro.price,
-      period: '/month',
-      setupFee: DISPLAY_PRICING.real_estate.pro.setupFee,
-      description: 'For agents who need advanced features',
-      features: [
-        'Enhanced AI Assistant with Routing',
-        '1 phone number',
-        'Scheduling integration',
-        'Advanced lead management',
-        'Priority support',
-        'Analytics dashboard',
-        'SMS notifications',
-      ],
-      popular: true,
-      tenantType: 'real_estate',
-    },
-    {
-      name: 'Elite',
-      tier: 'elite',
-      price: DISPLAY_PRICING.real_estate.elite.price,
-      period: '/month',
-      setupFee: DISPLAY_PRICING.real_estate.elite.setupFee,
-      description: 'For teams ready for premium automation and insights',
-      features: [
-        'Elite AI Assistant',
-        '1 phone number',
-        'Priority support',
-        'Advanced lead management',
-        'Review and feedback workflows',
-        'Automation and CX analytics',
-      ],
-      popular: false,
-      tenantType: 'real_estate',
-    },
   ];
 
-  // Voice/Office Pricing Plans
   const voicePlans = [
     {
-      name: 'Basic',
+      name: 'Merxus Office',
       tier: 'basic',
       price: DISPLAY_PRICING.voice.basic.price,
       period: '/month',
       setupFee: DISPLAY_PRICING.voice.basic.setupFee,
-      description: 'Perfect for small businesses getting started',
+      description: 'AI front-desk call handling for offices and professional services',
       features: [
-        'Basic AI Assistant',
+        'Merxus AI Assistant',
         '1 phone number',
         'Standard support',
         'Call routing',
@@ -167,58 +123,18 @@ export default function Pricing() {
       popular: false,
       tenantType: 'voice',
     },
-    {
-      name: 'Pro',
-      tier: 'pro',
-      price: DISPLAY_PRICING.voice.pro.price,
-      period: '/month',
-      setupFee: DISPLAY_PRICING.voice.pro.setupFee,
-      description: 'For growing businesses with multiple needs',
-      features: [
-        'Enhanced AI Assistant with Routing',
-        '3 phone numbers',
-        'Priority support',
-        'Analytics dashboard',
-        'Advanced call routing',
-        'SMS notifications',
-        'Custom greetings',
-      ],
-      popular: true,
-      tenantType: 'voice',
-    },
-    {
-      name: 'Elite',
-      tier: 'elite',
-      price: DISPLAY_PRICING.voice.elite.price,
-      period: '/month',
-      setupFee: DISPLAY_PRICING.voice.elite.setupFee,
-      description: 'For businesses requiring advanced capabilities',
-      features: [
-        'Enhanced AI Assistant with Routing',
-        '5 phone numbers',
-        'Priority support',
-        'Advanced analytics',
-        'API access',
-        'Custom integrations',
-        'Dedicated account manager',
-        'White-label options',
-      ],
-      popular: false,
-      tenantType: 'voice',
-    },
   ];
 
-  // Restaurant Pricing Plans
   const restaurantPlans = [
     {
-      name: 'Basic',
+      name: 'Merxus Restaurant',
       tier: 'basic',
       price: DISPLAY_PRICING.restaurant.basic.price,
       period: '/month',
       setupFee: DISPLAY_PRICING.restaurant.basic.setupFee,
-      description: 'Perfect for restaurants getting started',
+      description: 'AI phone assistance for restaurant orders and reservations',
       features: [
-        'Basic AI Assistant with Order and Reservation Taking',
+        'Merxus AI Assistant with Order and Reservation Taking',
         '3 phone numbers',
         'Priority support',
         'Analytics dashboard',
@@ -226,48 +142,6 @@ export default function Pricing() {
         'Reservation management',
         'Customer CRM',
         'Email & SMS notifications',
-      ],
-      popular: false,
-      tenantType: 'restaurant',
-    },
-    {
-      name: 'Pro',
-      tier: 'pro',
-      price: DISPLAY_PRICING.restaurant.pro.price,
-      period: '/month',
-      setupFee: DISPLAY_PRICING.restaurant.pro.setupFee,
-      description: 'For restaurants and event venues with active booking workflows',
-      features: [
-        'Enhanced AI Assistant for Orders and Reservations',
-        'Event and large-party booking workflows',
-        '5 phone numbers',
-        'Priority support',
-        'Advanced analytics',
-        'Menu import and optimization',
-        'Customer CRM',
-        'Email & SMS notifications',
-      ],
-      popular: true,
-      tenantType: 'restaurant',
-    },
-    {
-      name: 'Elite',
-      tier: 'elite',
-      price: DISPLAY_PRICING.restaurant.elite.price,
-      period: '/month',
-      setupFee: DISPLAY_PRICING.restaurant.elite.setupFee,
-      description: 'For restaurants with POS integration and multi-location needs',
-      features: [
-        'Basic AI Assistant with Order and Reservation Taking',
-        'POS integration (Toast/Square, etc)',
-        '5 phone numbers',
-        'Priority support',
-        'Advanced analytics',
-        'Automated menu sync',
-        'Real-time order synchronization',
-        'Multi-location support',
-        'API access',
-        'Dedicated account manager',
       ],
       popular: false,
       tenantType: 'restaurant',
@@ -289,6 +163,16 @@ export default function Pricing() {
   };
 
   const plans = getPlans();
+  const trainingSession = pricingData?.addOns?.trainingSession;
+  const trainingPrice = formatMoney(
+    trainingSession?.unitAmount ?? 7500,
+    trainingSession?.currency || 'usd',
+  );
+  const dashboardPath = {
+    voice: '/voice',
+    real_estate: '/estate',
+    restaurant: '/restaurant',
+  }[selectedTenantType] || '/';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
@@ -299,8 +183,11 @@ export default function Pricing() {
             Simple, Transparent Pricing
           </h1>
           <p className="mx-auto max-w-2xl text-xl text-gray-600 dark:text-slate-300">
-            Choose the plan that fits your business. All plans include our AI phone assistant.
+            Choose your business type. Each service includes a dedicated Merxus AI phone assistant.
           </p>
+          {pricingLoading && (
+            <p className="mt-3 text-sm text-gray-500 dark:text-slate-400">Confirming current Stripe pricing…</p>
+          )}
         </div>
 
         {/* Tenant Type Selector */}
@@ -339,7 +226,9 @@ export default function Pricing() {
 
         {/* Pricing Plans */}
         <div className={`grid grid-cols-1 gap-8 mx-auto mb-16 ${
-          plans.length === 2 
+          plans.length === 1
+            ? 'max-w-xl'
+            : plans.length === 2
             ? 'max-w-4xl md:grid-cols-2' 
             : 'max-w-6xl md:grid-cols-3'
         }`}>
@@ -399,10 +288,10 @@ export default function Pricing() {
                 <button
                   onClick={() => {
                     try {
-                      navigate('/restaurant');
+                      navigate(dashboardPath);
                     } catch (error) {
                       console.error('Navigation error:', error);
-                      window.location.href = '/restaurant';
+                      window.location.href = dashboardPath;
                     }
                   }}
                   className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${
@@ -415,7 +304,7 @@ export default function Pricing() {
                 </button>
               ) : (
                 <Link
-                  to={`/onboarding?type=${plan.tenantType}&plan=${plan.name.toLowerCase()}`}
+                  to={`/onboarding?type=${plan.tenantType}&plan=basic`}
                   className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${
                     plan.popular
                       ? 'bg-primary-600 hover:bg-primary-700 text-white'
@@ -427,6 +316,33 @@ export default function Pricing() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Optional Training */}
+        <div className="mx-auto mb-12 max-w-4xl">
+          <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-8 shadow-sm dark:border-emerald-900 dark:bg-emerald-950/30">
+            <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                  Optional add-on
+                </p>
+                <h2 className="mt-1 text-2xl font-bold text-gray-900 dark:text-slate-100">Merxus Training Session</h2>
+                <p className="mt-2 text-gray-700 dark:text-slate-300">
+                  A 30-minute guided session for paid assistance beyond the onboarding guidance included with setup.
+                </p>
+              </div>
+              <div className="shrink-0 text-center sm:text-right">
+                <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">{trainingPrice}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">per 30-minute session</p>
+                <a
+                  href="mailto:support@merxus.ai?subject=Merxus%20Training%20Session"
+                  className="mt-3 inline-block rounded-lg bg-emerald-600 px-5 py-2 font-semibold text-white hover:bg-emerald-700"
+                >
+                  Request Training
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Setup Fee Information */}
@@ -441,7 +357,7 @@ export default function Pricing() {
               <div className="flex-1">
                 <h2 className="mb-2 text-2xl font-bold text-gray-900 dark:text-slate-100">One-Time Setup Fee</h2>
                 <p className="mb-4 text-gray-700 dark:text-slate-300">
-                  All plans include a one-time setup fee that covers comprehensive onboarding and configuration to get you started quickly.
+                  Each tenant service includes a one-time setup fee that covers onboarding and configuration to get you started quickly.
                 </p>
                 <ul className="mb-6 space-y-2 text-gray-700 dark:text-slate-300">
                   <li className="flex items-start">
@@ -473,20 +389,14 @@ export default function Pricing() {
                     <span>Custom training sessions are available</span>
                   </li>
                   {selectedTenantType === 'restaurant' && (
-                    <>
-                      <li className="flex items-start">
-                        <span className="mr-2 text-primary-600">✓</span>
-                        <span>Menu import and optimization (if applicable)</span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="mr-2 text-primary-600">✓</span>
-                        <span>POS integration assistance (Elite plan)</span>
-                      </li>
-                    </>
+                    <li className="flex items-start">
+                      <span className="mr-2 text-primary-600">✓</span>
+                      <span>Menu import and optimization (if applicable)</span>
+                    </li>
                   )}
                 </ul>
                 <p className="text-sm italic text-gray-600 dark:text-slate-400">
-                  * Setup fee varies by plan. See pricing above for specific amounts.
+                  * Setup fees vary by tenant service. See the current amount above.
                 </p>
               </div>
             </div>
@@ -500,28 +410,25 @@ export default function Pricing() {
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
               <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Is the setup fee required?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                Yes, the setup fee is required for all plans and covers comprehensive onboarding and configuration 
-                to get you started quickly. Custom training sessions are available. Setup fees vary by plan type and tier.
+                Yes. It covers onboarding and initial configuration. Optional 30-minute training sessions beyond the included guidance are {trainingPrice} each.
               </p>
             </div>
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
-              <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Can I change plans later?</h3>
+              <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Can I change services later?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                Yes! You can upgrade or downgrade your plan at any time. Changes take effect on your next billing cycle. 
-                Setup fees may apply when upgrading to a higher tier.
+                Contact Merxus support if your business type or requirements change. We will review any billing or setup impact with you before making changes.
               </p>
             </div>
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
-              <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">What's included in POS integration?</h3>
+              <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Can I purchase additional help?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                POS integration (Restaurant Elite plan) includes automatic menu synchronization, 
-                order import/export, and real-time inventory updates. We support Toast, Square, Clover, and other major POS systems.
+                Yes. Merxus Training Sessions provide 30 minutes of guided assistance beyond onboarding for {trainingPrice} per session.
               </p>
             </div>
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
               <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Do you offer a free trial?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                Yes! All plans include a 30-day free trial. The one-time setup fee is charged upfront, then you have 30 days to try the service before monthly billing begins. 
+                Yes! Each service includes a 30-day free trial. The one-time setup fee is charged upfront, then you have 30 days to try the service before monthly billing begins.
                 You can explore all features and cancel anytime during the trial.
               </p>
             </div>
@@ -546,10 +453,10 @@ export default function Pricing() {
               <button
                 onClick={() => {
                   try {
-                    navigate('/restaurant');
+                    navigate(dashboardPath);
                   } catch (error) {
                     console.error('Navigation error:', error);
-                    window.location.href = '/restaurant';
+                    window.location.href = dashboardPath;
                   }
                 }}
                 className="inline-block px-8 py-3 text-lg font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
