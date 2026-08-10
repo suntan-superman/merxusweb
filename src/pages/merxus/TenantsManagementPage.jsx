@@ -7,6 +7,7 @@ import '../../utils/syncfusionRuntime';
 import { GridComponent, ColumnsDirective, ColumnDirective, Page, Sort, Filter, Toolbar, ExcelExport, Inject } from '@syncfusion/ej2-react-grids';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 import SelectField from '../../components/common/SelectField';
+import { getTenantBillingActionState } from '../../utils/tenantBillingActions';
 import {
   pauseSubscriptionForTenant,
   resumeSubscriptionForTenant,
@@ -463,10 +464,13 @@ export default function TenantsManagementPage() {
   };
 
   const actionsTemplate = (props) => {
-    const isPaused = props.billingPaused || props.subscriptionStatus === 'paused';
-    const cancelableStatuses = ['active', 'trialing', 'past_due', 'unpaid', 'incomplete'];
-    const hasSubscription = cancelableStatuses.includes(String(props.subscriptionStatus || '').toLowerCase());
-    const canCancel = hasSubscription && !props.cancelAtPeriodEnd;
+    const {
+      isPaused,
+      canPauseOrResume,
+      canRefund,
+      canCancel,
+      canViewRefundHistory,
+    } = getTenantBillingActionState(props);
     return (
       <div className="flex items-center gap-2">
         <button
@@ -476,7 +480,7 @@ export default function TenantsManagementPage() {
         >
           <Edit2 size={16} />
         </button>
-        {hasSubscription && (
+        {canPauseOrResume && (
           <button
             onClick={() => (isPaused ? handleResumeBilling(props) : handlePauseBilling(props))}
             disabled={processingActionId === props.id}
@@ -486,11 +490,12 @@ export default function TenantsManagementPage() {
                 : 'text-orange-600 hover:bg-orange-50 dark:text-orange-300 dark:hover:bg-orange-900/30'
             } ${processingActionId === props.id ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={isPaused ? 'Resume Billing' : 'Pause Billing'}
+            aria-label={isPaused ? `Resume billing for ${props.name}` : `Pause billing for ${props.name}`}
           >
             {isPaused ? <PlayCircle size={16} /> : <PauseCircle size={16} />}
           </button>
         )}
-        {hasSubscription && (
+        {canRefund && (
           <button
             onClick={() => handleOpenRefundModal(props)}
             className="rounded-lg p-2 text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/30"
@@ -512,7 +517,7 @@ export default function TenantsManagementPage() {
             <XCircle size={16} />
           </button>
         )}
-        {hasSubscription && (
+        {canViewRefundHistory && (
           <button
             onClick={() => handleViewRefundHistory(props)}
             className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -561,16 +566,27 @@ export default function TenantsManagementPage() {
     if (!tenant?.id || !tenant?.tenantType) return;
     setProcessingActionId(tenant.id);
     try {
-      await pauseSubscriptionForTenant({
+      const result = await pauseSubscriptionForTenant({
         tenantId: tenant.id,
         tenantType: tenant.tenantType,
+        stripeSubscriptionId: tenant.stripeSubscriptionId || undefined,
         reason: 'non_payment',
       });
+      setTenants((current) => current.map((item) => (
+        item.id === tenant.id
+          ? {
+              ...item,
+              billingPaused: true,
+              subscriptionStatus: 'paused',
+              stripeSubscriptionId: result?.stripeSubscriptionId || item.stripeSubscriptionId,
+            }
+          : item
+      )));
       toast.success('Billing paused');
-      loadTenants();
+      await loadTenants();
     } catch (error) {
       console.error('Error pausing billing:', error);
-      toast.error('Failed to pause billing');
+      toast.error(error?.response?.data?.error || 'Failed to pause billing');
     } finally {
       setProcessingActionId(null);
     }
@@ -580,15 +596,27 @@ export default function TenantsManagementPage() {
     if (!tenant?.id || !tenant?.tenantType) return;
     setProcessingActionId(tenant.id);
     try {
-      await resumeSubscriptionForTenant({
+      const result = await resumeSubscriptionForTenant({
         tenantId: tenant.id,
         tenantType: tenant.tenantType,
+        stripeSubscriptionId: tenant.stripeSubscriptionId || undefined,
+        reason: 'admin_resume',
       });
+      setTenants((current) => current.map((item) => (
+        item.id === tenant.id
+          ? {
+              ...item,
+              billingPaused: false,
+              subscriptionStatus: result?.status || 'active',
+              stripeSubscriptionId: result?.stripeSubscriptionId || item.stripeSubscriptionId,
+            }
+          : item
+      )));
       toast.success('Billing resumed');
-      loadTenants();
+      await loadTenants();
     } catch (error) {
       console.error('Error resuming billing:', error);
-      toast.error('Failed to resume billing');
+      toast.error(error?.response?.data?.error || 'Failed to resume billing');
     } finally {
       setProcessingActionId(null);
     }
