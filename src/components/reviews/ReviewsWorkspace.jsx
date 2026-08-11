@@ -149,11 +149,7 @@ export default function ReviewsWorkspace({ tenantType }) {
     [workspace?.availablePlatforms]
   );
   const postingModeOptions = useMemo(
-    () => [
-      { value: 'manual', label: 'Manual Operator Post' },
-      { value: 'direct', label: 'Direct Provider Post' },
-      { value: 'hybrid', label: 'Hybrid Assisted Flow' },
-    ],
+    () => [{ value: 'manual', label: 'Manual Provider Post' }],
     []
   );
   const postingProviderOptions = useMemo(
@@ -185,7 +181,7 @@ export default function ReviewsWorkspace({ tenantType }) {
   useEffect(() => {
     setModerationNotes(detail?.review?.operatorNotes || '');
     setFailureReason(detail?.review?.replyFailureReason || '');
-    setPostingMode(detail?.review?.replyPostingMode || detail?.postingKit?.workflowMode || 'manual');
+    setPostingMode('manual');
     setPostedVia(detail?.review?.replyPostedVia || detail?.review?.platform || '');
   }, [
     detail?.postingKit?.workflowMode,
@@ -739,7 +735,7 @@ export default function ReviewsWorkspace({ tenantType }) {
                           disabled={updateReviewDetailMutation.isPending}
                           className="rounded-full border border-sky-300 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Mark Posted
+                          Report Posted
                         </button>
                       ) : null}
                       {['failed', 'approved'].includes(String(item.replyState || '').toLowerCase()) ? (
@@ -1032,7 +1028,7 @@ export default function ReviewsWorkspace({ tenantType }) {
                       disabled={updateReviewDetailMutation.isPending || detail?.drafts?.[0]?.status !== 'approved'}
                       className="rounded-full border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Mark Posted
+                      Report Posted Manually
                     </button>
                     <button
                       type="button"
@@ -1068,7 +1064,7 @@ export default function ReviewsWorkspace({ tenantType }) {
                     value={postingMode}
                     onChange={(value) => setPostingMode(value || 'manual')}
                     options={postingModeOptions}
-                    helperText="Choose whether this reply is handled manually, posted directly through a provider, or coordinated through a hybrid operator flow."
+                    helperText="Provider posting is manual in the current rollout. A later sync will verify whether the public reply exists."
                   />
                   <SelectField
                     label="Posting provider"
@@ -1110,7 +1106,18 @@ export default function ReviewsWorkspace({ tenantType }) {
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reply State</p>
-                    <p className="mt-2 text-sm font-medium capitalize text-slate-900">{selectedReview.replyState || 'none'}</p>
+                    <p className="mt-2 text-sm font-medium capitalize text-slate-900">
+                      {selectedReview.replyState === 'posted' && selectedReview.replyVerification !== 'provider_verified'
+                        ? 'Reported posted'
+                        : selectedReview.replyState || 'none'}
+                    </p>
+                    {selectedReview.replyState === 'posted' ? (
+                      <p className="mt-1 text-xs text-slate-500">
+                        {selectedReview.replyVerification === 'provider_verified'
+                          ? 'Verified by provider sync'
+                          : 'Awaiting provider verification'}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Posting Route</p>

@@ -8,12 +8,15 @@ import {
   fetchInternalFeedbackQueue,
   fetchReviewDetail,
   fetchReviewIntegrations,
+  fetchReviewOnboarding,
   fetchReviewsWorkspace,
   generateReviewResponse,
   updateReviewDetail,
   updateInternalFeedback,
   updateFeedbackSettings,
   updateReviewIntegration,
+  updateReviewOnboarding,
+  sendReviewOnboardingTestNotification,
 } from '../api/reviews';
 import { fetchSmsNotificationEvents } from '../api/sms';
 
@@ -23,6 +26,7 @@ export const reviewKeys = {
   workspace: (filters = {}) => [...reviewKeys.all, 'workspace', filters],
   detail: (reviewId) => [...reviewKeys.all, 'detail', reviewId],
   integrations: () => [...reviewKeys.all, 'integrations'],
+  onboarding: () => [...reviewKeys.all, 'onboarding'],
   feedbackSettings: () => [...reviewKeys.all, 'feedback-settings'],
   internalFeedbackQueueRoot: () => [...reviewKeys.all, 'internal-feedback-queue'],
   internalFeedbackQueue: (filters = {}) => [...reviewKeys.all, 'internal-feedback-queue', filters],
@@ -133,6 +137,44 @@ export function useReviewIntegrations(options = {}) {
     queryKey: reviewKeys.integrations(),
     queryFn: fetchReviewIntegrations,
     ...options,
+  });
+}
+
+export function useReviewOnboarding(options = {}) {
+  return useQuery({
+    queryKey: reviewKeys.onboarding(),
+    queryFn: fetchReviewOnboarding,
+    ...options,
+  });
+}
+
+export function useUpdateReviewOnboarding() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => updateReviewOnboarding(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: reviewKeys.onboarding() });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.integrations() });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.feedbackSettings() });
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.error || 'Failed to save review setup');
+    },
+  });
+}
+
+export function useSendReviewOnboardingTestNotification() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (channels) => sendReviewOnboardingTestNotification(channels),
+    onSuccess: (data) => {
+      const delivered = data?.delivered || [];
+      queryClient.invalidateQueries({ queryKey: reviewKeys.onboarding() });
+      toast.success(delivered.length ? `Test sent through ${delivered.join(', ')}.` : 'Test notification processed.');
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.error || 'Failed to send test notification');
+    },
   });
 }
 

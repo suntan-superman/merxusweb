@@ -47,7 +47,22 @@ test('reviewMatchesWorkspaceView applies actionable, negative, and mine filters'
     reviewMatchesWorkspaceView(review, 'mine', { uid: 'user-1', email: 'owner@merxus.ai' }),
     true
   );
-  assert.equal(reviewMatchesWorkspaceView({ replyState: 'posted' }, 'actionable', null), false);
+  assert.equal(
+    reviewMatchesWorkspaceView(
+      { replyState: 'posted', replyVerification: 'customer_reported' },
+      'actionable',
+      null
+    ),
+    true
+  );
+  assert.equal(
+    reviewMatchesWorkspaceView(
+      { replyState: 'posted', replyVerification: 'provider_verified' },
+      'actionable',
+      null
+    ),
+    false
+  );
 });
 
 test('buildReviewWorkspaceExportRows keeps review workflow fields in CSV-ready form', () => {

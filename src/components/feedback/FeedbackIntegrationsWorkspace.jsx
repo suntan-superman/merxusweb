@@ -39,6 +39,7 @@ function copyForTenant(tenantType) {
       subtitle: 'Manage review source readiness and the SMS feedback funnel for your restaurant reputation workflows.',
       feedbackPath: '/restaurant/feedback',
       reviewsPath: '/restaurant/reviews',
+      setupPath: '/restaurant/feedback/setup',
     };
   }
 
@@ -48,6 +49,7 @@ function copyForTenant(tenantType) {
       subtitle: 'Manage review source readiness and the SMS feedback funnel for your real estate reputation workflows.',
       feedbackPath: '/estate/feedback',
       reviewsPath: '/estate/reviews',
+      setupPath: '/estate/feedback/setup',
     };
   }
 
@@ -56,6 +58,7 @@ function copyForTenant(tenantType) {
     subtitle: 'Manage review source readiness and the SMS feedback funnel for your office reputation workflows.',
     feedbackPath: '/voice/feedback',
     reviewsPath: '/voice/reviews',
+    setupPath: '/voice/feedback/setup',
   };
 }
 
@@ -139,6 +142,14 @@ export default function FeedbackIntegrationsWorkspace({ tenantType }) {
   const [testReviewForm, setTestReviewForm] = useState(defaultTestReviewForm());
 
   const integrations = data?.integrations || [];
+  const capabilities = data?.capabilities || {};
+  const availableIntegrations = useMemo(
+    () => integrations.filter((integration) => {
+      const capability = capabilities[integration.key];
+      return integration.status === 'connected' || capability?.visible || !Object.keys(capabilities).length;
+    }),
+    [capabilities, integrations]
+  );
   const stats = data?.stats || {};
   const syncAnalytics = data?.syncRunAnalytics || null;
   const analytics = data?.analytics || null;
@@ -153,8 +164,8 @@ export default function FeedbackIntegrationsWorkspace({ tenantType }) {
     stale: integrations.filter((item) => item.health === 'stale').length,
   }), [integrations]);
   const visibleIntegrations = useMemo(
-    () => sortFeedbackIntegrations(integrations, focusedPlatform),
-    [focusedPlatform, integrations]
+    () => sortFeedbackIntegrations(availableIntegrations, focusedPlatform),
+    [availableIntegrations, focusedPlatform]
   );
   const remediationHighlights = useMemo(
     () =>
@@ -180,7 +191,10 @@ export default function FeedbackIntegrationsWorkspace({ tenantType }) {
 
   useEffect(() => {
     let cancelled = false;
-    const candidates = integrations.filter((integration) => integration.supportsLiveOAuth);
+    const candidates = availableIntegrations.filter(
+      (integration) => integration.supportsLiveOAuth &&
+        (capabilities[integration.key]?.connectionEnabled || integration.status === 'connected')
+    );
     const serverSnapshots = data?.validationByPlatform || {};
     const hydratedSnapshots = Object.fromEntries(
       candidates
@@ -222,7 +236,7 @@ export default function FeedbackIntegrationsWorkspace({ tenantType }) {
     return () => {
       cancelled = true;
     };
-  }, [data?.validationByPlatform, integrations]);
+  }, [availableIntegrations, capabilities, data?.validationByPlatform]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -414,6 +428,11 @@ export default function FeedbackIntegrationsWorkspace({ tenantType }) {
             <p className="mt-3 text-sm leading-6 text-gray-600">{copy.subtitle}</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {canManage ? (
+              <Link to={copy.setupPath} className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700">
+                Open Guided Setup
+              </Link>
+            ) : null}
             <Link to={copy.feedbackPath} className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50">
               Back to Feedback
             </Link>
@@ -1010,7 +1029,8 @@ export default function FeedbackIntegrationsWorkspace({ tenantType }) {
                     ? integration.supportsLiveOAuth
                       ? `Connect ${platformDisplayName(integration.key)}`
                       : 'OAuth Soon'
-                    : 'Connect Manually';
+                  : 'Connect Manually';
+              const capability = capabilities[integration.key] || null;
 
               return (
                 <div
@@ -1196,7 +1216,7 @@ export default function FeedbackIntegrationsWorkspace({ tenantType }) {
                     <button
                       type="button"
                       onClick={() => handleToggleIntegration(integration)}
-                      disabled={!canManage || updateIntegration.isPending || (nextMode === 'oauth' && !integration.supportsLiveOAuth && integration.status !== 'connected')}
+                      disabled={!canManage || updateIntegration.isPending || (nextMode === 'oauth' && ((!integration.supportsLiveOAuth || capability?.connectionEnabled === false) && integration.status !== 'connected'))}
                       className="rounded-full border border-current bg-white/80 px-4 py-2 text-sm font-semibold hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isSaving ? 'Saving…' : connectLabel}

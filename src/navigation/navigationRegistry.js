@@ -79,6 +79,7 @@ export const NAV_ITEMS = [
   { id: 'merxus_real_estate', tenantType: 'merxus', groupId: 'core', label: 'Real Estate', path: '/merxus/real-estate', icon: 'Home', sortOrder: 50 },
   { id: 'merxus_analytics', tenantType: 'merxus', groupId: 'core', label: 'Analytics', path: '/merxus/analytics', icon: 'TrendingUp', sortOrder: 60, defaultQuickStart: true },
   { id: 'merxus_ops_audit', tenantType: 'merxus', groupId: 'core', label: 'Ops Audit', path: '/merxus/ops-audit', icon: 'Wrench', sortOrder: 70, defaultQuickStart: true },
+  { id: 'merxus_review_operations', tenantType: 'merxus', groupId: 'core', label: 'Review Health', path: '/merxus/review-operations', icon: 'Star', sortOrder: 75, defaultQuickStart: true },
   { id: 'merxus_readiness', tenantType: 'merxus', groupId: 'core', label: 'Readiness', path: '/merxus/production-readiness', icon: 'FlaskConical', sortOrder: 80, defaultQuickStart: true },
   { id: 'merxus_team_access', tenantType: 'merxus', groupId: 'admin', label: 'Teams & Access', path: '/merxus/users', icon: 'ShieldCheck', sortOrder: 10, allowedRoles: ['super_admin'], defaultQuickStart: true },
   { id: 'merxus_setup_wizard', tenantType: 'merxus', groupId: 'admin', label: 'Setup Wizard', path: '/merxus/setup-wizard', icon: 'Rocket', sortOrder: 20, allowedRoles: ['super_admin', 'merxus_admin'] },

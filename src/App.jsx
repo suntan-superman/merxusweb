@@ -73,6 +73,7 @@ const RestaurantMergeActivityPage = lazy(() => import('./pages/restaurant/Restau
 const RestaurantReviewsPage = lazy(() => import('./pages/restaurant/RestaurantReviewsPage'));
 const RestaurantFeedbackPage = lazy(() => import('./pages/restaurant/RestaurantFeedbackPage'));
 const RestaurantFeedbackIntegrationsPage = lazy(() => import('./pages/restaurant/RestaurantFeedbackIntegrationsPage'));
+const RestaurantReviewOnboardingPage = lazy(() => import('./pages/restaurant/RestaurantReviewOnboardingPage'));
 
 const VoiceDashboardPage = lazy(() => import('./pages/voice/VoiceDashboardPage'));
 const VoiceCallsPage = lazy(() => import('./pages/voice/VoiceCallsPage'));
@@ -89,6 +90,7 @@ const VoiceMergeActivityPage = lazy(() => import('./pages/voice/VoiceMergeActivi
 const VoiceReviewsPage = lazy(() => import('./pages/voice/VoiceReviewsPage'));
 const VoiceFeedbackPage = lazy(() => import('./pages/voice/VoiceFeedbackPage'));
 const VoiceFeedbackIntegrationsPage = lazy(() => import('./pages/voice/VoiceFeedbackIntegrationsPage'));
+const VoiceReviewOnboardingPage = lazy(() => import('./pages/voice/VoiceReviewOnboardingPage'));
 
 const MerxusDashboardPage = lazy(() => import('./pages/merxus/MerxusDashboardPage'));
 const RestaurantsPage = lazy(() => import('./pages/merxus/RestaurantsPage'));
@@ -98,6 +100,7 @@ const RealEstateCompaniesPage = lazy(() => import('./pages/merxus/RealEstateComp
 const AnalyticsPage = lazy(() => import('./pages/merxus/AnalyticsPage'));
 const MerxusOpsAuditPage = lazy(() => import('./pages/merxus/MerxusOpsAuditPage'));
 const MerxusProductionReadinessPage = lazy(() => import('./pages/merxus/MerxusProductionReadinessPage'));
+const MerxusReviewOperationsPage = lazy(() => import('./pages/merxus/MerxusReviewOperationsPage'));
 const SystemSettingsPage = lazy(() => import('./pages/merxus/SystemSettingsPage'));
 const TenantSelectorPage = lazy(() => import('./pages/merxus/TenantSelectorPage'));
 const VoiceAdminPage = lazy(() => import('./pages/merxus/VoiceAdminPage'));
@@ -121,6 +124,7 @@ const EstateMergeActivityPage = lazy(() => import('./pages/estate/EstateMergeAct
 const EstateReviewsPage = lazy(() => import('./pages/estate/EstateReviewsPage'));
 const EstateFeedbackPage = lazy(() => import('./pages/estate/EstateFeedbackPage'));
 const EstateFeedbackIntegrationsPage = lazy(() => import('./pages/estate/EstateFeedbackIntegrationsPage'));
+const EstateReviewOnboardingPage = lazy(() => import('./pages/estate/EstateReviewOnboardingPage'));
 const FlyerApprovalsPage = lazy(() => import('./pages/estate/FlyerApprovalsPage'));
 const FlyerMetricsPage = lazy(() => import('./pages/estate/FlyerMetricsPage'));
 const BillingPage = lazy(() => import('./pages/BillingPage'));
@@ -495,6 +499,14 @@ function App() {
                       )}
                     />
                     <Route
+                      path="feedback/setup"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager requiredPlanTier="elite">
+                          <LazyRoute><RestaurantReviewOnboardingPage /></LazyRoute>
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
                       path="feedback/integrations"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
@@ -618,6 +630,14 @@ function App() {
                       )}
                     />
                     <Route
+                      path="feedback/setup"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager requiredPlanTier="elite">
+                          <LazyRoute><VoiceReviewOnboardingPage /></LazyRoute>
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
                       path="feedback/integrations"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
@@ -731,6 +751,14 @@ function App() {
                       )}
                     />
                     <Route
+                      path="feedback/setup"
+                      element={(
+                        <ProtectedRoute requireAuth requireManager requiredPlanTier="elite">
+                          <LazyRoute><EstateReviewOnboardingPage /></LazyRoute>
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
                       path="feedback/integrations"
                       element={(
                         <ProtectedRoute requireAuth requiredPlanTier="elite">
@@ -802,6 +830,7 @@ function App() {
                     <Route path="real-estate" element={<LazyRoute><RealEstateCompaniesPage /></LazyRoute>} />
                     <Route path="analytics" element={<LazyRoute><AnalyticsPage /></LazyRoute>} />
                     <Route path="ops-audit" element={<LazyRoute><MerxusOpsAuditPage /></LazyRoute>} />
+                    <Route path="review-operations" element={<LazyRoute><MerxusReviewOperationsPage /></LazyRoute>} />
                     <Route path="production-readiness" element={<LazyRoute><MerxusProductionReadinessPage /></LazyRoute>} />
                     <Route path="settings" element={<LazyRoute><SystemSettingsPage /></LazyRoute>} />
                     <Route path="users" element={<LazyRoute><SuperAdminUsersPage /></LazyRoute>} />

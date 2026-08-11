@@ -37,7 +37,9 @@ export function reviewMatchesWorkspaceView(review, activeView, currentUser) {
   const replyState = String(review?.replyState || '').toLowerCase();
   const ownerId = review?.assigneeId || review?.assignee?.uid || '';
 
-  if (activeView === 'actionable') return replyState !== 'posted';
+  if (activeView === 'actionable') {
+    return replyState !== 'posted' || review?.replyVerification !== 'provider_verified';
+  }
   if (activeView === 'needs_reply') return replyState === 'none';
   if (activeView === 'drafts') return replyState === 'draft';
   if (activeView === 'approved') return replyState === 'approved';

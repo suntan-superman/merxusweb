@@ -35,6 +35,36 @@ export async function fetchReviewIntegrations() {
   return res.data;
 }
 
+export async function fetchReviewCapabilities() {
+  const res = await apiClient.get('/reviews/capabilities');
+  return res.data;
+}
+
+export async function fetchReviewOnboarding() {
+  const res = await apiClient.get('/reviews/onboarding');
+  return res.data;
+}
+
+export async function updateReviewOnboarding(payload = {}) {
+  const res = await apiClient.patch('/reviews/onboarding', payload);
+  return res.data;
+}
+
+export async function sendReviewOnboardingTestNotification(channels = []) {
+  const res = await apiClient.post('/reviews/onboarding/test-notification', { channels });
+  return res.data;
+}
+
+export async function fetchReviewOperationsHealth() {
+  const res = await apiClient.get('/reviews/operations');
+  return res.data;
+}
+
+export async function rerunReviewOperationsSync(payload = {}) {
+  const res = await apiClient.post('/reviews/operations/sync', payload);
+  return res.data;
+}
+
 export async function startReviewIntegrationOAuth(platform, params = {}) {
   const res = await apiClient.get(`/reviews/integrations/${platform}/oauth/start`, {
     params,
