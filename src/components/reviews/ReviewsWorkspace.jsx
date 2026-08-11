@@ -323,7 +323,7 @@ export default function ReviewsWorkspace({ tenantType }) {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" data-testid="review-workspace">
       <div className="card overflow-hidden">
         <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
@@ -621,7 +621,7 @@ export default function ReviewsWorkspace({ tenantType }) {
             </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-between gap-3">
+          <div className="mt-6 flex items-center justify-between gap-3" data-testid="review-feed-heading">
             <h3 className="text-lg font-semibold text-gray-900">Review Feed</h3>
             <span className="text-sm text-gray-500">
               {visibleItems.length} shown{activeView !== 'all' ? ` • ${items.length} filtered` : ` • ${workspace?.total ?? 0} results`}
@@ -653,6 +653,11 @@ export default function ReviewsWorkspace({ tenantType }) {
                 return (
                   <div
                     key={item.id}
+                    data-testid="review-feed-item"
+                    data-review-id={item.id}
+                    data-review-platform={item.platform}
+                    data-review-rating={item.rating ?? ''}
+                    data-review-sentiment={item.aiSentiment || ''}
                     onClick={() => setSelectedReviewId(item.id)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -756,7 +761,7 @@ export default function ReviewsWorkspace({ tenantType }) {
           )}
         </div>
 
-        <div className="card">
+        <div className="card" data-testid="review-detail-panel">
           <h3 className="text-lg font-semibold text-gray-900">Review Detail</h3>
           {detailLoading ? (
             <p className="mt-4 text-sm text-gray-500">Loading review detail…</p>
