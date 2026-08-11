@@ -39,6 +39,27 @@ export function callDemoTranscriptText(turn = {}, mode = 'original') {
   return turn.originalText || turn.englishTranslation || '';
 }
 
+export function callDemoTranscriptScrollTarget({
+  containerScrollTop,
+  containerTop,
+  containerHeight,
+  lineTop,
+  lineHeight,
+} = {}) {
+  const scrollTop = Math.max(0, Number(containerScrollTop) || 0);
+  const viewportTop = Number(containerTop) || 0;
+  const viewportHeight = Math.max(0, Number(containerHeight) || 0);
+  const activeLineTop = Number(lineTop) || 0;
+  const activeLineHeight = Math.max(0, Number(lineHeight) || 0);
+  const viewportBottom = viewportTop + viewportHeight;
+  const activeLineBottom = activeLineTop + activeLineHeight;
+  if (activeLineTop >= viewportTop && activeLineBottom <= viewportBottom) return null;
+  return Math.max(
+    0,
+    scrollTop + (activeLineTop - viewportTop) - (viewportHeight - activeLineHeight) / 2,
+  );
+}
+
 export function filterCallDemos(payload, demoIds = []) {
   const demos = Array.isArray(payload?.demos) ? payload.demos : [];
   if (!Array.isArray(demoIds) || demoIds.length === 0) return demos;

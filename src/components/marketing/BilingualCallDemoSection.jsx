@@ -6,6 +6,7 @@ import {
   CALL_DEMO_METADATA_URL,
   MERXUS_HQ_PHONE,
   callDemoLanguageLabel,
+  callDemoTranscriptScrollTarget,
   callDemoTranscriptText,
   clampCallDemoTime,
   filterCallDemos,
@@ -67,11 +68,18 @@ function DemoAudioCard({ demo, activeDemoId, onRequestPlay }) {
     const container = transcriptRef.current;
     const activeLine = lineRefs.current[activeTranscriptIndex];
     if (!container || !activeLine || !isPlaying) return;
-    const lineTop = activeLine.offsetTop;
-    const lineBottom = lineTop + activeLine.offsetHeight;
-    if (lineTop < container.scrollTop || lineBottom > container.scrollTop + container.clientHeight) {
+    const containerBounds = container.getBoundingClientRect();
+    const lineBounds = activeLine.getBoundingClientRect();
+    const scrollTarget = callDemoTranscriptScrollTarget({
+      containerScrollTop: container.scrollTop,
+      containerTop: containerBounds.top,
+      containerHeight: containerBounds.height,
+      lineTop: lineBounds.top,
+      lineHeight: lineBounds.height,
+    });
+    if (scrollTarget !== null) {
       container.scrollTo({
-        top: Math.max(0, lineTop - container.clientHeight / 3),
+        top: scrollTarget,
         behavior: 'smooth',
       });
     }

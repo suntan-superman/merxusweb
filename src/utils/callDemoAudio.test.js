@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   callDemoLanguageLabel,
   callDemoTranscriptText,
+  callDemoTranscriptScrollTarget,
   clampCallDemoTime,
   filterCallDemos,
   findActiveTranscriptIndex,
@@ -43,4 +44,28 @@ test('call demo filtering follows the requested marketing-card order', () => {
   const payload = { demos: [{ id: 'office' }, { id: 'real-estate' }] };
   assert.deepEqual(filterCallDemos(payload, ['real-estate', 'office']).map((demo) => demo.id), ['real-estate', 'office']);
   assert.deepEqual(filterCallDemos(payload, ['missing', 'office']).map((demo) => demo.id), ['office']);
+});
+
+test('transcript auto-scroll uses viewport-relative positions and leaves visible lines alone', () => {
+  assert.equal(callDemoTranscriptScrollTarget({
+    containerScrollTop: 0,
+    containerTop: 500,
+    containerHeight: 320,
+    lineTop: 520,
+    lineHeight: 72,
+  }), null);
+  assert.equal(callDemoTranscriptScrollTarget({
+    containerScrollTop: 0,
+    containerTop: 500,
+    containerHeight: 320,
+    lineTop: 900,
+    lineHeight: 72,
+  }), 276);
+  assert.equal(callDemoTranscriptScrollTarget({
+    containerScrollTop: 500,
+    containerTop: 500,
+    containerHeight: 320,
+    lineTop: 420,
+    lineHeight: 72,
+  }), 296);
 });
