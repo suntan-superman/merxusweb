@@ -14,6 +14,7 @@ import {
   trackSchedule,
 } from '../../utils/metaPixel';
 import { formatPhoneInput, getRawPhone } from '../../utils/phoneFormatter';
+import BilingualCallDemoSection from './BilingualCallDemoSection';
 
 const BUSINESS_TYPE_OPTIONS = [
   { value: 'office', label: 'Office / Professional Services' },
@@ -483,6 +484,14 @@ export default function VerticalLandingPage({ content }) {
           </div>
         </div>
       </section>
+
+      {content.callDemoId ? (
+        <BilingualCallDemoSection
+          demoIds={[content.callDemoId]}
+          setupHref={content.setupHref}
+          sectionId={`${content.callDemoId}-call-demo`}
+        />
+      ) : null}
 
       <section id="lead-form" className="scroll-mt-24 px-4 py-5">
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr,1.1fr]">

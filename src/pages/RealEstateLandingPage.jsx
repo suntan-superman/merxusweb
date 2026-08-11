@@ -13,6 +13,7 @@ const content = {
   secondaryCta: 'Book a 15-minute Demo',
   setupHref: '/setup?type=real_estate',
   demoHref: 'mailto:support@merxusllc.com?subject=Merxus%20Real%20Estate%20Demo%20Request',
+  callDemoId: 'real-estate',
   formTitle: 'See how Merxus would handle your listing inquiries.',
   formIntro: 'Tell us how leads reach you today, and we will map the right real estate response workflow.',
   formCta: 'Request My Real Estate Demo',

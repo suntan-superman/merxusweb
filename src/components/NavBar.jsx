@@ -42,6 +42,9 @@ const NavBar = () => {
                 <Link to={`/pricing${tenantQuery}`} className="text-gray-700 hover:text-primary-600 transition-colors">
                   Pricing
                 </Link>
+                <Link to="/hear-merxus" className="text-gray-700 hover:text-primary-600 transition-colors">
+                  Hear Merxus
+                </Link>
               </>
             )}
             {user ? (
@@ -107,6 +110,13 @@ const NavBar = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Pricing
+                </Link>
+                <Link
+                  to="/hear-merxus"
+                  className="block text-gray-700 hover:text-primary-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Hear Merxus
                 </Link>
               </>
             )}

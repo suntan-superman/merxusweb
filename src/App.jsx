@@ -38,6 +38,7 @@ import MetaEventTestPage from './pages/MetaEventTestPage';
 import OfficeLandingPage from './pages/OfficeLandingPage';
 import RealEstateLandingPage from './pages/RealEstateLandingPage';
 import RestaurantLandingPage from './pages/RestaurantLandingPage';
+import HearMerxusPage from './pages/HearMerxusPage';
 import EliteFeatureWorkspace from './components/premium/EliteFeatureWorkspace';
 import WebsiteChatWidget from './components/chat/WebsiteChatWidget';
 import lazyWithRetry from './utils/lazyWithRetry';
@@ -197,6 +198,7 @@ function MetaRouteTracker() {
       '/restaurant-ai': 'restaurant',
       '/solutions/restaurant': 'restaurant',
       '/pricing': { industry: 'platform', contentName: 'Merxus Pricing', category: 'pricing' },
+      '/hear-merxus': { industry: 'platform', contentName: 'Hear Merxus In Action', category: 'demonstration' },
     };
     const routeConfig = viewContentRoutes[location.pathname];
     if (routeConfig) {
@@ -253,6 +255,10 @@ const ROUTE_METADATA = {
   '/pricing': {
     title: 'Merxus AI Pricing | AI Front Desk Plans',
     description: 'Explore Merxus AI front-desk plans for office and real-estate teams that need responsive call handling and follow-up.',
+  },
+  '/hear-merxus': {
+    title: 'Hear Merxus In Action | English and Spanish AI Calls',
+    description: 'Hear Merxus follow customers naturally as real-estate and office conversations switch between English and Spanish.',
   },
   '/login': {
     title: 'Sign In | Merxus AI',
@@ -318,6 +324,7 @@ function PublicFooter() {
             <ul className="space-y-2 text-gray-400">
               <li><Link to={`/features${query}`} className="transition-colors hover:text-primary-400">Features</Link></li>
               <li><Link to={`/pricing${query}`} className="transition-colors hover:text-primary-400">Pricing</Link></li>
+              <li><Link to="/hear-merxus" className="transition-colors hover:text-primary-400">Hear Merxus</Link></li>
               <li><Link to={`/onboarding${query}`} className="transition-colors hover:text-primary-400">Get Started</Link></li>
             </ul>
           </div>
@@ -401,6 +408,8 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/features" element={<Features />} />
                   <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/hear-merxus" element={<HearMerxusPage />} />
+                  <Route path="/demos" element={<Navigate to="/hear-merxus" replace />} />
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="/never-miss-calls" element={<InstagramLandingPage />} />
                   <Route path="/ai-front-desk" element={<OfficeLandingPage />} />
