@@ -1,11 +1,12 @@
-import { getIdToken } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { apiClient } from '../api/client';
 import { getMerxusAppCheckToken } from '../firebase/appCheck';
 import { getCampaignAttribution } from './metaPixel';
 
 const VISITOR_KEY = 'merxus.worksideAnalytics.visitor.v1';
 const QUEUE_KEY = 'merxus.worksideAnalytics.queue.v1';
 const MAX_QUEUE_SIZE = 100;
+const MAX_EVENT_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_ATTEMPTS = 5;
 
 function canUseWindow() {
   return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
@@ -23,8 +24,13 @@ function uuid() {
   });
 }
 
-function endpoint() {
-  return String(import.meta.env?.VITE_WORKSIDE_ANALYTICS_ENDPOINT || '').trim().replace(/\/$/, '');
+function analyticsEnabled() {
+  const explicit = String(import.meta.env?.VITE_WORKSIDE_ANALYTICS_ENABLED || '').trim().toLowerCase();
+  if (explicit) return ['1', 'true', 'yes', 'on'].includes(explicit);
+
+  // Backward compatibility for existing Netlify builds. The legacy endpoint is
+  // now only an enablement signal; events are never sent to it from the browser.
+  return Boolean(String(import.meta.env?.VITE_WORKSIDE_ANALYTICS_ENDPOINT || '').trim());
 }
 
 function environment() {
@@ -57,11 +63,15 @@ function attribution() {
   });
 }
 
-function readQueue() {
+function readQueue(now = Date.now()) {
   if (!canUseWindow()) return [];
   try {
     const parsed = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item) => (
+          item?.payload?.eventId && now - Number(item.createdAt || 0) <= MAX_EVENT_AGE_MS
+        ))
+      : [];
   } catch {
     return [];
   }
@@ -69,40 +79,35 @@ function readQueue() {
 
 function writeQueue(queue) {
   if (!canUseWindow()) return;
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(queue.slice(-MAX_QUEUE_SIZE)));
+  const unique = [...new Map(queue.map((item) => [item.payload.eventId, item])).values()]
+    .slice(-MAX_QUEUE_SIZE);
+  localStorage.setItem(QUEUE_KEY, JSON.stringify(unique));
 }
 
-function enqueue(payload) {
-  writeQueue([...readQueue(), { payload, createdAt: Date.now() }]);
-}
-
-async function authToken() {
-  const currentUser = auth.currentUser;
-  return currentUser ? getIdToken(currentUser, false) : null;
+function enqueue(payload, attempts = 0) {
+  const currentTime = Date.now();
+  writeQueue([...readQueue(currentTime), {
+    payload,
+    attempts,
+    createdAt: currentTime,
+    nextAttemptAt: currentTime + Math.min(60_000, 1000 * (2 ** attempts)),
+  }]);
 }
 
 async function send(payload) {
-  const url = endpoint();
-  if (!url) return { disabled: true };
-  const [bearer, appCheckToken] = await Promise.all([
-    authToken(),
-    getMerxusAppCheckToken().catch(() => null),
-  ]);
-  const response = await fetch(`${url}/api/events`, {
-    method: 'POST',
-    keepalive: true,
+  if (!analyticsEnabled()) return { disabled: true };
+  const appCheckToken = await getMerxusAppCheckToken().catch(() => null);
+  const response = await apiClient.post('/analytics/events', payload, {
     headers: compact({
-      'Content-Type': 'application/json',
-      Authorization: bearer ? `Bearer ${bearer}` : null,
       'X-Firebase-AppCheck': appCheckToken,
+      'X-Suppress-Error-Log': 'true',
     }),
-    body: JSON.stringify(payload),
   });
-  if (!response.ok) throw new Error(`Workside Analytics rejected event with ${response.status}`);
-  return response.json();
+  return response.data;
 }
 
 export async function trackWorksideAnalyticsEvent(eventName, properties = {}, options = {}) {
+  if (!analyticsEnabled()) return { disabled: true };
   const payload = {
     eventId: options.eventId || uuid(),
     eventName,
@@ -130,15 +135,28 @@ export async function trackWorksideAnalyticsEvent(eventName, properties = {}, op
 }
 
 export async function flushWorksideAnalyticsQueue() {
-  const queue = readQueue();
+  if (!analyticsEnabled()) return { disabled: true };
+  const currentTime = Date.now();
+  const queue = readQueue(currentTime);
   const remaining = [];
   let sent = 0;
   for (const item of queue) {
+    if (Number(item.nextAttemptAt || 0) > currentTime) {
+      remaining.push(item);
+      continue;
+    }
     try {
       await send(item.payload);
       sent += 1;
     } catch {
-      remaining.push(item);
+      const attempts = Number(item.attempts || 0) + 1;
+      if (attempts < MAX_ATTEMPTS) {
+        remaining.push({
+          ...item,
+          attempts,
+          nextAttemptAt: currentTime + Math.min(60_000, 1000 * (2 ** attempts)),
+        });
+      }
     }
   }
   writeQueue(remaining);

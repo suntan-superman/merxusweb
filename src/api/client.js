@@ -133,6 +133,7 @@ apiClient.interceptors.response.use(
       // BUT: Don't redirect for public onboarding routes
       const currentPath = window.location.pathname;
       const isPublicRoute = originalRequest?.url?.includes('/onboarding/') || 
+                           originalRequest?.url?.includes('/analytics/events') ||
                            originalRequest?.url?.includes('/health');
       
       if (!currentPath.includes('/login') && !isPublicRoute) {

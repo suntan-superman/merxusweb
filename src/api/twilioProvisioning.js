@@ -23,10 +23,19 @@ export async function listUnassignedNumbers(tenantId) {
 /**
  * Purchase a Twilio phone number
  */
-export async function purchasePhoneNumber(phoneNumber, tenantType, tenantId, friendlyName, skipDbSave = false, phoneSid) {
+export async function purchasePhoneNumber(
+  phoneNumber,
+  tenantType,
+  tenantId,
+  friendlyName,
+  skipDbSave = false,
+  phoneSid,
+  twilioAccountKey
+) {
   const response = await apiClient.post('/twilio-provisioning/purchase', {
     phoneNumber,
     phoneSid,
+    twilioAccountKey,
     tenantType,
     tenantId,
     friendlyName,
@@ -39,9 +48,10 @@ export async function purchasePhoneNumber(phoneNumber, tenantType, tenantId, fri
 /**
  * Release a Twilio phone number
  */
-export async function releasePhoneNumber(phoneSid, tenantType, tenantId) {
+export async function releasePhoneNumber(phoneSid, tenantType, tenantId, twilioAccountKey) {
   const response = await apiClient.post('/twilio-provisioning/release', {
     phoneSid,
+    twilioAccountKey,
     tenantType,
     tenantId,
   });

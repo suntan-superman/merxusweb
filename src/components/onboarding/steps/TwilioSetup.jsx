@@ -102,7 +102,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
   };
 
   // Assign or purchase a number after payment
-  const assignNumber = async ({ phoneNumber, sid }) => {
+  const assignNumber = async ({ phoneNumber, sid, twilioAccountKey }) => {
     if (!paymentCompleted) {
       toast.error('Please complete payment first.');
       return;
@@ -127,7 +127,8 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
         tenantId,
         `Merxus ${normalizedTenantType || 'Office'}`,
         false,
-        sid
+        sid,
+        twilioAccountKey
       );
 
       const assigned = result?.number || {};
@@ -137,6 +138,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
       onChange({
         twilioPhoneNumber: assignedPhone,
         twilioPhoneSid: assignedSid,
+        twilioAccountKey: assigned.twilioAccountKey || twilioAccountKey || 'primary',
         twilioAccountSid: 'auto_provisioned',
         twilioAuthToken: 'auto_provisioned',
         demoPhoneDeferred: false,
@@ -206,8 +208,11 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
   };
 
   // Handle number selection (purchase/assign happens now)
-  const handleSelectNumber = async (phoneNumber) => {
-    await assignNumber({ phoneNumber });
+  const handleSelectNumber = async (number) => {
+    await assignNumber({
+      phoneNumber: number.phoneNumber,
+      twilioAccountKey: number.twilioAccountKey,
+    });
   };
 
   if (isLocked) {
@@ -296,7 +301,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
                 </p>
                 <div className="space-y-2 mb-3">
                   {unassignedNumbers.map((num) => (
-                    <div key={num.sid} className="bg-white rounded-lg p-3 border border-blue-200 flex items-center justify-between">
+                    <div key={`${num.twilioAccountKey || 'legacy'}:${num.sid}`} className="bg-white rounded-lg p-3 border border-blue-200 flex items-center justify-between">
                       <div>
                         <p className="font-mono text-lg font-bold text-gray-900">
                           {formatPhoneDisplay(num.phoneNumber)}
@@ -306,7 +311,11 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
                         )}
                       </div>
                       <button
-                        onClick={() => assignNumber({ phoneNumber: num.phoneNumber, sid: num.sid })}
+                        onClick={() => assignNumber({
+                          phoneNumber: num.phoneNumber,
+                          sid: num.sid,
+                          twilioAccountKey: num.twilioAccountKey,
+                        })}
                         disabled={provisioningBlocked || purchasingNumber !== null}
                         className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-green-700 hover:to-green-600 transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                       >
@@ -463,7 +472,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
                             </div>
                           </div>
                       <button
-                            onClick={() => handleSelectNumber(number.phoneNumber)}
+                            onClick={() => handleSelectNumber(number)}
                             disabled={provisioningBlocked || purchasingNumber !== null}
                             className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 shadow-md hover:shadow-lg"
                           >
