@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getSubscription, cancelSubscription, getBillingPricing, createPortalSession } from '../api/billing';
 import { refreshClaims } from '../api/auth';
-import { Check, X, CreditCard, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
+import { Check, CreditCard, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { getTierLabel } from '../hooks/useSubscriptionPlan';
@@ -62,134 +62,60 @@ const BillingPage = () => {
     }
   };
 
-  const getDisplayTierPricing = (planKey) => {
-    const pricingKey = tenantType === 'voice' ? 'office' : tenantType;
-    const displayTier = planKey === 'professional' ? 'pro' : planKey;
-    return pricingData?.displayPlans?.[pricingKey]?.find((item) => item.tier === displayTier) || null;
-  };
-
-  const PLANS = {
+  const CATALOG_PLANS = {
     restaurant: {
-      basic: {
-        name: 'Basic',
-        price: 199,
-        setup: 199,
-        features: [
-          'AI Phone Assistant',
-          'Order & Reservation Taking',
-          'Priority Support',
-          'Analytics Dashboard',
-          'Call Transcripts',
-        ],
-        popular: false,
-      },
-      professional: {
-        name: 'Pro',
-        price: 299,
-        setup: 299,
-        features: [
-          'Enhanced AI Phone Assistant',
-          'Orders, Reservations, and Events',
-          'Priority Support',
-          'Advanced Analytics Dashboard',
-          'Customer CRM',
-        ],
-        popular: true,
-      },
-      elite: {
-        name: 'Elite',
-        price: 499,
-        setup: 499,
-        features: [
-          'Elite AI Phone Assistant',
-          'POS Integration Support',
-          'Multi-Location Workflows',
-          'Automation and CX Analytics',
-          'Dedicated Account Support',
-        ],
-        popular: false,
-      },
+      name: 'Merxus Restaurant',
+      tier: 'basic',
+      subscriptionUnitAmount: 29900,
+      onboardingUnitAmount: 49900,
+      currency: 'usd',
+      features: [
+        'AI Phone Assistant',
+        'Order and reservation taking',
+        'Priority support',
+        'Analytics dashboard',
+        'Call transcripts',
+      ],
     },
     voice: {
-      basic: {
-        name: 'Basic',
-        price: 79,
-        setup: 79,
-        features: [
-          'AI Phone Assistant',
-          'Call Routing',
-          'Priority Support',
-          'Analytics Dashboard',
-        ],
-        popular: false,
-      },
-      professional: {
-        name: 'Pro',
-        price: 149,
-        setup: 149,
-        features: [
-          'Enhanced AI Phone Assistant',
-          'Advanced Call Routing',
-          'Priority Support',
-          'Analytics Dashboard',
-        ],
-        popular: true,
-      },
-      elite: {
-        name: 'Elite',
-        price: 199,
-        setup: 199,
-        features: [
-          'Elite AI Phone Assistant',
-          'Automation Workflows',
-          'Advanced Analytics',
-          'API Access',
-        ],
-        popular: false,
-      },
+      name: 'Merxus Office',
+      tier: 'basic',
+      subscriptionUnitAmount: 4900,
+      onboardingUnitAmount: 4900,
+      currency: 'usd',
+      features: [
+        'AI Phone Assistant',
+        'Call routing',
+        'Priority support',
+        'Analytics dashboard',
+      ],
     },
     real_estate: {
-      basic: {
-        name: 'Basic',
-        price: 79,
-        setup: 79,
-        features: [
-          'AI Phone Assistant',
-          'Lead Management',
-          'Call Routing',
-          'Priority Support',
-          'Analytics Dashboard',
-        ],
-        popular: false,
-      },
-      professional: {
-        name: 'Pro',
-        price: 149,
-        setup: 149,
-        features: [
-          'Enhanced AI Phone Assistant',
-          'Lead and Showing Workflows',
-          'Priority Support',
-          'Analytics Dashboard',
-        ],
-        popular: true,
-      },
-      elite: {
-        name: 'Elite',
-        price: 199,
-        setup: 199,
-        features: [
-          'Elite AI Phone Assistant',
-          'Review and Feedback Workflows',
-          'Automation and CX Analytics',
-          'Advanced Lead Intelligence',
-        ],
-        popular: false,
-      },
+      name: 'Merxus Real Estate',
+      tier: 'basic',
+      subscriptionUnitAmount: 4900,
+      onboardingUnitAmount: 4900,
+      currency: 'usd',
+      features: [
+        'AI Phone Assistant',
+        'Lead management',
+        'Call routing',
+        'Priority support',
+        'Analytics dashboard',
+      ],
     },
   };
 
-  const plans = PLANS[tenantType] || PLANS.restaurant;
+  const pricingKey = tenantType === 'voice' ? 'office' : tenantType;
+  const catalogTemplate = CATALOG_PLANS[tenantType] || CATALOG_PLANS.restaurant;
+  const catalogPlans = (pricingData?.displayPlans?.[pricingKey]?.length
+    ? pricingData.displayPlans[pricingKey]
+    : [catalogTemplate]
+  ).map((plan) => ({
+    ...catalogTemplate,
+    ...plan,
+    features: catalogTemplate.features,
+  }));
 
   useEffect(() => {
     fetchSubscription();
@@ -333,9 +259,23 @@ const BillingPage = () => {
 
   const isTrialing = subscription?.status === 'trial';
   const isActive = subscription?.status === 'active';
-  const currentPlan = subscription?.plan;
-  const currentPlanKey = subscription?.tier === 'base' ? 'basic' : subscription?.tier || null;
-  const currentPlanLabel = subscription?.tierLabel || (currentPlanKey ? plans[currentPlanKey]?.name : null) || 'Basic';
+  const currentPlanLabel = subscription?.tierLabel || 'Basic';
+  const currentBillingPrice = formatMoney(
+    subscription?.billing?.unitAmount,
+    subscription?.billing?.currency || 'usd',
+  );
+  const currentBillingInterval = subscription?.billing?.interval || 'month';
+  const catalogMonthlyPrice = formatMoney(
+    catalogPlans[0]?.subscriptionUnitAmount,
+    catalogPlans[0]?.currency || 'usd',
+  );
+  const hasRequiredAccess = upgradeContext
+    ? upgradeContext.requiredTier === 'elite'
+      ? !!subscription?.entitlements?.elite
+      : upgradeContext.requiredTier === 'professional'
+        ? !!subscription?.entitlements?.professional
+        : true
+    : false;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 py-8">
@@ -347,18 +287,38 @@ const BillingPage = () => {
         </div>
 
         {upgradeContext ? (
-          <div className="mb-6 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30 p-4">
+          <div className={`mb-6 rounded-xl border p-4 ${
+            hasRequiredAccess
+              ? 'border-green-200 bg-green-50 dark:border-green-700 dark:bg-green-950/30'
+              : 'border-blue-200 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30'
+          }`}>
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
-                {upgradeContext.requiredTierLabel} plan required
+              <p className={`text-sm font-semibold ${
+                hasRequiredAccess
+                  ? 'text-green-900 dark:text-green-200'
+                  : 'text-blue-900 dark:text-blue-200'
+              }`}>
+                {hasRequiredAccess
+                  ? `${upgradeContext.requiredTierLabel} access is enabled`
+                  : `${upgradeContext.requiredTierLabel} access required`}
               </p>
-              <p className="text-sm text-blue-800 dark:text-blue-300">
-                {upgradeContext.prettyFrom
-                  ? `${upgradeContext.prettyFrom} is available on the ${upgradeContext.requiredTierLabel} tier or higher.`
-                  : `This feature is available on the ${upgradeContext.requiredTierLabel} tier or higher.`}
+              <p className={`text-sm ${
+                hasRequiredAccess
+                  ? 'text-green-800 dark:text-green-300'
+                  : 'text-blue-800 dark:text-blue-300'
+              }`}>
+                {hasRequiredAccess
+                  ? `${upgradeContext.prettyFrom || 'This feature'} is available for this account.`
+                  : upgradeContext.prettyFrom
+                    ? `${upgradeContext.prettyFrom} is available on the ${upgradeContext.requiredTierLabel} tier or higher.`
+                    : `This feature is available on the ${upgradeContext.requiredTierLabel} tier or higher.`}
               </p>
               {upgradeContext.from ? (
-                <p className="text-xs text-blue-700 dark:text-blue-300">
+                <p className={`text-xs ${
+                  hasRequiredAccess
+                    ? 'text-green-700 dark:text-green-300'
+                    : 'text-blue-700 dark:text-blue-300'
+                }`}>
                   Requested route: <span className="font-medium">{upgradeContext.from}</span>
                 </p>
               ) : null}
@@ -408,22 +368,24 @@ const BillingPage = () => {
                         </>
                       ) : isActive ? (
                         <>
-                          <span className="font-medium text-green-600 capitalize">{currentPlanLabel} Plan</span>
-                          <span className="text-sm text-gray-500 dark:text-slate-400 ml-2">
-                            ${plans[currentPlanKey]?.price}/month
-                          </span>
+                          <span className="font-medium text-green-600 capitalize">{currentPlanLabel} feature access</span>
+                          {currentBillingPrice ? (
+                            <span className="text-sm text-gray-500 dark:text-slate-400 ml-2">
+                              {currentBillingPrice}/{currentBillingInterval}
+                            </span>
+                          ) : null}
                         </>
                       ) : (
                         <span className="font-medium text-gray-600 dark:text-slate-300 capitalize">{subscription.status}</span>
                       )}
                     </span>
                   </div>
-                  {subscription.currentPeriodEnd && (
+                  {subscription.renewalDate && (
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 text-gray-400 dark:text-slate-500 mr-2" />
                       <span className="text-sm text-gray-600 dark:text-slate-300">
                         {subscription.cancelAtPeriodEnd ? 'Cancels' : 'Renews'} on{' '}
-                        {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                        {new Date(subscription.renewalDate).toLocaleDateString()}
                       </span>
                     </div>
                   )}
@@ -438,6 +400,16 @@ const BillingPage = () => {
                 </button>
               )}
             </div>
+            {subscription.billing?.deprecatedPrice ? (
+              <div className="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                <p className="font-semibold">Legacy test price detected</p>
+                <p className="mt-1">
+                  Stripe is currently billing {currentBillingPrice || 'a legacy amount'} through{' '}
+                  {subscription.billing.productName || 'a deprecated test product'}. The current {catalogPlans[0]?.name || 'Merxus'} catalog price is{' '}
+                  {catalogMonthlyPrice || 'shown below'}/month. Changing the recurring Stripe price requires a separate billing migration.
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -490,38 +462,22 @@ const BillingPage = () => {
           </div>
         )}
 
-        {/* Pricing Plans */}
+        {/* Current tenant catalog pricing */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-6">Choose Your Plan</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(plans).map(([planKey, plan]) => {
-              const isCurrentPlan = currentPlanKey === planKey && isActive;
-              const tierPricing = getDisplayTierPricing(planKey);
-              const monthlyPrice = formatMoney(tierPricing?.subscriptionUnitAmount, tierPricing?.currency) || `$${plan.price}`;
-              const setupPrice = formatMoney(tierPricing?.onboardingUnitAmount, tierPricing?.currency) || `$${plan.setup}`;
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">Current Pricing</h2>
+          <p className="mb-6 text-sm text-gray-600 dark:text-slate-300">
+            Merxus currently has one Stripe offering for this tenant type. Feature-access levels are managed separately until additional Stripe tier prices are configured.
+          </p>
+          <div className="grid grid-cols-1 gap-6 lg:max-w-xl">
+            {catalogPlans.map((plan) => {
+              const monthlyPrice = formatMoney(plan.subscriptionUnitAmount, plan.currency);
+              const setupPrice = formatMoney(plan.onboardingUnitAmount, plan.currency);
               
               return (
                 <div
-                  key={planKey}
-                  className={`bg-white dark:bg-slate-900 rounded-lg shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700 border-2 ${
-                    plan.popular 
-                      ? 'border-green-500 relative' 
-                      : isCurrentPlan 
-                      ? 'border-green-500' 
-                      : 'border-gray-200 dark:border-slate-700'
-                  } p-6 flex flex-col`}
+                  key={`${pricingKey}-${plan.tier}`}
+                  className="bg-white dark:bg-slate-900 rounded-lg shadow-sm dark:shadow-none dark:ring-1 dark:ring-slate-700 border-2 border-green-500 p-6 flex flex-col"
                 >
-                  {plan.popular && (
-                    <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                      MOST POPULAR
-                    </div>
-                  )}
-                  {isCurrentPlan && (
-                    <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                      CURRENT PLAN
-                    </div>
-                  )}
-                  
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">{plan.name}</h3>
                   <div className="mb-4">
                     <span className="text-4xl font-bold text-gray-900 dark:text-slate-100">
@@ -543,21 +499,15 @@ const BillingPage = () => {
                   </ul>
                   
                   <button
-                    onClick={() => handleUpgrade(planKey)}
-                    disabled={isCurrentPlan || processingCheckout}
-                    className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${
-                      isCurrentPlan
-                        ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500 cursor-not-allowed'
-                        : plan.popular
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-gray-900 dark:bg-slate-800 text-white hover:bg-gray-800 dark:hover:bg-slate-700'
-                    }`}
+                    onClick={() => handleUpgrade(plan.tier)}
+                    disabled={processingCheckout}
+                    className="w-full py-3 px-4 rounded-md font-medium transition-colors bg-gray-900 dark:bg-slate-800 text-white hover:bg-gray-800 dark:hover:bg-slate-700 disabled:opacity-50"
                   >
-                    {isCurrentPlan ? 'Current Plan' : processingCheckout ? 'Processing...' : 'Get Started'}
+                    {processingCheckout ? 'Opening...' : isActive ? 'Manage Billing' : 'Get Started'}
                   </button>
                   
                   <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-3">
-                    Setup fee charged today • 30 days free trial
+                    One-time setup fee applies to new accounts • 30-day free trial
                   </p>
                 </div>
               );
@@ -582,9 +532,9 @@ const BillingPage = () => {
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 dark:text-slate-100">Can I upgrade or downgrade my plan?</h3>
+              <h3 className="font-medium text-gray-900 dark:text-slate-100">How do feature-access upgrades work?</h3>
               <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
-                Yes, you can change your plan at any time. Changes will be prorated based on your billing cycle.
+                Contact Merxus support for Professional or Elite feature access. Any recurring-price change is confirmed separately before Stripe billing is updated.
               </p>
             </div>
           </div>

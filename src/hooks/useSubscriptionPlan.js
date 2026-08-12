@@ -1,52 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getSubscription } from '../api/billing';
 import { useAuth } from '../context/AuthContext';
+import {
+  PLAN_ORDER,
+  buildSubscriptionSummary,
+  getTierLabel,
+  meetsPlanRequirement,
+} from '../utils/subscriptionPlan';
 
-export const PLAN_ORDER = {
-  base: 0,
-  professional: 1,
-  elite: 2,
-};
+export { PLAN_ORDER, getTierLabel, meetsPlanRequirement };
 
 const ELEVATED_PLAN_TIERS_ENABLED = import.meta.env.VITE_ELEVATED_PLAN_TIERS_ENABLED === 'true';
 
-function normalizeSubscriptionTier(plan) {
-  const normalized = String(plan || '').trim().toLowerCase();
-
-  if (!normalized) return 'base';
-  if (!ELEVATED_PLAN_TIERS_ENABLED) return 'base';
-  if (normalized.includes('elite') || normalized.includes('enterprise')) return 'elite';
-  if (normalized.includes('professional') || /(^|[^a-z0-9])pro($|[^a-z0-9])/.test(normalized)) return 'professional';
-  if (normalized.includes('standard') || normalized.includes('basic') || normalized.includes('starter') || normalized.includes('base')) return 'base';
-  return 'base';
-}
-
-export function getTierLabel(tier) {
-  if (tier === 'elite') return 'Elite';
-  if (tier === 'professional') return 'Professional';
-  return 'Basic';
-}
-
-export function meetsPlanRequirement(currentTier, requiredTier) {
-  return (PLAN_ORDER[currentTier] ?? 0) >= (PLAN_ORDER[requiredTier] ?? 0);
-}
-
-function getEntitlements(tier) {
-  const order = PLAN_ORDER[tier] ?? 0;
-  return {
-    professional: order >= PLAN_ORDER.professional,
-    elite: order >= PLAN_ORDER.elite,
-  };
-}
-
 function buildSummary(subscription = {}) {
-  const tier = normalizeSubscriptionTier(subscription?.tier || subscription?.plan);
-  return {
-    ...subscription,
-    tier,
-    tierLabel: getTierLabel(tier),
-    entitlements: getEntitlements(tier),
-  };
+  return buildSubscriptionSummary(subscription, {
+    elevatedPlanTiersEnabled: ELEVATED_PLAN_TIERS_ENABLED,
+  });
 }
 
 let cachedTenantId = null;
