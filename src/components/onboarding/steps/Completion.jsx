@@ -2,7 +2,17 @@ import { useState } from 'react';
 import { CheckCircle2, LogIn, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 
-export default function Completion({ tenantType, businessName, ownerEmail, ownerPassword, onSwitchToOwner }) {
+export default function Completion({
+  tenantType,
+  businessName,
+  ownerEmail,
+  ownerPassword,
+  onSwitchToOwner,
+  demoProvisioning = false,
+  phoneConnected = true,
+  demoPlanTier = 'elite',
+  demoExpiresInDays = 30,
+}) {
   const { userClaims } = useAuth();
   const [switchingUser, setSwitchingUser] = useState(false);
   
@@ -41,11 +51,20 @@ export default function Completion({ tenantType, businessName, ownerEmail, owner
           <CheckCircle2 size={56} className="text-white" />
         </div>
         
-        <h3 className="text-3xl font-bold text-gray-900 mb-2">🎉 Setup Complete!</h3>
+        <h3 className="text-3xl font-bold text-gray-900 mb-2">
+          {demoProvisioning ? '🎉 Demo Tenant Created!' : '🎉 Setup Complete!'}
+        </h3>
         <p className="text-lg text-gray-600 mb-1">
           {businessName ? `${businessName} is` : 'Your business is'} ready to go
         </p>
-        <p className="text-sm text-gray-500">Your AI assistant is live and taking calls</p>
+        <p className="text-sm text-gray-500">
+          {phoneConnected ? 'Your AI assistant is live and taking calls' : 'Portal access is ready; phone assignment is pending'}
+        </p>
+        {demoProvisioning && (
+          <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
+            {demoPlanTier} demo · {demoExpiresInDays} day access window · Stripe disabled
+          </p>
+        )}
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
@@ -56,8 +75,12 @@ export default function Completion({ tenantType, businessName, ownerEmail, owner
             <p className="text-xs text-green-700 font-medium">AI Configured</p>
           </div>
           <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-green-600 mb-1">✓</div>
-            <p className="text-xs text-green-700 font-medium">Phone Connected</p>
+            <div className={`text-3xl font-bold mb-1 ${phoneConnected ? 'text-green-600' : 'text-amber-600'}`}>
+              {phoneConnected ? '✓' : '—'}
+            </div>
+            <p className={`text-xs font-medium ${phoneConnected ? 'text-green-700' : 'text-amber-700'}`}>
+              {phoneConnected ? 'Phone Connected' : 'Phone Deferred'}
+            </p>
           </div>
           <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-green-600 mb-1">✓</div>

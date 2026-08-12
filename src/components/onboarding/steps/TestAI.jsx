@@ -1,6 +1,6 @@
 import { Phone, QrCode, ExternalLink, CheckCircle2 } from 'lucide-react';
 
-export default function TestAI({ phoneNumber }) {
+export default function TestAI({ phoneNumber, phoneDeferred = false }) {
   // Generate a simple QR code URL (using a QR code service)
   const qrCodeUrl = phoneNumber 
     ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`tel:${phoneNumber}`)}`
@@ -15,6 +15,20 @@ export default function TestAI({ phoneNumber }) {
     }
     return phone;
   };
+
+  if (!phoneNumber && phoneDeferred) {
+    return (
+      <div className="py-8">
+        <div className="mx-auto max-w-2xl rounded-2xl border-2 border-amber-300 bg-amber-50 p-8 text-center">
+          <Phone size={48} className="mx-auto mb-4 text-amber-600" />
+          <h3 className="text-2xl font-bold text-gray-900">Phone test deferred</h3>
+          <p className="mt-3 text-gray-700">
+            The demo portal and selected feature tier are ready. Attach an unassigned allowlisted QA number from the admin workflow before testing calls.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-4">

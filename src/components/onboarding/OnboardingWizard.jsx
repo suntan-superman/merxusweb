@@ -45,6 +45,7 @@ export default function OnboardingWizard({
   skipEmailValidation = false,
   disableLocalRestore = false,
   skipPayment = false,
+  demoProvisioning = false,
   resumeStep = null,
   forcePaymentComplete = false,
   paymentSessionId = null,
@@ -107,6 +108,10 @@ export default function OnboardingWizard({
     paymentCompleted: skipPayment ? true : false,
     paymentSessionId: null,
     promoCode: '',
+    demoPlanTier: normalizePlanTier(selectedPlan || 'elite'),
+    demoExpiresInDays: 30,
+    demoReason: 'Internal Merxus demonstration and QA',
+    demoPhoneDeferred: false,
   });
 
   const resolvedTenantId =
@@ -404,10 +409,21 @@ export default function OnboardingWizard({
       return !!wizardData.aiVoice;
     }
     if (currentStep === 5) {
+      if (demoProvisioning) {
+        const days = Number(wizardData.demoExpiresInDays);
+        return (
+          ['basic', 'professional', 'elite'].includes(wizardData.demoPlanTier) &&
+          Number.isInteger(days) &&
+          days >= 1 &&
+          days <= 365 &&
+          !!wizardData.demoReason?.trim()
+        );
+      }
       if (skipPayment) return true;
       return !!wizardData.paymentCompleted;
     }
     if (currentStep === 6) {
+      if (demoProvisioning && wizardData.demoPhoneDeferred) return true;
       if (!wizardData.paymentCompleted) {
         return false;
       }
@@ -446,8 +462,10 @@ export default function OnboardingWizard({
         if (!emailIsAvailable) return;
       }
 
-      // Special handling: Save data before payment step
-      if (currentStep === 4 && !dataSaved && onComplete) {
+      // Save customer tenants before payment; save demo tenants after the
+      // administrator has selected the demo tier and expiration.
+      const preSaveStep = demoProvisioning ? 5 : 4;
+      if (currentStep === preSaveStep && !dataSaved && onComplete) {
         console.log('💾 Saving tenant data before payment step...');
         try {
           const saveResult = await onComplete(wizardData, true); // Pass 'isPreSave' flag
@@ -523,7 +541,7 @@ export default function OnboardingWizard({
     'Business Details',
     'AI Voice Selection',
     getStep5Title(),
-    skipPayment ? 'Payment (Skipped)' : 'Payment',
+    demoProvisioning ? 'Demo Access' : skipPayment ? 'Payment (Skipped)' : 'Payment',
     'Twilio Phone Setup',
     'Test Your AI',
     'All Set!',
@@ -660,7 +678,49 @@ export default function OnboardingWizard({
               />
             )}
             {currentStep === 5 && (
-              skipPayment ? (
+              demoProvisioning ? (
+                <div className="space-y-5 py-2">
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-5">
+                    <h3 className="text-xl font-bold text-gray-900">Admin-only demo access</h3>
+                    <p className="mt-2 text-sm text-gray-700">
+                      Stripe customer and subscription creation are disabled. Demo authorization is recorded server-side and audited.
+                    </p>
+                  </div>
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold text-gray-800">Feature tier</span>
+                    <select
+                      value={wizardData.demoPlanTier}
+                      onChange={(event) => updateWizardData({ demoPlanTier: event.target.value })}
+                      className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-green-500 focus:outline-none"
+                    >
+                      <option value="basic">Basic</option>
+                      <option value="professional">Professional</option>
+                      <option value="elite">Elite</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold text-gray-800">Demo access days</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="365"
+                      value={wizardData.demoExpiresInDays}
+                      onChange={(event) => updateWizardData({ demoExpiresInDays: Number(event.target.value) })}
+                      className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-green-500 focus:outline-none"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold text-gray-800">Purpose / audit note</span>
+                    <textarea
+                      rows="3"
+                      maxLength="500"
+                      value={wizardData.demoReason}
+                      onChange={(event) => updateWizardData({ demoReason: event.target.value })}
+                      className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-green-500 focus:outline-none"
+                    />
+                  </label>
+                </div>
+              ) : skipPayment ? (
                 <div className="py-6">
                   <div className="rounded-xl border border-green-200 bg-green-50 p-6">
                     <h3 className="text-xl font-bold text-gray-900">Payment Skipped For Admin Setup</h3>
@@ -685,10 +745,14 @@ export default function OnboardingWizard({
                 onChange={updateWizardData}
                 tenantType={wizardData.tenantType}
                 tenantId={resolvedTenantId}
+                demoProvisioning={demoProvisioning}
               />
             )}
             {currentStep === 7 && (
-              <TestAI phoneNumber={wizardData.twilioPhoneNumber} />
+              <TestAI
+                phoneNumber={wizardData.twilioPhoneNumber}
+                phoneDeferred={demoProvisioning && wizardData.demoPhoneDeferred}
+              />
             )}
             {currentStep === 8 && (
               <Completion
@@ -696,6 +760,10 @@ export default function OnboardingWizard({
                 businessName={wizardData.businessName}
                 ownerEmail={wizardData.email}
                 ownerPassword={wizardData.tempPassword}
+                demoProvisioning={demoProvisioning}
+                phoneConnected={!!wizardData.twilioPhoneNumber}
+                demoPlanTier={wizardData.demoPlanTier}
+                demoExpiresInDays={wizardData.demoExpiresInDays}
                 onSwitchToOwner={() => onSwitchToOwner(wizardData.email, wizardData.tempPassword)}
               />
             )}

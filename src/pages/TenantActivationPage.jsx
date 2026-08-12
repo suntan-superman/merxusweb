@@ -47,6 +47,7 @@ export default function TenantActivationPage() {
   const tenantId = status?.tenantId || userClaims?.tenantId || userClaims?.restaurantId || userClaims?.officeId || userClaims?.agentId || '';
 
   const isReleaseTestBillingBypass = status?.billing?.releaseTestBypass === true;
+  const isDemoBillingBypass = status?.billing?.demoBypass === true;
   const isBillingComplete = Boolean(status?.billing?.complete || activationData.paymentCompleted);
   const isPhoneComplete = Boolean(status?.phone?.complete || activationData.twilioPhoneNumber);
   const isComplete = isBillingComplete && isPhoneComplete;
@@ -160,8 +161,10 @@ export default function TenantActivationPage() {
                 <CreditCard className="mb-3 text-green-300" size={24} />
                 <h2 className="text-lg font-semibold text-white">Billing</h2>
                 <p className="mt-1 text-sm text-slate-400">
-                  {isReleaseTestBillingBypass
-                    ? 'Release-test billing bypass is active. Stripe checkout is disabled for this QA tenant.'
+                  {isDemoBillingBypass
+                    ? 'Admin-authorized demo access is active. Stripe checkout is disabled for this demo tenant.'
+                    : isReleaseTestBillingBypass
+                      ? 'Release-test billing bypass is active. Stripe checkout is disabled for this QA tenant.'
                     : isBillingComplete
                       ? 'Payment is connected.'
                       : 'Connect Stripe checkout for this tenant.'}

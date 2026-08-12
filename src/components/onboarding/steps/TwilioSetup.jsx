@@ -22,7 +22,7 @@ function isReservedTwilioPhoneNumber(value) {
   return RESERVED_TWILIO_PHONE_NUMBERS.has(normalizePhoneNumber(value));
 }
 
-export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
+export default function TwilioSetup({ data, onChange, tenantType, tenantId, demoProvisioning = false }) {
   const [mode, setMode] = useState('auto'); // 'auto' or 'manual'
   const [areaCode, setAreaCode] = useState('');
   const [searchingNumbers, setSearchingNumbers] = useState(false);
@@ -74,7 +74,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
       try {
         setLoadingUnassigned(true);
         console.log('🔍 Fetching unassigned numbers from Twilio...');
-        const result = await listUnassignedNumbers();
+        const result = await listUnassignedNumbers(tenantId);
         console.log('📞 Unassigned numbers:', result);
         setUnassignedNumbers((result.numbers || []).filter((item) => !isReservedTwilioPhoneNumber(item.phoneNumber)));
       } catch (error) {
@@ -86,7 +86,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     };
 
     fetchUnassigned();
-  }, [paymentCompleted]);
+  }, [paymentCompleted, tenantId]);
 
   const handleChange = (field, value) => {
     onChange({ [field]: value });
@@ -139,6 +139,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
         twilioPhoneSid: assignedSid,
         twilioAccountSid: 'auto_provisioned',
         twilioAuthToken: 'auto_provisioned',
+        demoPhoneDeferred: false,
       });
 
       setPurchasedSuccess(true);
@@ -151,7 +152,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
       }
     } catch (error) {
       console.error('Assignment error:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to assign number';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to assign number';
       toast.error(errorMessage);
     } finally {
       setPurchasingNumber(null);
@@ -190,7 +191,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
       }
     } catch (error) {
       console.error('Search error:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Unknown error';
       
       if (errorMessage.includes('Twilio credentials not configured')) {
         toast.error('⚠️ Twilio not configured. Please contact support to enable automatic provisioning.');
@@ -243,7 +244,11 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
     <div className="py-4">
       <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-gray-900 mb-2">Get Your AI Phone Number</h3>
-        <p className="text-gray-600">Search and select a phone number instantly - no Twilio account needed!</p>
+        <p className="text-gray-600">
+          {demoProvisioning
+            ? 'Reuse an available Merxus number first, or purchase a new number when needed.'
+            : 'Search and select a phone number instantly - no Twilio account needed!'}
+        </p>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
@@ -263,9 +268,13 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
         {/* Highlight Automatic Mode */}
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 text-center">
           <Sparkles className="w-12 h-12 text-green-600 mx-auto mb-3" />
-          <h4 className="text-lg font-bold text-gray-900 mb-2">✨ Instant Setup - Takes 30 Seconds</h4>
+          <h4 className="text-lg font-bold text-gray-900 mb-2">
+            {demoProvisioning ? 'Admin Demo Number Assignment' : '✨ Instant Setup - Takes 30 Seconds'}
+          </h4>
           <p className="text-gray-700">
-            Choose a number and we'll assign it instantly. Everything is included in your plan!
+            {demoProvisioning
+              ? 'Existing Twilio numbers not associated with an active or paused Merxus account are shown first. If none are suitable, search by area code and purchase a new one.'
+              : "Choose a number and we'll assign it instantly. Everything is included in your plan!"}
           </p>
         </div>
 
@@ -282,8 +291,8 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                 </h4>
                 <p className="text-sm text-gray-600 mb-3">
                   {unassignedNumbers.length === 1 
-                    ? 'This number was purchased but not assigned yet. Want to use it?'
-                    : 'These numbers were purchased but not assigned yet. Select one to use:'}
+                    ? 'This Merxus-owned number is not tied to an active or paused account. Use it before purchasing another number when practical.'
+                    : 'These Merxus-owned numbers are not tied to active or paused accounts. Select one before purchasing another number when practical:'}
                 </p>
                 <div className="space-y-2 mb-3">
                   {unassignedNumbers.map((num) => (
@@ -328,12 +337,30 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
 
         {!data.twilioPhoneNumber && !loadingUnassigned && unassignedNumbers.length === 0 && (
           <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 text-center">
-            <p className="text-sm text-gray-600">No pre-purchased numbers found. Search by area code below.</p>
+            <p className="text-sm text-gray-600">
+              {demoProvisioning
+                ? 'No reusable Merxus-owned numbers are currently available. Search by area code below to purchase one.'
+                : 'No pre-purchased numbers found. Search by area code below.'}
+            </p>
+            {demoProvisioning && (
+              <button
+                type="button"
+                onClick={() => onChange({ demoPhoneDeferred: true })}
+                className="mt-3 rounded-lg border border-slate-400 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                Continue without a phone number
+              </button>
+            )}
+            {demoProvisioning && data.demoPhoneDeferred && (
+              <p className="mt-2 text-xs font-medium text-amber-700">
+                Phone assignment is deferred. The demo portal will work, but calls cannot be tested yet.
+              </p>
+            )}
           </div>
         )}
 
         {/* Mode Tabs */}
-        <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+        {!demoProvisioning && <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
           <button
             onClick={() => setMode('auto')}
             className={`flex-1 py-2.5 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2 ${
@@ -356,7 +383,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
             <Key size={18} />
             <span>I Have My Own Twilio</span>
           </button>
-        </div>
+        </div>}
 
         {/* Automatic Mode */}
         {mode === 'auto' && (
@@ -368,10 +395,12 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                   <div className="mb-4">
                     <h4 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
                       <Phone size={20} className="text-green-600" />
-                      Step 1: Enter Your Area Code
+                      {demoProvisioning ? 'Fallback: Purchase a New Number' : 'Step 1: Enter Your Area Code'}
                     </h4>
                     <p className="text-sm text-gray-600">
-                      We'll find available phone numbers in your area. Popular: 212 (NYC), 310 (LA), 312 (Chicago), 415 (SF), 661 (Bakersfield)
+                      {demoProvisioning
+                        ? 'Use this only when none of the reusable numbers above are suitable. Enter an area code to search Twilio.'
+                        : "We'll find available phone numbers in your area. Popular: 212 (NYC), 310 (LA), 312 (Chicago), 415 (SF), 661 (Bakersfield)"}
                     </p>
                   </div>
 
@@ -411,7 +440,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-gray-900 flex items-center gap-2">
                         <Phone size={20} className="text-green-600" />
-                        Step 2: Choose Your Number ({availableNumbers.length} available)
+                        {demoProvisioning ? 'Choose a Number to Purchase' : 'Step 2: Choose Your Number'} ({availableNumbers.length} available)
                       </h4>
                     </div>
                     <div className="max-h-96 overflow-y-auto space-y-3 pr-2">
@@ -446,7 +475,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
                             ) : (
                               <>
                                 <ShoppingCart size={18} />
-                                Assign
+                                {demoProvisioning ? 'Purchase & Assign' : 'Assign'}
                               </>
                             )}
                           </button>
@@ -472,7 +501,7 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId }) {
         )}
 
         {/* Manual Mode */}
-        {mode === 'manual' && (
+        {!demoProvisioning && mode === 'manual' && (
           <>
             <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
               <div className="flex items-start gap-3">

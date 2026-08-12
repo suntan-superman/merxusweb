@@ -34,6 +34,7 @@ import InstagramLandingPage from './pages/InstagramLandingPage';
 import SimpleOnboardingWizard from './pages/SimpleOnboardingWizard';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import TenantActivationPage from './pages/TenantActivationPage';
+import DemoAccessExpiredPage from './pages/DemoAccessExpiredPage';
 import MetaEventTestPage from './pages/MetaEventTestPage';
 import OfficeLandingPage from './pages/OfficeLandingPage';
 import RealEstateLandingPage from './pages/RealEstateLandingPage';
@@ -394,6 +395,14 @@ function App() {
             element={
               <ProtectedRoute requireAuth>
                 <TenantActivationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/demo-access-expired"
+            element={
+              <ProtectedRoute requireAuth>
+                <DemoAccessExpiredPage />
               </ProtectedRoute>
             }
           />

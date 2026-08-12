@@ -13,8 +13,10 @@ export async function searchAvailableNumbers(areaCode, tenantId) {
 /**
  * List all unassigned Twilio numbers
  */
-export async function listUnassignedNumbers() {
-  const response = await apiClient.get('/twilio-provisioning/list');
+export async function listUnassignedNumbers(tenantId) {
+  const response = await apiClient.get('/twilio-provisioning/list', {
+    params: tenantId ? { tenantId } : undefined,
+  });
   return response.data;
 }
 

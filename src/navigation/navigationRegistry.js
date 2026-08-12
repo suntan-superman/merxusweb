@@ -85,7 +85,7 @@ export const NAV_ITEMS = [
   { id: 'merxus_review_operations', tenantType: 'merxus', groupId: 'core', label: 'Review Health', path: '/merxus/review-operations', icon: 'Star', sortOrder: 75, defaultQuickStart: true },
   { id: 'merxus_readiness', tenantType: 'merxus', groupId: 'core', label: 'Readiness', path: '/merxus/production-readiness', icon: 'FlaskConical', sortOrder: 80, defaultQuickStart: true },
   { id: 'merxus_team_access', tenantType: 'merxus', groupId: 'admin', label: 'Teams & Access', path: '/merxus/users', icon: 'ShieldCheck', sortOrder: 10, allowedRoles: ['super_admin'], defaultQuickStart: true },
-  { id: 'merxus_setup_wizard', tenantType: 'merxus', groupId: 'admin', label: 'Setup Wizard', path: '/merxus/setup-wizard', icon: 'Rocket', sortOrder: 20, allowedRoles: ['super_admin', 'merxus_admin'] },
+  { id: 'merxus_setup_wizard', tenantType: 'merxus', groupId: 'admin', label: 'Demo Tenant Setup', path: '/merxus/setup-wizard', icon: 'Rocket', sortOrder: 20, allowedRoles: ['super_admin', 'merxus_admin'] },
   { id: 'merxus_system_settings', tenantType: 'merxus', groupId: 'admin', label: 'System Settings', path: '/merxus/settings', icon: 'Settings', sortOrder: 30, allowedRoles: ['merxus_admin'] },
 ];
 

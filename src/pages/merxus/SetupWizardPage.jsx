@@ -67,7 +67,7 @@ export default function SetupWizardPage() {
       
       switch (wizardData.tenantType) {
         case 'restaurant':
-          endpoint = '/onboarding/restaurant';
+          endpoint = '/admin/demo-tenants/restaurant';
           payload = {
             restaurant: {
               name: wizardData.businessName,
@@ -98,7 +98,7 @@ export default function SetupWizardPage() {
           
         case 'voice':
         case 'general':
-          endpoint = '/onboarding/office';
+          endpoint = '/admin/demo-tenants/office';
           payload = {
             office: {
               name: wizardData.businessName,
@@ -126,7 +126,7 @@ export default function SetupWizardPage() {
           break;
           
         case 'real_estate':
-          endpoint = '/onboarding/agent';
+          endpoint = '/admin/demo-tenants/real-estate';
           
           console.log('🎤 [SetupWizardPage] BEFORE creating payload:');
           console.log('  wizardData.aiVoice:', wizardData.aiVoice);
@@ -165,6 +165,16 @@ export default function SetupWizardPage() {
         default:
           throw new Error(`Unsupported tenant type: ${wizardData.tenantType}`);
       }
+
+      payload = {
+        ...payload,
+        provisioningMode: 'demo',
+        demo: {
+          planTier: wizardData.demoPlanTier,
+          expiresInDays: Number(wizardData.demoExpiresInDays),
+          reason: wizardData.demoReason,
+        },
+      };
       
       console.log('Creating tenant via API:', endpoint, payload);
       
@@ -298,6 +308,9 @@ export default function SetupWizardPage() {
           tenantType={null}
           tenantCreated={tenantCreated}
           skipPayment={true}
+          demoProvisioning={true}
+          selectedPlan="elite"
+          disableLocalRestore={true}
         />
       )}
     </div>

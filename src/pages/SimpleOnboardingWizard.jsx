@@ -139,7 +139,7 @@ export default function SimpleOnboardingWizard() {
     const loadUnassigned = async () => {
       setLoadingUnassigned(true);
       try {
-        const result = await listUnassignedNumbers();
+        const result = await listUnassignedNumbers(tenantId);
         setUnassignedNumbers(result?.numbers || []);
       } catch (error) {
         console.error("Failed to load unassigned numbers:", error);
@@ -150,7 +150,7 @@ export default function SimpleOnboardingWizard() {
     };
 
     loadUnassigned();
-  }, [loading, step, user]);
+  }, [loading, step, tenantId, user]);
 
   const steps = useMemo(
     () => [

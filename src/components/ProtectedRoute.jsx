@@ -146,6 +146,16 @@ export default function ProtectedRoute({
     return <Navigate to="/tenant-activation" state={{ from: location }} replace />;
   }
 
+  const demoExpiresAt = userClaims?.demoExpiresAt ? new Date(userClaims.demoExpiresAt) : null;
+  const demoAccessExpired =
+    userClaims?.demoTenant === true &&
+    demoExpiresAt &&
+    Number.isFinite(demoExpiresAt.getTime()) &&
+    demoExpiresAt.getTime() <= Date.now();
+  if (requireAuth && user && demoAccessExpired && location.pathname !== '/demo-access-expired') {
+    return <Navigate to="/demo-access-expired" replace />;
+  }
+
   if (
     requireAuth &&
     user &&
