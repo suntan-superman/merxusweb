@@ -1,6 +1,11 @@
 import { useState } from 'react';
-import ConfirmationModal from '../common/ConfirmationModal';
 import { apiClient } from '../../api/client';
+import { fetchMenu } from '../../api/menu';
+import {
+  parseMenuCsv,
+  toImportableMenuItems,
+  validateMenuItems,
+} from '../../utils/menuImport';
 
 export default function MenuImport({ onImportComplete, onClose }) {
   const [file, setFile] = useState(null);
@@ -12,7 +17,6 @@ export default function MenuImport({ onImportComplete, onClose }) {
   const [validation, setValidation] = useState(null); // { errors: [], warnings: [], valid: count }
   const [showModeConfirmation, setShowModeConfirmation] = useState(false);
   const [existingItemCount, setExistingItemCount] = useState(0);
-  const [importMode, setImportMode] = useState('add'); // 'add' or 'replace'
   const [parsedItems, setParsedItems] = useState(null);
 
   function handleFileSelect(e) {
@@ -42,7 +46,7 @@ export default function MenuImport({ onImportComplete, onClose }) {
 
       // Validate menu items
       try {
-        const items = parseCSV(text);
+        const items = parseMenuCsv(text);
         const validationResult = validateMenuItems(items);
         setValidation(validationResult);
       } catch (err) {
@@ -50,202 +54,6 @@ export default function MenuImport({ onImportComplete, onClose }) {
       }
     };
     reader.readAsText(selectedFile);
-  }
-
-  function validateMenuItems(items) {
-    const errors = [];
-    const warnings = [];
-    let validCount = 0;
-
-    items.forEach((item, index) => {
-      const rowNum = index + 2; // +2 for header and 0-index
-
-      // Required field errors
-      if (!item.name || !item.name.trim()) {
-        errors.push(`Row ${rowNum}: Missing required field 'Name'`);
-      }
-      if (!item.price || item.price === 0) {
-        errors.push(`Row ${rowNum}: Missing or invalid 'Price'`);
-      }
-      if (!item.category || !item.category.trim()) {
-        errors.push(`Row ${rowNum}: Missing required field 'Category'`);
-      }
-
-      // Warnings for recommended fields
-      if (!item.description || !item.description.trim()) {
-        warnings.push(`Row ${rowNum}: Missing description for "${item.name || 'item'}"`);
-      }
-
-      // Side items validation
-      if (item.includedSides && item.includedSides.length > 0) {
-        if (!item.sideCount) {
-          warnings.push(`Row ${rowNum}: "${item.name}" has included sides but no 'side count' in tags (expected format: "one side" or "two sides")`);
-        }
-      }
-
-      if (item.extraChargeSides && Object.keys(item.extraChargeSides).length > 0) {
-        // Validate that extra charge sides have valid prices
-        Object.entries(item.extraChargeSides).forEach(([sideName, price]) => {
-          if (isNaN(price) || price < 0) {
-            errors.push(`Row ${rowNum}: Invalid price for upcharge side "${sideName}" in "${item.name}"`);
-          }
-        });
-      }
-
-      // Price validation
-      if (item.price && item.price < 0) {
-        errors.push(`Row ${rowNum}: Price cannot be negative for "${item.name || 'item'}"`);
-      }
-      if (item.price && item.price > 10000) {
-        warnings.push(`Row ${rowNum}: Unusually high price ($${item.price}) for "${item.name || 'item'}"`);
-      }
-
-      // Count valid rows (has required fields)
-      if (item.name && item.price && item.category) {
-        validCount++;
-      }
-    });
-
-    return {
-      errors,
-      warnings: warnings.slice(0, 10), // Limit warnings to first 10
-      validCount,
-      totalCount: items.length,
-      hasErrors: errors.length > 0,
-      hasWarnings: warnings.length > 0,
-    };
-  }
-
-  function parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      const nextChar = line[i + 1];
-
-      if (char === '"') {
-        if (inQuotes && nextChar === '"') {
-          // Escaped quote
-          current += '"';
-          i++; // Skip next quote
-        } else {
-          // Toggle quote state
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        // End of field
-        result.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-
-    // Add last field
-    result.push(current.trim());
-    return result;
-  }
-
-  function parseCSV(text) {
-    const lines = text.split('\n').filter((line) => line.trim());
-    if (lines.length < 2) {
-      throw new Error('CSV file must have at least a header row and one data row');
-    }
-
-    const headers = parseCSVLine(lines[0]).map((h) => h.trim().toLowerCase());
-    
-    // Expected headers: name, description, price, category, isAvailable, tags, includedSides, extraChargeSides
-    const requiredHeaders = ['name', 'price', 'category'];
-    const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
-    if (missingHeaders.length > 0) {
-      throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
-    }
-
-    const items = [];
-    for (let i = 1; i < lines.length; i++) {
-      const values = parseCSVLine(lines[i]);
-      if (values.length < headers.length) continue; // Skip incomplete rows
-
-      const item = {};
-      headers.forEach((header, index) => {
-        const value = values[index] || '';
-        
-        switch (header) {
-          case 'name':
-            item.name = value;
-            break;
-          case 'description':
-            item.description = value;
-            break;
-          case 'price':
-            item.price = parseFloat(value) || 0;
-            break;
-          case 'category':
-            item.category = value;
-            break;
-          case 'isavailable':
-          case 'available':
-            item.isAvailable = value.toLowerCase() === 'true' || value.toLowerCase() === 'yes' || value === '1';
-            break;
-          case 'tags':
-            item.tags = value ? value.split(';').map((t) => t.trim()).filter(Boolean) : [];
-            break;
-          case 'includedsides':
-            // Parse included sides: semicolon-separated list
-            // Also extract number of sides from tags field
-            item.includedSides = value ? value.split(';').map((s) => s.trim()).filter(Boolean) : [];
-            break;
-          case 'extrachargesides':
-            // Parse extra charge sides: pipe-separated format "SideName:$price"
-            // Result: { "SideName": price, ... }
-            item.extraChargeSides = {};
-            if (value) {
-              const pairs = value.split(';').map((p) => p.trim());
-              pairs.forEach((pair) => {
-                const [sideName, priceStr] = pair.split(':');
-                if (sideName && priceStr) {
-                  const price = parseFloat(priceStr.replace('$', ''));
-                  if (!isNaN(price)) {
-                    item.extraChargeSides[sideName.trim()] = price;
-                  }
-                }
-              });
-            }
-            break;
-        }
-      });
-
-      // Validate required fields
-      if (item.name && item.price && item.category) {
-        // Set defaults
-        if (item.isAvailable === undefined) item.isAvailable = true;
-        if (!item.description) item.description = '';
-        if (!item.tags) item.tags = [];
-        if (!item.includedSides) item.includedSides = [];
-        if (!item.extraChargeSides) item.extraChargeSides = {};
-        
-        // Extract side count from tags (e.g., "two sides", "one side", "2 sides")
-        // Look for patterns like "one side", "two sides", "1 side", "2 sides"
-        const sideCountPatterns = /^(one|two|three|1|2|3)\s+sides?$/i;
-        const sideCountTag = item.tags?.find(tag => sideCountPatterns.test(tag));
-        
-        if (sideCountTag) {
-          // Convert word to number: "one" -> 1, "two" -> 2, etc.
-          const wordToNum = { 'one': 1, 'two': 2, 'three': 3 };
-          const match = sideCountTag.match(/^(one|two|three|1|2|3)/i);
-          if (match) {
-            const countStr = match[1].toLowerCase();
-            item.sideCount = wordToNum[countStr] || parseInt(countStr);
-          }
-        }
-        
-        items.push(item);
-      }
-    }
-
-    return items;
   }
 
   async function handleImport() {
@@ -260,7 +68,15 @@ export default function MenuImport({ onImportComplete, onClose }) {
 
     try {
       const text = await file.text();
-      const items = parseCSV(text);
+      const parsed = parseMenuCsv(text);
+      const validationResult = validateMenuItems(parsed);
+      setValidation(validationResult);
+
+      if (validationResult.hasErrors) {
+        throw new Error('Fix the CSV validation errors before importing');
+      }
+
+      const items = toImportableMenuItems(parsed);
 
       if (items.length === 0) {
         throw new Error('No valid menu items found in CSV file');
@@ -269,23 +85,18 @@ export default function MenuImport({ onImportComplete, onClose }) {
       // Store parsed items for later use
       setParsedItems(items);
 
-      // Check if there are existing menu items
-      try {
-        // Try to fetch existing items count
-        // For now, assume we might have existing items and show the confirmation dialog
-        // The backend will handle this, but we should ask user preference
-        setExistingItemCount(Math.random() > 0.5 ? 15 : 0); // Placeholder - backend check would be better
-        
-        // If this is a new import, just proceed
-        // Otherwise, show confirmation dialog
+      const existingItems = await fetchMenu();
+      const count = Array.isArray(existingItems) ? existingItems.length : 0;
+      setExistingItemCount(count);
+
+      if (count > 0) {
         setShowModeConfirmation(true);
-      } catch {
-        // If we can't check, just proceed with 'add' mode
+      } else {
         await performImport(items, 'add');
       }
     } catch (err) {
       console.error('Import error:', err);
-      setError(err.message || 'Failed to import menu items');
+      setError(err.response?.data?.error || err.message || 'Failed to import menu items');
     } finally {
       setImporting(false);
     }
@@ -333,14 +144,13 @@ export default function MenuImport({ onImportComplete, onClose }) {
       }
     } catch (err) {
       console.error('Import error:', err);
-      setError(err.message || 'Failed to import menu items');
+      setError(err.response?.data?.error || err.message || 'Failed to import menu items');
     } finally {
       setImporting(false);
     }
   }
 
   function handleModeConfirmation(mode) {
-    setImportMode(mode);
     setShowModeConfirmation(false);
     if (parsedItems) {
       performImport(parsedItems, mode);
@@ -465,7 +275,7 @@ export default function MenuImport({ onImportComplete, onClose }) {
                 
                 {!validation.hasErrors && validation.hasWarnings && (
                   <p className="text-sm text-yellow-700">
-                    ⚠️ {validation.warnings.length} warning(s). You can proceed, but some items may be incomplete.
+                    ⚠️ {validation.warningCount} warning(s). You can proceed, but some items may be incomplete.
                   </p>
                 )}
                 
@@ -498,7 +308,7 @@ export default function MenuImport({ onImportComplete, onClose }) {
                 <div className="bg-white border-2 border-yellow-200 rounded-lg p-4">
                   <h5 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
                     <span className="text-yellow-600">⚠️</span>
-                    Warnings ({validation.warnings.length})
+                    Warnings ({validation.warningCount})
                   </h5>
                   <div className="max-h-32 overflow-y-auto space-y-1">
                     {validation.warnings.map((warning, idx) => (
@@ -508,7 +318,7 @@ export default function MenuImport({ onImportComplete, onClose }) {
                     ))}
                   </div>
                   <p className="text-xs text-yellow-600 mt-2">
-                    These are optional fields. You can still import, but menu items may be incomplete.
+                    Showing up to 50 warnings. You can still import, but menu items may be incomplete.
                   </p>
                 </div>
               )}
@@ -559,6 +369,9 @@ export default function MenuImport({ onImportComplete, onClose }) {
                 </h3>
                 <p className="text-sm text-gray-600 mb-6">
                   You're about to import {parsedItems?.length || 0} menu items. What would you like to do?
+                </p>
+                <p className="text-sm text-gray-600 mb-6">
+                  The current menu contains {existingItemCount} item{existingItemCount === 1 ? '' : 's'}.
                 </p>
                 
                 <div className="space-y-3">
