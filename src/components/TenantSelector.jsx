@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { getBillingPricing } from '../api/billing';
+import { formatBillingAmount, getPlanPricing } from '../utils/billingPricing';
 
 const TENANT_OPTIONS = [
   {
@@ -9,7 +11,6 @@ const TENANT_OPTIONS = [
     icon: '📞',
     intro: 'Best for offices and small businesses that need a smart receptionist and call routing.',
     audience: 'Home services, clinics, law offices, contractors, and local businesses',
-    price: 'Starts at $79/month',
     bullets: [
       'Smart routing, voicemail, and receptionist coverage',
       'Appointment, quote, and service-request capture',
@@ -24,7 +25,6 @@ const TENANT_OPTIONS = [
     icon: '🏡',
     intro: 'Best for real-estate teams that need listing inquiries, showing requests, and lead qualification.',
     audience: 'Individual agents, broker teams, and real-estate offices',
-    price: 'Starts at $79/month',
     bullets: [
       'Listing inquiries, showing requests, and lead capture',
       'Property-aware follow-up and customer memory',
@@ -39,7 +39,6 @@ const TENANT_OPTIONS = [
     icon: '🍽️',
     intro: 'Best for restaurants that need orders, reservations, and after-hours call coverage.',
     audience: 'Quick-service, full-service, multi-location, and hospitality groups',
-    price: 'Starts at $199/month',
     bullets: [
       'Menu questions, reservations, and order capture',
       '24/7 call answering with staff alerts',
@@ -54,7 +53,7 @@ function buildOnboardingLink(type, queryParams = {}) {
   params.set('type', type);
 
   const hasProvidedPlan = Boolean(queryParams?.plan && String(queryParams.plan).trim().length > 0);
-  if (type === 'voice' && !hasProvidedPlan) {
+  if (!hasProvidedPlan) {
     params.set('plan', 'basic');
   }
 
@@ -73,11 +72,26 @@ export default function TenantSelector({ queryParams = {} }) {
     ? queryParams.type
     : TENANT_OPTIONS[0].type;
   const [selectedType, setSelectedType] = useState(defaultType);
+  const [pricingData, setPricingData] = useState(null);
+  const [pricingError, setPricingError] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getBillingPricing()
+      .then((data) => { if (active) setPricingData(data); })
+      .catch((error) => {
+        console.error('Failed to load tenant pricing:', error);
+        if (active) setPricingError(true);
+      });
+    return () => { active = false; };
+  }, []);
 
   const selectedOption = useMemo(
     () => TENANT_OPTIONS.find((option) => option.type === selectedType) || TENANT_OPTIONS[0],
     [selectedType]
   );
+  const selectedPlan = getPlanPricing(pricingData, selectedType, queryParams?.plan || 'basic');
+  const selectedPrice = formatBillingAmount(selectedPlan?.subscriptionUnitAmount, selectedPlan?.currency);
 
   return (
     <div className="px-4 pb-16 pt-10">
@@ -145,7 +159,7 @@ export default function TenantSelector({ queryParams = {} }) {
                 Plan Snapshot
               </p>
               <p className="mt-4 text-3xl font-bold text-gray-900 dark:text-slate-100">
-                {selectedOption.price}
+                {selectedPrice ? `Starts at ${selectedPrice}/month` : 'Pricing unavailable'}
               </p>
               <p className="mt-3 text-sm text-gray-600 dark:text-slate-300">
                 You can review exact features and pricing before checkout, and you can compare all plans if you need more detail.
@@ -154,6 +168,8 @@ export default function TenantSelector({ queryParams = {} }) {
               <div className="mt-8 space-y-3">
                 <Link
                   to={buildOnboardingLink(selectedOption.type, queryParams)}
+                  aria-disabled={!selectedPrice}
+                  onClick={(event) => { if (!selectedPrice) event.preventDefault(); }}
                   className="inline-flex w-full items-center justify-center rounded-xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
                 >
                   Continue with {selectedOption.label}
@@ -165,6 +181,12 @@ export default function TenantSelector({ queryParams = {} }) {
                   Compare plans
                 </Link>
               </div>
+
+              {pricingError && (
+                <p className="mt-3 text-sm font-semibold text-amber-700">
+                  Current Stripe pricing could not be verified. Reload before continuing.
+                </p>
+              )}
 
               <div className="mt-8 rounded-2xl border border-white/80 bg-white/80 px-5 py-4 dark:border-slate-700 dark:bg-slate-900/80">
                 <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">

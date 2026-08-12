@@ -11,6 +11,11 @@ const TENANT_SECTIONS = [
   { key: 'real_estate', label: 'Real Estate' },
   { key: 'restaurant', label: 'Restaurant' },
 ];
+const PLAN_TIERS = [
+  { key: 'basic', label: 'Basic' },
+  { key: 'professional', label: 'Pro' },
+  { key: 'elite', label: 'Elite' },
+];
 
 export default function SystemSettingsPage() {
   const [settings, setSettings] = useState(null);
@@ -98,6 +103,25 @@ export default function SystemSettingsPage() {
         [tenantType]: {
           ...(current?.tenants?.[tenantType] || {}),
           [field]: value,
+        },
+      },
+    }));
+  }
+
+  function updatePlanPriceField(tenantType, tier, field, value) {
+    setBillingConfig((current) => ({
+      ...current,
+      tenants: {
+        ...(current?.tenants || {}),
+        [tenantType]: {
+          ...(current?.tenants?.[tenantType] || {}),
+          plans: {
+            ...(current?.tenants?.[tenantType]?.plans || {}),
+            [tier]: {
+              ...(current?.tenants?.[tenantType]?.plans?.[tier] || {}),
+              [field]: value,
+            },
+          },
         },
       },
     }));
@@ -195,31 +219,34 @@ export default function SystemSettingsPage() {
           {TENANT_SECTIONS.map((section) => (
             <div key={section.key} className="p-4 border border-gray-200 rounded-lg">
               <h4 className="mb-3 text-base font-semibold text-gray-900">{section.label}</h4>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Onboarding Price ID
-                  </label>
-                  <input
-                    type="text"
-                    value={billingConfig?.tenants?.[section.key]?.onboardingPriceId || ''}
-                    onChange={(e) => updateBillingField(section.key, 'onboardingPriceId', e.target.value.trim())}
-                    className="w-full px-4 py-2 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="price_..."
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Subscription Price ID
-                  </label>
-                  <input
-                    type="text"
-                    value={billingConfig?.tenants?.[section.key]?.subscriptionPriceId || ''}
-                    onChange={(e) => updateBillingField(section.key, 'subscriptionPriceId', e.target.value.trim())}
-                    className="w-full px-4 py-2 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="price_..."
-                  />
-                </div>
+              <div className="space-y-4">
+                {PLAN_TIERS.map((tier) => (
+                  <div key={tier.key} className="rounded-lg border border-gray-200 p-3">
+                    <h5 className="mb-2 text-sm font-semibold text-gray-900">{tier.label}</h5>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Onboarding Price ID</label>
+                        <input
+                          type="text"
+                          value={billingConfig?.tenants?.[section.key]?.plans?.[tier.key]?.onboardingPriceId || ''}
+                          onChange={(e) => updatePlanPriceField(section.key, tier.key, 'onboardingPriceId', e.target.value.trim())}
+                          className="w-full px-4 py-2 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="price_..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">Subscription Price ID</label>
+                        <input
+                          type="text"
+                          value={billingConfig?.tenants?.[section.key]?.plans?.[tier.key]?.subscriptionPriceId || ''}
+                          onChange={(e) => updatePlanPriceField(section.key, tier.key, 'subscriptionPriceId', e.target.value.trim())}
+                          className="w-full px-4 py-2 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="price_..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="mt-3">
                 <label className="inline-flex items-center gap-2 text-sm text-gray-700">
@@ -245,14 +272,14 @@ export default function SystemSettingsPage() {
               </span>
             </div>
             <p className="text-sm text-amber-900">
-              $75 for 30 minutes beyond onboarding. The exported Stripe price is metered and recurs daily, so it must not be used for checkout until replaced with a one-time price.
+              Pricing is read from Stripe. The exported price is metered and recurs daily, so it must not be used for checkout until replaced with a one-time price.
             </p>
             <div className="grid grid-cols-1 gap-2 mt-1 text-xs md:grid-cols-2">
               <p className="font-mono text-amber-950">
-                Product: {billingConfig?.addOns?.trainingSession?.productId || 'prod_V2noFvsZlupMU6'}
+                Product: {billingConfig?.addOns?.trainingSession?.productId || 'Not configured'}
               </p>
               <p className="font-mono text-amber-950">
-                Unsafe price: {billingConfig?.addOns?.trainingSession?.priceId || 'price_1U2iD01P3zfcOCVWjOA5lm5w'}
+                Unsafe price: {billingConfig?.addOns?.trainingSession?.priceId || 'Not configured'}
               </p>
             </div>
           </div>

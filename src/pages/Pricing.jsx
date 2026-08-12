@@ -2,18 +2,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getBillingPricing } from '../api/billing';
-
-const DISPLAY_PRICING = {
-  voice: {
-    basic: { price: '$49', setupFee: '$49' },
-  },
-  real_estate: {
-    basic: { price: '$49', setupFee: '$49' },
-  },
-  restaurant: {
-    basic: { price: '$299', setupFee: '$499' },
-  },
-};
+import { formatBillingAmount, getPricingTenantKey, normalizePlanTier } from '../utils/billingPricing';
 
 export default function Pricing() {
   const { user } = useAuth();
@@ -26,15 +15,18 @@ export default function Pricing() {
   const [selectedTenantType, setSelectedTenantType] = useState(initialTenantType);
   const [pricingData, setPricingData] = useState(null);
   const [pricingLoading, setPricingLoading] = useState(true);
+  const [pricingError, setPricingError] = useState('');
 
   useEffect(() => {
     const loadPricing = async () => {
       try {
         setPricingLoading(true);
+        setPricingError('');
         const data = await getBillingPricing();
         setPricingData(data);
       } catch (error) {
         console.error('Failed to load pricing:', error);
+        setPricingError('Current pricing is temporarily unavailable. Please reload to try again.');
       } finally {
         setPricingLoading(false);
       }
@@ -54,120 +46,18 @@ export default function Pricing() {
     setSearchParams({ type: tenantType }, { replace: true });
   };
 
-  const formatMoney = (amount, currency = 'usd') => {
-    if (amount === null || amount === undefined) return null;
-    try {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currency.toUpperCase(),
-      }).format(amount / 100);
-    } catch {
-      return `$${(amount / 100).toFixed(2)}`;
-    }
-  };
-
-  const getDynamicPrice = (plan) => {
-    const pricingKey = plan.tenantType === 'voice' ? 'office' : plan.tenantType;
-    const tierPricing = pricingData?.displayPlans?.[pricingKey]?.find((item) => item.tier === plan.tier);
-    const amount = tierPricing?.subscriptionUnitAmount;
-    const currency = tierPricing?.currency;
-    return formatMoney(amount, currency) || plan.price;
-  };
-
-  const getDynamicSetupFee = (plan) => {
-    const pricingKey = plan.tenantType === 'voice' ? 'office' : plan.tenantType;
-    const tierPricing = pricingData?.displayPlans?.[pricingKey]?.find((item) => item.tier === plan.tier);
-    const amount = tierPricing?.onboardingUnitAmount;
-    const currency = tierPricing?.currency;
-    return formatMoney(amount, currency) || plan.setupFee;
-  };
-
-  // Stripe currently has one active billable offering for each tenant type.
-  const realEstatePlans = [
-    {
-      name: 'Merxus Real Estate',
-      tier: 'basic',
-      price: DISPLAY_PRICING.real_estate.basic.price,
-      period: '/month',
-      setupFee: DISPLAY_PRICING.real_estate.basic.setupFee,
-      description: 'AI call handling and lead capture for real estate professionals',
-      features: [
-        'Merxus AI Assistant',
-        '1 phone number',
-        'Standard support',
-        'Call routing',
-        'Lead capture',
-        'Email notifications',
-      ],
-      popular: false,
-      tenantType: 'real_estate',
-    },
-  ];
-
-  const voicePlans = [
-    {
-      name: 'Merxus Office',
-      tier: 'basic',
-      price: DISPLAY_PRICING.voice.basic.price,
-      period: '/month',
-      setupFee: DISPLAY_PRICING.voice.basic.setupFee,
-      description: 'AI front-desk call handling for offices and professional services',
-      features: [
-        'Merxus AI Assistant',
-        '1 phone number',
-        'Standard support',
-        'Call routing',
-        'Voicemail transcription',
-        'Email notifications',
-      ],
-      popular: false,
-      tenantType: 'voice',
-    },
-  ];
-
-  const restaurantPlans = [
-    {
-      name: 'Merxus Restaurant',
-      tier: 'basic',
-      price: DISPLAY_PRICING.restaurant.basic.price,
-      period: '/month',
-      setupFee: DISPLAY_PRICING.restaurant.basic.setupFee,
-      description: 'AI phone assistance for restaurant orders and reservations',
-      features: [
-        'Merxus AI Assistant with Order and Reservation Taking',
-        '3 phone numbers',
-        'Priority support',
-        'Analytics dashboard',
-        'Order management',
-        'Reservation management',
-        'Customer CRM',
-        'Email & SMS notifications',
-      ],
-      popular: false,
-      tenantType: 'restaurant',
-    },
-  ];
-
-  // Get plans based on selected tenant type
-  const getPlans = () => {
-    switch (selectedTenantType) {
-      case 'real_estate':
-        return realEstatePlans;
-      case 'voice':
-        return voicePlans;
-      case 'restaurant':
-        return restaurantPlans;
-      default:
-        return restaurantPlans; // Default to restaurant
-    }
-  };
-
-  const plans = getPlans();
+  const pricingKey = getPricingTenantKey(selectedTenantType);
+  const plans = (pricingData?.displayPlans?.[pricingKey] || []).map((plan) => ({
+    ...plan,
+    tier: normalizePlanTier(plan.tier),
+    tenantType: selectedTenantType,
+    popular: normalizePlanTier(plan.tier) === 'professional',
+  }));
   const trainingSession = pricingData?.addOns?.trainingSession;
-  const trainingPrice = formatMoney(
-    trainingSession?.unitAmount ?? 7500,
-    trainingSession?.currency || 'usd',
-  );
+  const trialDays = pricingData?.trialDays;
+  const trialLabel = Number.isFinite(trialDays) ? `${trialDays}-day` : 'configured';
+  const trainingPrice = formatBillingAmount(trainingSession?.unitAmount, trainingSession?.currency);
+  const trainingPriceLabel = trainingPrice || 'a quoted price';
   const dashboardPath = {
     voice: '/voice',
     real_estate: '/estate',
@@ -188,6 +78,7 @@ export default function Pricing() {
           {pricingLoading && (
             <p className="mt-3 text-sm text-gray-500 dark:text-slate-400">Confirming current Stripe pricing…</p>
           )}
+          {pricingError && <p className="mt-3 font-semibold text-red-600">{pricingError}</p>}
         </div>
 
         {/* Tenant Type Selector */}
@@ -234,7 +125,7 @@ export default function Pricing() {
         }`}>
           {plans.map((plan, idx) => (
             <div
-              key={`${plan.tenantType}-${plan.name}-${idx}`}
+              key={`${plan.tenantType}-${plan.tier}-${idx}`}
               className={`rounded-lg border-2 bg-white p-8 shadow-lg dark:bg-slate-900 ${
                 plan.popular
                   ? 'border-primary-600 transform scale-105 relative'
@@ -262,17 +153,15 @@ export default function Pricing() {
                 <h3 className="mb-2 text-2xl font-bold text-gray-900 dark:text-slate-100">{plan.name}</h3>
                 <div className="flex flex-col items-center justify-center mb-2">
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-bold text-gray-900 dark:text-slate-100">{getDynamicPrice(plan)}</span>
-                    {plan.period && (
-                      <span className="ml-2 text-gray-600 dark:text-slate-300">{plan.period}</span>
-                    )}
+                    <span className="text-4xl font-bold text-gray-900 dark:text-slate-100">{formatBillingAmount(plan.subscriptionUnitAmount, plan.currency)}</span>
+                    <span className="ml-2 text-gray-600 dark:text-slate-300">/month</span>
                   </div>
                   <div className="mt-2 text-sm text-gray-600 dark:text-slate-300">
                     <span className="font-semibold">Setup Fee: </span>
-                    <span>{getDynamicSetupFee(plan)} one-time</span>
+                    <span>{formatBillingAmount(plan.onboardingUnitAmount, plan.currency)} one-time</span>
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-slate-300">{plan.description}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-300">{plan.label || plan.tier} service level</p>
               </div>
               
               <ul className="mb-8 space-y-3 min-h-[200px]">
@@ -304,7 +193,7 @@ export default function Pricing() {
                 </button>
               ) : (
                 <Link
-                  to={`/onboarding?type=${plan.tenantType}&plan=basic`}
+                  to={`/onboarding?type=${plan.tenantType}&plan=${plan.tier}`}
                   className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${
                     plan.popular
                       ? 'bg-primary-600 hover:bg-primary-700 text-white'
@@ -332,7 +221,7 @@ export default function Pricing() {
                 </p>
               </div>
               <div className="shrink-0 text-center sm:text-right">
-                <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">{trainingPrice}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">{trainingPrice || 'Contact us'}</p>
                 <p className="text-sm text-gray-600 dark:text-slate-400">per 30-minute session</p>
                 <a
                   href="mailto:support@merxus.ai?subject=Merxus%20Training%20Session"
@@ -410,7 +299,7 @@ export default function Pricing() {
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
               <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Is the setup fee required?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                Yes. It covers onboarding and initial configuration. Optional 30-minute training sessions beyond the included guidance are {trainingPrice} each.
+                Yes. It covers onboarding and initial configuration. Optional 30-minute training sessions beyond the included guidance are available for {trainingPriceLabel} each.
               </p>
             </div>
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
@@ -422,20 +311,20 @@ export default function Pricing() {
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
               <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Can I purchase additional help?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                Yes. Merxus Training Sessions provide 30 minutes of guided assistance beyond onboarding for {trainingPrice} per session.
+                Yes. Merxus Training Sessions provide 30 minutes of guided assistance beyond onboarding for {trainingPriceLabel} per session.
               </p>
             </div>
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
               <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">Do you offer a free trial?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                Yes! Each service includes a 30-day free trial. The one-time setup fee is charged upfront, then you have 30 days to try the service before monthly billing begins.
+                Yes! Each service includes a {trialLabel} free trial. The one-time setup fee is charged upfront, then you can try the service before monthly billing begins.
                 You can explore all features and cancel anytime during the trial.
               </p>
             </div>
             <div className="rounded-lg bg-white p-6 shadow-md dark:bg-slate-900 dark:ring-1 dark:ring-slate-700">
               <h3 className="mb-2 font-semibold text-gray-900 dark:text-slate-100">What happens after my trial ends?</h3>
               <p className="text-gray-700 dark:text-slate-300">
-                After your 30-day trial, your monthly subscription will automatically begin. Your card on file will be charged the monthly subscription fee. 
+                After your {trialLabel} trial, your monthly subscription will automatically begin. Your card on file will be charged the monthly subscription fee.
                 You can cancel anytime before the trial ends to avoid being charged. We'll send you reminders before your trial ends.
               </p>
             </div>
@@ -446,7 +335,7 @@ export default function Pricing() {
         <div className="text-center">
           <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-slate-100">Ready to Get Started?</h2>
           <p className="mb-8 text-gray-600 dark:text-slate-300">
-            Start your 30-day free trial today. Setup fee charged upfront, monthly billing starts after trial.
+            Start your {trialLabel} free trial today. Setup fee charged upfront, monthly billing starts after trial.
           </p>
           <div className="flex flex-col gap-4 justify-center sm:flex-row">
             {user ? (

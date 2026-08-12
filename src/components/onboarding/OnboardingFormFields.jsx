@@ -110,10 +110,10 @@ export function PlanDisplay({ pricingInfo, selectedPlan }) {
       <div className="mb-4 inline-block rounded-lg border-2 border-primary-200 bg-primary-50 px-6 py-3 dark:border-slate-600 dark:bg-slate-800">
         <p className="mb-1 text-sm text-gray-600 dark:text-slate-300">Selected Plan</p>
         <p className="text-lg font-semibold text-primary-700">
-          {pricingInfo.planName} - ${pricingInfo.monthly}/month
+          {pricingInfo.planName} - {pricingInfo.monthly || 'Pricing unavailable'}/month
         </p>
         <p className="text-sm text-gray-600 dark:text-slate-300">
-          Setup Fee: ${pricingInfo.setup} one-time
+          Setup Fee: {pricingInfo.setup || 'Pricing unavailable'} one-time
         </p>
         <Link 
           to="/pricing" 
@@ -368,7 +368,7 @@ export function FormError({ error }) {
 /**
  * Submit button with pricing terms
  */
-export function SubmitButton({ loading, disabled, pricingInfo, selectedPlan }) {
+export function SubmitButton({ loading, disabled, pricingInfo, selectedPlan, trialDays }) {
   return (
     <div className="pt-4">
       <button 
@@ -380,12 +380,12 @@ export function SubmitButton({ loading, disabled, pricingInfo, selectedPlan }) {
       </button>
       <p className="text-center text-sm text-gray-600 mt-4">
         By continuing, you agree to our{' '}
-        <span className="font-semibold">30-day free trial</span>. 
+        <span className="font-semibold">{Number.isFinite(trialDays) ? `${trialDays}-day free trial` : 'free trial'}</span>.
         {selectedPlan && (
           <>
-            {' '}You'll pay a <span className="font-semibold">${pricingInfo.setup} setup fee</span> today.
+            {' '}You'll pay a <span className="font-semibold">{pricingInfo.setup} setup fee</span> today.
             {' '}After your trial, you'll be charged{' '}
-            <span className="font-semibold">${pricingInfo.monthly}/month</span>.
+            <span className="font-semibold">{pricingInfo.monthly}/month</span>.
           </>
         )}
         {' '}Cancel anytime.

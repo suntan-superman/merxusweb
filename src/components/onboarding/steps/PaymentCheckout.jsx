@@ -3,6 +3,12 @@ import { AlertCircle, CreditCard } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { createCheckoutSession, getBillingPricing } from '../../../api/billing';
 import TurnstileWidget from '../../common/TurnstileWidget';
+import {
+  formatBillingAmount,
+  getPlanPricing,
+  isCompletePlanPricing,
+  normalizePlanTier,
+} from '../../../utils/billingPricing';
 
 export default function PaymentCheckout({ data, onChange, tenantType, tenantId }) {
   const [captchaToken, setCaptchaToken] = useState('');
@@ -21,12 +27,7 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
       } catch (error) {
         console.error('Failed to load pricing:', error);
         setPricingError(true);
-        toast.error('Payment service unavailable right now. We will let you continue and you can pay later.');
-        onChange({
-          paymentCompleted: true,
-          paymentSessionId: null,
-          paymentSkipped: true,
-        });
+        toast.error('Payment service unavailable right now. Reload to verify pricing before checkout.');
       }
     };
 
@@ -66,24 +67,11 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
     }
   }, []);
 
-  const pricingKey = tenantType === 'voice' ? 'office' : tenantType;
-  const pricing = pricingData?.tenants?.[pricingKey];
-  const subscriptionPrice = pricing?.subscription?.unitAmount;
-  const subscriptionCurrency = pricing?.subscription?.currency || 'usd';
-  const onboardingPrice = pricing?.onboarding?.unitAmount;
-  const onboardingCurrency = pricing?.onboarding?.currency || 'usd';
-
-  const formatMoney = (amount, currency = 'usd') => {
-    if (amount === null || amount === undefined) return null;
-    try {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currency.toUpperCase(),
-      }).format(amount / 100);
-    } catch {
-      return `$${(amount / 100).toFixed(2)}`;
-    }
-  };
+  const planTier = normalizePlanTier(data.planTier);
+  const pricing = getPlanPricing(pricingData, tenantType, planTier);
+  const pricingReady = isCompletePlanPricing(pricing);
+  const trialDays = pricingData?.trialDays;
+  const trialLabel = Number.isFinite(trialDays) ? `${trialDays}-day trial` : 'configured trial';
 
   const handleCheckout = async () => {
     console.debug('🧭 Proceeding to checkout', {
@@ -91,10 +79,16 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
       tenantId,
       reservationId: data.reservationId,
       promoCode,
+      planTier,
     });
 
     if (!tenantType || !tenantId) {
       toast.error('Tenant setup not complete yet. Please continue setup.');
+      return;
+    }
+
+    if (!pricingReady) {
+      toast.error('Current plan pricing could not be verified. Reload and try again.');
       return;
     }
 
@@ -128,6 +122,7 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
         tenantId,
         reservationId: data.reservationId || undefined,
         promoCode: promoCode || undefined,
+        planTier,
         successUrl,
         cancelUrl,
       });
@@ -137,11 +132,6 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
       console.error('Checkout error:', error);
       const message = error.response?.data?.error || error.message || 'Failed to start checkout';
       toast.error(message);
-      // Allow flow to continue if backend temporarily unavailable
-      if (error.response?.status === 500) {
-        toast.info('Payment temporarily skipped due to a server issue. You can continue setup.');
-        onChange({ paymentCompleted: true, paymentSessionId: null });
-      }
     } finally {
       setLoading(false);
     }
@@ -151,7 +141,7 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
     <div className="py-4">
       <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Setup Payment</h3>
-        <p className="text-gray-600">Your onboarding fee is charged now. Subscription starts after your 30-day trial.</p>
+        <p className="text-gray-600">Your onboarding fee is charged now. Subscription starts after your {trialLabel}.</p>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
@@ -166,17 +156,21 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
               <span className="font-mono">Selected after payment</span>
             </p>
             <p>
+              <span className="font-semibold">Plan:</span>{' '}
+              {pricing?.label || pricing?.name}
+            </p>
+            <p>
               <span className="font-semibold">Onboarding Fee:</span>{' '}
-              {formatMoney(onboardingPrice, onboardingCurrency) || '—'}
+              {formatBillingAmount(pricing?.onboardingUnitAmount, pricing?.currency) || '—'}
             </p>
             <p>
               <span className="font-semibold">Monthly Subscription:</span>{' '}
-              {formatMoney(subscriptionPrice, subscriptionCurrency) || '—'} / month
+              {formatBillingAmount(pricing?.subscriptionUnitAmount, pricing?.currency) || '—'} / month
             </p>
-            <p className="text-xs text-gray-500">30-day free trial starts after onboarding payment.</p>
+            <p className="text-xs text-gray-500">Your {trialLabel} starts after onboarding payment.</p>
             {pricingError && (
               <p className="text-xs text-amber-600 font-semibold">
-                Pricing unavailable right now. You can finish setup and pay later from Billing.
+                Pricing unavailable right now. Reload to verify the current catalog before checkout.
               </p>
             )}
           </div>
@@ -212,7 +206,7 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
         {!pricingError && (
           <button
             onClick={handleCheckout}
-            disabled={loading}
+            disabled={loading || !pricingReady}
             className="w-full py-3 px-4 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {loading ? 'Redirecting to Checkout...' : 'Proceed to Secure Checkout'}
@@ -220,9 +214,13 @@ export default function PaymentCheckout({ data, onChange, tenantType, tenantId }
         )}
 
         {pricingError && (
-          <div className="w-full py-3 px-4 rounded-lg font-semibold bg-amber-500 text-white text-center">
-            Payment temporarily skipped due to server error.
-          </div>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="w-full py-3 px-4 rounded-lg font-semibold bg-amber-500 text-white text-center"
+          >
+            Reload pricing
+          </button>
         )}
       </div>
     </div>

@@ -30,6 +30,8 @@ import { getEmailSignInMethods, getSignInMethodInfo } from '../utils/authProvide
 import { capitalizeWordsPreservingApostrophes } from '../utils/textFormatters';
 import { trackMerxusOnboardingStarted } from '../utils/metaPixel';
 import { sendVerificationEmail } from '../api/otp';
+import { getBillingPricing } from '../api/billing';
+import { normalizePlanTier } from '../utils/billingPricing';
 import {
   AccountMethodSelector,
   FormInput,
@@ -58,7 +60,7 @@ const Onboarding = () => {
   const allowedTenantTypes = new Set(['restaurant', 'voice', 'real_estate']);
   const hasExplicitTenantType = allowedTenantTypes.has(tenantTypeParam);
   const tenantType = hasExplicitTenantType ? tenantTypeParam : 'restaurant';
-  const selectedPlan = searchParams.get('plan') || (tenantType === 'voice' ? 'basic' : null);
+  const selectedPlan = normalizePlanTier(searchParams.get('plan'));
   const returnTo = searchParams.get('returnTo') || null;
   const source = searchParams.get('source') || null;
   const prefillEmailFromQuery = (searchParams.get('email') || '').trim();
@@ -66,7 +68,9 @@ const Onboarding = () => {
   // Derived state
   const isVoice = tenantType === 'voice';
   const isRealEstate = tenantType === 'real_estate';
-  const pricingInfo = getPricingInfo(tenantType, selectedPlan);
+  const [pricingData, setPricingData] = useState(null);
+  const [pricingError, setPricingError] = useState('');
+  const pricingInfo = getPricingInfo(pricingData, tenantType, selectedPlan);
   const labels = getTenantLabels(tenantType);
 
   // Form state
@@ -74,6 +78,19 @@ const Onboarding = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [providerHint, setProviderHint] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    getBillingPricing()
+      .then((data) => {
+        if (active) setPricingData(data);
+      })
+      .catch((loadError) => {
+        console.error('Failed to load onboarding pricing:', loadError);
+        if (active) setPricingError('Current pricing could not be verified. Please reload before creating your account.');
+      });
+    return () => { active = false; };
+  }, []);
   
   // Invitation modal state
   const [showInvitationModal, setShowInvitationModal] = useState(false);
@@ -286,6 +303,9 @@ const Onboarding = () => {
     setLoading(true);
 
     try {
+      if (!pricingInfo.ready) {
+        throw new Error('Current pricing could not be verified. Please reload and try again.');
+      }
       if (isAppleAuth) {
         if (!isAppleConnected) {
           const message = 'Please connect Apple Sign-In before creating your account.';
@@ -297,6 +317,7 @@ const Onboarding = () => {
 
         const wizardParams = new URLSearchParams();
         if (tenantType) wizardParams.set('type', tenantType);
+        wizardParams.set('plan', selectedPlan);
         if (returnTo) wizardParams.set('returnTo', returnTo);
         navigate(`/onboarding-wizard?${wizardParams.toString()}`, { replace: true });
         setLoading(false);
@@ -461,7 +482,9 @@ const Onboarding = () => {
           
           <div className="mt-4">
             <p className="text-sm text-gray-600 dark:text-slate-400">
-              <span className="font-semibold text-primary-600">30-day free trial</span> • Setup fee charged upfront
+              <span className="font-semibold text-primary-600">
+                {Number.isFinite(pricingData?.trialDays) ? `${pricingData.trialDays}-day free trial` : 'Free trial'}
+              </span> • Setup fee charged upfront
             </p>
           </div>
         </div>
@@ -583,7 +606,7 @@ const Onboarding = () => {
           />
 
           {/* Error display */}
-          <FormError error={error} />
+          <FormError error={pricingError || error} />
 
           {providerHint?.isAppleOnly && (
             <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
@@ -602,9 +625,10 @@ const Onboarding = () => {
           {/* Submit button */}
           <SubmitButton
             loading={loading}
-            disabled={!isFormValid(formData, tenantType) || (isAppleAuth && !isAppleConnected)}
+            disabled={!pricingInfo.ready || !isFormValid(formData, tenantType) || (isAppleAuth && !isAppleConnected)}
             pricingInfo={pricingInfo}
             selectedPlan={selectedPlan}
+            trialDays={pricingData?.trialDays}
           />
         </form>
       </div>

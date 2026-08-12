@@ -1,33 +1,15 @@
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../firebase/config';
+import {
+  formatBillingAmount,
+  getPlanPricing,
+  isCompletePlanPricing,
+  normalizePlanTier,
+} from '../../utils/billingPricing';
 
 /**
  * Onboarding utilities and constants
  */
-
-/**
- * Pricing information by tenant type and plan
- */
-export const PRICING = {
-  restaurant: {
-    basic: { monthly: 199, setup: 199, planName: 'Basic' },
-    pro: { monthly: 299, setup: 299, planName: 'Pro' },
-    elite: { monthly: 499, setup: 499, planName: 'Elite' },
-    default: { monthly: 199, setup: 199, planName: 'Basic' },
-  },
-  voice: {
-    basic: { monthly: 79, setup: 79, planName: 'Basic' },
-    pro: { monthly: 149, setup: 149, planName: 'Pro' },
-    elite: { monthly: 199, setup: 199, planName: 'Elite' },
-    default: { monthly: 79, setup: 79, planName: 'Basic' },
-  },
-  real_estate: {
-    basic: { monthly: 79, setup: 79, planName: 'Basic' },
-    pro: { monthly: 149, setup: 149, planName: 'Pro' },
-    elite: { monthly: 199, setup: 199, planName: 'Elite' },
-    default: { monthly: 79, setup: 79, planName: 'Basic' },
-  },
-};
 
 /**
  * Get pricing info for tenant type and plan
@@ -35,9 +17,14 @@ export const PRICING = {
  * @param {string|null} plan - Plan name or null
  * @returns {Object} Pricing info with monthly, setup, and planName
  */
-export function getPricingInfo(tenantType, plan) {
-  const prices = PRICING[tenantType] || PRICING.restaurant;
-  return prices[plan] || prices.default;
+export function getPricingInfo(pricingData, tenantType, plan) {
+  const pricing = getPlanPricing(pricingData, tenantType, plan);
+  return {
+    planName: pricing?.label || pricing?.name || normalizePlanTier(plan),
+    monthly: formatBillingAmount(pricing?.subscriptionUnitAmount, pricing?.currency),
+    setup: formatBillingAmount(pricing?.onboardingUnitAmount, pricing?.currency),
+    ready: isCompletePlanPricing(pricing),
+  };
 }
 
 /**

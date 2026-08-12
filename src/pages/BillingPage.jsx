@@ -6,6 +6,7 @@ import { Check, CreditCard, Calendar, AlertCircle, RefreshCw } from 'lucide-reac
 import toast from 'react-hot-toast';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { getTierLabel } from '../hooks/useSubscriptionPlan';
+import { formatBillingAmount, getPricingTenantKey } from '../utils/billingPricing';
 
 const BillingPage = () => {
   const { user, tenantType: userTenantType } = useAuth();
@@ -17,6 +18,7 @@ const BillingPage = () => {
   const [showClaimsError, setShowClaimsError] = useState(false);
   const [refreshingClaims, setRefreshingClaims] = useState(false);
   const [pricingData, setPricingData] = useState(null);
+  const [pricingError, setPricingError] = useState('');
   const [deeplinkUrl, setDeeplinkUrl] = useState('');
 
   // Get tenant type from user claims
@@ -50,72 +52,11 @@ const BillingPage = () => {
     };
   }, []);
 
-  const formatMoney = (amount, currency = 'usd') => {
-    if (amount === null || amount === undefined) return null;
-    try {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currency.toUpperCase(),
-      }).format(amount / 100);
-    } catch {
-      return `$${(amount / 100).toFixed(2)}`;
-    }
-  };
-
-  const CATALOG_PLANS = {
-    restaurant: {
-      name: 'Merxus Restaurant',
-      tier: 'basic',
-      subscriptionUnitAmount: 29900,
-      onboardingUnitAmount: 49900,
-      currency: 'usd',
-      features: [
-        'AI Phone Assistant',
-        'Order and reservation taking',
-        'Priority support',
-        'Analytics dashboard',
-        'Call transcripts',
-      ],
-    },
-    voice: {
-      name: 'Merxus Office',
-      tier: 'basic',
-      subscriptionUnitAmount: 4900,
-      onboardingUnitAmount: 4900,
-      currency: 'usd',
-      features: [
-        'AI Phone Assistant',
-        'Call routing',
-        'Priority support',
-        'Analytics dashboard',
-      ],
-    },
-    real_estate: {
-      name: 'Merxus Real Estate',
-      tier: 'basic',
-      subscriptionUnitAmount: 4900,
-      onboardingUnitAmount: 4900,
-      currency: 'usd',
-      features: [
-        'AI Phone Assistant',
-        'Lead management',
-        'Call routing',
-        'Priority support',
-        'Analytics dashboard',
-      ],
-    },
-  };
-
-  const pricingKey = tenantType === 'voice' ? 'office' : tenantType;
-  const catalogTemplate = CATALOG_PLANS[tenantType] || CATALOG_PLANS.restaurant;
-  const catalogPlans = (pricingData?.displayPlans?.[pricingKey]?.length
-    ? pricingData.displayPlans[pricingKey]
-    : [catalogTemplate]
-  ).map((plan) => ({
-    ...catalogTemplate,
-    ...plan,
-    features: catalogTemplate.features,
-  }));
+  const pricingKey = getPricingTenantKey(tenantType);
+  const catalogPlans = pricingData?.displayPlans?.[pricingKey] || [];
+  const trialDays = pricingData?.trialDays;
+  const trialHeading = Number.isFinite(trialDays) ? `${trialDays}-Day Free Trial Active` : 'Free Trial Active';
+  const trialLabel = Number.isFinite(trialDays) ? `${trialDays}-day free trial` : 'configured free trial';
 
   useEffect(() => {
     fetchSubscription();
@@ -149,10 +90,12 @@ const BillingPage = () => {
 
   const fetchPricing = async () => {
     try {
+      setPricingError('');
       const data = await getBillingPricing();
       setPricingData(data);
     } catch (error) {
       console.error('Error fetching pricing:', error);
+      setPricingError('Current Stripe pricing could not be verified. Reload to try again.');
     }
   };
 
@@ -452,7 +395,7 @@ const BillingPage = () => {
             <div className="flex items-start">
               <AlertCircle className="h-5 w-5 text-green-600 mr-3 mt-0.5" />
               <div>
-                <h3 className="text-sm font-medium text-green-900">30-Day Free Trial Active</h3>
+                <h3 className="text-sm font-medium text-green-900">{trialHeading}</h3>
                 <p className="mt-1 text-sm text-green-700">
                   Your trial ends on {new Date(subscription.trialEndsAt).toLocaleDateString()}. 
                   Your monthly subscription will start automatically after the trial. Cancel anytime before then.
@@ -466,12 +409,13 @@ const BillingPage = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">Current Pricing</h2>
           <p className="mb-6 text-sm text-gray-600 dark:text-slate-300">
-            Merxus currently has one Stripe offering for this tenant type. Feature-access levels are managed separately until additional Stripe tier prices are configured.
+            Pricing below is loaded from the current Stripe catalog for this tenant type.
           </p>
-          <div className="grid grid-cols-1 gap-6 lg:max-w-xl">
+          {pricingError && <p className="mb-4 font-semibold text-red-600">{pricingError}</p>}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {catalogPlans.map((plan) => {
-              const monthlyPrice = formatMoney(plan.subscriptionUnitAmount, plan.currency);
-              const setupPrice = formatMoney(plan.onboardingUnitAmount, plan.currency);
+              const monthlyPrice = formatBillingAmount(plan.subscriptionUnitAmount, plan.currency);
+              const setupPrice = formatBillingAmount(plan.onboardingUnitAmount, plan.currency);
               
               return (
                 <div
@@ -507,7 +451,7 @@ const BillingPage = () => {
                   </button>
                   
                   <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-3">
-                    One-time setup fee applies to new accounts • 30-day free trial
+                    One-time setup fee applies to new accounts • {trialLabel}
                   </p>
                 </div>
               );
@@ -522,7 +466,7 @@ const BillingPage = () => {
             <div>
               <h3 className="font-medium text-gray-900 dark:text-slate-100">When will I be charged?</h3>
               <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
-                The one-time setup fee is charged immediately when you sign up. Your monthly subscription starts with a 30-day free trial. After the trial ends, you'll be charged the monthly subscription fee.
+                The one-time setup fee is charged immediately when you sign up. Your monthly subscription starts with a {trialLabel}. After the trial ends, you'll be charged the monthly subscription fee.
               </p>
             </div>
             <div>

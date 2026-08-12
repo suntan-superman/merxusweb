@@ -7,6 +7,7 @@ import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { queueFirstLoginChecklist } from '../utils/firstLoginChecklist';
 import { trackWorksideAnalyticsEvent } from '../utils/worksideAnalytics';
+import { normalizePlanTier } from '../utils/billingPricing';
 
 const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
 const ONBOARDING_PENDING_PREFILL_KEY = 'merxus_onboarding_pending_prefill';
@@ -107,6 +108,9 @@ export default function OnboardingWizardPage() {
     searchParams.get('type') ||
     sessionStorage.getItem(ONBOARDING_TENANT_TYPE_KEY) ||
     null;
+  const selectedPlan = normalizePlanTier(
+    searchParams.get('plan') || prefillDraft?.formData?.selectedPlan,
+  );
   const tenantIdFromQuery = searchParams.get('tenantId') || null;
   const sessionIdFromQuery = searchParams.get('session_id') || null;
   const resumeStep = Number(searchParams.get('resumeStep') || 0);
@@ -401,6 +405,7 @@ export default function OnboardingWizardPage() {
         onComplete={handleComplete}
         onSwitchToOwner={() => {}}
         tenantType={resolvedTenantType}
+        selectedPlan={selectedPlan}
         authMethod={authMethod}
         prefillEmail={prefillForm.ownerEmail || user?.email}
         prefillName={

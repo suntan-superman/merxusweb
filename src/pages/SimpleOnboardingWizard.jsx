@@ -10,24 +10,18 @@ import {
   sendVerificationLink,
 } from "../api/instagramOnboarding";
 import { capitalizeWordsPreservingApostrophes } from "../utils/textFormatters";
+import {
+  formatBillingAmount,
+  getPlanPricing,
+  isCompletePlanPricing,
+  normalizePlanTier,
+} from "../utils/billingPricing";
 
 const INDUSTRY_OPTIONS = [
   { value: "voice", label: "Office" },
   { value: "real_estate", label: "Real Estate" },
   { value: "restaurant", label: "Restaurant" },
 ];
-
-function formatMoney(amount, currency = "usd") {
-  if (amount === null || amount === undefined) return "n/a";
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency.toUpperCase(),
-    }).format(amount / 100);
-  } catch {
-    return `$${(amount / 100).toFixed(2)}`;
-  }
-}
 
 function formatPhoneNumber(value) {
   const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
@@ -44,6 +38,7 @@ export default function SimpleOnboardingWizard() {
   const initialType = params.get("type") || "voice";
   const verifiedFromRedirect = params.get("verified") === "1";
   const tenantFromRedirect = params.get("tenantId") || "";
+  const initialPlanTier = normalizePlanTier(params.get("plan"));
 
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -55,6 +50,7 @@ export default function SimpleOnboardingWizard() {
   const [unassignedNumbers, setUnassignedNumbers] = useState([]);
   const [numbers, setNumbers] = useState([]);
   const [pricing, setPricing] = useState(null);
+  const [pricingError, setPricingError] = useState(false);
   const [form, setForm] = useState({
     tenantType: initialType,
     businessName: "",
@@ -63,10 +59,10 @@ export default function SimpleOnboardingWizard() {
     mobilePhone: "",
     areaCode: "",
     selectedNumber: "",
+    planTier: initialPlanTier,
   });
 
-  const pricingKey = form.tenantType === "voice" ? "office" : form.tenantType;
-  const tenantPricing = pricing?.tenants?.[pricingKey] || null;
+  const tenantPricing = getPlanPricing(pricing, form.tenantType, form.planTier);
   const tenantIdCandidates = useMemo(() => {
     const candidates = [
       tenantId,
@@ -126,8 +122,10 @@ export default function SimpleOnboardingWizard() {
       try {
         const data = await getBillingPricing();
         setPricing(data);
+        setPricingError(false);
       } catch (error) {
         console.error("Pricing load failed:", error);
+        setPricingError(true);
       }
     };
     loadPricing();
@@ -164,8 +162,8 @@ export default function SimpleOnboardingWizard() {
     []
   );
 
-  const setupReturnPath = `/setup?type=${encodeURIComponent(form.tenantType)}`;
-  const onboardingSignupPath = `/onboarding?type=${encodeURIComponent(form.tenantType)}&plan=basic&source=ig&returnTo=${encodeURIComponent(setupReturnPath)}`;
+  const setupReturnPath = `/setup?type=${encodeURIComponent(form.tenantType)}&plan=${encodeURIComponent(form.planTier)}`;
+  const onboardingSignupPath = `/onboarding?type=${encodeURIComponent(form.tenantType)}&plan=${encodeURIComponent(form.planTier)}&source=ig&returnTo=${encodeURIComponent(setupReturnPath)}`;
 
   const handleAlreadyUser = () => {
     const loginPath = `/login?type=${encodeURIComponent(form.tenantType)}&returnTo=${encodeURIComponent(setupReturnPath)}`;
@@ -199,6 +197,7 @@ export default function SimpleOnboardingWizard() {
           contactName: form.contactName.trim(),
           email: form.email.trim(),
           mobilePhone: form.mobilePhone.trim(),
+          planTier: form.planTier,
         });
         effectiveTenantId = createResult.tenantId;
         setTenantId(effectiveTenantId);
@@ -317,16 +316,21 @@ export default function SimpleOnboardingWizard() {
       toast.error("Reserve a number first.");
       return;
     }
+    if (!isCompletePlanPricing(tenantPricing)) {
+      toast.error("Current pricing could not be verified. Reload and try again.");
+      return;
+    }
 
     setSubmitting(true);
     try {
       const origin = window.location.origin;
       const successUrl = `${origin}/payment-success?type=${encodeURIComponent(form.tenantType)}&tenantId=${encodeURIComponent(tenantId)}`;
-      const cancelUrl = `${origin}/setup?type=${encodeURIComponent(form.tenantType)}&tenantId=${encodeURIComponent(tenantId)}&verified=1`;
+      const cancelUrl = `${origin}/setup?type=${encodeURIComponent(form.tenantType)}&plan=${encodeURIComponent(form.planTier)}&tenantId=${encodeURIComponent(tenantId)}&verified=1`;
       const result = await createCheckoutSession({
         tenantType: form.tenantType,
         tenantId,
         reservationId,
+        planTier: form.planTier,
         successUrl,
         cancelUrl,
       });
@@ -554,17 +558,36 @@ export default function SimpleOnboardingWizard() {
         <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
           <h2 className="text-lg font-semibold text-gray-900">Review & Pricing Confirmation</h2>
           <p className="mt-3 text-sm text-gray-700">Selected number: {form.selectedNumber || "none"}</p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {(pricing?.displayPlans?.[form.tenantType === 'voice' ? 'office' : form.tenantType] || []).map((plan) => {
+              const tier = normalizePlanTier(plan.tier);
+              const selected = tier === form.planTier;
+              return (
+                <button
+                  key={tier}
+                  type="button"
+                  onClick={() => setForm((current) => ({ ...current, planTier: tier }))}
+                  className={`rounded-lg border p-3 text-left ${selected ? 'border-green-600 bg-green-50' : 'border-gray-300'}`}
+                >
+                  <span className="block font-semibold">{plan.label || plan.name}</span>
+                  <span className="text-sm">{formatBillingAmount(plan.subscriptionUnitAmount, plan.currency)}/month</span>
+                </button>
+              );
+            })}
+          </div>
           <p className="mt-1 text-sm text-gray-700">
-            Onboarding fee: {formatMoney(tenantPricing?.onboarding?.unitAmount, tenantPricing?.onboarding?.currency)}
+            Onboarding fee: {formatBillingAmount(tenantPricing?.onboardingUnitAmount, tenantPricing?.currency) || "unavailable"}
           </p>
           <p className="mt-1 text-sm text-gray-700">
             Monthly subscription:{" "}
-            {formatMoney(tenantPricing?.subscription?.unitAmount, tenantPricing?.subscription?.currency)}
+            {formatBillingAmount(tenantPricing?.subscriptionUnitAmount, tenantPricing?.currency) || "unavailable"}
           </p>
+          {pricingError && <p className="mt-2 text-sm font-semibold text-red-600">Current pricing could not be verified. Reload to continue.</p>}
           <button
             type="button"
             onClick={() => setStep(4)}
-            className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
+            disabled={!isCompletePlanPricing(tenantPricing)}
+            className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-gray-300"
           >
             Continue to Checkout
           </button>
@@ -580,7 +603,7 @@ export default function SimpleOnboardingWizard() {
           <button
             type="button"
             onClick={handleStartCheckout}
-            disabled={submitting}
+            disabled={submitting || !isCompletePlanPricing(tenantPricing)}
             className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:bg-gray-300"
           >
             {submitting ? "Redirecting..." : "Proceed to Secure Checkout"}

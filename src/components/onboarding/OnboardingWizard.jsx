@@ -10,6 +10,7 @@ import TwilioSetup from './steps/TwilioSetup';
 import TestAI from './steps/TestAI';
 import Completion from './steps/Completion';
 import ConfirmationModal from '../common/ConfirmationModal';
+import { normalizePlanTier } from '../../utils/billingPricing';
 
 const TOTAL_STEPS = 8;
 const STORAGE_KEY = 'merxus_onboarding_wizard';
@@ -20,6 +21,7 @@ export default function OnboardingWizard({
   onSwitchToOwner,
   userEmail,
   tenantType: initialTenantType,
+  selectedPlan = 'basic',
   authMethod = 'password',
   prefillEmail,
   prefillName,
@@ -61,6 +63,7 @@ export default function OnboardingWizard({
   const [wizardData, setWizardData] = useState({
     // Step 1: Industry
     tenantType: initialTenantType || null,
+    planTier: normalizePlanTier(selectedPlan),
     authMethod,
     
     // Step 2: Business Basics (avoid pre-populating unless Apple sign-in)
