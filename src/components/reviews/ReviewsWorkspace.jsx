@@ -31,6 +31,8 @@ function copyForTenant(tenantType) {
       billingPath: '/restaurant/billing',
       feedbackPath: '/restaurant/feedback',
       notificationsPath: '/restaurant/notifications',
+      setupPath: '/restaurant/feedback/setup',
+      integrationsPath: '/restaurant/feedback/integrations',
     };
   }
 
@@ -42,6 +44,8 @@ function copyForTenant(tenantType) {
       billingPath: '/estate/billing',
       feedbackPath: '/estate/feedback',
       notificationsPath: '/estate/notifications',
+      setupPath: '/estate/feedback/setup',
+      integrationsPath: '/estate/feedback/integrations',
     };
   }
 
@@ -52,6 +56,8 @@ function copyForTenant(tenantType) {
     billingPath: '/voice/billing',
     feedbackPath: '/voice/feedback',
     notificationsPath: '/voice/notifications',
+    setupPath: '/voice/feedback/setup',
+    integrationsPath: '/voice/feedback/integrations',
   };
 }
 
@@ -109,7 +115,9 @@ function previewText(value, fallback = '') {
 
 export default function ReviewsWorkspace({ tenantType }) {
   const copy = copyForTenant(tenantType);
-  const { user } = useAuth();
+  const { user, userClaims } = useAuth();
+  const role = String(userClaims?.role || 'staff').toLowerCase();
+  const canManageIntegrations = role === 'owner' || role === 'manager';
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState({
     days: Number(searchParams.get('days') || 30),
@@ -331,6 +339,22 @@ export default function ReviewsWorkspace({ tenantType }) {
             <h2 className="mt-3 text-3xl font-semibold text-gray-900">{copy.title}</h2>
             <p className="mt-3 text-sm leading-6 text-gray-600">{copy.subtitle}</p>
             <div className="mt-5 flex flex-wrap gap-2">
+              {canManageIntegrations ? (
+                <Link
+                  to={copy.setupPath}
+                  data-testid="connect-review-platforms-link"
+                  className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  Connect Review Platforms
+                </Link>
+              ) : null}
+              <Link
+                to={copy.integrationsPath}
+                data-testid="manage-review-integrations-link"
+                className="rounded-full border border-emerald-500 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
+              >
+                Manage Integrations
+              </Link>
               <Link
                 to={copy.commandCenterPath}
                 className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
@@ -401,7 +425,31 @@ export default function ReviewsWorkspace({ tenantType }) {
           <h3 className="text-lg font-semibold text-gray-900">Platforms</h3>
           <div className="mt-4 space-y-3">
             {(summary?.platformBreakdown || []).length === 0 ? (
-              <p className="text-sm text-gray-500">No connected review platforms yet.</p>
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                <p className="text-sm font-medium text-slate-900">No connected review platforms yet.</p>
+                <p className="mt-2 text-sm text-slate-600">
+                  {canManageIntegrations
+                    ? 'Use the guided setup to connect Google first, select locations, validate access, and run the initial import.'
+                    : 'An owner or manager can connect Google and other supported review sources.'}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {canManageIntegrations ? (
+                    <Link
+                      to={copy.setupPath}
+                      data-testid="start-review-setup-link"
+                      className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                    >
+                      Start Guided Setup
+                    </Link>
+                  ) : null}
+                  <Link
+                    to={copy.integrationsPath}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    Open Integrations
+                  </Link>
+                </div>
+              </div>
             ) : (
               summary.platformBreakdown.map((item) => (
                 <div key={item.key} className="rounded-xl border border-gray-200 p-3">
@@ -636,6 +684,22 @@ export default function ReviewsWorkspace({ tenantType }) {
               <p className="mt-2 text-sm text-slate-600">
                 This usually means review platforms have not been connected yet or no reviews have been synced into Merxus.
               </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {canManageIntegrations ? (
+                  <Link
+                    to={copy.setupPath}
+                    className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    Connect Review Platforms
+                  </Link>
+                ) : null}
+                <Link
+                  to={copy.integrationsPath}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  View Integration Status
+                </Link>
+              </div>
             </div>
           ) : visibleItems.length === 0 ? (
             <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">

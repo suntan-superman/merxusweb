@@ -26,9 +26,10 @@ export const NAV_ITEMS = [
   { id: 'restaurant_customer_360', tenantType: 'restaurant', groupId: 'pro', label: 'Customer 360', path: '/restaurant/customer-360', icon: 'ContactRound', sortOrder: 20, requiredPlan: 'professional' },
   { id: 'restaurant_merge_activity', tenantType: 'restaurant', groupId: 'pro', label: 'Merge Activity', path: '/restaurant/merge-activity', icon: 'GitMerge', sortOrder: 30, requiredPlan: 'professional' },
   { id: 'restaurant_reviews', tenantType: 'restaurant', groupId: 'elite', label: 'Reviews', path: '/restaurant/reviews', icon: 'Star', sortOrder: 10, requiredPlan: 'elite', defaultQuickStart: true },
-  { id: 'restaurant_feedback', tenantType: 'restaurant', groupId: 'elite', label: 'Feedback', path: '/restaurant/feedback', icon: 'MessagesSquare', sortOrder: 20, requiredPlan: 'elite' },
-  { id: 'restaurant_automations', tenantType: 'restaurant', groupId: 'elite', label: 'Automations', path: '/restaurant/automations', icon: 'Zap', sortOrder: 30, requiredPlan: 'elite' },
-  { id: 'restaurant_cx_analytics', tenantType: 'restaurant', groupId: 'elite', label: 'CX Analytics', path: '/restaurant/cx-analytics', icon: 'TrendingUp', sortOrder: 40, requiredPlan: 'elite' },
+  { id: 'restaurant_review_integrations', tenantType: 'restaurant', groupId: 'elite', label: 'Integrations', path: '/restaurant/feedback/integrations', icon: 'Wrench', sortOrder: 20, requiredPlan: 'elite' },
+  { id: 'restaurant_feedback', tenantType: 'restaurant', groupId: 'elite', label: 'Feedback', path: '/restaurant/feedback', icon: 'MessagesSquare', sortOrder: 30, requiredPlan: 'elite' },
+  { id: 'restaurant_automations', tenantType: 'restaurant', groupId: 'elite', label: 'Automations', path: '/restaurant/automations', icon: 'Zap', sortOrder: 40, requiredPlan: 'elite' },
+  { id: 'restaurant_cx_analytics', tenantType: 'restaurant', groupId: 'elite', label: 'CX Analytics', path: '/restaurant/cx-analytics', icon: 'TrendingUp', sortOrder: 50, requiredPlan: 'elite' },
 
   // Office / voice
   { id: 'voice_dashboard', tenantType: 'voice', groupId: 'core', label: 'Dashboard', path: '/voice', icon: 'LayoutDashboard', sortOrder: 10, defaultQuickStart: true },
@@ -46,9 +47,10 @@ export const NAV_ITEMS = [
   { id: 'voice_customer_360', tenantType: 'voice', groupId: 'pro', label: 'Customer 360', path: '/voice/customer-360', icon: 'ContactRound', sortOrder: 30, requiredPlan: 'professional' },
   { id: 'voice_merge_activity', tenantType: 'voice', groupId: 'pro', label: 'Merge Activity', path: '/voice/merge-activity', icon: 'GitMerge', sortOrder: 40, requiredPlan: 'professional' },
   { id: 'voice_reviews', tenantType: 'voice', groupId: 'elite', label: 'Reviews', path: '/voice/reviews', icon: 'Star', sortOrder: 10, requiredPlan: 'elite' },
-  { id: 'voice_feedback', tenantType: 'voice', groupId: 'elite', label: 'Feedback', path: '/voice/feedback', icon: 'MessagesSquare', sortOrder: 20, requiredPlan: 'elite' },
-  { id: 'voice_automations', tenantType: 'voice', groupId: 'elite', label: 'Automations', path: '/voice/automations', icon: 'Zap', sortOrder: 30, requiredPlan: 'elite' },
-  { id: 'voice_cx_analytics', tenantType: 'voice', groupId: 'elite', label: 'CX Analytics', path: '/voice/cx-analytics', icon: 'TrendingUp', sortOrder: 40, requiredPlan: 'elite' },
+  { id: 'voice_review_integrations', tenantType: 'voice', groupId: 'elite', label: 'Integrations', path: '/voice/feedback/integrations', icon: 'Wrench', sortOrder: 20, requiredPlan: 'elite' },
+  { id: 'voice_feedback', tenantType: 'voice', groupId: 'elite', label: 'Feedback', path: '/voice/feedback', icon: 'MessagesSquare', sortOrder: 30, requiredPlan: 'elite' },
+  { id: 'voice_automations', tenantType: 'voice', groupId: 'elite', label: 'Automations', path: '/voice/automations', icon: 'Zap', sortOrder: 40, requiredPlan: 'elite' },
+  { id: 'voice_cx_analytics', tenantType: 'voice', groupId: 'elite', label: 'CX Analytics', path: '/voice/cx-analytics', icon: 'TrendingUp', sortOrder: 50, requiredPlan: 'elite' },
 
   // Real estate
   { id: 'estate_dashboard', tenantType: 'real_estate', groupId: 'core', label: 'Dashboard', path: '/estate', icon: 'LayoutDashboard', sortOrder: 10, defaultQuickStart: true },
@@ -67,9 +69,10 @@ export const NAV_ITEMS = [
   { id: 'estate_customer_360', tenantType: 'real_estate', groupId: 'pro', label: 'Customer 360', path: '/estate/customer-360', icon: 'ContactRound', sortOrder: 20, requiredPlan: 'professional', defaultQuickStart: true },
   { id: 'estate_merge_activity', tenantType: 'real_estate', groupId: 'pro', label: 'Merge Activity', path: '/estate/merge-activity', icon: 'GitMerge', sortOrder: 30, requiredPlan: 'professional' },
   { id: 'estate_reviews', tenantType: 'real_estate', groupId: 'elite', label: 'Reviews', path: '/estate/reviews', icon: 'Star', sortOrder: 10, requiredPlan: 'elite', defaultQuickStart: true },
-  { id: 'estate_feedback', tenantType: 'real_estate', groupId: 'elite', label: 'Feedback', path: '/estate/feedback', icon: 'MessagesSquare', sortOrder: 20, requiredPlan: 'elite' },
-  { id: 'estate_automations', tenantType: 'real_estate', groupId: 'elite', label: 'Automations', path: '/estate/automations', icon: 'Zap', sortOrder: 30, requiredPlan: 'elite', defaultQuickStart: true },
-  { id: 'estate_cx_analytics', tenantType: 'real_estate', groupId: 'elite', label: 'CX Analytics', path: '/estate/cx-analytics', icon: 'TrendingUp', sortOrder: 40, requiredPlan: 'elite' },
+  { id: 'estate_review_integrations', tenantType: 'real_estate', groupId: 'elite', label: 'Integrations', path: '/estate/feedback/integrations', icon: 'Wrench', sortOrder: 20, requiredPlan: 'elite' },
+  { id: 'estate_feedback', tenantType: 'real_estate', groupId: 'elite', label: 'Feedback', path: '/estate/feedback', icon: 'MessagesSquare', sortOrder: 30, requiredPlan: 'elite' },
+  { id: 'estate_automations', tenantType: 'real_estate', groupId: 'elite', label: 'Automations', path: '/estate/automations', icon: 'Zap', sortOrder: 40, requiredPlan: 'elite', defaultQuickStart: true },
+  { id: 'estate_cx_analytics', tenantType: 'real_estate', groupId: 'elite', label: 'CX Analytics', path: '/estate/cx-analytics', icon: 'TrendingUp', sortOrder: 50, requiredPlan: 'elite' },
 
   // Merxus admin
   { id: 'merxus_dashboard', tenantType: 'merxus', groupId: 'core', label: 'Dashboard', path: '/merxus', icon: 'LayoutDashboard', sortOrder: 10, defaultQuickStart: true },

@@ -22,6 +22,22 @@ test('getNavigationItems can exclude locked plan items', () => {
   assert.ok(unlockedOnly.some((item) => item.id === 'voice_sms_inbox'));
 });
 
+test('each tenant portal exposes review integrations in the Elite navigation group', () => {
+  const expected = [
+    ['restaurant', 'restaurant_review_integrations', '/restaurant/feedback/integrations'],
+    ['voice', 'voice_review_integrations', '/voice/feedback/integrations'],
+    ['real_estate', 'estate_review_integrations', '/estate/feedback/integrations'],
+  ];
+
+  for (const [tenantType, id, path] of expected) {
+    const item = getNavigationItems({ tenantType, role: 'owner' }).find((candidate) => candidate.id === id);
+    assert.ok(item, `${tenantType} should expose review integrations`);
+    assert.equal(item.path, path);
+    assert.equal(item.groupId, 'elite');
+    assert.equal(item.requiredPlan, 'elite');
+  }
+});
+
 test('getNavigationGroups returns sorted stable groups with Elite above admin', () => {
   const groups = getNavigationGroups();
   assert.deepEqual(groups.map((group) => group.id), ['core', 'pro', 'elite', 'admin']);
