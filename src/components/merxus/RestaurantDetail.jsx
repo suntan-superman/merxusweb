@@ -17,6 +17,40 @@ const DAYS = [
   { key: 'sunday', label: 'Sunday' },
 ];
 
+const DEFAULT_BUSINESS_HOURS = {
+  monday: { open: '11:00', close: '21:00', closed: false },
+  tuesday: { open: '11:00', close: '21:00', closed: false },
+  wednesday: { open: '11:00', close: '21:00', closed: false },
+  thursday: { open: '11:00', close: '21:00', closed: false },
+  friday: { open: '11:00', close: '21:00', closed: false },
+  saturday: { open: '11:00', close: '21:00', closed: false },
+  sunday: { open: '11:00', close: '21:00', closed: false },
+};
+
+const DEFAULT_AI_CONFIG = {
+  model: 'gpt-4o-mini',
+  voiceName: 'alloy',
+  language: 'en-US',
+  systemPrompt: '',
+};
+
+function createRestaurantForm(restaurant = {}) {
+  return {
+    name: restaurant?.name || '',
+    email: restaurant?.email || '',
+    phoneNumber: restaurant?.phoneNumber || '',
+    address: restaurant?.address || '',
+    timezone: restaurant?.timezone || 'America/Los_Angeles',
+    disabled: restaurant?.disabled || false,
+    businessHours: restaurant?.businessHours || DEFAULT_BUSINESS_HOURS,
+    aiConfig: restaurant?.aiConfig || DEFAULT_AI_CONFIG,
+    notifySmsNumbers: restaurant?.notifySmsNumbers || [],
+    notifyEmailAddresses: restaurant?.notifyEmailAddresses || [],
+    twilioPhoneNumber: restaurant?.twilioPhoneNumber || '',
+    twilioPhoneSid: restaurant?.twilioPhoneSid || restaurant?.twilioNumberSid || '',
+  };
+}
+
 export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose }) {
   const [activeTab, setActiveTab] = useState('basic');
   const [editing, setEditing] = useState(false);
@@ -28,37 +62,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteMenuItemModal, setShowDeleteMenuItemModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const [form, setForm] = useState({
-    // Basic info
-    name: restaurant?.name || '',
-    email: restaurant?.email || '',
-    phoneNumber: restaurant?.phoneNumber || '',
-    address: restaurant?.address || '',
-    timezone: restaurant?.timezone || 'America/Los_Angeles',
-    disabled: restaurant?.disabled || false,
-    // Business hours
-    businessHours: restaurant?.businessHours || {
-      monday: { open: '11:00', close: '21:00', closed: false },
-      tuesday: { open: '11:00', close: '21:00', closed: false },
-      wednesday: { open: '11:00', close: '21:00', closed: false },
-      thursday: { open: '11:00', close: '21:00', closed: false },
-      friday: { open: '11:00', close: '21:00', closed: false },
-      saturday: { open: '11:00', close: '21:00', closed: false },
-      sunday: { open: '11:00', close: '21:00', closed: false },
-    },
-    // AI settings
-    aiConfig: restaurant?.aiConfig || {
-      model: 'gpt-4o-mini',
-      voiceName: 'alloy',
-      language: 'en-US',
-      systemPrompt: '',
-    },
-    // Notifications
-    notifySmsNumbers: restaurant?.notifySmsNumbers || [],
-    notifyEmailAddresses: restaurant?.notifyEmailAddresses || [],
-    // Twilio
-    twilioNumberSid: restaurant?.twilioNumberSid || '',
-  });
+  const [form, setForm] = useState(() => createRestaurantForm(restaurant));
 
   // Load menu when menu tab is active
   useEffect(() => {
@@ -142,32 +146,9 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
   // Update form when restaurant changes
   useEffect(() => {
     if (restaurant) {
-      setForm({
-        name: restaurant?.name || '',
-        email: restaurant?.email || '',
-        phoneNumber: restaurant?.phoneNumber || '',
-        address: restaurant?.address || '',
-        timezone: restaurant?.timezone || 'America/Los_Angeles',
-        disabled: restaurant?.disabled || false,
-        businessHours: restaurant?.businessHours || {
-          monday: { open: '11:00', close: '21:00', closed: false },
-          tuesday: { open: '11:00', close: '21:00', closed: false },
-          wednesday: { open: '11:00', close: '21:00', closed: false },
-          thursday: { open: '11:00', close: '21:00', closed: false },
-          friday: { open: '11:00', close: '21:00', closed: false },
-          saturday: { open: '11:00', close: '21:00', closed: false },
-          sunday: { open: '11:00', close: '21:00', closed: false },
-        },
-        aiConfig: restaurant?.aiConfig || {
-          model: 'gpt-4o-mini',
-          voiceName: 'alloy',
-          language: 'en-US',
-          systemPrompt: '',
-        },
-        notifySmsNumbers: restaurant?.notifySmsNumbers || [],
-        notifyEmailAddresses: restaurant?.notifyEmailAddresses || [],
-        twilioNumberSid: restaurant?.twilioNumberSid || '',
-      });
+      setForm(createRestaurantForm(restaurant));
+      setEditing(false);
+      setActiveTab('basic');
     }
   }, [restaurant]);
 
@@ -285,7 +266,9 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
     <>
       <div className="card sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Restaurant Details</h3>
+          <h3 className="min-w-0 pr-3 text-lg font-semibold text-gray-900">
+            Restaurant Details: <span className="text-primary-600">{(editing ? form.name : restaurant.name) || restaurant.restaurantId || restaurant.id}</span>
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -460,7 +443,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
 
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Twilio Phone Number *
+                    Business Phone Number *
                   </label>
                   <input
                     name="phoneNumber"
@@ -472,17 +455,34 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                     required
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    The Twilio phone number assigned to this restaurant for AI call routing.
+                    The restaurant's public business or contact number.
                   </p>
                 </div>
 
                 <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Twilio Number SID (Optional)
+                    Merxus AI Phone Number
                   </label>
                   <input
-                    name="twilioNumberSid"
-                    value={form.twilioNumberSid}
+                    name="twilioPhoneNumber"
+                    type="tel"
+                    value={form.twilioPhoneNumber}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="+15551234567"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    The assigned Twilio number callers use to reach this restaurant's AI assistant.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Twilio Phone SID (Optional)
+                  </label>
+                  <input
+                    name="twilioPhoneSid"
+                    value={form.twilioPhoneSid}
                     onChange={handleChange}
                     className="input-field"
                     placeholder="PNxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -744,19 +744,7 @@ export default function RestaurantDetail({ restaurant = {}, onUpdate, onClose })
                 onClick={() => {
                   setEditing(false);
                   // Reset form to original values
-                  setForm({
-                    name: restaurant?.name || '',
-                    email: restaurant?.email || '',
-                    phoneNumber: restaurant?.phoneNumber || '',
-                    address: restaurant?.address || '',
-                    timezone: restaurant?.timezone || 'America/Los_Angeles',
-                    disabled: restaurant?.disabled || false,
-                    businessHours: restaurant?.businessHours || form.businessHours,
-                    aiConfig: restaurant?.aiConfig || form.aiConfig,
-                    notifySmsNumbers: restaurant?.notifySmsNumbers || [],
-                    notifyEmailAddresses: restaurant?.notifyEmailAddresses || [],
-                    twilioNumberSid: restaurant?.twilioNumberSid || '',
-                  });
+                  setForm(createRestaurantForm(restaurant));
                 }}
                 className="flex-1 btn-secondary"
               >

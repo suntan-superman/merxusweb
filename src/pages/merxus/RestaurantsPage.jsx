@@ -50,9 +50,8 @@ export default function RestaurantsPage() {
       setSelectedRestaurant(fullDetails);
     } catch (err) {
       console.error('Error loading restaurant details:', err);
-      setError('Failed to load restaurant details.');
-      // Fallback to basic restaurant data
-      setSelectedRestaurant(restaurant);
+      setError('Failed to load the complete restaurant settings. Editing is unavailable until the details can be loaded.');
+      setSelectedRestaurant(null);
     } finally {
       setLoadingRestaurant(false);
     }

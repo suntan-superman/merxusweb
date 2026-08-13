@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, Building, Home, Phone, AlertCircle, CheckCircle, XCircle, Edit2, PauseCircle, PlayCircle, DollarSign, History } from 'lucide-react';
-import { collection, query, where, getDocs, doc, updateDoc, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDoc, doc, updateDoc, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { toast } from 'react-toastify';
 import '../../utils/syncfusionRuntime';
@@ -21,6 +21,16 @@ const EMPTY_REFUND_SUMMARY = {
   refundedAmountCents: 0,
   refundableAmountCents: 0,
 };
+
+const FIRESTORE_IN_QUERY_LIMIT = 30;
+
+function chunkValues(values, size = FIRESTORE_IN_QUERY_LIMIT) {
+  const chunks = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
+}
 
 function createRefundRequestId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -119,58 +129,75 @@ export default function TenantsManagementPage() {
       const collectionName = currentTab.collection;
       const tenantsRef = collection(db, collectionName);
       const snapshot = await getDocs(tenantsRef);
+      const tenantIds = snapshot.docs.map((tenantDoc) => tenantDoc.id);
+      const settingsByTenantId = new Map();
+      const subscriptionByTenantId = new Map();
+      const subscriptionLookupFailures = new Set();
 
-      const tenantsList = [];
-      for (const tenantDoc of snapshot.docs) {
+      const settingsLookup = Promise.all(
+        snapshot.docs.map(async (tenantDoc) => {
+          try {
+            const settingsSnapshot = await getDoc(
+              doc(db, collectionName, tenantDoc.id, 'meta', 'settings')
+            );
+            settingsByTenantId.set(
+              tenantDoc.id,
+              settingsSnapshot.exists() ? settingsSnapshot.data() || {} : {}
+            );
+          } catch (error) {
+            settingsByTenantId.set(tenantDoc.id, {});
+            console.error('Error loading settings for', tenantDoc.id, error);
+          }
+        })
+      );
+
+      const subscriptionLookup = Promise.all(
+        chunkValues(tenantIds).map(async (tenantIdBatch) => {
+          try {
+            const subscriptionsSnapshot = await getDocs(
+              query(collection(db, 'subscriptions'), where('tenantId', 'in', tenantIdBatch))
+            );
+
+            subscriptionsSnapshot.docs.forEach((subscriptionDoc) => {
+              const subscription = subscriptionDoc.data() || {};
+              const tenantId = subscription.tenantId;
+              if (!tenantId) return;
+
+              const existing = subscriptionByTenantId.get(tenantId);
+              if (
+                !existing ||
+                getSubscriptionSortValue(subscription) > getSubscriptionSortValue(existing)
+              ) {
+                subscriptionByTenantId.set(tenantId, subscription);
+              }
+            });
+          } catch (error) {
+            tenantIdBatch.forEach((tenantId) => subscriptionLookupFailures.add(tenantId));
+            console.error('Error loading subscription batch', error);
+          }
+        })
+      );
+
+      await Promise.all([settingsLookup, subscriptionLookup]);
+
+      const tenantsList = snapshot.docs.map((tenantDoc) => {
         const tenantData = tenantDoc.data();
-        
-        // Load settings from meta/settings subcollection
-        let settings = {};
-        try {
-          const settingsDoc = await getDocs(
-            query(collection(db, collectionName, tenantDoc.id, 'meta'))
-          );
-          if (settingsDoc.docs.length > 0) {
-            settings = settingsDoc.docs[0].data();
-          }
-        } catch (error) {
-          console.error('Error loading settings for', tenantDoc.id, error);
-        }
-
-        // Check subscription status
-        let subscriptionStatus = 'Unknown';
-        let trialEndsAt = null;
-        let billingPaused = false;
-        let cancelAtPeriodEnd = false;
-        let stripeSubscriptionId = null;
-        try {
-          const subsSnapshot = await getDocs(
-            query(collection(db, 'subscriptions'), where('tenantId', '==', tenantDoc.id))
-          );
-          if (subsSnapshot.docs.length > 0) {
-            const sub = subsSnapshot.docs
-              .map((docSnap) => docSnap.data() || {})
-              .sort((a, b) => getSubscriptionSortValue(b) - getSubscriptionSortValue(a))[0];
-            billingPaused = !!sub.billingPaused;
-            cancelAtPeriodEnd = !!sub.cancelAtPeriodEnd;
-            stripeSubscriptionId = sub.stripeSubscriptionId || null;
-            subscriptionStatus = billingPaused
+        const settings = settingsByTenantId.get(tenantDoc.id) || {};
+        const subscription = subscriptionByTenantId.get(tenantDoc.id) || null;
+        const billingPaused = !!subscription?.billingPaused;
+        const cancelAtPeriodEnd = !!subscription?.cancelAtPeriodEnd;
+        const stripeSubscriptionId = subscription?.stripeSubscriptionId || null;
+        const subscriptionStatus = subscription
+          ? (billingPaused
               ? 'paused'
-              : (cancelAtPeriodEnd && sub.status && sub.status !== 'canceled'
+              : (cancelAtPeriodEnd && subscription.status && subscription.status !== 'canceled'
                   ? 'canceling'
-                  : (sub.status || 'unknown'));
-            trialEndsAt = sub.trialEndsAt?.toDate?.() || null;
-            console.log(`[TenantsManagement] ${tenantDoc.id} - Found subscription with status: "${subscriptionStatus}"`);
-          } else {
-            subscriptionStatus = 'No Subscription';
-            console.log(`[TenantsManagement] ${tenantDoc.id} - No subscription found`);
-          }
-        } catch (error) {
-          console.error('Error loading subscription for', tenantDoc.id, error);
-        }
+                  : (subscription.status || 'unknown')))
+          : (subscriptionLookupFailures.has(tenantDoc.id) ? 'Unknown' : 'No Subscription');
+        const trialEndsAt = subscription?.trialEndsAt?.toDate?.() || null;
 
         // Store both phone fields consistently for all tenant types
-        tenantsList.push({
+        return {
           id: tenantDoc.id,
           name: settings.name || tenantData.name || 'Unknown',
           email: settings.email || tenantData.email || 'N/A',
@@ -188,8 +215,8 @@ export default function TenantsManagementPage() {
           noRecurringChargesOverride: !!settings.noRecurringChargesOverride,
           type: currentTab.type,
           tenantType: currentTab.id === 'offices' ? 'voice' : currentTab.id === 'agents' ? 'real_estate' : 'restaurant',
-        });
-      }
+        };
+      });
 
       // Sort by creation date (newest first)
       tenantsList.sort((a, b) => b.createdAt - a.createdAt);
