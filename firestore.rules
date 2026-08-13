@@ -25,19 +25,6 @@ service cloud.firestore {
              request.auth.token.agentId == agentId;
     }
     
-    // Helper function to check if user is owner
-    function isOwner(restaurantId) {
-      return belongsToRestaurant(restaurantId) && 
-             request.auth.token.role == 'owner';
-    }
-    
-    // Helper function to check if user is owner or manager
-    function isOwnerOrManager(restaurantId) {
-      return belongsToRestaurant(restaurantId) && 
-             (request.auth.token.role == 'owner' || 
-              request.auth.token.role == 'manager');
-    }
-    
     // Helper function to check if user is Merxus admin
     function isMerxusAdmin() {
       return isAuthenticated() && 
