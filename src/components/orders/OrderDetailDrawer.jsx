@@ -11,6 +11,9 @@ export default function OrderDetailDrawer({
 
   const isUpdating = updatingId === order.id;
   const nextStatus = getNextStatus(order.status);
+  const awaitingVerification =
+    order.phoneVerification?.required === true &&
+    order.phoneVerification?.status !== 'verified';
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -44,7 +47,7 @@ export default function OrderDetailDrawer({
             <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">Status</h3>
             <div className="flex items-center gap-2">
               <OrderStatusBadge status={order.status} />
-              {nextStatus && (
+              {nextStatus && !awaitingVerification && (
                 <button
                   type="button"
                   disabled={isUpdating}
@@ -58,7 +61,24 @@ export default function OrderDetailDrawer({
                   {isUpdating ? 'Updating…' : `Mark ${labelForStatus(nextStatus)}`}
                 </button>
               )}
+              {order.status === 'new' && !awaitingVerification ? (
+                <button
+                  type="button"
+                  disabled={isUpdating}
+                  onClick={() => onStatusChange?.(order, 'cancelled')}
+                  className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                >
+                  Decline
+                </button>
+              ) : null}
             </div>
+            {order.phoneVerification?.required ? (
+              <div className={`mt-3 rounded-md border px-3 py-2 text-xs ${awaitingVerification ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
+                {awaitingVerification
+                  ? `Do not prepare or accept this order yet. Customer phone verification is ${String(order.phoneVerification?.status || 'pending').replace(/_/g, ' ')}.`
+                  : 'Customer control of the provided phone number has been verified. Staff acceptance is still required.'}
+              </div>
+            ) : null}
           </section>
 
           <section>

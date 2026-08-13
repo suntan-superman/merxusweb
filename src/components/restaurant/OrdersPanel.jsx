@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '../../firebase/config';
-import { collection, query, where, onSnapshot, updateDoc, doc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
+import { updateOrderStatus } from '../../api/orders';
 import LoadingSpinner from '../LoadingSpinner';
 import './OrdersPanel.css';
 
 const ORDER_STATUS_COLORS = {
-  new: { color: '#FF6B6B', label: '🆕 New', next: 'confirmed' },
-  confirmed: { color: '#4ECDC4', label: '✓ Confirmed', next: 'preparing' },
-  preparing: { color: '#FFE66D', label: '👨‍🍳 Preparing', next: 'ready' },
+  new: { color: '#FF6B6B', label: '🆕 New', next: 'accepted' },
+  accepted: { color: '#4ECDC4', label: '✓ Accepted', next: 'in_progress' },
+  in_progress: { color: '#FFE66D', label: '👨‍🍳 In Progress', next: 'ready' },
   ready: { color: '#95E1D3', label: '📦 Ready', next: 'picked_up' },
-  picked_up: { color: '#A8E6CF', label: '✅ Picked Up', next: null },
+  completed: { color: '#A8E6CF', label: '✅ Completed', next: null },
   cancelled: { color: '#999999', label: '❌ Cancelled', next: null }
 };
 
@@ -66,10 +67,10 @@ export default function OrdersPanel({ restaurantId, filterDate, fullScreen = fal
   const filteredOrders = useMemo(() => {
     if (statusFilter === 'all') return orders;
     if (statusFilter === 'pending') {
-      return orders.filter(o => o.status === 'new' || o.status === 'confirmed' || o.status === 'preparing');
+      return orders.filter(o => o.status === 'new' || o.status === 'accepted' || o.status === 'in_progress' || o.status === 'ready');
     }
     if (statusFilter === 'completed') {
-      return orders.filter(o => o.status === 'picked_up' || o.status === 'cancelled');
+      return orders.filter(o => o.status === 'completed' || o.status === 'cancelled');
     }
     return orders;
   }, [orders, statusFilter]);
@@ -77,10 +78,10 @@ export default function OrdersPanel({ restaurantId, filterDate, fullScreen = fal
   const stats = useMemo(() => {
     return {
       total: orders.length,
-      pending: orders.filter(o => !['picked_up', 'cancelled'].includes(o.status)).length,
-      completed: orders.filter(o => o.status === 'picked_up').length,
+      pending: orders.filter(o => !['completed', 'cancelled'].includes(o.status)).length,
+      completed: orders.filter(o => o.status === 'completed').length,
       cancelled: orders.filter(o => o.status === 'cancelled').length,
-      revenue: orders.filter(o => o.status === 'picked_up').reduce((sum, o) => sum + (o.total || 0), 0)
+      revenue: orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.total || 0), 0)
     };
   }, [orders]);
 
@@ -89,11 +90,7 @@ export default function OrdersPanel({ restaurantId, filterDate, fullScreen = fal
     if (!nextStatus) return;
 
     try {
-      const orderRef = doc(db, 'restaurants', restaurantId, 'orders', orderId);
-      await updateDoc(orderRef, { 
-        status: nextStatus,
-        updatedAt: Timestamp.now()
-      });
+      await updateOrderStatus(orderId, nextStatus);
     } catch (error) {
       console.error('Error updating order status:', error);
     }
@@ -171,6 +168,8 @@ export default function OrdersPanel({ restaurantId, filterDate, fullScreen = fal
         ) : (
           filteredOrders.map(order => {
             const statusInfo = ORDER_STATUS_COLORS[order.status] || ORDER_STATUS_COLORS.new;
+            const awaitingVerification = order.phoneVerification?.required === true
+              && order.phoneVerification?.status !== 'verified';
             return (
               <div key={order.id} className="order-card">
                 {/* Order header */}
@@ -202,9 +201,10 @@ export default function OrdersPanel({ restaurantId, filterDate, fullScreen = fal
                       color: '#fff'
                     }}
                     onClick={() => handleStatusChange(order.id, order.status)}
-                    title={statusInfo.next ? `Click to mark as ${statusInfo.next}` : 'No further status'}
+                    disabled={awaitingVerification}
+                    title={awaitingVerification ? 'Customer phone verification is required' : (statusInfo.next ? `Click to mark as ${statusInfo.next}` : 'No further status')}
                   >
-                    {statusInfo.label}
+                    {awaitingVerification ? '⏳ Awaiting SMS code' : statusInfo.label}
                   </button>
                 </div>
 

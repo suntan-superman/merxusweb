@@ -12,7 +12,6 @@ export const NAV_ITEMS = [
   { id: 'restaurant_bookings', tenantType: 'restaurant', groupId: 'core', label: 'Bookings', path: '/restaurant/bookings', icon: 'BookOpen', sortOrder: 25, defaultQuickStart: true },
   { id: 'restaurant_booking_areas', tenantType: 'restaurant', groupId: 'core', label: 'Booking Areas', path: '/restaurant/booking-areas', icon: 'MapPinned', sortOrder: 26 },
   { id: 'restaurant_booking_rules', tenantType: 'restaurant', groupId: 'core', label: 'Booking Rules', path: '/restaurant/booking-settings', icon: 'ClipboardList', sortOrder: 27 },
-  { id: 'restaurant_reservations', tenantType: 'restaurant', groupId: 'core', label: 'Reservations', path: '/restaurant/reservations', icon: 'CalendarDays', sortOrder: 30 },
   { id: 'restaurant_calls_messages', tenantType: 'restaurant', groupId: 'core', label: 'Calls & Messages', path: '/restaurant/calls', icon: 'Phone', sortOrder: 40, defaultQuickStart: true },
   { id: 'restaurant_customers', tenantType: 'restaurant', groupId: 'core', label: 'Customers', path: '/restaurant/customers', icon: 'Users', sortOrder: 50 },
   { id: 'restaurant_menu', tenantType: 'restaurant', groupId: 'core', label: 'Menu', path: '/restaurant/menu', icon: 'Utensils', sortOrder: 60 },

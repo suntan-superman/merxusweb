@@ -7,7 +7,7 @@ export async function fetchOrders({ limit = 50, status, orderType } = {}) {
   if (orderType) params.orderType = orderType;
 
   const res = await apiClient.get('/orders', { params });
-  return res.data;
+  return res.data?.orders || [];
 }
 
 export async function updateOrderStatus(orderId, status, updates = {}) {
@@ -15,11 +15,11 @@ export async function updateOrderStatus(orderId, status, updates = {}) {
     status,
     ...updates,
   });
-  return res.data;
+  return res.data?.order || null;
 }
 
 export async function getOrder(orderId) {
   const res = await apiClient.get(`/orders/${orderId}`);
-  return res.data;
+  return res.data?.order || null;
 }
 

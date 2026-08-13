@@ -58,7 +58,6 @@ const OrdersPage = lazy(() => import('./pages/restaurant/OrdersPage'));
 const RestaurantBookingsPage = lazy(() => import('./pages/restaurant/RestaurantBookingsPage'));
 const RestaurantBookingAreasPage = lazy(() => import('./pages/restaurant/RestaurantBookingAreasPage'));
 const RestaurantBookingSettingsPage = lazy(() => import('./pages/restaurant/RestaurantBookingSettingsPage'));
-const ReservationsPage = lazy(() => import('./pages/restaurant/ReservationsPage'));
 const DashboardPage = lazy(() => import('./pages/restaurant/DashboardPage'));
 const RestaurantDashboard = lazy(() => import('./components/restaurant/RestaurantDashboard'));
 const CallsPage = lazy(() => import('./pages/restaurant/CallsPage'));
@@ -452,7 +451,7 @@ function App() {
                     <Route path="bookings" element={<LazyRoute><RestaurantBookingsPage /></LazyRoute>} />
                     <Route path="booking-areas" element={<LazyRoute><RestaurantBookingAreasPage /></LazyRoute>} />
                     <Route path="booking-settings" element={<LazyRoute><RestaurantBookingSettingsPage /></LazyRoute>} />
-                    <Route path="reservations" element={<LazyRoute><ReservationsPage /></LazyRoute>} />
+                    <Route path="reservations" element={<Navigate to="/restaurant/bookings" replace />} />
                     <Route path="calls" element={<LazyRoute><CallsPage /></LazyRoute>} />
                     <Route path="customers" element={<LazyRoute><CustomersPage /></LazyRoute>} />
                     <Route path="menu" element={<LazyRoute><MenuPage /></LazyRoute>} />

@@ -21,6 +21,13 @@ const DEFAULT_SETTINGS = {
   emailConfirmationsEnabled: true,
   smsRemindersEnabled: true,
   reminderHoursBefore: 24,
+  transactionVerificationEnabled: true,
+  orderPhoneVerificationEnabled: true,
+  reservationPhoneVerificationEnabled: true,
+  staffAcceptanceRequiredWithoutIntegration: true,
+  verificationCodeExpiryMinutes: 10,
+  verificationMaxAttempts: 5,
+  verificationMaxRequestsPerPhone24h: 5,
   staffNotificationChannels: {
     dashboard: true,
     mobilePush: true,
@@ -77,6 +84,9 @@ export default function RestaurantBookingSettingsPage() {
         largePartyThreshold: Number(settings.largePartyThreshold || 1),
         privateEventThreshold: Number(settings.privateEventThreshold || 1),
         reminderHoursBefore: Number(settings.reminderHoursBefore || 1),
+        verificationCodeExpiryMinutes: Number(settings.verificationCodeExpiryMinutes || 10),
+        verificationMaxAttempts: Number(settings.verificationMaxAttempts || 5),
+        verificationMaxRequestsPerPhone24h: Number(settings.verificationMaxRequestsPerPhone24h || 5),
       };
       const saved = await updateRestaurantBookingSettings(payload);
       setSettings({
@@ -139,6 +149,22 @@ export default function RestaurantBookingSettingsPage() {
         </div>
         <div className="mt-4">
           <ToggleField label="Bookings enabled" checked={settings.enabled !== false} onChange={(checked) => patch({ enabled: checked })} />
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Fraud Protection</h3>
+        <p className="mt-1 text-sm text-gray-600 dark:text-slate-400">
+          For AI phone requests without a connected order or reservation provider, Merxus texts a one-time code to the caller and holds the request until they reply. Verification proves control of the number; staff acceptance is still required.
+        </p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <ToggleField label="Enable transaction verification" checked={settings.transactionVerificationEnabled !== false} onChange={(checked) => patch({ transactionVerificationEnabled: checked })} />
+          <ToggleField label="Verify AI phone orders" checked={settings.orderPhoneVerificationEnabled !== false} onChange={(checked) => patch({ orderPhoneVerificationEnabled: checked })} />
+          <ToggleField label="Verify AI phone reservations" checked={settings.reservationPhoneVerificationEnabled !== false} onChange={(checked) => patch({ reservationPhoneVerificationEnabled: checked })} />
+          <ToggleField label="Require staff acceptance without an integration" checked={settings.staffAcceptanceRequiredWithoutIntegration !== false} onChange={(checked) => patch({ staffAcceptanceRequiredWithoutIntegration: checked })} />
+          <NumberField label="Code expires after minutes" value={settings.verificationCodeExpiryMinutes} onChange={(value) => patch({ verificationCodeExpiryMinutes: value })} min="5" max="30" />
+          <NumberField label="Maximum code attempts" value={settings.verificationMaxAttempts} onChange={(value) => patch({ verificationMaxAttempts: value })} min="3" max="10" />
+          <NumberField label="Maximum requests per phone / 24 hours" value={settings.verificationMaxRequestsPerPhone24h} onChange={(value) => patch({ verificationMaxRequestsPerPhone24h: value })} min="1" max="20" />
         </div>
       </section>
 
@@ -213,13 +239,14 @@ function TextField({ label, value, onChange }) {
   );
 }
 
-function NumberField({ label, value, onChange, min }) {
+function NumberField({ label, value, onChange, min, max }) {
   return (
     <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
       {label}
       <input
         type="number"
         min={min}
+        max={max}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"

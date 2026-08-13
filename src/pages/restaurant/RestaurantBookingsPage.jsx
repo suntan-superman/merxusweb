@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import '../../utils/syncfusionScheduleRuntime';
 import { ScheduleComponent, ViewsDirective, ViewDirective, Day, Week, Month, Agenda, Inject } from '@syncfusion/ej2-react-schedule';
 import {
@@ -45,6 +46,7 @@ const STATUS_STYLES = {
 };
 
 export default function RestaurantBookingsPage() {
+  const [searchParams] = useSearchParams();
   const [bookings, setBookings] = useState([]);
   const [areas, setAreas] = useState([]);
   const [filter, setFilter] = useState('pending_review');
@@ -63,6 +65,7 @@ export default function RestaurantBookingsPage() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [lastRefreshAt, setLastRefreshAt] = useState(null);
   const [autoRefreshSeconds, setAutoRefreshSeconds] = useState(() => readAutoRefreshSeconds());
+  const requestedBookingId = searchParams.get('bookingId') || '';
 
   const loadBookings = useCallback(async ({ silent = false } = {}) => {
     if (!silent) {
@@ -120,6 +123,12 @@ export default function RestaurantBookingsPage() {
   useEffect(() => {
     loadBookings();
   }, [loadBookings]);
+
+  useEffect(() => {
+    if (!requestedBookingId || !bookings.length) return;
+    const requested = bookings.find((booking) => (booking.bookingId || booking.id) === requestedBookingId);
+    if (requested) setSelectedBooking(requested);
+  }, [bookings, requestedBookingId]);
 
   useEffect(() => {
     localStorage.setItem(AUTO_REFRESH_STORAGE_KEY, String(autoRefreshSeconds));
@@ -709,7 +718,12 @@ function BookingsTable({ bookings, selectedId, updatingId, sendingSmsId, onSelec
                 <td className="px-4 py-3 text-gray-700 dark:text-slate-300">
                   <SourceBadge source={booking.source} />
                 </td>
-                <td className="px-4 py-3"><StatusBadge status={booking.status} /></td>
+                <td className="px-4 py-3">
+                  <div className="space-y-1">
+                    <StatusBadge status={booking.status} />
+                    <BookingVerificationBadge verification={booking.phoneVerification} />
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-gray-700 dark:text-slate-300">
                   {booking.conflictState && booking.conflictState !== 'none' ? (
                     <span className="text-xs font-medium text-amber-700 dark:text-amber-300">{formatLabel(booking.conflictState)}</span>
@@ -739,12 +753,16 @@ function ActionButtons({ booking, updatingId, sendingSmsId, onTransition, onSend
   const id = booking.bookingId || booking.id;
   const busy = updatingId === id;
   const smsBusy = sendingSmsId === id;
-  const canConfirm = booking.status === 'pending_review' || booking.status === 'requested' || booking.requiresApproval;
+  const awaitingVerification = booking.phoneVerification?.required === true && booking.phoneVerification?.status !== 'verified';
+  const canConfirm = !awaitingVerification && (booking.status === 'pending_review' || booking.status === 'requested' || booking.requiresApproval);
   const canCancel = !['cancelled', 'declined', 'completed', 'no_show'].includes(booking.status);
   const canSendConfirmation = booking.status === 'confirmed' && booking.customer?.phone;
 
   return (
     <div className="inline-flex flex-wrap justify-end gap-2">
+      {awaitingVerification ? (
+        <span className="rounded-md bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">Awaiting customer code</span>
+      ) : null}
       {canConfirm ? (
         <>
           <button
@@ -786,6 +804,16 @@ function ActionButtons({ booking, updatingId, sendingSmsId, onTransition, onSend
         </button>
       ) : null}
     </div>
+  );
+}
+
+function BookingVerificationBadge({ verification }) {
+  if (!verification?.required) return null;
+  const verified = verification.status === 'verified';
+  return (
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${verified ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'}`}>
+      {verified ? 'Phone verified' : `Phone ${String(verification.status || 'pending').replace(/_/g, ' ')}`}
+    </span>
   );
 }
 
@@ -1091,6 +1119,7 @@ function BookingDetailDrawer({
               <StatusBadge status={booking.status} />
             </div>
             <DetailRow label="Requires approval" value={booking.requiresApproval ? 'Yes' : 'No'} />
+            <DetailRow label="Phone verification" value={booking.phoneVerification?.required ? formatLabel(booking.phoneVerification.status || 'pending') : 'Not required'} />
             <DetailRow label="Conflict" value={booking.conflictState && booking.conflictState !== 'none' ? formatLabel(booking.conflictState) : 'None'} />
             <DetailRow label="Conflict reason" value={booking.conflictReason} />
           </DetailGroup>

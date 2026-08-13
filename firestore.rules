@@ -46,6 +46,22 @@ service cloud.firestore {
               request.auth.token.role == 'super_admin');
     }
 
+    // Orders and reservation mirrors that require phone verification are
+    // backend-controlled records. The Admin SDK bypasses these rules, while a
+    // browser or mobile client must use the authenticated API so verification,
+    // audit, and customer-notification checks cannot be skipped.
+    function hasRequiredPhoneVerification(data) {
+      return data != null
+        && data.keys().hasAny(['phoneVerification'])
+        && data.phoneVerification is map
+        && data.phoneVerification.required == true;
+    }
+
+    function isBackendControlledRestaurantTransaction() {
+      return (resource != null && hasRequiredPhoneVerification(resource.data))
+        || (request.resource != null && hasRequiredPhoneVerification(request.resource.data));
+    }
+
     // User-owned web preferences.
     // Used by the Merxus web Quick Start navigation/sidebar.
     match /users/{userId}/preferences/{docId} {
@@ -67,10 +83,12 @@ service cloud.firestore {
     // Restaurant data - ALL subcollections under a restaurant
     // Uses recursive wildcard to match any depth
     match /restaurants/{restaurantId}/{document=**} {
-      // Restaurant users can read/write their own data
-      allow read, write: if belongsToRestaurant(restaurantId);
-      // Merxus admins can read/write all restaurant data
-      allow read, write: if isMerxusAdmin();
+      // Restaurant members and Merxus admins can read tenant data. Ordinary
+      // client writes remain compatible, except protected transactions must go
+      // through the API and its server-side verification guard.
+      allow read: if belongsToRestaurant(restaurantId) || isMerxusAdmin();
+      allow write: if (belongsToRestaurant(restaurantId) || isMerxusAdmin())
+        && !isBackendControlledRestaurantTransaction();
     }
     
     // Office/Voice data - ALL subcollections under an office

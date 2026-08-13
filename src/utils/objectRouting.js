@@ -14,8 +14,8 @@ export function getNativeObjectRoute(tenantType, graphRefs = {}) {
   if (tenantType === 'restaurant') {
     if (graphRefs.reservationId) {
       return {
-        label: 'Open Reservation Record',
-        path: `${portalBasePath}/reservations?reservationId=${encodeURIComponent(graphRefs.reservationId)}`,
+        label: 'Open Booking Record',
+        path: `${portalBasePath}/bookings?bookingId=${encodeURIComponent(graphRefs.reservationId)}`,
       };
     }
 

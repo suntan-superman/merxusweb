@@ -14,8 +14,8 @@ test('native object routing resolves tenant-specific record drilldowns', () => {
   assert.deepEqual(
     getNativeObjectRoute('restaurant', { reservationId: 'res 42' }),
     {
-      label: 'Open Reservation Record',
-      path: '/restaurant/reservations?reservationId=res%2042',
+      label: 'Open Booking Record',
+      path: '/restaurant/bookings?bookingId=res%2042',
     },
   );
   assert.deepEqual(

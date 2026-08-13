@@ -139,7 +139,10 @@ export default function OrdersTable({
   );
 
   const statusTemplate = (props) => (
-    <OrderStatusBadge status={props.status} />
+    <div className="space-y-1">
+      <OrderStatusBadge status={props.status} />
+      <VerificationBadge verification={props.phoneVerification} />
+    </div>
   );
 
   const actionsTemplate = (props) => (
@@ -315,21 +318,67 @@ function StatusButtonGroup({ order, isUpdating, onStatusChange, orders }) {
 
   // Find original order for status change
   const originalOrder = orders?.find((o) => o.id === order.id) || order;
+  const awaitingVerification =
+    originalOrder.phoneVerification?.required === true &&
+    originalOrder.phoneVerification?.status !== 'verified';
+
+  if (awaitingVerification) {
+    return (
+      <span className="inline-flex rounded-md bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+        Awaiting customer code
+      </span>
+    );
+  }
 
   return (
-    <button
-      type="button"
-      disabled={isUpdating}
-      onClick={() => onStatusChange?.(originalOrder, nextStatus)}
-      className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-        isUpdating
-          ? 'cursor-not-allowed bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
-          : 'bg-primary-600 text-white hover:bg-primary-700'
-      }`}
-    >
-      {isUpdating ? 'Updating…' : `Mark ${labelForStatus(nextStatus)}`}
-    </button>
+    <div className="inline-flex flex-wrap justify-end gap-2">
+      <button
+        type="button"
+        disabled={isUpdating}
+        onClick={() => onStatusChange?.(originalOrder, nextStatus)}
+        className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+          isUpdating
+            ? 'cursor-not-allowed bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
+            : 'bg-primary-600 text-white hover:bg-primary-700'
+        }`}
+      >
+        {isUpdating ? 'Updating…' : `Mark ${labelForStatus(nextStatus)}`}
+      </button>
+      {originalOrder.status === 'new' ? (
+        <button
+          type="button"
+          disabled={isUpdating}
+          onClick={() => onStatusChange?.(originalOrder, 'cancelled')}
+          className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/40"
+        >
+          Decline
+        </button>
+      ) : null}
+    </div>
   );
+}
+
+function VerificationBadge({ verification }) {
+  if (!verification?.required) return null;
+  const verified = verification.status === 'verified';
+  return (
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${verified ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'}`}>
+      {verified ? 'Phone verified' : formatVerificationStatus(verification.status)}
+    </span>
+  );
+}
+
+function formatVerificationStatus(status) {
+  const labels = {
+    pending: 'Awaiting code',
+    expired: 'Code expired',
+    locked: 'Verification locked',
+    rate_limited: 'Rate limited',
+    phone_unavailable: 'Phone unavailable',
+    delivery_failed: 'SMS failed',
+    delivery_skipped: 'SMS skipped',
+  };
+  return labels[status] || 'Not verified';
 }
 
 function getNextStatus(status) {

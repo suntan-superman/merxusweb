@@ -115,7 +115,7 @@ export default function OrdersPage() {
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to update order status.');
+      setError(err?.response?.data?.error || 'Failed to update order status.');
     } finally {
       setUpdatingId(null);
     }
