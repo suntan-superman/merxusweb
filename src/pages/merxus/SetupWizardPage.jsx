@@ -8,6 +8,7 @@ import apiClient from '../../api/client';
 import { auth } from '../../firebase/config';
 import { getEmailSignInMethods, getSignInMethodInfo } from '../../utils/authProviders';
 import { trackWorksideAnalyticsEvent } from '../../utils/worksideAnalytics';
+import { getAdminSetupCompletionPath } from '../../utils/adminSetupRouting';
 
 export default function SetupWizardPage() {
   const navigate = useNavigate();
@@ -19,19 +20,17 @@ export default function SetupWizardPage() {
   const handleComplete = async (wizardData, isPreSave = false) => {
     console.log('Wizard completion called:', { isPreSave, tenantAlreadyCreated: !!tenantCreated, wizardData });
     
-    // If tenant already created (at Step 5) and this is Step 7, just redirect
+    // Demo tenants are created before phone assignment. The administrator's
+    // Firebase claims intentionally remain Merxus-admin claims, so completing
+    // the wizard must return to the admin portal rather than a tenant-only
+    // dashboard. Entering the tenant is an explicit owner sign-in action.
     if (tenantCreated && !isPreSave) {
-      console.log('✅ Tenant already created, redirecting to dashboard...');
-      toast.success('🎉 Welcome! Redirecting to your dashboard...');
+      console.log('✅ Tenant already created, returning to Tenant Management...');
+      toast.success('🎉 Demo tenant created! Returning to Tenant Management...');
       
       setTimeout(() => {
         setShowWizard(false);
-        const dashboardPaths = {
-          restaurant: '/restaurant/dashboard',
-          voice: '/voice/dashboard',
-          real_estate: '/estate/dashboard',
-        };
-        navigate(dashboardPaths[wizardData.tenantType] || '/merxus');
+        navigate(getAdminSetupCompletionPath(), { replace: true });
       }, 1500);
       
       return tenantCreated;
@@ -199,38 +198,17 @@ export default function SetupWizardPage() {
         setIsSubmitting(false);
         return createdTenant;
       } else {
-        // Final completion at Step 7 - refresh auth claims then redirect
-        toast.success('🎉 Setup completed! Refreshing your access...');
+        // The current user is a Merxus administrator. Provisioning creates
+        // tenant claims for the owner, not for the administrator.
+        toast.success('🎉 Demo tenant created! Returning to Tenant Management...');
         void trackWorksideAnalyticsEvent('onboarding_completed', {
           tenantId: resolvedTenantId,
           tenantType: wizardData.tenantType,
         }, { sessionId: resolvedTenantId });
         
-        // Force token refresh to get new claims
-        try {
-          const currentUser = auth.currentUser;
-          if (currentUser) {
-            await currentUser.getIdToken(true); // Force refresh
-            console.log('✅ Token refreshed, claims should be updated');
-            
-            // Wait a moment for claims to propagate
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        } catch (refreshError) {
-          console.error('Token refresh error:', refreshError);
-        }
-        
-        // Redirect to appropriate dashboard
         setTimeout(() => {
           setShowWizard(false);
-          
-          const dashboardPaths = {
-            restaurant: '/restaurant/dashboard',
-            voice: '/voice/dashboard',
-            real_estate: '/estate/dashboard',
-          };
-          
-          navigate(dashboardPaths[wizardData.tenantType] || '/merxus');
+          navigate(getAdminSetupCompletionPath(), { replace: true });
         }, 500);
       }
       

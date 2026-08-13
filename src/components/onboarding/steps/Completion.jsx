@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, LogIn, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
+import { getAdminSetupCompletionPath } from '../../../utils/adminSetupRouting';
 
 export default function Completion({
   tenantType,
@@ -24,7 +25,7 @@ export default function Completion({
     await onSwitchToOwner(ownerEmail, ownerPassword);
     // onSwitchToOwner will handle the actual login and redirect
   };
-  // Get dashboard path based on tenant type
+  // Get dashboard path based on tenant type for the signed-in tenant owner.
   const getDashboardPath = () => {
     const paths = {
       restaurant: '/restaurant/dashboard',
@@ -120,11 +121,11 @@ export default function Completion({
 
                 {/* View as Admin Button */}
                 <button
-                  onClick={() => window.location.href = getDashboardPath()}
+                  onClick={() => { window.location.href = getAdminSetupCompletionPath(); }}
                   className="flex items-center justify-center gap-2 bg-white border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-all"
                 >
                   <ExternalLink size={20} />
-                  <span>View as Admin</span>
+                  <span>Return to Tenant Management</span>
                 </button>
               </div>
 

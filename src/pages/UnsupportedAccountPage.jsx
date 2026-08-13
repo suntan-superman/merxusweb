@@ -10,6 +10,9 @@ export default function UnsupportedAccountPage() {
   const [params] = useSearchParams();
   const reason = params.get('reason');
   const isSupportConsole = reason === 'support-console' || userClaims?.supportRole;
+  const isMerxusAdmin =
+    userClaims?.type === 'merxus' &&
+    ['super_admin', 'merxus_admin'].includes(userClaims?.role);
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-16 text-slate-900">
@@ -18,12 +21,18 @@ export default function UnsupportedAccountPage() {
           Account Access
         </p>
         <h1 className="mt-3 text-2xl font-bold">
-          {isSupportConsole ? 'Use the Workside Support Console' : 'No Merxus tenant is assigned'}
+          {isSupportConsole
+            ? 'Use the Workside Support Console'
+            : isMerxusAdmin
+              ? 'This page requires a tenant account'
+              : 'No Merxus tenant is assigned'}
         </h1>
         <p className="mt-4 text-sm leading-6 text-slate-700">
           {isSupportConsole
             ? 'This Firebase account is authorized for the Workside Support Console, but it is not assigned to a Merxus AI restaurant, office, real estate, or admin tenant.'
-            : 'You signed in successfully, but this account does not have a Merxus AI tenant assignment yet.'}
+            : isMerxusAdmin
+              ? 'You are still signed in as a Merxus administrator. Return to Tenant Management, or sign out and use the newly created owner account to enter its tenant portal.'
+              : 'You signed in successfully, but this account does not have a Merxus AI tenant assignment yet.'}
         </p>
 
         <div className="mt-5 rounded-md bg-slate-50 p-4 text-sm text-slate-700">
@@ -45,6 +54,13 @@ export default function UnsupportedAccountPage() {
             >
               Open Support Console
             </a>
+          ) : isMerxusAdmin ? (
+            <Link
+              to="/merxus/tenants"
+              className="inline-flex justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
+            >
+              Return to Tenant Management
+            </Link>
           ) : (
             <Link
               to="/onboarding"

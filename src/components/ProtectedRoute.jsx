@@ -184,6 +184,15 @@ export default function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  if (
+    requireAuth &&
+    user &&
+    isMerxusAdmin &&
+    (requireRestaurant || requireVoice || requireRealEstate)
+  ) {
+    return <Navigate to="/merxus/tenants" replace />;
+  }
+
   if (requireRestaurant && user && (!userClaims || !isRestaurantUser)) {
     // User is logged in but not a restaurant user
     console.warn('User logged in but not a restaurant user. Redirecting to unsupported account page.');
