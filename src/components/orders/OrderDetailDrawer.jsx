@@ -150,26 +150,52 @@ export default function OrderDetailDrawer({
                 return sum + (unitPrice * quantity);
               }, 0) || 0;
               
-              const taxRate = parseFloat(order.taxRate || 0.075); // Default 7.5%
+              const parsedTaxRate = parseFloat(order.taxRate);
+              const taxRate = Number.isFinite(parsedTaxRate) ? parsedTaxRate : null;
               
               // If we have a total but no item prices, calculate subtotal from total
               let subtotal, tax, total;
               if (order.total && calculatedSubtotal === 0) {
                 // Total is provided but items don't have prices
-                // Assume total includes tax, so back-calculate
                 total = parseFloat(order.total || 0);
-                subtotal = total / (1 + taxRate);
-                tax = total - subtotal;
+                if (order.subtotal !== undefined && order.subtotal !== null) {
+                  subtotal = parseFloat(order.subtotal || 0);
+                  tax = order.tax !== undefined && order.tax !== null
+                    ? parseFloat(order.tax || 0)
+                    : total - subtotal;
+                } else if (taxRate !== null) {
+                  subtotal = total / (1 + taxRate);
+                  tax = total - subtotal;
+                } else {
+                  subtotal = total;
+                  tax = null;
+                }
               } else if (calculatedSubtotal > 0) {
                 // We have item prices, calculate normally
                 subtotal = order.subtotal !== undefined ? parseFloat(order.subtotal || 0) : calculatedSubtotal;
-                tax = subtotal * taxRate;
-                total = order.total !== undefined ? parseFloat(order.total || 0) : (subtotal + tax);
+                tax = order.tax !== undefined && order.tax !== null
+                  ? parseFloat(order.tax || 0)
+                  : taxRate !== null
+                    ? subtotal * taxRate
+                    : null;
+                total = order.total !== undefined && order.total !== null
+                  ? parseFloat(order.total || 0)
+                  : tax !== null
+                    ? subtotal + tax
+                    : subtotal;
               } else {
                 // No data available
                 subtotal = parseFloat(order.subtotal || 0);
-                tax = subtotal * taxRate;
-                total = parseFloat(order.total || 0);
+                tax = order.tax !== undefined && order.tax !== null
+                  ? parseFloat(order.tax || 0)
+                  : taxRate !== null
+                    ? subtotal * taxRate
+                    : null;
+                total = order.total !== undefined && order.total !== null
+                  ? parseFloat(order.total || 0)
+                  : tax !== null
+                    ? subtotal + tax
+                    : subtotal;
               }
               
               return (
@@ -180,9 +206,9 @@ export default function OrderDetailDrawer({
                   </div>
                   <div className="flex justify-between">
                     <h3 className="text-xs font-semibold uppercase text-gray-500">
-                      Tax ({(taxRate * 100).toFixed(2)}%)
+                      Tax{taxRate !== null ? ` (${(taxRate * 100).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}%)` : ''}
                     </h3>
-                    <p className="text-gray-800">${tax.toFixed(2)}</p>
+                    <p className="text-gray-800">{tax === null ? 'Not calculated' : `$${tax.toFixed(2)}`}</p>
                   </div>
                   <div className="flex justify-between pt-2 border-t">
                     <h3 className="text-xs font-semibold uppercase text-gray-500">Total</h3>

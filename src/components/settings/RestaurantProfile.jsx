@@ -19,7 +19,9 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
     websiteUrl: settings.websiteUrl || settings.website || '',
     timezone: settings.timezone || 'America/Los_Angeles',
     phoneNumber: settings.phoneNumber || '',
-    taxRate: settings.taxRate !== undefined ? (settings.taxRate * 100).toFixed(2) : '7.50',
+    taxRate: settings.taxRate !== undefined && settings.taxRate !== null
+      ? (settings.taxRate * 100).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')
+      : '',
   });
 
   function handleChange(e) {
@@ -30,10 +32,9 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
   function handleSubmit(e) {
     e.preventDefault();
     // Convert tax rate percentage to decimal before saving
-    const dataToSave = {
-      ...form,
-      taxRate: parseFloat(form.taxRate) / 100,
-    };
+    const dataToSave = { ...form };
+    if (form.taxRate !== '') dataToSave.taxRate = parseFloat(form.taxRate) / 100;
+    else delete dataToSave.taxRate;
     onSave(dataToSave);
   }
 
@@ -148,17 +149,18 @@ export default function RestaurantProfile({ settings, onSave, saving }) {
               step="0.01"
               min="0"
               max="100"
+              required
               value={form.taxRate}
               onChange={handleChange}
               className="input-field pr-8"
-              placeholder="7.50"
+              placeholder="8.25"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
               %
             </span>
           </div>
           <p className="mt-1 text-xs text-gray-500">
-            Default tax rate applied to all orders (default: 7.5%)
+            Required for estimated order totals. Verify the combined rate for this restaurant's address.
           </p>
         </div>
 
