@@ -48,6 +48,7 @@ export default function MenuTable({
 
               <td className="px-4 py-3 align-top text-xs">
                 <button
+                  type="button"
                   className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
                     item.isAvailable
                       ? 'bg-primary-100 text-primary-800 hover:bg-primary-200'
@@ -61,12 +62,14 @@ export default function MenuTable({
 
               <td className="px-4 py-3 align-top text-right">
                 <button
+                  type="button"
                   onClick={() => onEdit(item)}
                   className="text-xs text-primary-600 hover:text-primary-700 hover:underline mr-3"
                 >
                   Edit
                 </button>
                 <button
+                  type="button"
                   onClick={() => onDelete(item)}
                   className="text-xs text-red-600 hover:text-red-700 hover:underline"
                 >
