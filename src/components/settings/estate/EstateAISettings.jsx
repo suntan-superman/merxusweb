@@ -7,16 +7,18 @@ export default function EstateAISettings({ settings, onSave, saving }) {
     voiceName: settings.aiConfig?.voiceName || 'alloy',
     language: settings.aiConfig?.language || 'en-US',
     systemPrompt: settings.aiConfig?.systemPrompt || '',
+    autoSendFlyers: settings.autoSendFlyers === true,
   });
 
   function handleChange(e) {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   }
 
   function handleSubmit(e) {
     e.preventDefault();
     onSave({
+      autoSendFlyers: form.autoSendFlyers,
       aiConfig: {
         model: form.model,
         voiceName: form.voiceName,
@@ -116,8 +118,30 @@ export default function EstateAISettings({ settings, onSave, saving }) {
           />
           <p className="text-xs text-gray-500 mt-1">
             Customize how the AI assistant behaves. Leave blank to use the default real estate prompt.
+            Add <code>BILINGUAL_GREETING: enabled</code> on its own line only if you want the opening
+            greeting spoken in both English and Spanish. Spanish callers are still detected and served
+            automatically when this directive is omitted.
           </p>
         </div>
+
+        <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4 dark:border-slate-700">
+          <input
+            type="checkbox"
+            name="autoSendFlyers"
+            checked={form.autoSendFlyers}
+            onChange={handleChange}
+            className="mt-1 h-4 w-4"
+          />
+          <span>
+            <span className="block text-sm font-medium text-gray-900 dark:text-slate-100">
+              Automatically email confirmed flyer requests
+            </span>
+            <span className="mt-1 block text-xs text-gray-500 dark:text-slate-400">
+              Merxus sends only when the exact listing and flyer exist, the caller provides an email,
+              and the caller explicitly agrees. Otherwise the request remains in Flyer Approvals.
+            </span>
+          </span>
+        </label>
 
         <button type="submit" className="btn-primary" disabled={saving}>
           {saving ? 'Saving…' : 'Save AI Settings'}

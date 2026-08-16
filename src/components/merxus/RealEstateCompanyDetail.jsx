@@ -258,7 +258,7 @@ export default function RealEstateCompanyDetail({ company = {}, onUpdate, onClos
               />
             </div>
             <div>
-              <label className="label">Phone Number</label>
+              <label className="label">Business/Contact Phone</label>
               <input
                 type="tel"
                 name="phoneNumber"
@@ -268,6 +268,20 @@ export default function RealEstateCompanyDetail({ company = {}, onUpdate, onClos
                 className="input-field"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="label">Merxus AI Number</label>
+            <input
+              type="tel"
+              value={company.twilioPhoneNumber || ''}
+              placeholder="Not assigned"
+              disabled
+              className="input-field bg-gray-50"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              This assigned Twilio number is managed through Merxus phone provisioning.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

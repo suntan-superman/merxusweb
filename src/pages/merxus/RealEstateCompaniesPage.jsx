@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { fetchAllRealEstateCompanies, updateRealEstateCompany, getRealEstateCompany } from '../../api/realEstate';
 import RealEstateCompaniesTable from '../../components/merxus/RealEstateCompaniesTable';
 import RealEstateCompanyDetail from '../../components/merxus/RealEstateCompanyDetail';
+import { resolveRealEstateCompanyPhones } from '../../utils/realEstateCompanyPresentation';
 
 // Helper to safely extract string value from field (handles objects)
 const safeString = (value, defaultValue = 'N/A') => {
@@ -43,21 +44,24 @@ export default function RealEstateCompaniesPage() {
         // Load settings from meta/settings subcollection
         let settings = {};
         try {
-          const settingsRef = collection(db, 'agents', agentDoc.id, 'meta');
-          const settingsSnapshot = await getDocs(settingsRef);
-          if (settingsSnapshot.docs.length > 0) {
-            settings = settingsSnapshot.docs[0].data();
+          const settingsSnapshot = await getDoc(doc(db, 'agents', agentDoc.id, 'meta', 'settings'));
+          if (settingsSnapshot.exists()) {
+            settings = settingsSnapshot.data();
           }
         } catch (error) {
           console.error('Error loading settings for', agentDoc.id, error);
         }
         
+        const { businessPhone, merxusAiPhone } = resolveRealEstateCompanyPhones(agentData, settings);
         companiesList.push({
           id: agentDoc.id,
           agentId: agentDoc.id,
           name: settings.name || agentData.name || 'Unknown',
           email: settings.email || agentData.email || 'N/A',
-          phone: safeString(settings.phone || agentData.phone, 'N/A'),
+          phone: businessPhone,
+          phoneNumber: businessPhone,
+          phonePrimary: businessPhone,
+          twilioPhoneNumber: merxusAiPhone,
           brokerage: safeString(settings.brokerage || agentData.brokerage, 'N/A'),
           yearsExperience: settings.yearsExperience || agentData.yearsExperience || 0,
           homesSold: settings.homesSold || agentData.homesSold || 0,
@@ -127,7 +131,8 @@ export default function RealEstateCompaniesPage() {
       c.name?.toLowerCase().includes(q) ||
       c.officeId?.toLowerCase().includes(q) ||
       c.email?.toLowerCase().includes(q) ||
-      c.phoneNumber?.toLowerCase().includes(q)
+      c.phoneNumber?.toLowerCase().includes(q) ||
+      c.twilioPhoneNumber?.toLowerCase().includes(q)
     );
   });
 

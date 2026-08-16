@@ -117,7 +117,7 @@ export const estatePhoneSetupSchema = z.object({
  * Estate flyover - Voice selection step
  */
 export const estateVoiceSchema = z.object({
-  voiceName: z.enum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'ballad', 'coral']),
+  voiceName: z.enum(['alloy', 'ash', 'ballad', 'cedar', 'coral', 'echo', 'marin', 'sage', 'shimmer', 'verse']),
   promptTemplate: z.string().optional(),
   customInstructions: z.string().max(2000, 'Instructions must be under 2000 characters').optional(),
 });
@@ -190,7 +190,7 @@ export const voicePhoneSetupSchema = z.object({
  * Voice flyover - Voice selection step
  */
 export const voiceVoiceSchema = z.object({
-  voiceName: z.enum(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'ballad', 'coral']),
+  voiceName: z.enum(['alloy', 'ash', 'ballad', 'cedar', 'coral', 'echo', 'marin', 'sage', 'shimmer', 'verse']),
 });
 
 /**

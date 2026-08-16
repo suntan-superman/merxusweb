@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { parseMenuCsv, toImportableMenuItems, validateMenuItems } from './menuImport.js';
 
@@ -53,3 +54,22 @@ test('importable items exclude parser metadata', () => {
   assert.equal(item.price, 3.5);
 });
 
+test('canonical sides template is importable and declares entree allowances', () => {
+  const templateUrl = new URL(
+    '../../../docs/sample-menu-imports/restaurant-menu-with-sides-template.csv',
+    import.meta.url
+  );
+  const items = parseMenuCsv(readFileSync(templateUrl, 'utf8'));
+  const validation = validateMenuItems(items);
+  const oneSideEntree = items.find((item) => item.name === 'Sample Grilled Chicken');
+  const twoSideEntree = items.find((item) => item.name === 'Sample Filet');
+  const selectableSides = items.filter(
+    (item) => item.category === 'A La Carte Sides' && item.tags.includes('side')
+  );
+
+  assert.equal(validation.hasErrors, false);
+  assert.equal(validation.warningCount, 0);
+  assert.equal(oneSideEntree.sideCount, 1);
+  assert.equal(twoSideEntree.sideCount, 2);
+  assert.equal(selectableSides.length, 5);
+});

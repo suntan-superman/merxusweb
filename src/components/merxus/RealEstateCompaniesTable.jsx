@@ -1,3 +1,5 @@
+import { formatPhoneDisplay } from '../../utils/phoneFormatter';
+
 export default function RealEstateCompaniesTable({ companies = [], onSelect, selectedId }) {
   if (!companies || companies.length === 0) {
     return (
@@ -8,13 +10,14 @@ export default function RealEstateCompaniesTable({ companies = [], onSelect, sel
   }
 
   return (
-    <div className="card overflow-hidden">
-      <table className="w-full">
+    <div className="card overflow-x-auto">
+      <table className="w-full min-w-[1100px]">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Agent Name</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Brokerage</th>
-            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Phone</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Business Phone</th>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Merxus AI Number</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Listings</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Homes Sold</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Experience</th>
@@ -40,7 +43,10 @@ export default function RealEstateCompaniesTable({ companies = [], onSelect, sel
                 {company.brokerage || 'N/A'}
               </td>
               <td className="px-6 py-4 text-sm text-gray-600">
-                {company.phoneNumber || company.phonePrimary || 'N/A'}
+                {formatPhoneDisplay(company.phoneNumber || company.phonePrimary || company.phone) || 'N/A'}
+              </td>
+              <td className="px-6 py-4 text-sm text-gray-600">
+                {formatPhoneDisplay(company.twilioPhoneNumber) || 'Not assigned'}
               </td>
               <td className="px-6 py-4 text-sm text-gray-600 font-medium">
                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
