@@ -10,12 +10,14 @@ import POSIntegration from '../../components/settings/POSIntegration';
 import AISettings from '../../components/settings/AISettings';
 import SmsSettings from '../../components/settings/SmsSettings';
 import VoiceProviderHealthPanel from '../../components/settings/voice/VoiceProviderHealthPanel';
+import RestaurantCallRouting from '../../components/settings/RestaurantCallRouting';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: '🏪' },
   { id: 'hours', label: 'Business Hours', icon: '🕐' },
   { id: 'holidays', label: 'Holidays', icon: '📅' },
   { id: 'notifications', label: 'Notifications', icon: '🔔' },
+  { id: 'routing', label: 'Call Routing', icon: '📞' },
   // { id: 'managers', label: 'Managers', icon: '👥' }, // Hidden for now: SMS/team routing is the active path; this legacy manager-availability UI is not wired into live routing.
   { id: 'pos', label: 'POS Integration', icon: '💳' },
   { id: 'ai', label: 'AI & Voice', icon: '🤖' },
@@ -73,7 +75,7 @@ export default function SettingsPage() {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error(err);
-      setError('Failed to save settings.');
+      setError(err?.response?.data?.error || 'Failed to save settings.');
     } finally {
       setSaving(false);
     }
@@ -160,6 +162,9 @@ export default function SettingsPage() {
         )}
         {activeTab === 'notifications' && (
           <NotificationSettings settings={settings} onSave={handleSave} saving={saving} />
+        )}
+        {activeTab === 'routing' && (
+          <RestaurantCallRouting settings={settings} onSave={handleSave} saving={saving} />
         )}
         {activeTab === 'managers' && (
           <ManagersSettings settings={settings} onSave={handleSave} saving={saving} />

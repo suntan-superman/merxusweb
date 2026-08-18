@@ -597,6 +597,29 @@ export default function WebsiteChatWidget({
       if (result.session?.leadName) setLeadName(result.session.leadName);
       if (result.session?.leadEmail) setLeadEmail(result.session.leadEmail);
       setMessages((current) => normalizeMessages([...current.filter((item) => !item.pending), ...(result.messages || [])]));
+
+      if (result.session?.humanRequired && !humanRequested) {
+        const activeSessionId = result.session?.id || sessionId;
+        const resultLeadName = String(result.session?.leadName || effectiveLeadName || '').trim();
+        const resultLeadEmail = String(result.session?.leadEmail || effectiveLeadEmail || '').trim();
+        if (isLoggedIn || (isValidLeadName(resultLeadName) && isValidLeadEmail(resultLeadEmail))) {
+          try {
+            await requestHumanTransfer({
+              sessionIdOverride: activeSessionId,
+              leadNameOverride: resultLeadName,
+              leadEmailOverride: resultLeadEmail,
+              message: text,
+              reason: result.session?.humanReason || 'tier_one_human_required',
+              initialIntent: 'support',
+            });
+          } catch (transferError) {
+            setError(publicChatErrorMessage(transferError));
+          }
+        } else {
+          setLeadTouched({ name: true, email: true });
+          setError('This request needs human support. Enter your name and a valid email, then choose "Talk to a person".');
+        }
+      }
     } catch (sendError) {
       setError(publicChatErrorMessage(sendError));
       setMessages((current) => current.filter((item) => item.id !== optimistic.id));
