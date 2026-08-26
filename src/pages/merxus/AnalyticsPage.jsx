@@ -57,6 +57,37 @@ function SectionCard({ title, subtitle, children }) {
   );
 }
 
+function TenantCallValueGrid({ value }) {
+  if (!value) return null;
+  const measured = value.measuredValue || {};
+  const formattedValue = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: measured.currency || 'USD',
+    maximumFractionDigits: 0,
+  }).format(Number(measured.amount || 0));
+
+  return (
+    <SectionCard
+      title="AI Call Outcomes"
+      subtitle="Versioned call outcomes only. Booking counts require an authoritative transaction record; monetary value includes only explicit stored values."
+    >
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard title="AI Resolution" value={`${value.aiResolutionRate || 0}%`} helper={`${value.resolvedByAi || 0} of ${value.totalCalls || 0} normalized calls`} />
+        <StatCard title="Human Transfers" value={value.transferredToHuman || 0} helper={`${value.callbacksRequested || 0} callback fallback(s)`} />
+        <StatCard title="Authoritative Bookings" value={value.authoritativeBookings || 0} helper="Confirmed by a stored transaction ID and completed state" />
+        <StatCard title="Measured Value" value={formattedValue} helper={`${measured.callCount || 0} call(s) with explicit value`} />
+        <StatCard title="High-intent Leads" value={value.highIntentLeads || 0} helper="Deterministic appointment, quote, showing, order, or reservation intent" />
+        <StatCard title="Bilingual Calls" value={value.bilingualCalls || 0} helper="Calls with a recorded language switch" />
+        <StatCard title="Messages Taken" value={value.messagesTaken || 0} helper={`${value.failedOrAbandoned || 0} failed or abandoned`} />
+        <StatCard title="Value Not Measured" value={value.unmeasuredValueCallCount || 0} helper="Excluded from the monetary total" />
+      </div>
+      <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        {value.valueDisclosure}
+      </p>
+    </SectionCard>
+  );
+}
+
 function TrendBars({ title, items = [], metricKey, colorClass = 'bg-emerald-500', helper }) {
   const maxValue = Math.max(...items.map((item) => Number(item?.[metricKey] || 0)), 0);
 
@@ -628,6 +659,8 @@ export default function AnalyticsPage() {
       </div>
 
       {isTenantAnalytics ? <TenantFeedbackGrid feedback={analytics?.feedback} /> : null}
+
+      {isTenantAnalytics ? <TenantCallValueGrid value={analytics?.callValue} /> : null}
 
       {!isTenantAnalytics ? (
         <>

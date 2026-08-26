@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Phone, Key, ExternalLink, CheckCircle2, AlertCircle, Search, ShoppingCart, Sparkles, Loader } from 'lucide-react';
 import { searchAvailableNumbers, listUnassignedNumbers, purchasePhoneNumber } from '../../../api/twilioProvisioning';
 import { toast } from 'react-toastify';
 import { formatPhoneDisplay } from '../../../utils/phoneFormatter';
+import { trackWorksideAnalyticsEvent } from '../../../utils/worksideAnalytics';
+import { ADOPTION_EVENTS } from '../../../constants/adoptionEvents';
 
 const RESERVED_TWILIO_PHONE_NUMBERS = new Set(['+18882506769', '+16614047441', '+16613872290']);
 
@@ -23,6 +25,7 @@ function isReservedTwilioPhoneNumber(value) {
 }
 
 export default function TwilioSetup({ data, onChange, tenantType, tenantId, demoProvisioning = false }) {
+  const setupStartedTracked = useRef(false);
   const [mode, setMode] = useState('auto'); // 'auto' or 'manual'
   const [areaCode, setAreaCode] = useState('');
   const [searchingNumbers, setSearchingNumbers] = useState(false);
@@ -41,6 +44,15 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
   const assignedNumber = data.twilioPhoneNumber
     ? formatPhoneDisplay(data.twilioPhoneNumber)
     : 'this number';
+
+  useEffect(() => {
+    if (setupStartedTracked.current) return;
+    setupStartedTracked.current = true;
+    void trackWorksideAnalyticsEvent(ADOPTION_EVENTS.PHONE_SETUP_STARTED, {
+      tenantId: tenantId || null,
+      tenantType: tenantType === 'office' ? 'voice' : tenantType,
+    }, { sessionId: tenantId || null });
+  }, [tenantId, tenantType]);
 
   // Detect previously auto-provisioned number
   React.useEffect(() => {
@@ -143,6 +155,12 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
         twilioAuthToken: 'auto_provisioned',
         demoPhoneDeferred: false,
       });
+      void trackWorksideAnalyticsEvent(ADOPTION_EVENTS.PHONE_SETUP_COMPLETED, {
+        tenantId,
+        tenantType: normalizedTenantType,
+        assignmentSource: sid ? 'existing_inventory' : 'new_purchase',
+        twilioAccountKey: assigned.twilioAccountKey || twilioAccountKey || 'primary',
+      }, { sessionId: tenantId });
 
       setPurchasedSuccess(true);
       if (result?.confirmationEmailSent === true) {
@@ -257,6 +275,16 @@ export default function TwilioSetup({ data, onChange, tenantType, tenantId, demo
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
+        {['voice', 'office', 'real_estate'].includes(tenantType) && (
+          <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-5 text-left">
+            <h4 className="font-bold text-blue-950 mb-1">Keep your existing business number</h4>
+            <p className="text-sm text-blue-900">
+              Customers continue calling the number they already know. This Merxus routing number works
+              behind it through call forwarding, and you can choose All Calls, Overflow / No Answer,
+              After Hours, or Off / Bypass during forwarding setup.
+            </p>
+          </div>
+        )}
         {!paymentCompleted && (
           <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
             <div className="flex items-start gap-3">

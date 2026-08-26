@@ -17,6 +17,7 @@ const STORAGE_KEY = 'merxus_onboarding_wizard';
 
 export default function OnboardingWizard({
   onClose,
+  onAbandon,
   onComplete,
   onSwitchToOwner,
   userEmail,
@@ -564,6 +565,7 @@ export default function OnboardingWizard({
     } catch (error) {
       console.error('Failed to clear wizard storage:', error);
     }
+    onAbandon?.({ currentStep, tenantType: wizardData.tenantType || initialTenantType || null });
     onClose();
   };
 

@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { queueFirstLoginChecklist } from '../utils/firstLoginChecklist';
 import { trackWorksideAnalyticsEvent } from '../utils/worksideAnalytics';
 import { normalizePlanTier } from '../utils/billingPricing';
+import { ADOPTION_EVENTS } from '../constants/adoptionEvents';
 
 const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
 const ONBOARDING_PENDING_PREFILL_KEY = 'merxus_onboarding_pending_prefill';
@@ -121,6 +122,17 @@ export default function OnboardingWizardPage() {
   const shouldResumeTwilio = isPaymentReturn && effectiveResumeStep >= 6;
   const authMethod =
     user?.providerData?.some((p) => p?.providerId === 'apple.com') ? 'apple' : 'password';
+
+  useEffect(() => {
+    const key = 'merxus_onboarding_started_tracked';
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, 'true');
+    void trackWorksideAnalyticsEvent(ADOPTION_EVENTS.ONBOARDING_STARTED, {
+      tenantType: initialTenantType,
+      selectedPlan,
+      resumed: hasWizardProgress || isPaymentReturn,
+    });
+  }, [initialTenantType, selectedPlan, hasWizardProgress, isPaymentReturn]);
 
   useEffect(() => {
     try {
@@ -402,6 +414,13 @@ export default function OnboardingWizardPage() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <OnboardingWizard
         onClose={handleClose}
+        onAbandon={({ currentStep, tenantType }) => {
+          void trackWorksideAnalyticsEvent(ADOPTION_EVENTS.ONBOARDING_ABANDONED, {
+            currentStep,
+            tenantType,
+            selectedPlan,
+          });
+        }}
         onComplete={handleComplete}
         onSwitchToOwner={() => {}}
         tenantType={resolvedTenantType}
