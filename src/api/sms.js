@@ -6,8 +6,36 @@ export async function fetchSmsSettings() {
 }
 
 export async function updateSmsSettings(payload) {
-  const res = await apiClient.patch('/sms/settings', payload);
-  return res.data;
+  if (payload.operationId) {
+    const res = await apiClient.patch('/sms/settings', payload);
+    return res.data;
+  }
+  // Keep the existing full-form UI compatible, while protected fields use the same
+  // revision/audit boundary as mobile. Never persist unchanged form defaults.
+  const current = await fetchSmsSettings();
+  const incoming = payload.sms || {};
+  let result = current;
+  const protectedFields = ['businessName', 'dailyDigestTime'];
+  if (Object.hasOwn(incoming, 'dailyDigestTime') && (typeof incoming.dailyDigestTime !== 'string' || incoming.dailyDigestTime.length !== 5 || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(incoming.dailyDigestTime))) {
+    throw new Error('Daily digest send time must use HH:mm (00:00–23:59).');
+  }
+  for (const field of protectedFields) {
+    if (typeof incoming[field] !== 'string') continue;
+    const value = field === 'businessName' ? incoming[field].trim() : incoming[field];
+    if (value === result.sms[field]) continue;
+    const res = await apiClient.patch('/sms/settings', {
+      sms: { [field]: value },
+      revision: result.revision,
+      operationId: crypto.randomUUID(),
+    });
+    result = { ...res.data, sms: { ...result.sms, ...res.data.sms } };
+  }
+  const changes = Object.fromEntries(Object.entries(incoming).filter(([key, value]) => !protectedFields.includes(key) && JSON.stringify(value) !== JSON.stringify(current.sms[key])));
+  if (Object.keys(changes).length) {
+    const res = await apiClient.patch('/sms/settings', { sms: changes });
+    result = { ...result, sms: res.data.sms };
+  }
+  return result;
 }
 
 export async function sendSmsTest(payload) {

@@ -49,6 +49,17 @@ service cloud.firestore {
         || (request.resource != null && hasRequiredPhoneVerification(request.resource.data));
     }
 
+    // This predicate is part of EVERY broad tenant write grant. A narrower
+    // deny would not override the recursive grants. Reads are unchanged.
+    function preservesAdministrativeSms(document) {
+      return document != /meta/settings || (
+        resource != null && request.resource != null
+          ? !request.resource.data.diff(resource.data).affectedKeys().hasAny(['sms', 'smsSettingsRevision'])
+          : (resource == null && request.resource != null
+            && !request.resource.data.keys().hasAny(['sms', 'smsSettingsRevision']))
+      );
+    }
+
     // User-owned web preferences.
     // Used by the Merxus web Quick Start navigation/sidebar.
     match /users/{userId}/preferences/{docId} {
@@ -75,28 +86,39 @@ service cloud.firestore {
       // through the API and its server-side verification guard.
       allow read: if belongsToRestaurant(restaurantId) || isMerxusAdmin();
       allow write: if (belongsToRestaurant(restaurantId) || isMerxusAdmin())
-        && !isBackendControlledRestaurantTransaction();
+        && !isBackendControlledRestaurantTransaction()
+        && preservesAdministrativeSms(document);
     }
     
     // Office/Voice data - ALL subcollections under an office
     // Uses recursive wildcard to match any depth
     match /offices/{officeId}/{document=**} {
       // Office users can read/write their own data
-      allow read, write: if belongsToOffice(officeId);
+      allow read: if belongsToOffice(officeId);
       // Merxus admins can read/write all office data
-      allow read, write: if isMerxusAdmin();
+      allow read: if isMerxusAdmin();
+      allow write: if (belongsToOffice(officeId) || isMerxusAdmin()) && preservesAdministrativeSms(document);
     }
     
     // Agent/Real Estate data - ALL subcollections under an agent
     // Uses recursive wildcard to match any depth
     match /agents/{agentId}/{document=**} {
       // Agent users can read/write their own data
-      allow read, write: if belongsToAgent(agentId);
+      allow read: if belongsToAgent(agentId);
       // Merxus admins can read/write all agent data
-      allow read, write: if isMerxusAdmin();
+      allow read: if isMerxusAdmin();
+      allow write: if (belongsToAgent(agentId) || isMerxusAdmin()) && preservesAdministrativeSms(document);
     }
     
     // Merxus admin collections
+    // Administrative SMS mutation audit/receipts are exclusively backend owned.
+    match /tenant_admin_audit/{document=**} {
+      allow read, write: if false;
+    }
+    match /tenant_admin_operations/{document=**} {
+      allow read, write: if false;
+    }
+
     match /merxus/{document=**} {
       allow read, write: if isMerxusAdmin();
     }
