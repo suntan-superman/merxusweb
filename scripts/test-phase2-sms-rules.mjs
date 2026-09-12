@@ -8,16 +8,16 @@ const jwt = (role, tenantId = 'merxus-maestro-rules-a') => {
   const now = Math.floor(Date.now() / 1000);
   return [ { alg: 'none', typ: 'JWT' }, { aud: project, iss: `https://securetoken.google.com/${project}`, sub: `rules-${role}-${tenantId}`, user_id: `rules-${role}-${tenantId}`, iat: now, exp: now + 3600, role, officeId: tenantId, firebase: { sign_in_provider: 'custom', identities: {} } } ].map((value) => Buffer.from(JSON.stringify(value)).toString('base64url')).join('.') + '.';
 };
-const field = (value) => typeof value === 'string' ? { stringValue: value } : typeof value === 'number' ? { integerValue: String(value) } : { mapValue: { fields: Object.fromEntries(Object.entries(value).map(([key, nested]) => [key, field(nested)])) } };
+const field = (value) => typeof value === 'string' ? { stringValue: value } : typeof value === 'boolean' ? { booleanValue: value } : typeof value === 'number' ? { integerValue: String(value) } : { mapValue: { fields: Object.fromEntries(Object.entries(value).map(([key, nested]) => [key, field(nested)])) } };
 async function request(path, token, method = 'GET', values, mask = '') {
   return fetch(`${base}/${path}${mask}`, { method, headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: values ? JSON.stringify({ fields: Object.fromEntries(Object.entries(values).map(([key, value]) => [key, field(value)])) }) : undefined });
 }
 const path = 'offices/merxus-maestro-rules-a/meta/settings';
 try {
-  assert.equal((await request(path, 'owner', 'PATCH', { name: 'baseline', sms: { businessName: 'baseline', dailyDigestTime: '18:00' }, smsSettingsRevision: 1 })).status, 200);
+  assert.equal((await request(path, 'owner', 'PATCH', { name: 'baseline', sms: { businessName: 'baseline', dailyDigestTime: '18:00', notificationRetryMaxAttempts: 2, notificationRetryEnabled: false }, smsSettingsRevision: 1 })).status, 200);
   for (const role of ['owner', 'manager', 'staff']) {
     assert.equal((await request(path, jwt(role))).status, 200, `${role} read`);
-    for (const [values, mask] of [[{ sms: { dailyDigestTime: '18:30' } }, '?updateMask.fieldPaths=sms.dailyDigestTime'], [{ sms: { businessName: 'ILLEGAL' } }, '?updateMask.fieldPaths=sms.businessName'], [{ smsSettingsRevision: 8 }, '?updateMask.fieldPaths=smsSettingsRevision'], [{ name: 'replacement deleting SMS' }, '']]) {
+    for (const [values, mask] of [[{ sms: { notificationRetryDelayMinutes: 20 } }, '?updateMask.fieldPaths=sms.notificationRetryDelayMinutes'], [{ sms: { notificationRetryMaxAttempts: 3 } }, '?updateMask.fieldPaths=sms.notificationRetryMaxAttempts'], [{ sms: { notificationRetryEnabled: true } }, '?updateMask.fieldPaths=sms.notificationRetryEnabled'], [{ sms: { dailyDigestTime: '18:30' } }, '?updateMask.fieldPaths=sms.dailyDigestTime'], [{ sms: { businessName: 'ILLEGAL' } }, '?updateMask.fieldPaths=sms.businessName'], [{ smsSettingsRevision: 8 }, '?updateMask.fieldPaths=smsSettingsRevision'], [{ name: 'replacement deleting SMS' }, '']]) {
       const response = await request(path, jwt(role), 'PATCH', values, mask);
       assert.equal(response.status, 403, `${role} protected update: ${await response.text()}`);
     }

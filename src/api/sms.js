@@ -15,12 +15,18 @@ export async function updateSmsSettings(payload) {
   const current = await fetchSmsSettings();
   const incoming = payload.sms || {};
   let result = current;
-  const protectedFields = ['businessName', 'dailyDigestTime'];
+  const protectedFields = ['businessName', 'dailyDigestTime', 'notificationRetryMaxAttempts', 'notificationRetryDelayMinutes'];
+  if (Object.hasOwn(incoming, 'notificationRetryDelayMinutes') && (!Number.isInteger(incoming.notificationRetryDelayMinutes) || incoming.notificationRetryDelayMinutes < 1 || incoming.notificationRetryDelayMinutes > 1440)) {
+    throw new Error('Notification retry delay must be an integer from 1 to 1440 minutes.');
+  }
+  if (Object.hasOwn(incoming, 'notificationRetryMaxAttempts') && (!Number.isInteger(incoming.notificationRetryMaxAttempts) || incoming.notificationRetryMaxAttempts < 1 || incoming.notificationRetryMaxAttempts > 10)) {
+    throw new Error('Notification retry max attempts must be an integer from 1 to 10.');
+  }
   if (Object.hasOwn(incoming, 'dailyDigestTime') && (typeof incoming.dailyDigestTime !== 'string' || incoming.dailyDigestTime.length !== 5 || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(incoming.dailyDigestTime))) {
     throw new Error('Daily digest send time must use HH:mm (00:00–23:59).');
   }
   for (const field of protectedFields) {
-    if (typeof incoming[field] !== 'string') continue;
+    if (['notificationRetryMaxAttempts', 'notificationRetryDelayMinutes'].includes(field) ? !Object.hasOwn(incoming, field) : typeof incoming[field] !== 'string') continue;
     const value = field === 'businessName' ? incoming[field].trim() : incoming[field];
     if (value === result.sms[field]) continue;
     const res = await apiClient.patch('/sms/settings', {
