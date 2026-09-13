@@ -19,6 +19,21 @@ function rig() {
   vm.runInContext(source.replace(/^import .*\r?\n/, '').replaceAll('export async function', 'async function'), context);
   return { calls, baseline, save: context.updateSmsSettings };
 }
+test('boolean full-form saves use protected boolean payloads in either direction, never delivery', async () => {
+  for (const value of [true, false]) {
+    const { calls, baseline, save } = rig(); baseline.dailyDigestEnabled = !value;
+    await save({ sms: { ...baseline, dailyDigestEnabled: value } });
+    assert.equal(calls.length, 1); assert.equal(calls[0].url, '/sms/settings');
+    assert.equal(JSON.stringify(calls[0].payload.sms), JSON.stringify({ dailyDigestEnabled: value }));
+    assert.equal(calls[0].payload.revision, 1); assert.ok(calls[0].payload.operationId);
+  }
+  for (const value of [null, 'true', 'false', 0, 1, [], {}]) {
+    const { calls, baseline, save } = rig();
+    await assert.rejects(save({ sms: { ...baseline, businessName: 'changed', dailyDigestEnabled: value } }));
+    assert.equal(calls.length, 0);
+  }
+});
+
 test('web full-form digest edit uses protected single-field mutation without enabling delivery', async () => {
   const { calls, baseline, save } = rig();
   await save({ sms: { ...baseline, dailyDigestTime: '18:30' } });

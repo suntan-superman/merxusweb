@@ -16,6 +16,9 @@ const path = 'offices/merxus-maestro-rules-a/meta/settings';
 try {
   assert.equal((await request(path, 'owner', 'PATCH', { name: 'baseline', sms: { businessName: 'baseline', dailyDigestTime: '18:00', notificationRetryMaxAttempts: 2, notificationRetryEnabled: false }, smsSettingsRevision: 1 })).status, 200);
   for (const role of ['owner', 'manager', 'staff']) {
+    for (const dailyDigestEnabled of [true, false]) {
+      assert.equal((await request(path, jwt(role), 'PATCH', { sms: { dailyDigestEnabled } }, '?updateMask.fieldPaths=sms.dailyDigestEnabled')).status, 403, `${role} direct digest toggle denied`);
+    }
     assert.equal((await request(path, jwt(role))).status, 200, `${role} read`);
     for (const [values, mask] of [[{ sms: { notificationRetryDelayMinutes: 20 } }, '?updateMask.fieldPaths=sms.notificationRetryDelayMinutes'], [{ sms: { notificationRetryMaxAttempts: 3 } }, '?updateMask.fieldPaths=sms.notificationRetryMaxAttempts'], [{ sms: { notificationRetryEnabled: true } }, '?updateMask.fieldPaths=sms.notificationRetryEnabled'], [{ sms: { dailyDigestTime: '18:30' } }, '?updateMask.fieldPaths=sms.dailyDigestTime'], [{ sms: { businessName: 'ILLEGAL' } }, '?updateMask.fieldPaths=sms.businessName'], [{ smsSettingsRevision: 8 }, '?updateMask.fieldPaths=smsSettingsRevision'], [{ name: 'replacement deleting SMS' }, '']]) {
       const response = await request(path, jwt(role), 'PATCH', values, mask);
