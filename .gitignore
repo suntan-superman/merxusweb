@@ -19,6 +19,7 @@ scripts
 !scripts/
 scripts/*
 !scripts/verify-release.js
+!scripts/test-phase2-sms-rules.mjs
 !scripts/write-bilingual-voice-qa-certification.js
 !scripts/write-bilingual-voice-qa-certification.test.js
 
