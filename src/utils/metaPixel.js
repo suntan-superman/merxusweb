@@ -1,3 +1,5 @@
+import { advertisingConsentGranted } from './advertisingAttribution.js';
+
 const ATTRIBUTION_KEY = 'merxus.metaAttribution';
 const LEAD_EVENT_KEY_PREFIX = 'merxus.metaLeadEvent.';
 const PURCHASE_EVENT_KEY_PREFIX = 'merxus.metaPurchaseEvent.';
@@ -92,7 +94,7 @@ export function collectCampaignAttribution({ href, search, referrer } = {}) {
 
   TRACKING_PARAMS.forEach((key) => {
     const value = params.get(key);
-    if (value) attribution[key] = value;
+    if (value && (!['fbclid', 'gclid'].includes(key) || advertisingConsentGranted())) attribution[key] = value;
   });
 
   return attribution;
@@ -141,6 +143,11 @@ export function getCampaignAttribution() {
 
 export function initMetaPixel(pixelId = getConfiguredMetaPixelId()) {
   if (!canUseWindow()) return false;
+
+  if (!advertisingConsentGranted()) {
+    recordMetaPixelStatus({ initialized: false, lastError: 'Advertising consent is not granted.' });
+    return false;
+  }
 
   const normalizedPixelId = String(pixelId || '').trim();
   const status = getMetaPixelStatus();
@@ -314,8 +321,9 @@ async function trackWorksideFromMeta(name, parameters = {}, options = {}) {
 function worksideEventNameForMeta(name, parameters = {}) {
   if (name === 'PageView') return 'landing_page_view';
   if (name === 'ViewContent') return parameters.page_type === 'pricing' ? 'pricing_view' : 'content_viewed';
-  if (name === 'Lead') return 'lead_created';
-  if (name === 'Schedule') return 'demo_scheduled';
+  // Lead and demo conversions are emitted by the backend only after the
+  // corresponding request has been successfully persisted.
+  if (name === 'Lead' || name === 'Schedule') return null;
   if (name === 'MerxusChatOpened') return 'chat_opened';
   if (name === 'MerxusOnboardingStarted') return 'onboarding_started';
   return null;

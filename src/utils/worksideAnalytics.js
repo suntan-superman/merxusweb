@@ -1,6 +1,6 @@
 import { apiClient } from '../api/client';
 import { getMerxusAppCheckToken } from '../firebase/appCheck';
-import { getCampaignAttribution } from './metaPixel';
+import { getAdvertisingAttribution } from './advertisingAttribution';
 
 const VISITOR_KEY = 'merxus.worksideAnalytics.visitor.v1';
 const QUEUE_KEY = 'merxus.worksideAnalytics.queue.v1';
@@ -49,18 +49,7 @@ function anonymousId() {
 }
 
 function attribution() {
-  const source = getCampaignAttribution();
-  return compact({
-    utmSource: source.utm_source,
-    utmMedium: source.utm_medium,
-    utmCampaign: source.utm_campaign,
-    utmContent: source.utm_content,
-    utmTerm: source.utm_term,
-    metaClickId: source.fbclid,
-    googleClickId: source.gclid,
-    referrer: source.referrer,
-    landingPage: source.landingPageUrl,
-  });
+  return getAdvertisingAttribution();
 }
 
 function readQueue(now = Date.now()) {
@@ -124,7 +113,7 @@ export async function trackWorksideAnalyticsEvent(eventName, properties = {}, op
     properties,
     attribution: attribution(),
     appVersion: import.meta.env?.VITE_APP_VERSION || null,
-    schemaVersion: 1,
+    schemaVersion: 2,
   };
   try {
     return await send(payload);

@@ -9,6 +9,7 @@ import { auth } from '../../firebase/config';
 import { getEmailSignInMethods, getSignInMethodInfo } from '../../utils/authProviders';
 import { trackWorksideAnalyticsEvent } from '../../utils/worksideAnalytics';
 import { getAdminSetupCompletionPath } from '../../utils/adminSetupRouting';
+import { buildOnboardingPayload } from '../../utils/onboardingPayload';
 
 export default function SetupWizardPage() {
   const navigate = useNavigate();
@@ -60,113 +61,29 @@ export default function SetupWizardPage() {
         }
       }
       
-      // Determine which API endpoint to call based on tenant type
       let endpoint = '';
-      let payload = {};
-      
       switch (wizardData.tenantType) {
         case 'restaurant':
           endpoint = '/admin/demo-tenants/restaurant';
-          payload = {
-            restaurant: {
-              name: wizardData.businessName,
-              email: wizardData.email, // Required by backend validation
-              address: wizardData.address,
-              city: wizardData.city ?? '',
-              state: wizardData.state ?? '',
-              zip: wizardData.zip ?? '',
-              phoneNumber: wizardData.phone,
-              twilioPhoneNumber: wizardData.twilioPhoneNumber,
-              twilioPhoneSid: wizardData.twilioPhoneSid,
-              twilioAccountSid: wizardData.twilioAccountSid,
-              twilioAuthToken: wizardData.twilioAuthToken,
-              aiVoice: wizardData.aiVoice || 'alloy',
-              cuisineType: wizardData.industryData?.cuisineType,
-              description: wizardData.industryData?.description,
-              dineIn: wizardData.industryData?.dineIn === 'yes',
-              delivery: wizardData.industryData?.delivery === 'yes',
-            },
-            manager: {
-              displayName: wizardData.ownerName,
-              email: wizardData.email,
-              password: wizardData.tempPassword,
-              allowExistingUser: true,
-            },
-          };
           break;
-          
         case 'voice':
         case 'general':
           endpoint = '/admin/demo-tenants/office';
-          payload = {
-            office: {
-              name: wizardData.businessName,
-              email: wizardData.email, // Required by backend validation
-              address: wizardData.address,
-              city: wizardData.city ?? '',
-              state: wizardData.state ?? '',
-              zip: wizardData.zip ?? '',
-              phoneNumber: wizardData.phone,
-              twilioPhoneNumber: wizardData.twilioPhoneNumber,
-              twilioPhoneSid: wizardData.twilioPhoneSid,
-              twilioAccountSid: wizardData.twilioAccountSid,
-              twilioAuthToken: wizardData.twilioAuthToken,
-              aiVoice: wizardData.aiVoice || 'alloy',
-              businessType: wizardData.industryData?.businessType,
-              description: wizardData.industryData?.description,
-            },
-            owner: {
-              displayName: wizardData.ownerName,
-              email: wizardData.email,
-              password: wizardData.tempPassword,
-              allowExistingUser: true,
-            },
-          };
           break;
-          
         case 'real_estate':
           endpoint = '/admin/demo-tenants/real-estate';
-          
-          console.log('🎤 [SetupWizardPage] BEFORE creating payload:');
-          console.log('  wizardData.aiVoice:', wizardData.aiVoice);
-          
-          payload = {
-            agent: {
-              name: wizardData.ownerName,
-              agentName: wizardData.industryData?.brandName || wizardData.ownerName,
-              email: wizardData.email,
-              phone: wizardData.phone,
-              address: wizardData.address,
-              city: wizardData.city ?? '',
-              state: wizardData.state ?? '',
-              zip: wizardData.zip ?? '',
-              twilioPhoneNumber: wizardData.twilioPhoneNumber,
-              twilioPhoneSid: wizardData.twilioPhoneSid,
-              twilioAccountSid: wizardData.twilioAccountSid,
-              twilioAuthToken: wizardData.twilioAuthToken,
-              aiVoice: wizardData.aiVoice || 'alloy',
-              brokerage: wizardData.industryData?.brokerage,
-              licenseNumber: wizardData.industryData?.licenseNumber,
-              markets: wizardData.industryData?.markets,
-            },
-            owner: {
-              displayName: wizardData.ownerName,
-              email: wizardData.email,
-              password: wizardData.tempPassword,
-              allowExistingUser: true,
-            },
-          };
-          
-          console.log('🎤 [SetupWizardPage] AFTER creating payload:');
-          console.log('  payload.agent.aiVoice:', payload.agent.aiVoice);
           break;
-          
         default:
           throw new Error(`Unsupported tenant type: ${wizardData.tenantType}`);
       }
 
-      payload = {
-        ...payload,
+      const payload = {
+        ...buildOnboardingPayload(wizardData, {
+          authPayload: {
+            password: wizardData.tempPassword,
+            allowExistingUser: true,
+          },
+        }),
         provisioningMode: 'demo',
         demo: {
           planTier: wizardData.demoPlanTier,

@@ -1,8 +1,9 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getBillingPricing } from '../api/billing';
 import { formatBillingAmount, getPricingTenantKey, normalizePlanTier } from '../utils/billingPricing';
+import { fetchPricingWithRetry } from '../utils/pricingLoader';
 
 export default function Pricing() {
   const { user } = useAuth();
@@ -17,23 +18,23 @@ export default function Pricing() {
   const [pricingLoading, setPricingLoading] = useState(true);
   const [pricingError, setPricingError] = useState('');
 
-  useEffect(() => {
-    const loadPricing = async () => {
-      try {
-        setPricingLoading(true);
-        setPricingError('');
-        const data = await getBillingPricing();
-        setPricingData(data);
-      } catch (error) {
-        console.error('Failed to load pricing:', error);
-        setPricingError('Current pricing is temporarily unavailable. Please reload to try again.');
-      } finally {
-        setPricingLoading(false);
-      }
-    };
-
-    loadPricing();
+  const loadPricing = useCallback(async () => {
+    try {
+      setPricingLoading(true);
+      setPricingError('');
+      const data = await fetchPricingWithRetry(getBillingPricing);
+      setPricingData(data);
+    } catch (error) {
+      console.error('Failed to load pricing:', error);
+      setPricingError('Current pricing is temporarily unavailable.');
+    } finally {
+      setPricingLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadPricing();
+  }, [loadPricing]);
 
   useEffect(() => {
     if (['voice', 'real_estate', 'restaurant'].includes(requestedTenantType)) {
@@ -78,7 +79,19 @@ export default function Pricing() {
           {pricingLoading && (
             <p className="mt-3 text-sm text-gray-500 dark:text-slate-400">Confirming current Stripe pricing…</p>
           )}
-          {pricingError && <p className="mt-3 font-semibold text-red-600">{pricingError}</p>}
+          {pricingError && (
+            <div className="mt-3" role="alert">
+              <p className="font-semibold text-red-600">{pricingError}</p>
+              <button
+                type="button"
+                onClick={loadPricing}
+                disabled={pricingLoading}
+                className="mt-3 rounded-lg border-2 border-primary-600 px-4 py-2 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-60 dark:text-primary-300 dark:hover:bg-slate-800"
+              >
+                {pricingLoading ? 'Retrying…' : 'Retry pricing'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Tenant Type Selector */}

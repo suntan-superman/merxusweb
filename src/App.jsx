@@ -42,6 +42,7 @@ import RestaurantLandingPage from './pages/RestaurantLandingPage';
 import HearMerxusPage from './pages/HearMerxusPage';
 import EliteFeatureWorkspace from './components/premium/EliteFeatureWorkspace';
 import WebsiteChatWidget from './components/chat/WebsiteChatWidget';
+import PrivacyPreferences from './components/PrivacyPreferences';
 import lazyWithRetry from './utils/lazyWithRetry';
 import {
   initMetaPixel,
@@ -51,6 +52,7 @@ import {
 } from './utils/metaPixel';
 import { markDiagnostic } from './utils/productionDiagnostics';
 import { flushWorksideAnalyticsQueue } from './utils/worksideAnalytics';
+import { persistAdvertisingAttribution } from './utils/advertisingAttribution';
 
 const lazy = lazyWithRetry;
 
@@ -173,9 +175,17 @@ function MetaRouteTracker() {
   const location = useLocation();
 
   useEffect(() => {
+    persistAdvertisingAttribution();
     persistCampaignAttribution();
     initMetaPixel();
     void flushWorksideAnalyticsQueue();
+    const onConsentChanged = () => {
+      persistAdvertisingAttribution();
+      persistCampaignAttribution();
+      initMetaPixel();
+    };
+    window.addEventListener('merxus:consent-changed', onConsentChanged);
+    return () => window.removeEventListener('merxus:consent-changed', onConsentChanged);
   }, []);
 
   useEffect(() => {
@@ -185,6 +195,7 @@ function MetaRouteTracker() {
       hash: location.hash,
     });
     persistCampaignAttribution();
+    persistAdvertisingAttribution();
     trackPageView({
       path: location.pathname,
       page_path: location.pathname,
@@ -370,6 +381,7 @@ function App() {
       <AuthProvider>
         <Router>
         <MetaRouteTracker />
+        <PrivacyPreferences />
         <RouteMetadata />
         <ScrollToTop />
         <Routes>

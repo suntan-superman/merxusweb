@@ -12,20 +12,44 @@ const TIMEZONE_OPTIONS = [
   { value: 'Pacific/Honolulu', label: 'Hawaii Time (HST)' },
 ];
 
+const LEGACY_BUSINESS_TYPE_ALIASES = {
+  'Law Firm': { category: 'Professional Services', industry: 'Law Office' },
+  'Medical Office': { category: 'Health & Wellness', industry: 'Primary Care Clinic' },
+  'Dental Office': { category: 'Health & Wellness', industry: 'Dental Office' },
+  Consulting: { category: 'Professional Services', industry: 'Consulting Firm' },
+  'Accounting / Tax': { category: 'Professional Services', industry: 'Accounting & Tax Services' },
+  Insurance: { category: 'Professional Services', industry: 'Insurance Agency' },
+  'Financial Services': { category: 'Professional Services', industry: 'Financial Advisor' },
+  'Real Estate Brokerage': { category: 'Professional Services', industry: 'Real Estate Brokerage' },
+  Automotive: { category: 'Retail & Consumer Services', industry: 'Auto Sales' },
+  Retail: { category: 'Retail & Consumer Services', industry: 'Retail Store / Boutique' },
+  Logistics: { category: 'Transportation & Logistics', industry: 'Logistics Management' },
+  Hospitality: { category: 'Food & Hospitality (Non-Restaurant)', industry: 'Hotel Front Desk' },
+};
+
+function normalizeBusinessType(value) {
+  if (value && typeof value === 'object') {
+    return { category: value.category || '', industry: value.industry || '' };
+  }
+  if (typeof value !== 'string' || !value.trim()) return { category: '', industry: '' };
+
+  const exactCategory = getCategories().find((category) =>
+    getIndustriesForCategory(category).includes(value.trim()));
+  if (exactCategory) return { category: exactCategory, industry: value.trim() };
+  return LEGACY_BUSINESS_TYPE_ALIASES[value.trim()] || { category: 'General', industry: value.trim() };
+}
+
 export default function VoiceCompanyProfile({ settings, onSave, saving }) {
   const [form, setForm] = useState({
     name: settings.name || '',
     address: settings.address || '',
     phoneNumber: settings.phoneNumber || '',
-    websiteUrl: settings.websiteUrl || '',
+    websiteUrl: settings.websiteUrl || settings.website || '',
     timezone: settings.timezone || 'America/Los_Angeles',
     twilioPhoneNumber: settings.twilioPhoneNumber || '',
     twilioNumberSid: settings.twilioNumberSid || '',
     notifyEmailAddresses: settings.notifyEmailAddresses || [],
-    businessType: settings.businessType || {
-      category: '',
-      industry: '',
-    },
+    businessType: normalizeBusinessType(settings.businessType),
   });
   const hasTwilioAssigned = !!form.twilioPhoneNumber;
 
@@ -39,17 +63,19 @@ export default function VoiceCompanyProfile({ settings, onSave, saving }) {
   useEffect(() => {
     if (form.businessType.category) {
       const categoryIndustries = form.businessType.category === 'General'
-        ? ['General']
+        ? Array.from(new Set(['General', form.businessType.industry].filter(Boolean)))
         : getIndustriesForCategory(form.businessType.category);
 
       setIndustries(categoryIndustries);
       
       // Reset or default industry when category changes
       if (form.businessType.category === 'General') {
-        setForm((prev) => ({
-          ...prev,
-          businessType: { ...prev.businessType, industry: 'General' },
-        }));
+        if (!form.businessType.industry) {
+          setForm((prev) => ({
+            ...prev,
+            businessType: { ...prev.businessType, industry: 'General' },
+          }));
+        }
       } else if (form.businessType.industry && !categoryIndustries.includes(form.businessType.industry)) {
         setForm((prev) => ({
           ...prev,

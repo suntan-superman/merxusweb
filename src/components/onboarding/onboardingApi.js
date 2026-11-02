@@ -3,6 +3,7 @@
  */
 import { apiClient } from '../../api/client';
 import { createOffice } from '../../api/voice';
+import { getAdvertisingAttribution } from '../../utils/advertisingAttribution';
 import { 
   DEFAULT_TIMEZONE, 
   parseMarkets, 
@@ -88,10 +89,13 @@ export async function submitRestaurantOnboarding(formData, options = {}) {
       email: formData.ownerEmail,
       phoneNumber: formData.phoneNumber,
       address: formData.address,
+      website: formData.websiteUrl,
       websiteUrl: formData.websiteUrl,
       cuisineType: formData.cuisineType,
       description: formData.description,
-      timezone: DEFAULT_TIMEZONE,
+      timezone: formData.timezone || DEFAULT_TIMEZONE,
+      dineIn: formData.dineIn !== false,
+      delivery: formData.delivery !== false,
     },
     manager: {
       email: formData.ownerEmail,
@@ -100,6 +104,7 @@ export async function submitRestaurantOnboarding(formData, options = {}) {
       ...authPayload,
     },
     plan: formData.selectedPlan,
+    advertisingAttribution: getAdvertisingAttribution(),
   });
 
   const result = res.data;
@@ -144,12 +149,17 @@ export async function submitVoiceOnboarding(formData, options = {}) {
   const result = await createOffice({
     office: {
       name: formData.name,
+      businessName: formData.name,
+      organizationName: formData.name,
       email: formData.ownerEmail,
       phoneNumber: formData.phoneNumber,
       address: formData.address,
+      website: formData.websiteUrl,
       websiteUrl: formData.websiteUrl,
       businessType: formData.businessType,
-      timezone: DEFAULT_TIMEZONE,
+      services: formData.services || formData.description || '',
+      description: formData.description || formData.services || '',
+      timezone: formData.timezone || DEFAULT_TIMEZONE,
     },
     owner: {
       email: formData.ownerEmail,
@@ -158,6 +168,7 @@ export async function submitVoiceOnboarding(formData, options = {}) {
       ...authPayload,
     },
     plan: formData.selectedPlan,
+    advertisingAttribution: getAdvertisingAttribution(),
   });
 
   if (!result?.officeId) {
@@ -202,15 +213,21 @@ export async function submitRealEstateOnboarding(formData, options = {}) {
   const res = await apiClient.post('/onboarding/agent', {
     agent: {
       name: formData.name,
+      agentName: brandName,
       brandName,
+      businessName: formData.businessName || formData.brokerage || brandName,
+      organizationName: formData.businessName || formData.brokerage || brandName,
       email: formData.ownerEmail,
+      phone: formData.phoneNumber,
       phoneNumber: formData.phoneNumber,
+      phonePrimary: formData.phoneNumber,
       address: formData.address,
+      website: formData.websiteUrl,
       websiteUrl: formData.websiteUrl,
       brokerage: formData.brokerage.trim() || null,
       licenseNumber: formData.licenseNumber.trim() || null,
       markets: marketsArray,
-      timezone: DEFAULT_TIMEZONE,
+      timezone: formData.timezone || DEFAULT_TIMEZONE,
     },
     owner: {
       email: formData.ownerEmail,
@@ -219,6 +236,7 @@ export async function submitRealEstateOnboarding(formData, options = {}) {
       ...authPayload,
     },
     plan: formData.selectedPlan,
+    advertisingAttribution: getAdvertisingAttribution(),
   });
 
   const result = res.data;

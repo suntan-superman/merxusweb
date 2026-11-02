@@ -7,8 +7,10 @@ import { auth } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { queueFirstLoginChecklist } from '../utils/firstLoginChecklist';
 import { trackWorksideAnalyticsEvent } from '../utils/worksideAnalytics';
+import { getAdvertisingAttribution } from '../utils/advertisingAttribution';
 import { normalizePlanTier } from '../utils/billingPricing';
 import { ADOPTION_EVENTS } from '../constants/adoptionEvents';
+import { buildOnboardingPayload } from '../utils/onboardingPayload';
 
 const ONBOARDING_TENANT_TYPE_KEY = 'merxus_onboarding_selected_type';
 const ONBOARDING_PENDING_PREFILL_KEY = 'merxus_onboarding_pending_prefill';
@@ -235,95 +237,28 @@ export default function OnboardingWizardPage() {
         : { authMethod: 'password', password: wizardData.tempPassword, firebaseUid: user?.uid };
 
       let endpoint = '';
-      let payload = {};
 
       switch (wizardData.tenantType) {
         case 'restaurant':
           endpoint = '/onboarding/restaurant';
-          payload = {
-            restaurant: {
-              name: wizardData.businessName,
-              email: effectiveEmail,
-              address: wizardData.address,
-              city: wizardData.city ?? '',
-              state: wizardData.state ?? '',
-              zip: wizardData.zip ?? '',
-              phoneNumber: wizardData.phone,
-              twilioPhoneNumber: wizardData.twilioPhoneNumber,
-              twilioPhoneSid: wizardData.twilioPhoneSid,
-              twilioAccountSid: wizardData.twilioAccountSid,
-              twilioAuthToken: wizardData.twilioAuthToken,
-              aiVoice: wizardData.aiVoice || 'alloy',
-              cuisineType: wizardData.industryData?.cuisineType,
-              description: wizardData.industryData?.description,
-              dineIn: wizardData.industryData?.dineIn === 'yes',
-              delivery: wizardData.industryData?.delivery === 'yes',
-            },
-            manager: {
-              displayName: wizardData.ownerName,
-              email: effectiveEmail,
-              ...authPayload,
-            },
-          };
           break;
         case 'voice':
         case 'general':
           endpoint = '/onboarding/office';
-          payload = {
-            office: {
-              name: wizardData.businessName,
-              email: effectiveEmail,
-              address: wizardData.address,
-              city: wizardData.city ?? '',
-              state: wizardData.state ?? '',
-              zip: wizardData.zip ?? '',
-              phoneNumber: wizardData.phone,
-              twilioPhoneNumber: wizardData.twilioPhoneNumber,
-              twilioPhoneSid: wizardData.twilioPhoneSid,
-              twilioAccountSid: wizardData.twilioAccountSid,
-              twilioAuthToken: wizardData.twilioAuthToken,
-              aiVoice: wizardData.aiVoice || 'alloy',
-              businessType: wizardData.industryData?.businessType,
-              description: wizardData.industryData?.description,
-            },
-            owner: {
-              displayName: wizardData.ownerName,
-              email: effectiveEmail,
-              ...authPayload,
-            },
-          };
           break;
         case 'real_estate':
           endpoint = '/onboarding/agent';
-          payload = {
-            agent: {
-              name: wizardData.ownerName,
-              agentName: wizardData.industryData?.brandName || wizardData.ownerName,
-              email: effectiveEmail,
-              phone: wizardData.phone,
-              address: wizardData.address,
-              city: wizardData.city ?? '',
-              state: wizardData.state ?? '',
-              zip: wizardData.zip ?? '',
-              twilioPhoneNumber: wizardData.twilioPhoneNumber,
-              twilioPhoneSid: wizardData.twilioPhoneSid,
-              twilioAccountSid: wizardData.twilioAccountSid,
-              twilioAuthToken: wizardData.twilioAuthToken,
-              aiVoice: wizardData.aiVoice || 'alloy',
-              brokerage: wizardData.industryData?.brokerage,
-              licenseNumber: wizardData.industryData?.licenseNumber,
-              markets: wizardData.industryData?.markets,
-            },
-            owner: {
-              displayName: wizardData.ownerName,
-              email: effectiveEmail,
-              ...authPayload,
-            },
-          };
           break;
         default:
           throw new Error('Please select a tenant type to continue.');
       }
+
+      const payload = buildOnboardingPayload(wizardData, {
+        email: effectiveEmail,
+        authPayload,
+      });
+      payload.advertisingAttribution = getAdvertisingAttribution();
+      payload.plan = selectedPlan || null;
 
       const response = await apiClient.post(endpoint, payload);
       const createdTenant = { ...response.data, tenantType: wizardData.tenantType };

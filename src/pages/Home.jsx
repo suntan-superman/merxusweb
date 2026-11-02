@@ -198,7 +198,8 @@ const Home = () => {
             Ready to Get Started?
           </h2>
           <p className="mb-8 text-xl text-primary-100">
-            Try it free for 14 days – cancel anytime
+            Start with a 30-day subscription trial. The one-time setup fee is charged at checkout,
+            and monthly billing begins automatically after the trial unless canceled.
           </p>
           <Link to="#choose-service" className="inline-block bg-white btn-secondary text-primary-600 hover:bg-primary-50">
             Get Started

@@ -13,6 +13,7 @@ import {
   trackMerxusOnboardingStarted,
   trackSchedule,
 } from '../../utils/metaPixel';
+import { getAdvertisingAttribution } from '../../utils/advertisingAttribution';
 import { formatPhoneInput, getRawPhone } from '../../utils/phoneFormatter';
 import BilingualCallDemoSection from './BilingualCallDemoSection';
 
@@ -232,6 +233,7 @@ export default function VerticalLandingPage({ content }) {
         tenantType: content.tenantType || content.theme || 'office',
       },
       campaign: attribution,
+      advertisingAttribution: getAdvertisingAttribution(),
       appBaseUrl: window.location.origin,
     };
 
@@ -360,6 +362,7 @@ export default function VerticalLandingPage({ content }) {
         primaryNeed: lead.primaryNeed,
         preferredContactMethod: lead.preferredContactMethod,
         campaign: attribution,
+        advertisingAttribution: getAdvertisingAttribution(),
       })
       .then(() => {
         setLeadStatus((current) => (

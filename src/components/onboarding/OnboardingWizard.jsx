@@ -79,6 +79,7 @@ export default function OnboardingWizard({
     state: prefillState || '',
     zip: prefillZip || '',
     timezone: prefillTimezone || 'America/Los_Angeles',
+    website: '',
     
     // Step 3: Twilio
     twilioPhoneNumber: '',
@@ -93,10 +94,15 @@ export default function OnboardingWizard({
       businessType: prefillBusinessType || '',
       cuisineType: prefillCuisineType || '',
       description: prefillDescription || '',
+      dineIn: 'yes',
+      delivery: 'yes',
       brandName: prefillBrandName || '',
       brokerage: prefillBrokerage || '',
       licenseNumber: prefillLicenseNumber || '',
       markets: prefillMarkets || '',
+      services: '',
+      industry: '',
+      aiPurpose: '',
     },
 
     // Payment + reservation
@@ -408,6 +414,18 @@ export default function OnboardingWizard({
     }
     if (currentStep === 3) {
       return !!wizardData.aiVoice;
+    }
+    if (currentStep === 4) {
+      if (wizardData.tenantType === 'restaurant') {
+        return !!(
+          wizardData.industryData?.cuisineType?.trim() &&
+          wizardData.industryData?.description?.trim()
+        );
+      }
+      if (wizardData.tenantType === 'voice') {
+        return !!wizardData.industryData?.businessType?.trim();
+      }
+      return true;
     }
     if (currentStep === 5) {
       if (demoProvisioning) {

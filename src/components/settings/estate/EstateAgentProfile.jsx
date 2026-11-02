@@ -3,12 +3,12 @@ import { useState } from 'react';
 export default function EstateAgentProfile({ settings, onSave, saving }) {
   const [form, setForm] = useState({
     name: settings.name || '',
-    brandName: settings.brandName || '',
+    brandName: settings.brandName || settings.agentName || '',
     brokerage: settings.brokerage || '',
     licenseNumber: settings.licenseNumber || '',
     address: settings.address || '',
-    phonePrimary: settings.phonePrimary || settings.phoneNumber || '',
-    websiteUrl: settings.websiteUrl || '',
+    phonePrimary: settings.phonePrimary || settings.phoneNumber || settings.phone || '',
+    websiteUrl: settings.websiteUrl || settings.website || '',
     markets: Array.isArray(settings.markets) ? settings.markets.join(', ') : (settings.markets || ''),
     twilioPhoneNumber: settings.twilioPhoneNumber || '',
     twilioNumberSid: settings.twilioNumberSid || '',

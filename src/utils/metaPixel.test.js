@@ -9,21 +9,33 @@ import {
 } from './metaPixel.js';
 
 test('collectCampaignAttribution extracts paid social params', () => {
+  const originalWindow = globalThis.window;
+  const originalLocalStorage = globalThis.localStorage;
+  const values = new Map([
+    ['merxus.analyticsConsent.v1', JSON.stringify({ analytics: 'granted', advertising: 'granted', capturedAt: new Date().toISOString() })],
+  ]);
+  globalThis.window = { navigator: { globalPrivacyControl: false } };
+  globalThis.localStorage = { getItem: (key) => values.get(key) || null, setItem: (key, value) => values.set(key, value) };
   const attribution = collectCampaignAttribution({
     href: 'https://merxusllc.com/office-ai-front-desk?utm_source=meta&utm_medium=paid_social&utm_campaign=Office&utm_content=AdA&utm_term=Owners&fbclid=abc123&gclid=google456&adVariant=office-a',
     referrer: 'https://facebook.com/',
   });
 
-  assert.equal(attribution.utm_source, 'meta');
-  assert.equal(attribution.utm_medium, 'paid_social');
-  assert.equal(attribution.utm_campaign, 'Office');
-  assert.equal(attribution.utm_content, 'AdA');
-  assert.equal(attribution.utm_term, 'Owners');
-  assert.equal(attribution.fbclid, 'abc123');
-  assert.equal(attribution.gclid, 'google456');
-  assert.equal(attribution.adVariant, 'office-a');
-  assert.equal(attribution.landingPageUrl.includes('merxusllc.com'), true);
-  assert.equal(attribution.referrer, 'https://facebook.com/');
+  try {
+    assert.equal(attribution.utm_source, 'meta');
+    assert.equal(attribution.utm_medium, 'paid_social');
+    assert.equal(attribution.utm_campaign, 'Office');
+    assert.equal(attribution.utm_content, 'AdA');
+    assert.equal(attribution.utm_term, 'Owners');
+    assert.equal(attribution.fbclid, 'abc123');
+    assert.equal(attribution.gclid, 'google456');
+    assert.equal(attribution.adVariant, 'office-a');
+    assert.equal(attribution.landingPageUrl.includes('merxusllc.com'), true);
+    assert.equal(attribution.referrer, 'https://facebook.com/');
+  } finally {
+    globalThis.window = originalWindow;
+    globalThis.localStorage = originalLocalStorage;
+  }
 });
 
 test('collectCampaignAttribution keeps landing metadata without utms', () => {
@@ -41,6 +53,7 @@ test('collectCampaignAttribution keeps landing metadata without utms', () => {
 test('initMetaPixel injects Meta script and records tracked events', () => {
   const originalWindow = globalThis.window;
   const originalDocument = globalThis.document;
+  const originalLocalStorage = globalThis.localStorage;
   const insertedScripts = [];
 
   const parentNode = {
@@ -49,6 +62,9 @@ test('initMetaPixel injects Meta script and records tracked events', () => {
     },
   };
   const sessionValues = new Map();
+  const localValues = new Map([
+    ['merxus.analyticsConsent.v1', JSON.stringify({ analytics: 'granted', advertising: 'granted', capturedAt: new Date().toISOString() })],
+  ]);
 
   globalThis.window = {
     location: {
@@ -56,7 +72,8 @@ test('initMetaPixel injects Meta script and records tracked events', () => {
       pathname: '/office-ai-front-desk',
       search: '?test_event_code=TEST8449',
     },
-    localStorage: { getItem: () => null, setItem: () => {} },
+    navigator: { globalPrivacyControl: false },
+    localStorage: { getItem: (key) => localValues.get(key) || null, setItem: (key, value) => localValues.set(key, value) },
     sessionStorage: {
       getItem: (key) => sessionValues.get(key) || null,
       setItem: (key, value) => sessionValues.set(key, value),
@@ -71,6 +88,7 @@ test('initMetaPixel injects Meta script and records tracked events', () => {
       return [{ parentNode }];
     },
   };
+  globalThis.localStorage = globalThis.window.localStorage;
 
   try {
     assert.equal(initMetaPixel('937938119035288'), true);
@@ -102,5 +120,6 @@ test('initMetaPixel injects Meta script and records tracked events', () => {
   } finally {
     globalThis.window = originalWindow;
     globalThis.document = originalDocument;
+    globalThis.localStorage = originalLocalStorage;
   }
 });
