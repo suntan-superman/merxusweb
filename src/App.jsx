@@ -40,7 +40,6 @@ import OfficeLandingPage from './pages/OfficeLandingPage';
 import RealEstateLandingPage from './pages/RealEstateLandingPage';
 import RestaurantLandingPage from './pages/RestaurantLandingPage';
 import HearMerxusPage from './pages/HearMerxusPage';
-import MissedCallsArticlePage from './pages/MissedCallsArticlePage';
 import EliteFeatureWorkspace from './components/premium/EliteFeatureWorkspace';
 import WebsiteChatWidget from './components/chat/WebsiteChatWidget';
 import PrivacyPreferences from './components/PrivacyPreferences';
@@ -272,11 +271,6 @@ const ROUTE_METADATA = {
     title: 'Merxus AI Pricing | AI Front Desk Plans',
     description: 'Explore Merxus AI front-desk plans for office and real-estate teams that need responsive call handling and follow-up.',
   },
-  '/articles/cost-of-missed-calls-small-businesses': {
-    title: 'The Cost of Missed Calls for Small Businesses | Merxus AI',
-    description: 'Estimate the possible cost of unanswered business calls with a transparent formula, illustrative assumptions, and practical ways to improve follow-up.',
-    canonical: 'https://merxus.ai/articles/cost-of-missed-calls-small-businesses',
-  },
   '/hear-merxus': {
     title: 'Hear Merxus In Action | English and Spanish AI Calls',
     description: 'Hear Merxus follow customers naturally as real-estate and office conversations switch between English and Spanish.',
@@ -305,18 +299,6 @@ function RouteMetadata() {
       document.head.appendChild(description);
     }
     description.content = metadata.description;
-
-    if (metadata.canonical) {
-      let canonical = document.querySelector('link[rel="canonical"]');
-      if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
-      canonical.href = metadata.canonical;
-      let ogUrl = document.querySelector('meta[property="og:url"]');
-      if (!ogUrl) { ogUrl = document.createElement('meta'); ogUrl.setAttribute('property', 'og:url'); document.head.appendChild(ogUrl); }
-      ogUrl.content = metadata.canonical;
-    } else {
-      document.querySelector('link[rel="canonical"]')?.remove();
-      document.querySelector('meta[property="og:url"]')?.remove();
-    }
   }, [pathname]);
 
   return null;
@@ -451,7 +433,6 @@ function App() {
                   <Route path="/features" element={<Features />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/hear-merxus" element={<HearMerxusPage />} />
-                  <Route path="/articles/cost-of-missed-calls-small-businesses" element={<MissedCallsArticlePage />} />
                   <Route path="/demos" element={<Navigate to="/hear-merxus" replace />} />
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="/never-miss-calls" element={<InstagramLandingPage />} />
